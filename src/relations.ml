@@ -10,9 +10,35 @@ type basic =
 type relation =
   | Basic of basic
   | Asymetrical of basic * basic
-  | Explosive of t * t
+  | Explosive of relation * relation
 
 type t = relation * bool
+
+let is_explosive = function
+  | (Explosive (_, _), _) -> true
+  | _ -> false
+
+let is_strong = snd
+
+let basic_to_string = function
+  | Neutral -> "Neutral relation"
+  | Hate -> "Hate"
+  | Trust -> "Trust"
+  | Chaotic -> "Chaotic"
+  | Undetermined -> "Yet-to-determine relation"
+  | Avoidance -> "Avoidance relation"
+
+let rec relation_to_string = function
+  | Basic r -> basic_to_string r
+  | Asymetrical (r1, r2) ->
+    "Asymetrical, " ^ basic_to_string r1 ^ " in one hand, " ^ basic_to_string r2 ^ " in the other"
+  | Explosive (r1, r2) ->
+    relation_to_string r1 ^ ", " ^ relation_to_string r2
+
+let to_string (r, s) =
+  (if s then "Strong, " else "")
+  ^ (if is_explosive (r, s) then "Explosive, " else "")
+  ^ relation_to_string r
 
 let basic_complexity = function
   | Neutral -> 0
@@ -24,12 +50,12 @@ let basic_complexity = function
 
 let rec relation_complexity = function
   | Basic r -> basic_complexity r
-  | Asymetrical (r1, r2) -> max (relation_complexity r1) (relation_complexity r2)
+  | Asymetrical (r1, r2) -> max (basic_complexity r1) (basic_complexity r2)
   | Explosive (r1, r2) -> 1 + relation_complexity r1 + relation_complexity r2
 
 let complexity (r, s) =
   let c = relation_complexity r in
-  if s then c else 2 * c
+  if s then 2 * c else c
 
 let basic_difficulty = function
   | Neutral -> 0
@@ -41,53 +67,50 @@ let basic_difficulty = function
 
 let rec relation_difficulty = function
   | Basic r -> basic_difficulty r
-  | Asymetrical (Basic Neutral, r) | Asymetrical (r, Basic Neutral) -> relation_difficulty r - 1
-  | Asymetrical (r1, r2) -> max (relation_difficulty r1) (relation_difficulty r2)
+  | Asymetrical (Neutral, r) | Asymetrical (r, Neutral) -> basic_difficulty r - 1
+  | Asymetrical (r1, r2) -> max (basic_difficulty r1) (basic_difficulty r2)
   | Explosive (r1, r2) -> 1 + relation_difficulty r1 + relation_difficulty r2
 
 let difficulty (r, s) =
   let c = relation_difficulty r in
-  if s then c else 2 * c
-
-let is_explosive = function
-  | (Explosive (_, _), _) -> true
-  | _ -> false
-
-let is_strong = snd
+  if s then 2 * c else c
 
 let normalise r =
   let rec aux l = function
     | Explosive (r1, r2) ->
       aux (aux l r1) r2
-    | Basic b -> Utils.left b :: l
-    | Asymetrical (b1, b2) -> Utils.right (b1, b2) :: l
+    | Basic b -> Utils.Left b :: l
+    | Asymetrical (b1, b2) -> Utils.Right (b1, b2) :: l
   in
   match List.sort compare (aux [] r) with
   | x :: l ->
     let f = function
-    | Utils.left b -> Basic b
-    | Utils.right (b1, b2) -> Asymetrical (b1, b2)
+    | Utils.Left b -> Basic b
+    | Utils.Right (b1, b2) -> Asymetrical (b1, b2)
     in
     List.fold_left (fun r x -> Explosive (f x, r)) (f x) l
   | [] ->
-    Errors.should_not_happen "Empty list computed during relation normalisation" ;
+    InOut.should_not_happen "Empty list computed during relation normalisation" ;
     Basic Neutral
 
 let simplify r =
   let rec aux l = function
     | Explosive (r1, r2) ->
       aux (aux l r1) r2
-    | Basic b -> Utils.left b :: Utils.right b :: l
-    | Asymetrical (b1, b2) -> Utils.left b1 :: Utils.right b2 :: l
-  in
-  match List.sort_uniq compare (aux [] r) with
+    | Basic b -> Utils.Left b :: Utils.Right b :: l
+    | Asymetrical (b1, b2) -> Utils.Left b1 :: Utils.Right b2 :: l
+  in let extract = function
+    | Utils.Left r | Utils.Right r -> r
+  in let l =
+    List.sort_uniq compare (List.filter (fun r -> extract r <> Neutral) (aux [] r)) in
+  (* LATER: Maybe it would be better to first consider all relations that pairs
+   * (for which next_exact returns something), and in a second pass, consider the rest. *)
+  match l with
   | x :: l ->
     let different_type x y =
       match x, y with
-      | Utils.left _, Utils.right _ | Utils.right _, Utils.left _ -> true
-      | Utils.left _, Utils.left _ | Utils.right _, Utils.right _ -> false
-    in let extract = function
-      | Utils.left r | Utils.right r -> r
+      | Utils.Left _, Utils.Right _ | Utils.Right _, Utils.Left _ -> true
+      | Utils.Left _, Utils.Left _ | Utils.Right _, Utils.Right _ -> false
     in let rec next_different x = function
       | y :: l when different_type x y -> (extract y, l)
       | y :: l ->
@@ -99,7 +122,7 @@ let simplify r =
       | [] -> None
       | y :: l when x = y -> Some (extract y, l)
       | y :: l ->
-        option_map (fun (z, l) -> (z, y :: l)) (next_exact x l)
+        Utils.option_map (fun (z, l) -> (z, y :: l)) (next_exact x l)
     in let next x l =
       match next_exact x l with
       | Some v -> v
@@ -110,8 +133,8 @@ let simplify r =
         let (y, l) = next x l in
         let (x, y) =
           match x with
-          | Utils.left x -> (x, y)
-          | Utils.right x -> (y, x)
+          | Utils.Left x -> (x, y)
+          | Utils.Right x -> (y, x)
         in let r =
           if x = y then
             if x = Neutral then r
@@ -122,26 +145,30 @@ let simplify r =
       next x l
     in let (x, y) =
       match x with
-      | Utils.left x -> (x, y)
-      | Utils.right x -> (y, x)
+      | Utils.Left x -> (x, y)
+      | Utils.Right x -> (y, x)
     in let r =
           if x = y then
             Basic x
           else Asymetrical (x, y) in
     aux r l
-  | [] ->
-    Errors.should_not_happen "Empty list computed during relation simplification" ;
-    Basic Neutral
+  | [] -> Basic Neutral
 
-let rec left_projection = function
+let rec left_relation_projection = function
   | Basic r -> Basic r
   | Asymetrical (r, _) -> Basic r
-  | Explosive (r1, r2) -> Explosive (left_projection r1, left_projection r2)
+  | Explosive (r1, r2) -> Explosive (left_relation_projection r1, left_relation_projection r2)
 
-let rec right_projection = function
+let left_projection (r, s) =
+  (left_relation_projection r, s)
+
+let rec right_relation_projection = function
   | Basic r -> Basic r
   | Asymetrical (_, r) -> Basic r
-  | Explosive (r1, r2) -> Explosive (right_projection r1, right_projection r2)
+  | Explosive (r1, r2) -> Explosive (right_relation_projection r1, right_relation_projection r2)
+
+let right_projection (r, s) =
+  (right_relation_projection r, s)
 
 let compose_basic r1 r2 =
   match r1, r2 with
@@ -156,38 +183,37 @@ let compose_basic r1 r2 =
   | Trust, Hate | Hate, Trust -> (None, true)
   | _, _ -> (None, false)
 
-let not_to_forgotten = function
+let not_to_be_forgotten = function
   | Hate | Trust -> true
   | _ -> false
 
 let relation_compare r1 r2 =
-  normalise (left_projection r1) = normalise (left_projection r2)
-  and
-  normalise (right_projection r1) = normalise (right_projection r2)
+  normalise (left_relation_projection r1) = normalise (left_relation_projection r2)
+  && normalise (right_relation_projection r1) = normalise (right_relation_projection r2)
 
 let rec compose_relation r1 r2 =
   match r1, r2 with
   | Basic r1, Basic r2 ->
     (match compose_basic r1 r2 with
-     | Some r, s -> (r, s)
+     | Some r, s -> (Basic r, s)
      | None, s -> (Explosive (Basic r1, Basic r2), s))
   | Basic _, Asymetrical (_, _) ->
     compose_relation r2 r1
   | Asymetrical (r1a, r1b), Basic r2 ->
-    let one_explosive r s ri rr =
-      if s or not_to_forgotten r then
-        (Explosive (Asymetrical (fst rr, snd rr), Basic r2), s)
+    let one_explosive r s s' ri rr =
+      if s || not_to_be_forgotten r then
+        (Explosive (Asymetrical (fst rr, snd rr), Basic r2), s || s')
       else (* We forget about r, which was probably not that important here. *)
-        (Explosive (Basic ri, Basic r2), false)
+        (Explosive (Basic ri, Basic r2), s')
     in
     (match compose_basic r1a r2, compose_basic r1b r2 with
      | (Some r1, s1), (Some r2, s2) ->
-       if r1 = r2 then (Basic r1, s1 or s2)
-       else (Asymetrical (r1, r2), s1 or s2)
-     | (Some r, s), None -> one_explosive r s r1b (r, r1b)
-     | None, Some (r, s) -> one_explosive r s r1a (r1a, r)
-     | None, None ->
-       (Explosive (Asymetrical (r1a, r1b), Basic r2), false))
+       if r1 = r2 then (Basic r1, s1 || s2)
+       else (Asymetrical (r1, r2), s1 || s2)
+     | (Some r, s1), (None, s2) -> one_explosive r s1 s2 r1b (r, r1b)
+     | (None, s1), (Some r, s2) -> one_explosive r s2 s1 r1a (r1a, r)
+     | (None, s1), (None, s2) ->
+       (Explosive (Asymetrical (r1a, r1b), Basic r2), s1 || s2))
   | Basic _, Explosive (_, _) ->
     compose_relation r2 r1
   | Explosive (r1a, r1b), Basic r2 ->
@@ -195,34 +221,40 @@ let rec compose_relation r1 r2 =
     let (rb, sb) = compose_relation r1b (Basic r2) in
     let ra = simplify ra in
     let rb = simplify rb in
-    (if relation_compare ra rb then ra
-     else Explosive (ra, rb),
-     sa or sb)
+    let r =
+      if relation_compare ra rb then ra
+      else simplify (Explosive (ra, rb)) in
+    (r, sa || sb)
   | Asymetrical (r1a, r1b), Asymetrical (r2a, r2b) ->
     (match compose_basic r1a r2a, compose_basic r1b r2b with
      | (Some r1, s1), (Some r2, s2) ->
-       if r1 = r2 then (Basic r1, s1 or s2)
-       else (Asymetrical (r1, r2), s1 or s2)
-     | (Some r, s), None ->
-       (simplify (Explosive (Asymetrical (r, r1b), Asymetrical (r, r2b))), false)
-     | None, Some (r, s) ->
-       (simplify (Explosive (Asymetrical (r1a, r), Asymetrical (r2a, r))), false)
-     | None, None ->
-       (simplify (Explosive (Asymetrical (r1a, r1b), Asymetrical (r2a, r2b))), false))
+       if r1 = r2 then (Basic r1, s1 || s2)
+       else (Asymetrical (r1, r2), s1 || s2)
+     | (Some r, s1), (None, s2) ->
+       (simplify (Explosive (Asymetrical (r, r1b), Asymetrical (r, r2b))), s1 || s2)
+     | (None, s1), (Some r, s2) ->
+       (simplify (Explosive (Asymetrical (r1a, r), Asymetrical (r2a, r))), s1 || s2)
+     | (None, s1), (None, s2) ->
+       (simplify (Explosive (Asymetrical (r1a, r1b), Asymetrical (r2a, r2b))), s1 || s2))
   | Asymetrical (_, _), Explosive (_, _) ->
     compose_relation r2 r1
   | Explosive (r1a, r1b), Asymetrical (_, _) ->
     let (ra, sa) = compose_relation r1a r2 in
     let (rb, sb) = compose_relation r1b r2 in
-    (simplify (Explosive (ra, rb)), sa or sb)
+    (simplify (Explosive (ra, rb)), sa || sb)
   | Explosive (r1a, r1b), Explosive (r2a, r2b) ->
     let (ra, sa) = compose_relation r1a r2a in
     let (rb, sb) = compose_relation r1b r2b in
+    let r1 = simplify (Explosive (ra, rb)) in
     let (rc, sc) = compose_relation r1a r2b in
     let (rd, sd) = compose_relation r1b r2a in
-    (simplify (Explosive (Explosive (ra, rb), Explosive (rc, rd)), sa or sb or sc or sd)
+    let r2 = simplify (Explosive (ra, rb)) in
+    let r =
+      if relation_complexity r1 > relation_complexity r2
+      then r2 else r1 in
+    (r, sa || sb || sc || sd)
 
 let compose (r1, s1) (r2, s2) =
     let (r, s) = compose_relation (normalise r1) (normalise r2) in
-    (r, s or s1 or s2)
+    (r, s || s1 || s2)
 

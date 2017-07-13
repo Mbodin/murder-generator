@@ -12,7 +12,7 @@ type basic (** Basic relations **) =
 type relation (** The type of relations between players **) =
   | Basic of basic (** A basic relation, as shown above. **)
   | Asymetrical of basic * basic (** There is some kind of asymmetry. For instance, one know things about the other (from a newspaper or from the point of view of other characters) but not the other: there would then probably be a relation Asymetrical (Neutral, Undetermined). **)
-  | Explosive of t * t (** There is some kind of contradictions in the relation between the two characters. For instance, they love each others, but one is forced to do something against this player (which would probably be a relation Explosive (Basic Trust, Basic Chaotic)). These are really complex relations and the generator should avoid to create too many of them. **)
+  | Explosive of relation * relation (** There is some kind of contradictions in the relation between the two characters. For instance, they love each others, but one is forced to do something against this player (which would probably be a relation Explosive (Basic Trust, Basic Chaotic)). These are really complex relations and the generator should avoid to create too many of them. **)
 
 type t (** This type is a relation coupled with a boolean stating whether the relation is strong or not **) =
   relation
@@ -21,12 +21,16 @@ type t (** This type is a relation coupled with a boolean stating whether the re
 val complexity : t -> int (** How complex it is to understand the character relation. **)
 val difficulty : t -> int (** How complex it is to play and survive the murder. **)
 
-val is_strong : t -> bool
-val is_explosive : t -> bool
+val is_strong : t -> bool (** Whether a relation is strong. **)
+val is_explosive : t -> bool (** Whether the relation is explosive. **)
 
 (** The following two functions remove all the Asymetrical constructors, replacing them by either the left or right basic relation. **)
 val left_projection : t -> t
 val right_projection : t -> t
 
+(** Compose two relations. Tries to summarize both into one. **)
 val compose : t -> t -> t
+
+(** Converts a relation to a string, for bebugging purposes. **)
+val to_string : t -> string
 

@@ -1,7 +1,7 @@
 (** Module History
  * Stores the history of a character. **)
 
-type character = int
+type character = Utils.idt
 
 type result (** The result of an event **) =
     | Relation_event (** An event that changed the way a character relates with another one. **)
@@ -12,12 +12,48 @@ type result (** The result of an event **) =
                        * asymmetrical relations should probably never
                        * appear here. **)
 
-type event (** An important event in the player life. **) =
-    date (** Beginning of the event **) *
-    date (** End of the event **) *
-    result (** Result of the event in the character’s vision of the world. **)
+type date (** A place of time **) =
+    int (** Years, from the present (negative for past events) **)
+    * int (** Day of the year **)
+    * int (** Minute of the day **)
 
-type t = event list
+(** Adds a given number of years to a date **)
+val add_years : date -> int -> date
+
+(** Adds a given number of days to a date **)
+val add_days : date -> int -> date
+
+(** Adds a given number of minutes to a date **)
+val add_minutes : date -> int -> date
+
+(** Each event is associated an event type, which describes whether
+ * two events can be at the same time: two events of the same type
+ * can not be at the same time. **)
+type event_type =
+    | For_life_event (** An event that will continue, reaching the game itself. **)
+    | Long_term_event (** Several years **)
+    | Medium_term_event (** Several week **)
+    | Short_term_event (** Several days **)
+    | Very_short_term_event (** Several minutes **)
+    | Instance_event (** Less than a minute **)
+
+type event (** An important event in the player life. **) =
+    date (** Beginning of the event **)
+    * date (** End of the event **)
+    * result (** Result of the event in the character’s vision of the world. **)
+    * event_type
+
+(** A smart constructor for events **)
+type generate_event : date (** Beginning **) -> event_type (** Duration **) -> result -> event
+
+(** States whether two events are compatible, that is that they do not overlap, or that they
+ * are of different types. **)
+type compatible_events : event -> event -> bool
+
 (** The history of a character is a list of events that created
  * the current mind state of the character. **)
+type t = event list
+
+(** States whether an event is compatible with an history. **)
+type compatible : t -> event -> bool
 

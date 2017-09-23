@@ -34,3 +34,7 @@ val compose : t -> t -> t
 (** Converts a relation to a string, for bebugging purposes. **)
 val to_string : t -> string
 
+(** Reverse the point of view of the given relation: every
+ * Asymetrical (t1, t2) are replaced by Asymetrical (t2, t1). **)
+val reverse : t -> t
+

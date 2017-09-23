@@ -4,17 +4,31 @@
 type character = int
 
 type relation_state
-(** A mapping from pairs of characters to Relation.t.
- * The pairs are always ordered, with the smallest character first: the relations
- * are usually symmetrical, and the asymetrical relation betweeen c1 and c2 is
- * represented by Asymetrical (r1, r2) where r1 is the relation from the point of
- * view of c1.
- * If a mapping is not present, it returns the default relation Relation.Basic Relation.Neutral. *)
+(** A mapping from pairs of characters to Relation.t. **)
+
+val get_relation : relation_state -> characters -> characters -> Relations.t
+(** Returns the relation between the two characters.
+ * The relations are usually symmetrical, but note how the asymetrical
+ * relation betweeen c1 and c2 is represented by Asymetrical (r1, r2)
+ * where r1 is the relation from the point of view of c1.
+ * If a mapping is not present, it returns the default relation
+ * Relations.Basic Relations.Neutral. *)
+
+val write_relation : relation_state -> characters -> characters -> Relations.t -> unit
+(** Non-functionnaly update the relation state. **)
+
+(** The following exception is returned if one tries to write or read
+ * a relation between two identical characters. **)
+exception SelfRelation
+
+val create_relation_state : int -> relation_state
+(** Creates an empty relation state for the given number n of characters,
+ * each indexed from 0 to n - 1. **)
 
 type state =
     relation_state * History.state
 
-type generator : state -> character -> character list -> (character * character * Relation.t) list * (character * History.t) list
+type generator : state -> character -> character list -> (character * character * Relations.t) list * (character * History.t) list
 (** A relation generator.
  * It takes a character, which is usually a character whose current relation
  * complexity and difficulty is far from what the associated player expects.

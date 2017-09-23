@@ -55,7 +55,7 @@ let rec relation_complexity = function
 
 let complexity (r, s) =
   let c = relation_complexity r in
-  if s then 2 * c else c
+  if s then c + c / 2 else c
 
 let basic_difficulty = function
   | Neutral -> 0
@@ -255,6 +255,14 @@ let rec compose_relation r1 r2 =
     (r, sa || sb || sc || sd)
 
 let compose (r1, s1) (r2, s2) =
-    let (r, s) = compose_relation (normalise r1) (normalise r2) in
-    (r, s || s1 || s2)
+  let (r, s) = compose_relation (normalise r1) (normalise r2) in
+  (r, s || s1 || s2)
+
+let rec reverse_relation = function
+  | Basic r -> Basic r
+  | Asymetrical (r1, r2) -> Asymetrical (r2, r1)
+  | Explosive (r1, r2) ->
+    Explosive (reverse_relation r1, reverse_relation r2)
+
+let reverse (r, s) = (r, reverse_relation s)
 

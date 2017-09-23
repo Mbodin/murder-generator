@@ -1,21 +1,21 @@
 (** Module Generator
  * Generates some new relations between characters. **)
 
-type character = int
+type character = History.character
 
 type relation_state
 (** A mapping from pairs of characters to Relation.t. **)
 
 val get_relation : relation_state -> characters -> characters -> Relations.t
 (** Returns the relation between the two characters.
- * The relations are usually symmetrical, but note how the asymetrical
- * relation betweeen c1 and c2 is represented by Asymetrical (r1, r2)
+ * The relations are usually symmetrical, but note how the asymmetrical
+ * relation between c1 and c2 is represented by Asymmetrical (r1, r2)
  * where r1 is the relation from the point of view of c1.
  * If a mapping is not present, it returns the default relation
  * Relations.Basic Relations.Neutral. *)
 
 val write_relation : relation_state -> characters -> characters -> Relations.t -> unit
-(** Non-functionnaly update the relation state. **)
+(** Non-functionally update the relation state. **)
 
 (** The following exception is returned if one tries to write or read
  * a relation between two identical characters. **)
@@ -32,13 +32,13 @@ type generator : state -> character -> character list -> (character * character 
 (** A relation generator.
  * It takes a character, which is usually a character whose current relation
  * complexity and difficulty is far from what the associated player expects.
- * It also takes a list of character to be prioritarily used in relations
+ * It also takes a list of character to be used in priority in relations
  * (because their own complexity and difficulty are also far from from the
  * target complexity and difficulty).
  * It then returns a list a relations to be added, as well as some history
  * associated to this relation.
  * Note that these relations won’t necessary be applied: if the solver
- * considers these relations to be too complex in combinaison to the current
+ * considers these relations to be too complex in combination to the current
  * ones, or that the histories are incompatibles with the current history of
  * players, the solver might ask an other generator. **)
 

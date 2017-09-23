@@ -41,7 +41,8 @@ type event (** An important event in the player life. **) =
     date (** Beginning of the event **)
     * date (** End of the event **)
     * result (** Result of the event in the character’s vision of the world. **)
-    * event_type
+    * event_type (** Two events with the same event type can not happen simultaneously. **)
+    * character list (** List of characters fully involved during this event, or that can not be involved during this event takes place. Two events with non-disjunct character lists can not happen simultaneously. **)
 
 (** A smart constructor for events **)
 type generate_event : date (** Beginning **) -> event_type (** Duration **) -> result -> event

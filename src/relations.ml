@@ -9,7 +9,7 @@ type basic =
 
 type relation =
   | Basic of basic
-  | Asymetrical of basic * basic
+  | Asymmetrical of basic * basic
   | Explosive of relation * relation
 
 type t = relation * bool
@@ -30,8 +30,8 @@ let basic_to_string = function
 
 let rec relation_to_string = function
   | Basic r -> basic_to_string r
-  | Asymetrical (r1, r2) ->
-    "Asymetrical, " ^ basic_to_string r1 ^ " in one hand, " ^ basic_to_string r2 ^ " in the other"
+  | Asymmetrical (r1, r2) ->
+    "Asymmetrical, " ^ basic_to_string r1 ^ " in one hand, " ^ basic_to_string r2 ^ " in the other"
   | Explosive (r1, r2) ->
     relation_to_string r1 ^ ", " ^ relation_to_string r2
 
@@ -50,7 +50,7 @@ let basic_complexity = function
 
 let rec relation_complexity = function
   | Basic r -> basic_complexity r
-  | Asymetrical (r1, r2) -> max (basic_complexity r1) (basic_complexity r2)
+  | Asymmetrical (r1, r2) -> max (basic_complexity r1) (basic_complexity r2)
   | Explosive (r1, r2) -> 1 + relation_complexity r1 + relation_complexity r2
 
 let complexity (r, s) =
@@ -67,8 +67,8 @@ let basic_difficulty = function
 
 let rec relation_difficulty = function
   | Basic r -> basic_difficulty r
-  | Asymetrical (Neutral, r) | Asymetrical (r, Neutral) -> basic_difficulty r - 1
-  | Asymetrical (r1, r2) -> max (basic_difficulty r1) (basic_difficulty r2)
+  | Asymmetrical (Neutral, r) | Asymmetrical (r, Neutral) -> basic_difficulty r - 1
+  | Asymmetrical (r1, r2) -> max (basic_difficulty r1) (basic_difficulty r2)
   | Explosive (r1, r2) -> 1 + relation_difficulty r1 + relation_difficulty r2
 
 let difficulty (r, s) =
@@ -80,13 +80,13 @@ let normalise r =
     | Explosive (r1, r2) ->
       aux (aux l r1) r2
     | Basic b -> Utils.Left b :: l
-    | Asymetrical (b1, b2) -> Utils.Right (b1, b2) :: l
+    | Asymmetrical (b1, b2) -> Utils.Right (b1, b2) :: l
   in
   match List.sort compare (aux [] r) with
   | x :: l ->
     let f = function
     | Utils.Left b -> Basic b
-    | Utils.Right (b1, b2) -> Asymetrical (b1, b2)
+    | Utils.Right (b1, b2) -> Asymmetrical (b1, b2)
     in
     List.fold_left (fun r x -> Explosive (f x, r)) (f x) l
   | [] ->
@@ -98,7 +98,7 @@ let simplify r =
     | Explosive (r1, r2) ->
       aux (aux l r1) r2
     | Basic b -> Utils.Left b :: Utils.Right b :: l
-    | Asymetrical (b1, b2) -> Utils.Left b1 :: Utils.Right b2 :: l
+    | Asymmetrical (b1, b2) -> Utils.Left b1 :: Utils.Right b2 :: l
   in let extract = function
     | Utils.Left r | Utils.Right r -> r
   in let l =
@@ -139,7 +139,7 @@ let simplify r =
           if x = y then
             if x = Neutral then r
             else Explosive (r, Basic x)
-          else Explosive (r, Asymetrical (x, y)) in
+          else Explosive (r, Asymmetrical (x, y)) in
         aux r l
     in let (y, l) =
       next x l
@@ -150,13 +150,13 @@ let simplify r =
     in let r =
           if x = y then
             Basic x
-          else Asymetrical (x, y) in
+          else Asymmetrical (x, y) in
     aux r l
   | [] -> Basic Neutral
 
 let rec left_relation_projection = function
   | Basic r -> Basic r
-  | Asymetrical (r, _) -> Basic r
+  | Asymmetrical (r, _) -> Basic r
   | Explosive (r1, r2) -> Explosive (left_relation_projection r1, left_relation_projection r2)
 
 let left_projection (r, s) =
@@ -164,7 +164,7 @@ let left_projection (r, s) =
 
 let rec right_relation_projection = function
   | Basic r -> Basic r
-  | Asymetrical (_, r) -> Basic r
+  | Asymmetrical (_, r) -> Basic r
   | Explosive (r1, r2) -> Explosive (right_relation_projection r1, right_relation_projection r2)
 
 let right_projection (r, s) =
@@ -197,23 +197,23 @@ let rec compose_relation r1 r2 =
     (match compose_basic r1 r2 with
      | Some r, s -> (Basic r, s)
      | None, s -> (Explosive (Basic r1, Basic r2), s))
-  | Basic _, Asymetrical (_, _) ->
+  | Basic _, Asymmetrical (_, _) ->
     compose_relation r2 r1
-  | Asymetrical (r1a, r1b), Basic r2 ->
+  | Asymmetrical (r1a, r1b), Basic r2 ->
     let one_explosive r s s' ri rr =
       if s || not_to_be_forgotten r then
-        (Explosive (Asymetrical (fst rr, snd rr), Basic r2), s || s')
+        (Explosive (Asymmetrical (fst rr, snd rr), Basic r2), s || s')
       else (* We forget about r, which was probably not that important here. *)
         (Explosive (Basic ri, Basic r2), s')
     in
     (match compose_basic r1a r2, compose_basic r1b r2 with
      | (Some r1, s1), (Some r2, s2) ->
        if r1 = r2 then (Basic r1, s1 || s2)
-       else (Asymetrical (r1, r2), s1 || s2)
+       else (Asymmetrical (r1, r2), s1 || s2)
      | (Some r, s1), (None, s2) -> one_explosive r s1 s2 r1b (r, r1b)
      | (None, s1), (Some r, s2) -> one_explosive r s2 s1 r1a (r1a, r)
      | (None, s1), (None, s2) ->
-       (Explosive (Asymetrical (r1a, r1b), Basic r2), s1 || s2))
+       (Explosive (Asymmetrical (r1a, r1b), Basic r2), s1 || s2))
   | Basic _, Explosive (_, _) ->
     compose_relation r2 r1
   | Explosive (r1a, r1b), Basic r2 ->
@@ -225,20 +225,20 @@ let rec compose_relation r1 r2 =
       if relation_compare ra rb then ra
       else simplify (Explosive (ra, rb)) in
     (r, sa || sb)
-  | Asymetrical (r1a, r1b), Asymetrical (r2a, r2b) ->
+  | Asymmetrical (r1a, r1b), Asymmetrical (r2a, r2b) ->
     (match compose_basic r1a r2a, compose_basic r1b r2b with
      | (Some r1, s1), (Some r2, s2) ->
        if r1 = r2 then (Basic r1, s1 || s2)
-       else (Asymetrical (r1, r2), s1 || s2)
+       else (Asymmetrical (r1, r2), s1 || s2)
      | (Some r, s1), (None, s2) ->
-       (simplify (Explosive (Asymetrical (r, r1b), Asymetrical (r, r2b))), s1 || s2)
+       (simplify (Explosive (Asymmetrical (r, r1b), Asymmetrical (r, r2b))), s1 || s2)
      | (None, s1), (Some r, s2) ->
-       (simplify (Explosive (Asymetrical (r1a, r), Asymetrical (r2a, r))), s1 || s2)
+       (simplify (Explosive (Asymmetrical (r1a, r), Asymmetrical (r2a, r))), s1 || s2)
      | (None, s1), (None, s2) ->
-       (simplify (Explosive (Asymetrical (r1a, r1b), Asymetrical (r2a, r2b))), s1 || s2))
-  | Asymetrical (_, _), Explosive (_, _) ->
+       (simplify (Explosive (Asymmetrical (r1a, r1b), Asymmetrical (r2a, r2b))), s1 || s2))
+  | Asymmetrical (_, _), Explosive (_, _) ->
     compose_relation r2 r1
-  | Explosive (r1a, r1b), Asymetrical (_, _) ->
+  | Explosive (r1a, r1b), Asymmetrical (_, _) ->
     let (ra, sa) = compose_relation r1a r2 in
     let (rb, sb) = compose_relation r1b r2 in
     (simplify (Explosive (ra, rb)), sa || sb)
@@ -260,7 +260,7 @@ let compose (r1, s1) (r2, s2) =
 
 let rec reverse_relation = function
   | Basic r -> Basic r
-  | Asymetrical (r1, r2) -> Asymetrical (r2, r1)
+  | Asymmetrical (r1, r2) -> Asymmetrical (r2, r1)
   | Explosive (r1, r2) ->
     Explosive (reverse_relation r1, reverse_relation r2)
 

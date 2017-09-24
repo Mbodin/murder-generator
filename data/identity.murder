@@ -1,30 +1,38 @@
 
-player property specy
-    Human
-        fr:adj:mas "humain"
-        fr:adj:fem "humaine"
-        fr:adj:plu:mas "humains"
-        fr:adj:plu:fem "humaines"
-        fr:nom:mas "un homme":mas
-        fr:nom:fem "une femme":fem
-        fr:nom:plu "des personnes":plu:fem
-        fr:nom:def:mas "l'homme":mas
-        fr:nom:def:fem "la femme":fem
-        fr:nom:def:plu "les personnes":plu:fem
-    Dwarf
-        fr:adj:mas "nain"
-        fr:adj:fem "naine"
-        fr:adj:plu:mas "nains"
-        fr:adj:plu:fem "naines"
-        fr:nom:mas "un nain":mas
-        fr:nom:fem "une naine":fem
-        fr:nom:plu "des nains":plu:mas
-        fr:nom:def:mas "le nain":mas
-        fr:nom:def:fem "la naine":fem
-        fr:nom:def:plu "les nains":plu:mas
-    Elf
-    Alien
+player property specy Human
+
+translate Human
+    fr:adj:mas "humain"
+    fr:adj:fem "humaine"
+    fr:adj:plu:mas "humains"
+    fr:adj:plu:fem "humaines"
+    fr:nom:mas "un homme":mas
+    fr:nom:fem "une femme":fem
+    fr:nom:plu "des personnes":plu:fem
+    fr:nom:def:mas "l'homme":mas
+    fr:nom:def:fem "la femme":fem
+    fr:nom:def:plu "les personnes":plu:fem
 end
+
+player property specy Dwarf
+
+translate Dwarf
+    fr:adj:mas "nain"
+    fr:adj:fem "naine"
+    fr:adj:plu:mas "nains"
+    fr:adj:plu:fem "naines"
+    fr:nom:mas "un nain":mas
+    fr:nom:fem "une naine":fem
+    fr:nom:plu "des nains":plu:mas
+    fr:nom:def:mas "le nain":mas
+    fr:nom:def:fem "la naine":fem
+    fr:nom:def:plu "les nains":plu:mas
+end
+
+player property specy Elf
+
+player property specy Alien
+
 
 element SpecyHuman
 

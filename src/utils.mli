@@ -108,3 +108,16 @@ val find : 'a union_find -> 'a -> (idt * 'a union_find) option
 (** Same as find, but inserts the element if not present. **)
 val find_insert : 'a union_find -> 'a -> idt * 'a union_find
 
+
+(** A list whose elements can be easily taken and added from and to both directions. **)
+type 'a two_direction_list
+
+val two_direction_list_is_empty : 'a two_direction_list -> bool
+val match_left : 'a two_direction_list -> ('a * 'a two_direction_list) option
+val match_right : 'a two_direction_list -> ('a two_direction_list * 'a) option
+val add_left : 'a -> 'a two_direction_list -> 'a two_direction_list
+val add_right : 'a two_direction_list -> 'a -> 'a two_direction_list
+val two_direction_list_from_list : 'a list -> 'a two_direction_list
+val two_direction_list_to_list : 'a two_direction_list -> 'a list
+val for_all : ('a -> bool) -> 'a two_direction_list -> bool
+

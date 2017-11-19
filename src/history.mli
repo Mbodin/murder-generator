@@ -6,7 +6,7 @@ type character = Utils.idt
 type result (** The result of an event **) =
     | Relation_event (** An event that changed the way a character relates with another one. **)
         of character (** The character in question **)
-        * Relation.t (** How the character now perceive this new relation.
+        * Relations.t (** How the character now perceive this new relation.
                        * Note that in case of a compound relation, this
                        * relation is from the point of view of the player:
                        * asymmetrical relations should probably never
@@ -45,16 +45,23 @@ type event (** An important event in the player life. **) =
     * character list (** List of characters fully involved during this event, or that can not be involved during this event takes place. Two events with non-disjunct character lists can not happen simultaneously. **)
 
 (** A smart constructor for events **)
-type generate_event : date (** Beginning **) -> event_type (** Duration **) -> result -> event
+val generate_event : date (** Beginning **) -> event_type (** Duration **) -> result -> event
 
 (** States whether two events are compatible, that is that they do not overlap, or that they
  * are of different types. **)
-type compatible_events : event -> event -> bool
+val compatible_events : event -> event -> bool
 
 (** The history of a character is a list of events that created
  * the current mind state of the character. **)
 type t = event list
 
 (** States whether an event is compatible with an history. **)
-type compatible : t -> event -> bool
+val compatible : t -> event -> bool
+
+(** The global state, describing all characters. **)
+type state = t array
+
+val create_state : int -> state
+(** Creates an empty history state for the given number n of characters,
+ * each indexed from 0 to n - 1. **)
 

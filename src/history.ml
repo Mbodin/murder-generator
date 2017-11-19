@@ -58,3 +58,8 @@ type t = event list
 (** States whether an event is compatible with an history. **)
 type compatible : t -> event -> bool
 
+type state = t array
+
+let create_state n =
+    Array.make n []
+

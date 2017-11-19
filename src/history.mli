@@ -30,19 +30,19 @@ val add_minutes : date -> int -> date
  * two events can be at the same time: two events of the same type
  * can not be at the same time. **)
 type event_type =
-    | For_life_event (** An event that will continue, reaching the game itself. **)
-    | Long_term_event (** Several years **)
-    | Medium_term_event (** Several week **)
-    | Short_term_event (** Several days **)
-    | Very_short_term_event (** Several minutes **)
-    | Instance_event (** Less than a minute **)
+  | For_life_event (** An event that will continue, reaching the game itself. **)
+  | Long_term_event (** Several years **)
+  | Medium_term_event (** Several week **)
+  | Short_term_event (** Several days **)
+  | Very_short_term_event (** Several minutes **)
+  | Instance_event (** Less than a minute **)
 
 type event (** An important event in the player life. **) =
-    date (** Beginning of the event **)
-    * date (** End of the event **)
-    * result (** Result of the event in the character’s vision of the world. **)
-    * event_type (** Two events with the same event type can not happen simultaneously. **)
-    * character list (** List of characters fully involved during this event, or that can not be involved during this event takes place. Two events with non-disjunct character lists can not happen simultaneously. **)
+  date (** Beginning of the event **)
+  * date (** End of the event **)
+  * result (** Result of the event in the character’s vision of the world. **)
+  * event_type (** Two events with the same event type can not happen simultaneously. **)
+  * character list (** List of characters fully involved during this event, or that can not be involved during this event takes place. Two events with non-disjunct character lists can not happen simultaneously. **)
 
 (** A smart constructor for events **)
 val generate_event : date (** Beginning **) -> event_type (** Duration **) -> result -> event

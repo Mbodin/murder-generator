@@ -24,7 +24,7 @@ let rec unfold f i =
   match f i with
   | None -> []
   | Some (v, j) ->
-      v :: unfold f j
+    v :: unfold f j
 
 let seq i =
   (* We assume i >= 0. *)
@@ -45,6 +45,9 @@ let select l =
         if p >= t then v
         else search (t - p) l
     in search (Random.int s) l
+
+let rand min max =
+  min + Random.int (max - min + 1)
 
 let select_any l =
   List.nth l (Random.int (List.length l))

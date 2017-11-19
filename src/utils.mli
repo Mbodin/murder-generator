@@ -26,6 +26,9 @@ val unfold : ('a -> ('b * 'a) option) -> 'a -> 'b list
 (** Builds the list of nth first elements, from 0 to n - 1. **)
 val seq : int -> int list
 
+(** Returns a random number between its two arguments, included. **)
+val rand : int -> int -> int
+
 (** Takes a list and return a random element from it. **)
 val select_any : 'a list -> 'a
 

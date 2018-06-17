@@ -1,5 +1,5 @@
 
-type character = Utils.idt
+type character = Utils.Id.t
 
 type relation_state =
   Relations.t array array
@@ -11,8 +11,8 @@ let create_relation_state n =
     Array.make (n - 1 - i) (Relations.Basic Relations.Neutral, false))
 
 let rec get_relation_state a c1 c2 =
-  let c1 = Utils.idt_to_array c1 in
-  let c2 = Utils.idt_to_array c2 in
+  let c1 = Utils.Id.to_array c1 in
+  let c2 = Utils.Id.to_array c2 in
   if c1 = c2 then
     raise SelfRelation
   else if c1 > c2 then
@@ -20,8 +20,8 @@ let rec get_relation_state a c1 c2 =
   else a.(c1).(c2)
 
 let write_relation_state a c1 c2 r =
-  let c1 = Utils.idt_to_array c1 in
-  let c2 = Utils.idt_to_array c2 in
+  let c1 = Utils.Id.to_array c1 in
+  let c2 = Utils.Id.to_array c2 in
   if c1 = c2 then
     raise SelfRelation
   else if c1 > c2 then

@@ -1,5 +1,5 @@
 
-type character = Utils.idt
+type character = Utils.Id.t
 
 type result =
     | Relation_event

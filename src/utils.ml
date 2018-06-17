@@ -1,6 +1,10 @@
 
 let _ = Random.self_init ()
 
+(** Switches some asserts on. These asserts can be costly to perform. **)
+let assert_defend = true
+
+
 let id x = x
 
 let option_map f = function
@@ -20,6 +24,11 @@ let error_monad o f =
   | Left e -> Left e
   | Right v -> f v
 
+
+let safe_tail = function
+  | [] -> []
+  | _ :: l -> l
+
 let rec unfold f i =
   match f i with
   | None -> []
@@ -29,12 +38,12 @@ let rec unfold f i =
 let seq_range min max =
   (* We assume i >= 0. *)
   unfold (fun j ->
-    if j = max then None
+    if j = max + 1 then None
     else Some (j, j + 1)) min
 
-let seq = seq_range 0
+let seq_incl = seq_range 0
 
-let seq_incl i = seq (i + 1)
+let seq i = seq_incl (i - 1)
 
 let uniq l =
   let rec aux = function
@@ -58,6 +67,20 @@ let rec list_remove i = function
   | [] -> raise Not_found
   | _ :: l when i = 0 -> l
   | a :: l -> a :: list_remove (i - 1) l
+
+let rec list_predicate_index f = function
+  | [] -> None
+  | a :: _ when f a -> Some 0
+  | _ :: l -> option_map ((+) 1) (list_predicate_index f l)
+
+let list_index e = list_predicate_index ((=) e)
+
+let swap (a, b) = (b, a)
+
+let pair_sort (a, b) =
+  if a > b then (b, a)
+  else (a, b)
+
 
 let positive_mod a b =
   ((a mod b) + b) mod b
@@ -99,121 +122,198 @@ let array_count f = Array.fold_left (fun v x -> v + if f x then 1 else 0) 0
 let array_for_all f = Array.fold_left (fun v x -> v && f x) true
 
 
-type idt = int
+module Id = struct
 
-let new_id_function () =
-  let current = ref (-1) in
-  fun () ->
-    incr current ;
-    !current
+    type t = int
 
-let new_id = new_id_function ()
+    let new_id_function _ =
+      let current = ref (-1) in
+      fun _ ->
+        incr current ;
+        !current
 
-let idt_to_array = id
+    let new_id = new_id_function ()
 
-
-type _ idt_map =
-  | Idt_map : ('a, idt) PMap.t * (unit -> idt) -> 'a idt_map
-  | Idt_int : idt idt_map (* No need to create new identifiers for integers! *)
-
-let idt_map_create _ =
-  Idt_map (PMap.empty, (new_id_function ()))
-
-let idt_idt_map_create =
-  Idt_int
-let idt_int_map_create =
-  idt_idt_map_create
-
-let idt_map_insert_idt (type a) : a idt_map -> a -> idt * a idt_map = function
-  | Idt_map (m, f) -> fun o ->
-    let i = f () in
-    (i, Idt_map (PMap.add o i m, f))
-  | Idt_int -> fun i ->
-    (i, Idt_int)
-
-let idt_map_insert m e =
-  snd (idt_map_insert_idt m e)
-
-let get_id (type a) : a idt_map -> a -> idt option = function
-  | Idt_map (m, f) -> fun o ->
-    (try Some (PMap.find o m)
-     with Not_found -> None)
-  | Idt_int -> fun i ->
-    Some i
+    let to_array = id
 
 
-type 'a union_find =
-  'a idt_map * (idt, idt) PMap.t
+    type _ map =
+      | Map : ('a, t) PMap.t (** Forwards map **) * (t, 'a) PMap.t (** Reverse map **) * int (** Fresh identifier **) -> 'a map
+      | Int : t map (* No need to create new identifiers for integers! *)
 
-let create_union_find _ = idt_map_create (), PMap.empty
+    let map_create _ =
+      Map (PMap.empty, PMap.empty, 0)
 
-let create_union_find_idt = idt_idt_map_create, PMap.empty
-let create_union_find_int = create_union_find_idt
+    let t_map_create =
+      Int
+    let int_map_create =
+      t_map_create
 
-let insert_idt (m, p) e =
-  let (i, m) =
-    match get_id m e with
-    | None ->
-      idt_map_insert_idt m e
-    | Some i -> (i, m)
-  in (i, (m, PMap.add i i p))
+    let map_insert_t (type a) : a map -> a -> t * a map = function
+      | Map (m, mi, f) -> fun o ->
+        let i = f in
+        (i, Map (PMap.add o i m, PMap.add i o mi, 1 + f))
+      | Int -> fun i ->
+        (i, Int)
 
-let insert mp e =
-  snd (insert_idt mp e)
+    let map_insert m e =
+      snd (map_insert_t m e)
 
-let find (m, p) e =
-  let rec aux p i =
-    let pi = PMap.find i p in
-    if i = pi then
-      (i, (m, p))
-    else let (pi', (m, p)) = aux p pi in
-      (pi', (m, PMap.add i pi' p))
-  in try
-    option_map (aux p) (get_id m e)
-  with Not_found -> None
+    let get_id (type a) : a map -> a -> t option = function
+      | Map (m, _, f) -> fun o ->
+        (try Some (PMap.find o m)
+         with Not_found -> None)
+      | Int -> fun i ->
+        Some i
 
-let find_insert mp e =
-  match find mp e with
-  | Some r -> r
-  | None ->
-    insert_idt mp e
+    let map_inverse (type a) : a map -> t -> a option = function
+      | Map (_, mi, f) -> fun i ->
+        (try Some (PMap.find i mi)
+         with Not_found -> None)
+      | Int -> fun i ->
+        Some i
 
-let merge_idt mp e1 e2 =
-  let (i1, mp) = find_insert mp e1 in
-  let (i2, (m, p)) = find_insert mp e2 in
-  (i2, (m, PMap.add i1 i2 p))
+  end
 
-let merge mp e1 e2 =
-  snd (merge_idt mp e1 e2)
+module UnionFind = struct
 
+    type 'a t =
+      'a Id.map * (Id.t, Id.t) PMap.t ref
 
-type 'a two_direction_list = 'a list * 'a list
-(** (ll, lr) represents the list ll @ List.rev lr. **)
+    let create _ = (Id.map_create (), ref PMap.empty)
 
-let two_direction_list_from_list l = (l, [])
-let two_direction_list_to_list (ll, lr) = ll @ List.rev lr
+    let create_idt _ = (Id.t_map_create, ref PMap.empty)
+    let create_int = create_idt
 
-let two_direction_list_is_empty = function
-  | ([], []) -> true
-  | _ -> false
+    let insert_idt (m, p) e =
+      let (i, m) =
+        match Id.get_id m e with
+        | None ->
+          let (i, m) = Id.map_insert_t m e in
+          if assert_defend then assert (not (PMap.mem i !p)) ;
+          (i, m)
+        | Some i -> (i, m) in
+      (i, (m, ref (PMap.add i i !p)))
 
-let add_left e (ll, lr) = (e :: ll, lr)
-let add_right (ll, lr) e = (ll, e :: lr)
+    let insert mp e =
+      snd (insert_idt mp e)
 
-let match_left = function
-  | (e :: ll, lr) -> Some (e, (ll, lr))
-  | ([], lr) ->
-    match List.rev lr with
-    | [] -> None
-    | e :: ll -> Some (e, (ll, []))
+    (** Internal function: finds the representant identifier of a given identifier. It may raise Not_found if i is not present in the mapping. **)
+    let rec representant p i =
+      let pi = PMap.find i !p in
+      if i = pi then pi
+      else
+        let pi' = representant p pi in
+        if assert_defend then assert (let pi'' = PMap.find pi' !p in pi' = pi'') ;
+        if pi <> pi' then p := PMap.add i pi' !p ;
+        pi'
 
-let match_right = function
-  | (ll, e :: lr) -> Some ((ll, lr), e)
-  | (ll, []) ->
-    match List.rev ll with
-    | [] -> None
-    | e :: lr -> Some (([], lr), e)
+    let find (m, p) e =
+      try option_map (representant p) (Id.get_id m e)
+      with Not_found -> assert false
 
-let for_all p (ll, lr) =
-  List.for_all p ll && List.for_all p lr
+    let find_insert mp e =
+      match find mp e with
+      | Some i -> (i, mp)
+      | None -> insert_idt mp e
+
+    let same_class_insert mp e1 e2 =
+      let (i1, mp) = find_insert mp e1 in
+      let (i2, mp) = find_insert mp e2 in
+      (i1 = i2, mp)
+
+    let same_class mp e1 e2 =
+      if_option (find mp e1) (fun i1 ->
+        if_option (find mp e2) (fun i2 ->
+          Some (i1 = i2)))
+
+    let merge_idt mp e1 e2 =
+      let (i1, mp) = find_insert mp e1 in
+      let (i2, (m, p)) = find_insert mp e2 in
+      if assert_defend then assert (let pi2 = PMap.find i2 !p in i2 = pi2) ;
+      if assert_defend then assert (let pi1 = PMap.find i1 !p in i1 = pi1) ;
+      (i2, (m, ref (PMap.add i1 i2 !p)))
+
+    let merge mp e1 e2 =
+      let mp = snd (merge_idt mp e1 e2) in
+      if assert_defend then assert (same_class mp e1 e2 = Some true) ;
+      mp
+
+    let to_list (m, p) =
+      let classes =
+        PMap.foldi (fun i ip l -> if i = ip then i :: l else l) !p [] in
+      let representants =
+        List.map (Id.map_inverse m) classes in
+      List.map (function
+        | None -> assert false
+        | Some e -> e) representants
+
+    let fold f i mp =
+      List.fold_left (fun a e -> f e a) i (to_list mp)
+
+    let iter f =
+      fold (fun e () -> f e) ()
+
+    exception Found
+
+    let get_one_class (m, p) =
+      let r = ref None in
+      try
+        PMap.iter (fun i ip -> r := Some ip ; raise Found) !p ;
+        None
+      with Found ->
+        match !r with
+        | None -> assert false
+        | Some i ->
+          match Id.map_inverse m (representant p i) with
+          | None -> assert false
+          | Some v -> Some v
+
+    let one_class (m, p) =
+      match get_one_class (m, p) with
+      | None -> true
+      | Some e ->
+        match Id.get_id m e with
+        | None -> assert false
+        | Some i ->
+          try
+            PMap.iter (fun _ ip -> if i <> representant p ip then raise Found) !p ;
+            true
+          with Found -> false
+
+  end
+
+module BidirectionalList = struct
+
+    type 'a t = 'a list * 'a list
+    (** (ll, lr) represents the list ll @ List.rev lr. **)
+
+    let from_list l = (l, [])
+    let to_list (ll, lr) = ll @ List.rev lr
+
+    let is_empty = function
+      | ([], []) -> true
+      | _ -> false
+
+    let add_left e (ll, lr) = (e :: ll, lr)
+    let add_right (ll, lr) e = (ll, e :: lr)
+
+    let match_left = function
+      | (e :: ll, lr) -> Some (e, (ll, lr))
+      | ([], lr) ->
+        match List.rev lr with
+        | [] -> None
+        | e :: ll -> Some (e, (ll, []))
+
+    let match_right = function
+      | (ll, e :: lr) -> Some ((ll, lr), e)
+      | (ll, []) ->
+        match List.rev ll with
+        | [] -> None
+        | e :: lr -> Some (([], lr), e)
+
+    let for_all p (ll, lr) =
+      List.for_all p ll && List.for_all p lr
+
+  end
 

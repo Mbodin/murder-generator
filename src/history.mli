@@ -1,7 +1,7 @@
 (** Module History
  * Stores the history of a character. **)
 
-type character = Utils.idt
+type character = Utils.Id.t
 
 type result (** The result of an event **) =
     | Relation_event (** An event that changed the way a character relates with another one. **)

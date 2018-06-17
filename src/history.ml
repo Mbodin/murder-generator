@@ -2,16 +2,16 @@
 type character = Utils.Id.t
 
 type result =
-    | Relation_event
-        of character
-        * Relations.t
+  | Relation_event
+    of character
+       * Relations.t
 
 type date =
-    int
-    * int
-    * int
+  int
+  * int
+  * int
 
-let current_year = TODO
+let current_year = 0 (* TODO *)
 
 let add_years (y, d, m) i =
     (y + i, d, m)
@@ -53,10 +53,11 @@ type event =
   * date
   * result
   * event_type
+  * character list
 
 let max_date = (max_int / 2, 0, 0)
 
-let generate_event beg dur res =
+let generate_event beg dur res chars =
   let en =
     match dur with
     | For_life_event -> max_date
@@ -65,7 +66,7 @@ let generate_event beg dur res =
     | Short_term_event -> add_days beg (Utils.rand 2 10)
     | Very_short_term_event -> add_minutes beg (Utils.rand 2 300)
     | Instance_event -> beg
-  in (beg, en, res, dur)
+  in (beg, en, res, dur, chars)
 
 let order_event (y1, d1, m1) (y2, d2, m2) =
   if y1 < y2 then true
@@ -74,12 +75,12 @@ let order_event (y1, d1, m1) (y2, d2, m2) =
   else if d1 > d2 then false
   else m1 <= m2
 
-let compatible_events (b1, e1, _, t1) (b2, e2, _, t2) =
+let compatible_events (b1, e1, _, t1, _) (b2, e2, _, t2, _) =
   t1 <> t2 || order_event e1 b2 || order_event e2 b1
 
 type t = event list
 
-let compatible e el =
+let compatible el e =
   List.for_all (fun ep -> compatible_events e ep) el
 
 type state = t array

@@ -1,12 +1,12 @@
 
-declare property born
+declare attribute born
 
-property born True
+attribute born True
 
 
-declare property specy
+declare attribute specy
 
-property specy Human
+attribute specy Human
   :fr:adj:mas "humain"
   :fr:adj:fem "humaine"
   :fr:adj:plu:mas "humains"
@@ -51,7 +51,7 @@ property specy Human
 end
 
 
-property specy Dwarf
+attribute specy Dwarf
   category fantasy
   :fr:adj:mas "nain"
   :fr:adj:fem "naine"
@@ -66,12 +66,12 @@ property specy Dwarf
   (* LATER: Other translations *)
 end
 
-property specy Elf
+attribute specy Elf
   category fantasy
   (* LATER: translations *)
 end
 
-property specy Alien
+attribute specy Alien
   category scienceFiction
   (* LATER: translations *)
 end
@@ -79,9 +79,9 @@ end
 
 element SpecyHuman
 
-    let P be player with property born as True
+    let P be player with attribute born as True
 
-    provide property specy to P as Human
+    provide attribute specy to P as Human
 
 end
 
@@ -89,7 +89,7 @@ element Birth
 
     let P be player
 
-    provide property born to P as True
+    provide attribute born to P as True
     provide event to P (* TODO *)
 
 end

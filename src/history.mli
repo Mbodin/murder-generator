@@ -4,18 +4,18 @@
 type character = Utils.Id.t
 
 type result (** The result of an event **) =
-    | Relation_event (** An event that changed the way a character relates with another one. **)
-        of character (** The character in question **)
-        * Relations.t (** How the character now perceive this new relation.
-                       * Note that in case of a compound relation, this
-                       * relation is from the point of view of the player:
-                       * asymmetrical relations should probably never
-                       * appear here. **)
+  | Relation_event (** An event that changed the way a character relates with another one. **)
+    of character (** The character in question **)
+       * Relations.t (** How the character now perceive this new relation.
+                      * Note that in case of a compound relation, this
+                      * relation is from the point of view of the player:
+                      * asymmetrical relations should probably never
+                      * appear here. **)
 
 type date (** A place of time **) =
-    int (** Years, from the present (negative for past events) **)
-    * int (** Day of the year **)
-    * int (** Minute of the day **)
+  int (** Years, from the present (negative for past events) **)
+  * int (** Day of the year **)
+  * int (** Minute of the day **)
 
 (** Adds a given number of years to a date **)
 val add_years : date -> int -> date
@@ -45,7 +45,7 @@ type event (** An important event in the player life. **) =
   * character list (** List of characters fully involved during this event, or that can not be involved during this event takes place. Two events with non-disjunct character lists can not happen simultaneously. **)
 
 (** A smart constructor for events **)
-val generate_event : date (** Beginning **) -> event_type (** Duration **) -> result -> event
+val generate_event : date (** Beginning **) -> event_type (** Duration **) -> result -> character list -> event
 
 (** States whether two events are compatible, that is that they do not overlap, or that they
  * are of different types. **)

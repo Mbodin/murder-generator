@@ -151,8 +151,12 @@ module Id = struct
 
     let map_insert_t (type a) : a map -> a -> t * a map = function
       | Map (m, mi, f) -> fun o ->
-        let i = f in
-        (i, Map (PMap.add o i m, PMap.add i o mi, 1 + f))
+        (try
+           let i = PMap.find o m in
+           (i, Map (m, mi, f))
+         with Not_found ->
+           let i = f in
+           (i, Map (PMap.add o i m, PMap.add i o mi, 1 + f)))
       | Int -> fun i ->
         (i, Int)
 
@@ -187,12 +191,8 @@ module UnionFind = struct
 
     let insert_idt (m, p) e =
       let (i, m) =
-        match Id.get_id m e with
-        | None ->
-          let (i, m) = Id.map_insert_t m e in
-          if assert_defend then assert (not (PMap.mem i !p)) ;
-          (i, m)
-        | Some i -> (i, m) in
+        let (i, m) = Id.map_insert_t m e in
+        (i, m) in
       (i, (m, ref (PMap.add i i !p)))
 
     let insert mp e =

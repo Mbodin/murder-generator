@@ -127,7 +127,8 @@ module Id : sig
     (** Create a identifier map specialised for the type int. **)
     val int_map_create : int map
 
-    (** Inserts an object to an identifier map, giving it an identifier. **)
+    (** Inserts an object to an identifier map, giving it an identifier.
+     * If the object is already associated an identifier, the old one is returned. **)
     val map_insert : 'a map -> 'a -> 'a map
     (** As for map_insert, but also returns the chosen identifier.  **)
     val map_insert_t : 'a map -> 'a -> t * 'a map

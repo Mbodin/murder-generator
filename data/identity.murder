@@ -1,57 +1,96 @@
 
-player property specy Human
+declare property born
 
-translate Human
-    fr:adj:mas "humain"
-    fr:adj:fem "humaine"
-    fr:adj:plu:mas "humains"
-    fr:adj:plu:fem "humaines"
-    fr:nom:mas "un homme":mas
-    fr:nom:fem "une femme":fem
-    fr:nom:plu "des personnes":plu:fem
-    fr:nom:def:mas "l'homme":mas
-    fr:nom:def:fem "la femme":fem
-    fr:nom:def:plu "les personnes":plu:fem
+property born True
+
+
+declare property specy
+
+property specy Human
+  :fr:adj:mas "humain"
+  :fr:adj:fem "humaine"
+  :fr:adj:plu:mas "humains"
+  :fr:adj:plu:fem "humaines"
+  :fr:nom "une personne":fem
+  :fr:nom:mas "un homme":mas
+  :fr:nom:fem "une femme":fem
+  :fr:nom:plu "des personnes":plu:fem
+  :fr:nom:plu:mas "des hommes":plu:mas
+  :fr:nom:plu:fem "des femmes":plu:fem
+  :fr:nom:def "la personne":fem
+  :fr:nom:def:mas "l'homme":mas
+  :fr:nom:def:fem "la femme":fem
+  :fr:nom:def:plu "les personnes":plu:fem
+  :fr:nom:def:plu:mas "les hommes":plu:mas
+  :fr:nom:def:plu:fem "les femmes":plu:fem
+  :en:adj "human"
+  :en:nom "human being"
+  :en:nom:mas "man"
+  :en:nom:fem "woman"
+  :en:nom:plu "human beings"
+  :en:nom:plu:mas "men"
+  :en:nom:plu:fem "women"
+  :en:nom:def "the human being"
+  :en:nom:def:mas "the man"
+  :en:nom:def:fem "the woman"
+  :en:nom:def:plu "the human beings"
+  :en:nom:def:plu:mas "the men"
+  :en:nom:def:plu:fem "the women"
+  :eo:adj "homa"
+  :eo:adj:plu "homaj"
+  :eo:adj:acc "homan"
+  :eo:adj:acc:plu "homajn"
+  :eo:nom "homo"
+  :eo:nom:plu "homoj"
+  :eo:nom:acc "homon"
+  :eo:nom:acc:plu "homojn"
+  :eo:nom:def "la homo"
+  :eo:nom:def:plu "la homoj"
+  :eo:nom:def:acc "la homon"
+  :eo:nom:def:acc:plu "la homojn"
 end
 
-player property specy Dwarf
 
-translate Dwarf
-    fr:adj:mas "nain"
-    fr:adj:fem "naine"
-    fr:adj:plu:mas "nains"
-    fr:adj:plu:fem "naines"
-    fr:nom:mas "un nain":mas
-    fr:nom:fem "une naine":fem
-    fr:nom:plu "des nains":plu:mas
-    fr:nom:def:mas "le nain":mas
-    fr:nom:def:fem "la naine":fem
-    fr:nom:def:plu "les nains":plu:mas
+property specy Dwarf
+  category fantasy
+  :fr:adj:mas "nain"
+  :fr:adj:fem "naine"
+  :fr:adj:plu:mas "nains"
+  :fr:adj:plu:fem "naines"
+  :fr:nom:mas "un nain":mas
+  :fr:nom:fem "une naine":fem
+  :fr:nom:plu "des nains":plu:mas
+  :fr:nom:def:mas "le nain":mas
+  :fr:nom:def:fem "la naine":fem
+  :fr:nom:def:plu "les nains":plu:mas
+  (* LATER: Other translations *)
 end
 
-player property specy Elf
+property specy Elf
+  category fantasy
+  (* LATER: translations *)
+end
 
-player property specy Alien
+property specy Alien
+  category scienceFiction
+  (* LATER: translations *)
+end
 
 
 element SpecyHuman
 
-    repeat always at initialisation for 9 out of 10
-    repeat between 1 and 4 at initialisation for 9 out of 100
+    let P be player with property born as True
 
-    let P be a player whose specy is undefined
-
-    set specy of P to Human
+    provide property specy to P as Human
 
 end
 
 element Birth
 
-    repeat once at initialisation
+    let P be player
 
-    let P be every player
-
-    add history to P (* TODO *)
+    provide property born to P as True
+    provide event to P (* TODO *)
 
 end
 

@@ -1,0 +1,118 @@
+
+category family
+  :fr "famille"
+  :en "family"
+  :eo "familio"
+end
+
+category mystery
+  :fr "mystère"
+  :en "mystery"
+  :eo "mistero"
+end
+
+
+declare contact known
+contact known True
+contact known False
+
+element SiblingsKnowEachOthers
+  category family
+
+  let A be player with contact familyMember to B as Siblings
+  let B be player with contact familyMember to A as Siblings
+
+  provide contact known from A to B as True
+  provide contact known from B to A as True
+
+end
+
+element ParentsChildsKnowEachOthers
+  category family
+
+  let A be player with contact familyMember to B as Child
+  let B be player with contact familyMember to A as Parent
+
+  provide contact known from A to B as True
+  provide contact known from B to A as True
+
+end
+
+
+declare contact familyMember
+contact familyMember Siblings
+contact familyMember Parent
+contact familyMember Child
+
+element TrustedSiblings
+  category family
+
+  let A be player
+  let B be player
+
+  provide relation between A and B as Trust
+  provide contact familyMember from A to B as Siblings
+  provide contact familyMember from B to A as Siblings
+  provide event to A (* TODO *)
+  provide event to B (* TODO *)
+
+end
+
+element HatingSiblings
+  category family
+
+  let A be player
+  let B be player
+
+  provide relation between A and B as Explosive Trust Hate
+  provide contact familyMember from A to B as Siblings
+  provide contact familyMember from B to A as Siblings
+  provide event to A (* TODO *)
+  provide event to B (* TODO *)
+
+end
+
+element AsymmetricalSiblings
+  category family
+
+  let A be player
+  let B be player
+
+  provide relation between A and B as Asymmetrical Trust Hate
+  provide contact familyMember from A to B as Siblings
+  provide contact familyMember from B to A as Siblings
+  provide event to A (* TODO *)
+  provide event to B (* TODO *)
+
+end
+
+element LostSiblings
+  category family
+  category mystery
+
+  let A be player
+  let B be player
+
+  provide relation between A and B as Strong Neutral
+  provide contact familyMember from A to B as Siblings
+  provide contact familyMember from B to A as Siblings
+  provide contact known between A and B as False
+
+end
+
+element Parent
+  category family
+
+  let A be player
+  let B be player
+
+  provide relation between A and B as Trust
+  provide contact familyMember from A to B as Parent
+  provide contact familyMember from B to A as Child
+
+  provide event to A (* TODO *)
+  provide event to B (* TODO *)
+
+end
+
+

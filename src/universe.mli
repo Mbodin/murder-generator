@@ -1,7 +1,7 @@
 (** Module Universe
  * Contains all the relation and history generators of the game. **)
 
-type universe : Generator.generator list list
+type universe = Generator.t list list
 (** A universe is a list of generators.
  * These generators are categorized by steps: we continue applying
  * the generators of a step until none are left, then consider the

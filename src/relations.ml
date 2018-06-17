@@ -264,5 +264,5 @@ let rec reverse_relation = function
   | Explosive (r1, r2) ->
     Explosive (reverse_relation r1, reverse_relation r2)
 
-let reverse (r, s) = (r, reverse_relation s)
+let reverse (r, s) = (reverse_relation r, s)
 

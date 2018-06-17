@@ -26,25 +26,61 @@ let rec unfold f i =
   | Some (v, j) ->
     v :: unfold f j
 
-let seq i =
+let seq_range min max =
   (* We assume i >= 0. *)
   unfold (fun j ->
-    if i = j then None
-    else Some (j, j + 1)) 0
+    if j = max then None
+    else Some (j, j + 1)) min
+
+let seq = seq_range 0
+
+let seq_incl i = seq (i + 1)
+
+let uniq l =
+  let rec aux = function
+    | a :: b :: l when a = b -> aux (b :: l)
+    | a :: l -> a :: aux l
+    | [] -> [] in
+  aux (List.sort compare l)
+
+let rec repeat i e =
+  if i = 0 then []
+  else e :: repeat (i - 1) e
+
+let rec list_update i e l =
+  match i, l with
+  | 0, [] -> [e]
+  | 0, _ :: l -> e :: l
+  | i, a :: l -> a :: list_update (i - 1) e l
+  | _, [] -> raise Not_found
+
+let rec list_remove i = function
+  | [] -> raise Not_found
+  | _ :: l when i = 0 -> l
+  | a :: l -> a :: list_remove (i - 1) l
+
+let positive_mod a b =
+  ((a mod b) + b) mod b
+
+let square x = x * x
 
 exception NegativeWeigth
 exception InternalError
 
-let select l =
+let take l =
   let s = List.fold_left (+) 0 (List.map fst l) in
   if s <= 0 then raise NegativeWeigth
   else
     let rec search t = function
       | [] -> raise InternalError
       | (p, v) :: l ->
-        if p >= t then v
-        else search (t - p) l
+        if p >= t then (v, l)
+        else
+          let (r, l) = search (t - p) l in
+          (r, (p, v) :: l)
     in search (Random.int s) l
+
+let select l = fst (take l)
 
 let rand min max =
   min + Random.int (max - min + 1)
@@ -52,10 +88,15 @@ let rand min max =
 let select_any l =
   List.nth l (Random.int (List.length l))
 
+let take_any l =
+  let i = Random.int (List.length l) in
+  (List.nth l i, list_remove i l)
+
 let sum = List.fold_left (+) 0
 let array_sum = Array.fold_left (+) 0
 
 let array_count f = Array.fold_left (fun v x -> v + if f x then 1 else 0) 0
+let array_for_all f = Array.fold_left (fun v x -> v && f x) true
 
 
 type idt = int

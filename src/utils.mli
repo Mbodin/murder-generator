@@ -26,14 +26,44 @@ val unfold : ('a -> ('b * 'a) option) -> 'a -> 'b list
 (** Builds the list of nth first elements, from 0 to n - 1. **)
 val seq : int -> int list
 
+(** Builds the list of nth first elements, from 0 to n. **)
+val seq_incl : int -> int list
+
+(** Builds the list from i to j. **)
+val seq_range : int -> int -> int list
+
+(** Creates a list of the given size filled with the given argument. **)
+val repeat : int -> 'a -> 'a list
+
+(** Updates the given list element. **)
+val list_update : int -> 'a -> 'a list -> 'a list
+
+(** Removes the nth element from a list. **)
+val list_remove : int -> 'a list -> 'a list
+
+(** Sorts and remove all duplicated element from the given list. **)
+val uniq : 'a list -> 'a list
+
+(** Returns the positive modulo. **)
+val positive_mod : int -> int -> int
+
+(** The square of its argument. **)
+val square : int -> int
+
 (** Returns a random number between its two arguments, included. **)
 val rand : int -> int -> int
 
 (** Takes a list and return a random element from it. **)
 val select_any : 'a list -> 'a
 
+(** Similar to select_any, but it removes the element from the list. **)
+val take_any : 'a list -> 'a * 'a list
+
 (** Takes a weighted list and return a random element from it. **)
 val select : (int * 'a) list -> 'a
+
+(** Similar to select, but it removes the element from the list. **)
+val take : (int * 'a) list -> 'a * (int * 'a) list
 
 (** Possible exception returned by the select function. **)
 exception NegativeWeigth
@@ -48,6 +78,9 @@ val array_sum : int array -> int
 
 (** Indicates how many elements of the array satisfy the predicates. **)
 val array_count : ('a -> bool) -> 'a array -> int
+
+(** Indicates whether all the elements of the array satisfies the predicate. **)
+val array_for_all : ('a -> bool) -> 'a array -> bool
 
 
 (** A type for identifiers. Integers are used internally, but hiding this fact in the signature helps preventing mistakes. **)

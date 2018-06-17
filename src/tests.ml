@@ -4,7 +4,7 @@ let test_relations =
   let b = [ Neutral; Hate; Trust; Chaotic; Undetermined; Avoidance ] in
   let l =
     List.map (fun r -> Basic r, false) b @
-    List.concat (List.map (fun r1 -> List.map (fun r2 -> Asymetrical (r1, r2), false) b) b) @
+    List.concat (List.map (fun r1 -> List.map (fun r2 -> Asymmetrical (r1, r2), false) b) b) @
     List.concat (List.map (fun r1 -> List.map (fun r2 -> Explosive (Basic r1, Basic r2), false) b) b)
   in
   for i = 0 to 50 do

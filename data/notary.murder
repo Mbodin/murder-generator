@@ -1,0 +1,135 @@
+
+category money
+  :fr "finance"
+  :en "money"
+  :eo "monaĵoj"
+end
+
+declare contact financialDebt
+  category money
+end
+
+contact financialDebt Small
+  :fr:adj:fem "petite"
+  :fr:adj:mas "petit"
+  :en:adj "small"
+  :eo:adj "malgranda"
+end
+
+contact financialDebt Large
+  :fr:adj:fem "grande"
+  :fr:adj:mas "grand"
+  :en:adj "large"
+  :eo:adj "granda"
+end
+
+contact financialDebt Old
+  (* Large but from the old times: it would be complex to require it now. *)
+  :fr:adj:fem "vielle"
+  :fr:adj:mas "vieux"
+  :en:adj "old"
+  :eo:adj "malnova"
+end
+
+declare attribute richness
+  category money
+end
+
+attribute richness Rich
+  :fr:adj "riche"
+  :en:adj "rich"
+  :eo:adj "riĉa"
+end
+
+attribute richness Neutral
+end
+
+attribute richness Poor
+  :fr:adj "pauvre"
+  :en:adj "poor"
+  :eo:adj "malriĉa"
+end
+
+element CausalDebt
+
+  let A be player with attribute richness as Neutral
+                  with contact known to B as True
+  let B be player with attribute richness as Neutral
+                  with contact known to A as True
+
+  provide contact financialDebt from A to B as Small
+
+  provide relation between A and B as Asymmetrical Trust Neutral
+
+  provide event to A (* TODO *)
+  provide event to B (* TODO *)
+
+end
+
+element SmallDebtNeutralPoor
+
+  let A be player with attribute richness as Poor
+  let B be player with attribute richness as Neutral
+                  with contact known to B as True
+
+  provide contact financialDebt from A to B as Small
+
+  provide relation between A and B as Asymmetrical Avoidance Undetermined
+  provide contact known from A to B as True
+
+  provide event to A (* TODO *)
+  provide event to B (* TODO *)
+
+end
+
+element RichPaysItsDebt
+
+  let A be player with attribute richness as Rich
+                  with contact known to B as True
+  let B be player
+
+  provide contact financialDebt from A to B as Large
+
+  provide relation between A and B as Asymmetrical Neutral Undetermined
+  provide contact known from B to A as True
+
+  provide event to A (* TODO *)
+  provide event to B (* TODO *)
+
+end
+
+
+declare contact favor
+
+contact favor Small
+  :fr:adj:fem "petite"
+  :fr:adj:mas "petit"
+  :en:adj "small"
+  :eo:adj "malgranda"
+end
+
+contact favor Large
+  :fr:adj:fem "grande"
+  :fr:adj:mas "grand"
+  :en:adj "large"
+  :eo:adj "granda"
+end
+
+element FinancialDebtSmallFavor
+
+  let A be player with contact financialDebt to B as Small
+  let B be player
+
+  provide contact favor from A to B as Small
+
+end
+
+element FinancialDebtLargeFavor
+
+  let A be player with contact financialDebt to B as Large
+  let B be player
+
+  provide contact favor from A to B as Large
+
+end
+

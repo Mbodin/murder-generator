@@ -59,12 +59,19 @@ val declare_attribute : constructor_map -> string -> attribute * constructor_map
 (** Declare a new constructor for an attribute. **)
 val declare_constructor : constructor_map -> attribute -> string -> value * constructor_map
 
+(** Users can remove categories before the story generation.
+ * This function removes a constructor, probably because it was associated an unwanted category. **)
+val remove_constructor : constructor_map -> attribute -> value -> constructor_map
+
 
 (** Waiting for a value to be decided for a given attribute,
  * the following type is sed instead. **)
 type attribute_value =
   | Fixed_value of value (** The value has already been fixed.  It can not be changed back. **)
   | One_value_of of value list (** The value has not been yet fixed, but it is known to be one of these. **)
+(** Note that a [One_value_of] associated with a singleton list is not equivalent
+ * to a [Fixed_value]: the latter has been approved by a story element (possibly
+ * associating it with an event), whilst the former hasn't. **)
 
 (** Contacts between characters. **)
 type contact = Utils.Id.t

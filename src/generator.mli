@@ -1,6 +1,8 @@
 (** Module Generator
  * Generates some new relations between characters. **)
 
+(* FIXME: This file may disappear at some point. *)
+
 type character = State.character
 
 (** The type of generators. **)

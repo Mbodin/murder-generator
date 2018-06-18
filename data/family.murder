@@ -96,7 +96,8 @@ element LostSiblings
   provide relation between A and B as Strong Neutral
   provide contact familyMember from A to B as Siblings
   provide contact familyMember from B to A as Siblings
-  provide contact known between A and B as False
+  provide contact known from A to B as False
+  provide contact known from B to A as False
 
 end
 
@@ -114,5 +115,4 @@ element Parent
   provide event to B (* TODO *)
 
 end
-
 

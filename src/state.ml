@@ -63,6 +63,13 @@ let declare_constructor (mn, mc, al) a c =
     with Not_found -> assert false in
   (c, (mn, mc, PMap.add a (c :: l) al))
 
+let remove_constructor (mn, mc, al) a c =
+  let l =
+    try PMap.find a al
+    with Not_found -> assert false in
+  let l = List.filter ((<>) c) l in
+  (mn, mc, PMap.add a l al)
+
 type attribute_value =
   | Fixed_value of value
   | One_value_of of value list

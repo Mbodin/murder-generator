@@ -1,4 +1,6 @@
 
+(* FIXME: This file may disappear at some point. *)
+
 type character = State.character
 
 type frequency =

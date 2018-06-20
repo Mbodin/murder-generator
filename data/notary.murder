@@ -5,6 +5,36 @@ category money
   :eo "monaĵoj"
 end
 
+declare attribute richness
+  category money
+end
+
+attribute richness Rich
+  :fr:adj "riche"
+  :en:adj "rich"
+  :eo:adj "riĉa"
+end
+
+attribute richness Neutral
+end
+
+attribute richness Poor
+  :fr:adj "pauvre"
+  :en:adj "poor"
+  :eo:adj "malriĉa"
+end
+
+element heritage
+
+  let P be player
+
+  provide attribute richness to P as Rich
+
+  provide event to P (* TODO *)
+
+end
+
+
 declare contact financialDebt
   category money
 end
@@ -24,30 +54,11 @@ contact financialDebt Large
 end
 
 contact financialDebt Old
-  (* Large but from the old times: it would be complex to require it now. *)
+  (* Large but from the old times: it would be awkward to require it now. *)
   :fr:adj:fem "vielle"
   :fr:adj:mas "vieux"
   :en:adj "old"
   :eo:adj "malnova"
-end
-
-declare attribute richness
-  category money
-end
-
-attribute richness Rich
-  :fr:adj "riche"
-  :en:adj "rich"
-  :eo:adj "riĉa"
-end
-
-attribute richness Neutral
-end
-
-attribute richness Poor
-  :fr:adj "pauvre"
-  :en:adj "poor"
-  :eo:adj "malriĉa"
 end
 
 element CausalDebt
@@ -95,6 +106,37 @@ element RichPaysItsDebt
 
   provide event to A (* TODO *)
   provide event to B (* TODO *)
+
+end
+
+element TookMoneyToBuildAShopAndIsNowRich
+
+  let A be player with attribute richness as Neutral
+  let B be player
+
+  provide event to A (* TODO: Money exchange *)
+  provide event to B (* TODO: Money exchange *)
+
+  provide contact financialDebt from B to A as Old
+  provide attribute richness to B as Rich
+  provide attribute job to B as Seller
+
+  provide relation between B and A as Asymmetrical Trust Undetermined
+  provide contact known from B to A as True
+  provide contact known from A to B as True
+
+  provide event to B (* TODO: Got rich after the shop got working *)
+
+end
+
+element ImportantSeller
+
+  let P be player
+
+  provide attribute richness to B as Rich
+  provide attribute job to B as Seller
+
+  provide event to P (* TODO *)
 
 end
 

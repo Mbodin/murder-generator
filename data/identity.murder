@@ -1,7 +1,62 @@
 
 declare attribute born
+(* Only gods and abstract beings are not born, so this is kind of a silly attribute, but we permit it. *)
 
 attribute born True
+
+element Birth
+
+    let P be player
+
+    provide attribute born to P as True
+    provide event to P (* TODO *)
+
+end
+
+
+declare attribute gender
+
+attribute gender Male
+  :en:adj "male"
+  :eo:adj "iĉa"
+  :eo:adj:plu "iĉaj"
+  :eo:adj:acc "iĉan"
+  :eo:adj:plu:acc "iĉajn"
+  :eo:nom "viro"
+  :eo:nom:plu "viroj"
+  :eo:nom:acc "viron"
+  :eo:nom:plu:acc "virojn"
+end
+
+attribute gender Female
+  :en:adj "female"
+  :eo:adj "ina"
+  :eo:adj:plu "inaj"
+  :eo:adj:acc "inan"
+  :eo:adj:plu:acc "inajn"
+  :eo:nom "virino"
+  :eo:nom:plu "virinoj"
+  :eo:nom:acc "virinon"
+  :eo:nom:plu:acc "virinojn"
+end
+
+attribute gender NonBinary
+
+element MaleCharacter
+
+  let P be player
+
+  provide attribute gender as Male
+
+end
+
+element FemaleCharacter
+
+  let P be player
+
+  provide attribute gender as Female
+
+end
 
 
 declare attribute specy
@@ -82,15 +137,6 @@ element SpecyHuman
     let P be player with attribute born as True
 
     provide attribute specy to P as Human
-
-end
-
-element Birth
-
-    let P be player
-
-    provide attribute born to P as True
-    provide event to P (* TODO *)
 
 end
 

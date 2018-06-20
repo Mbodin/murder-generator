@@ -29,8 +29,10 @@ let write_relation_state a c1 c2 r =
   else a.(c2).(c1) <- r
 
 type attribute = Utils.Id.t
-type contact = Utils.Id.t
 type value = Utils.Id.t
+
+type contact = Utils.Id.t
+type contact_value = Utils.Id.t
 
 type constructor_map =
   string Utils.Id.map (** Attribute names **)
@@ -75,7 +77,7 @@ type attribute_value =
   | One_value_of of value list
 
 type attribute_map = (attribute, attribute_value) PMap.t
-type contact_map = (contact, character) PMap.t
+type contact_map = (contact, character * contact_value) PMap.t
 
 type character_state =
   (attribute_map * contact_map) array
@@ -87,16 +89,19 @@ let get_attribute_character st c a =
   try Some (PMap.find a (fst st.(Utils.Id.to_array c)))
   with Not_found -> None
 
-let force_get_attribute_character cm st c a =
+let write_attribute_character st c a v =
   let c = Utils.Id.to_array c in
-  try PMap.find a (fst st.(c))
+  st.(c) <- (PMap.add a v (fst st.(c)), snd st.(c))
+
+let force_get_attribute_character cm st c a =
+  try PMap.find a (fst st.(Utils.Id.to_array c))
   with Not_found ->
     let l =
       match constructors cm a with
       | Some l -> l
       | None -> assert false in
     let v = One_value_of l in
-    st.(c) <- (PMap.add a v (fst st.(c)), snd st.(c)) ;
+    write_attribute_character st c a v ;
     v
 
 type t =

@@ -29,10 +29,10 @@ val create_relation_state : int -> relation_state
 type character_state
 
 (** The type of attributes. **)
-type attribute = Utils.Id.t
+type attribute
 
 (** The type of values. **)
-type value = Utils.Id.t
+type value
 
 (** Values are just constructor identifiers.
  * Each attribute is associated with a given set of possible constructors
@@ -74,7 +74,10 @@ type attribute_value =
  * associating it with an event), whilst the former hasn't. **)
 
 (** Contacts between characters. **)
-type contact = Utils.Id.t
+type contact
+
+(** values of contact. **)
+type contact_value
 
 (** Creates an empty character state for the given number n of characters,
  * each indexed from 0 to n - 1. **)
@@ -84,13 +87,15 @@ val create_character_state : int -> character_state
 val get_attribute_character : character_state -> character -> attribute -> attribute_value option
 
 (** Get a character attribute from the character state.
- * If it is not present, the character set is non-functionnally updated
+ * If it is not present, the character set is non-functionally updated
  * to mark the attribute as being of need of a value (returning all the
  * constructors of its type). **)
 val force_get_attribute_character : constructor_map -> character_state -> character -> attribute -> attribute_value
 
-type t =
-  character_state * relation_state * History.state
+(** Non-functionally associates the given attribute of the character to the given value. **)
+val write_attribute_character : character_state -> character -> attribute -> attribute_value -> unit
+
+type t
 
 val get_relation : t -> character -> character -> Relations.t
 

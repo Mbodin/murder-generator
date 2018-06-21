@@ -95,6 +95,9 @@ val force_get_attribute_character : constructor_map -> character_state -> charac
 (** Non-functionally associates the given attribute of the character to the given value. **)
 val write_attribute_character : character_state -> character -> attribute -> attribute_value -> unit
 
+(** Get a contact from the character state. **) (* FIXME: Can't we have more than one contact of the same name? *)
+val get_contact_character : character_state -> character -> contact -> (character * contact_value) option
+
 type t
 
 val get_relation : t -> character -> character -> Relations.t
@@ -104,4 +107,6 @@ val write_relation : t -> character -> character -> Relations.t -> unit
 (** Creates an empty state for the given number n of characters,
  * each indexed from 0 to n - 1. **)
 val create_state : int -> t
+
+val get_character_state : t -> character_state
 

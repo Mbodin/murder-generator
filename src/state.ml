@@ -72,7 +72,7 @@ let remove_constructor (mn, mc, al) a c =
   let l = List.filter ((<>) c) l in
   (mn, mc, PMap.add a l al)
 
-type attribute_value =
+type attribute_value = (* FIXME: Why is there no equivalent for the contact? *)
   | Fixed_value of value
   | One_value_of of value list
 
@@ -104,6 +104,10 @@ let force_get_attribute_character cm st c a =
     write_attribute_character st c a v ;
     v
 
+let get_contact_character st c a =
+  try Some (PMap.find a (snd st.(Utils.Id.to_array c)))
+  with Not_found -> None
+
 type t =
   character_state * relation_state * History.state
 
@@ -113,4 +117,6 @@ let write_relation (_, a, _) = write_relation_state a
 
 let create_state n =
   (create_character_state n, create_relation_state n, History.create_state n)
+
+let get_character_state (st, _, _) = st
 

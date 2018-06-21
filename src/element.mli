@@ -10,7 +10,7 @@ type character_constraint =
 
 type element =
   ((** Each players considered by the element are represented as a cell. **)
-   player_constraint list (** The constraints on this player. **)
+   character_constraint list (** The constraints on this player. **)
    * (State.attribute * State.value) list (** The attributes provided to this player. **)
    * (State.contact * int * State.contact_value) list (** The contacts provided to this player (identified in the local array). **)
    * History.event list (** The events that this element would provide to this player. **)
@@ -24,6 +24,11 @@ type element =
  * progress, that is whether there exists at least one [State.One_value_of]
  * that would be changed into a [State.Fixed_value]. **)
 val compatible_and_progress : State.t -> element -> character array -> bool option
+
+(** Look for instantiations.
+ * The second return value is the result of [compatible_and_progress] on this instantiation.
+ * It tries as possible as can be to return an instantiation that progresses. **)
+val search_instantiation : State.t -> element -> (character array * bool) option
 
 (** Apply the given element to the state according to this instantiation.
  * This function should only be applied to instantiations for which

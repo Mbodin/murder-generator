@@ -120,3 +120,6 @@ let create_state n =
 
 let get_character_state (st, _, _) = st
 
+let all_players (st, _, _) =
+  List.map Utils.Id.from_array (Utils.seq (Array.length st))
+

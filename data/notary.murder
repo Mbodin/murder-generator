@@ -129,6 +129,26 @@ element TookMoneyToBuildAShopAndIsNowRich
 
 end
 
+element TookMoneyToBuildAShopButGotBankrupt
+
+  let A be player with attribute richness as Neutral
+  let B be player
+
+  provide event to A (* TODO: Money exchange *)
+  provide event to B (* TODO: Money exchange *)
+
+  provide contact financialDebt from B to A as Large
+  provide attribute richness to B as Poor
+  provide attribute job to B as Seller
+
+  provide relation between B and A as Asymmetrical Avoidance Hate
+  provide contact known from B to A as True
+  provide contact known from A to B as True
+
+  provide event to B (* TODO: Got bankrupt *)
+
+end
+
 element ImportantSeller
 
   let P be player

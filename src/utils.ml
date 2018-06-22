@@ -135,6 +135,7 @@ module Id = struct
     let new_id = new_id_function ()
 
     let to_array = id
+    let from_array = id
 
 
     type _ map =

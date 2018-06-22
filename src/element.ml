@@ -43,6 +43,24 @@ let respect_constraints cst conss c =
          (* FIXME: To be changed when contacts will be associated an equivalent of [attribute_value]. *)
          (cha = cha' && v = v'))) true conss
 
+(** Takes a cell of the element and a character, and returns the equivalent
+ * of [compatible_and_progress] for this particular player. **)
+let compatible_and_progress_player cst conss attps c =
+  if respect_constraints cst conss c then
+    match List.fold_left (function
+      | None -> fun _ -> None
+      | Some b -> fun (a, v) ->
+        match State.get_attribute_character cst c a with
+        | None -> Some b
+        | Some v' ->
+          match more_precise_attribute_value v v' with
+          | None -> None
+          | Some b' -> Some (b || b')) (Some false) attps with
+    | None -> None
+    | Some b ->
+            Some b
+  else None
+
 let compatible_and_progress st e inst =
   let cst = State.get_character_state st in
   let abort = (None, 0) in
@@ -51,35 +69,35 @@ let compatible_and_progress st e inst =
     | None -> abort
     | Some b ->
       let (conss, attps, contps, evs, rs) = e.(i) in
-      if respect_constraints cst conss c then
+      match compatible_and_progress_player cst conss attps c with
+      | None -> abort
+      | Some b' ->
         match List.fold_left (function
           | None -> fun _ -> None
-          | Some b -> fun (a, v) ->
-            match State.get_attribute_character cst c a with
-            | None -> Some b
-            | Some v' ->
-              match more_precise_attribute_value v v' with
-              | None -> None
-              | Some b' -> Some (b || b')) (Some false) attps with
+          | Some b -> fun (con, cha, v) ->
+              let cha = inst.(cha) in
+              match State.get_contact_character cst c con with
+              | None -> Some b (* FIXME: At some point, this [b] may chek things and be a [true] sometimes. *)
+              | Some (cha', v') ->
+                if cha = cha' && v = v' then Some b else None) (Some false) contps with
         | None -> abort
-        | Some b' ->
-          match List.fold_left (function
-            | None -> fun _ -> None
-            | Some b -> fun (con, cha, v) ->
-                let cha = inst.(cha) in
-                match State.get_contact_character cst c con with
-                | None -> Some b (* FIXME: At some point, this [b] may chek things and be a [true] sometimes. *)
-                | Some (cha', v') ->
-                  if cha = cha' && v = v' then Some b else None) (Some false) contps with
-          | None -> abort
-          | Some b'' ->
-            (* TODO: events *)
-            (Some (b || b' || b''), 1 + i)
-      else abort) (Some false, 0) inst)
+        | Some b'' ->
+          (* TODO: events *)
+          (Some (b || b' || b''), 1 + i)) (Some false, 0) inst)
 
 let search_instantiation st e =
-  let possible_players_progress = TODO in
-  let possible_players_no_progress = TODO in
+  let cst = State.get_character_state st in
+  let all_players = State.all_players st in
+  let possible_players_progress =
+    Array.map (fun ei ->
+      let (conss, attps, contps, evs, rs) = ei in
+      List.filter (fun c -> compatible_and_progress_player cst conss attps c = Some true)
+        all_players) e in
+  let possible_players_no_progress =
+    Array.map (fun ei ->
+      let (conss, attps, contps, evs, rs) = ei in
+      List.filter (fun c -> compatible_and_progress_player cst conss attps c = Some false)
+        all_players) e in
   TODO
 
 let apply state e i =

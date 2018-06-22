@@ -72,6 +72,8 @@ type attribute_value =
 (** Note that a [One_value_of] associated with a singleton list is not equivalent
  * to a [Fixed_value]: the latter has been approved by a story element (possibly
  * associating it with an event), whilst the former hasn't. **)
+(** Furthermore, note that [One_value_of] associated with an empty list is possible.
+ * The underlying meaning is that this attribute must not be used. **)
 
 (** Contacts between characters. **)
 type contact
@@ -95,7 +97,7 @@ val force_get_attribute_character : constructor_map -> character_state -> charac
 (** Non-functionally associates the given attribute of the character to the given value. **)
 val write_attribute_character : character_state -> character -> attribute -> attribute_value -> unit
 
-(** Get a contact from the character state. **) (* FIXME: Can't we have more than one contact of the same name? *)
+(** Get a contact from the character state. **) (* TODO: We can have more than one contact of the same name. *)
 val get_contact_character : character_state -> character -> contact -> (character * contact_value) option
 
 type t
@@ -109,4 +111,6 @@ val write_relation : t -> character -> character -> Relations.t -> unit
 val create_state : int -> t
 
 val get_character_state : t -> character_state
+
+val all_players : t -> character list
 

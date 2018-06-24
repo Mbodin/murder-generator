@@ -66,9 +66,9 @@ val remove_constructor : constructor_map -> attribute -> value -> constructor_ma
 
 (** Waiting for a value to be decided for a given attribute,
  * the following type is sed instead. **)
-type attribute_value =
-  | Fixed_value of value (** The value has already been fixed.  It can not be changed back. **)
-  | One_value_of of value list (** The value has not been yet fixed, but it is known to be one of these. **)
+type 'value attribute_value =
+  | Fixed_value of 'value (** The value has already been fixed.  It can not be changed back. **)
+  | One_value_of of 'value list (** The value has not been yet fixed, but it is known to be one of these. **)
 (** Note that a [One_value_of] associated with a singleton list is not equivalent
  * to a [Fixed_value]: the latter has been approved by a story element (possibly
  * associating it with an event), whilst the former hasn't. **)
@@ -86,19 +86,22 @@ type contact_value
 val create_character_state : int -> character_state
 
 (** Get a character attribute from the character state. **)
-val get_attribute_character : character_state -> character -> attribute -> attribute_value option
+val get_attribute_character : character_state -> character -> attribute -> value attribute_value option
 
 (** Get a character attribute from the character state.
  * If it is not present, the character set is non-functionally updated
  * to mark the attribute as being of need of a value (returning all the
  * constructors of its type). **)
-val force_get_attribute_character : constructor_map -> character_state -> character -> attribute -> attribute_value
+val force_get_attribute_character : constructor_map -> character_state -> character -> attribute -> value attribute_value
 
 (** Non-functionally associates the given attribute of the character to the given value. **)
-val write_attribute_character : character_state -> character -> attribute -> attribute_value -> unit
+val write_attribute_character : character_state -> character -> attribute -> value attribute_value -> unit
 
-(** Get a contact from the character state. **) (* TODO: We can have more than one contact of the same name. *)
-val get_contact_character : character_state -> character -> contact -> (character * contact_value) option
+(** Get a contact from the character state, using the target character. **)
+val get_contact_character : character_state -> character -> contact -> character -> (contact_value attribute_value) option
+
+(** Get all the contacts of a character from the character state. **)
+val get_all_contact_character : character_state -> character -> contact -> (character * contact_value attribute_value) list
 
 type t
 

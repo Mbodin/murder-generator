@@ -72,12 +72,12 @@ let remove_constructor (mn, mc, al) a c =
   let l = List.filter ((<>) c) l in
   (mn, mc, PMap.add a l al)
 
-type attribute_value = (* FIXME: Why is there no equivalent for the contact? *)
-  | Fixed_value of value
-  | One_value_of of value list
+type 'value attribute_value =
+  | Fixed_value of 'value
+  | One_value_of of 'value list
 
-type attribute_map = (attribute, attribute_value) PMap.t
-type contact_map = (contact, character * contact_value) PMap.t
+type attribute_map = (attribute, value attribute_value) PMap.t
+type contact_map = (contact, (character, contact_value attribute_value) PMap.t) PMap.t
 
 type character_state =
   (attribute_map * contact_map) array
@@ -104,9 +104,14 @@ let force_get_attribute_character cm st c a =
     write_attribute_character st c a v ;
     v
 
-let get_contact_character st c a =
-  try Some (PMap.find a (snd st.(Utils.Id.to_array c)))
+let get_contact_character st c a ct =
+  try Some (PMap.find ct (PMap.find a (snd st.(Utils.Id.to_array c))))
   with Not_found -> None
+
+let get_all_contact_character st c a =
+  try PMap.foldi (fun ct cv l -> (ct, cv) :: l)
+        (PMap.find a (snd st.(Utils.Id.to_array c))) []
+  with Not_found -> []
 
 type t =
   character_state * relation_state * History.state

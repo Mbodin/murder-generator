@@ -13,8 +13,9 @@ type element =
    * Relations.t array
   ) array
 
-(** Returns [None] if incompatible, [Some false] if equal, and [Some true]
- * if [v1] is more precise than [v2]. **)
+(** Returns [None] if incompatible the current value [v2] is not
+ * compatible with the proposed new value [v1], [Some false] if equal,
+ * and [Some true] if [v1] is more precise than [v2]. **)
 let more_precise_attribute_value v1 v2 =
   match v1, v2 with
   | State.Fixed_value v, State.Fixed_value v' ->
@@ -37,11 +38,10 @@ let respect_constraints cst conss c =
        | None -> true
        | Some v' -> more_precise_attribute_value (State.Fixed_value v) v' <> None)
     | Contact (con, cha, v) ->
-      (match State.get_contact_character cst c con with
-       | None -> true
-       | Some (cha', v') ->
-         (* FIXME: To be changed when contacts will be associated an equivalent of [attribute_value]. *)
-         (cha = cha' && v = v'))) true conss
+      let cha = inst.(cha) in (* FIXME: must be checked afterwards. *)
+      match State.get_contact_character cst c con cha with
+      | None -> true
+      | Some v' -> more_precise_attribute_value v v' <> None) true conss
 
 (** Takes a cell of the element and a character, and returns the equivalent
  * of [compatible_and_progress] for this particular player. **)

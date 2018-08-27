@@ -34,6 +34,16 @@ val seq_incl : int -> int list
 (** Builds the list from i to j, included. **)
 val seq_range : int -> int -> int list
 
+(** Builds the array of nth first elements, from 0 to n - 1. **)
+val seq_array : int -> int array
+
+(** Builds the array of nth first elements, from 0 to n. **)
+val seq_incl_array : int -> int array
+
+(** Builds the array from i to j, included. **)
+val seq_range_array : int -> int -> int array
+
+
 (** Creates a list of the given size filled with the given argument. **)
 val repeat : int -> 'a -> 'a list
 
@@ -52,6 +62,8 @@ val list_predicate_index : ('a -> bool) -> 'a list -> int option
 (** Sorts and remove all duplicated element from the given list. **)
 val uniq : 'a list -> 'a list
 
+(** Shuffle a list. **)
+val shuffle : 'a list -> 'a list
 
 (** Swaps the given pair. **)
 val swap : 'a * 'b -> 'b * 'a

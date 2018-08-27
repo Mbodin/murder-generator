@@ -6,7 +6,7 @@ type character = State.character
 (** A constraint on a character **)
 type character_constraint =
   | Attribute of State.attribute * State.value (** The given attribute must have this value. **)
-  | Contact of State.contact * character * State.contact_value (** The given contact must exists with this other character with this value. *)
+  | Contact of State.contact * character * State.contact_value (** The given contact must exist with this other character with this value. *)
 
 type element =
   ((** Each players considered by the element are represented as a cell. **)
@@ -18,7 +18,7 @@ type element =
   ) array
 
 (** Given a state, an element, and an instantiation of the characters, states
- * whether the event could be applied.
+ * whether the event can be applied.
  * If not, it returns [None].
  * If the element can be applied, it states whether the element is making
  * progress, that is whether there exists at least one [State.One_value_of]

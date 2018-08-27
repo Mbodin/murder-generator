@@ -16,7 +16,7 @@ Il ne fait en effet que rarement référence à un meurtrier qu’il faudrait re
 ## Objectifs
 
 Les soirées enquête générées ont plusieurs objectifs :
-* Aider à la rédaction de soirées enquête. En effet, les scénarios générés n’ont pas pour objectif d’être trop complexes. En particulier, aucun élément sortant vraiment de l’ordinaire des soirées enquêtes (vous ne sortirez pas de la lecture en disant « c’est génial ! ») ne sera présent. Cependant, les relations entre les différents personnages ont pour but d’être équilibrées et intéressantes.
+* Aider à la rédaction de soirées enquête. En effet, les scénarios générés n’ont pas pour objectif d’être trop complexes. En particulier, aucun élément sortant vraiment de l’ordinaire des soirées enquêtes ne sera présent. Vous ne sortirez donc pas de la lecture en disant « c’est génial ! ». Cependant, les relations entre les différents personnages ont pour but d’être équilibrées et intéressantes.
 * Avoir des soirées enquêtes personnalisées. Souvent, les joueurs de soirées enquête ont des requêtes très précises sur leur personnage. À tel point que souvent, une soirée enquête toute en main n’est pas suffisante pour satisfaire leur besoin de complexité. Ce programme est paramétré par les envies des différents joueurs, permettant par exemple de donner un personnage plus simple à jouer pour des débutants, ou assuré de mourir rapidement pour quelqu’un qui ne sera pas disponible sur toute la durée de la soirée enquête.
 * Permettre d’improviser rapidement une soirée enquête unique entre amis. En bonus, les soirées enquête générées étant aléatoires, il n’y a pas de raison d’avoir peur de se gâcher une soirée enquête connue, par exemple.
 
@@ -35,15 +35,15 @@ Si cela donne des relations intéressantes, le programme va modifier le scénari
 Le programme continue jusqu’à ce que les relations entre personnages soient suffisantes.
 
 Les relations sont évaluées par deux caractéristiques : la complexité et la difficulté.
-La complexité peut être vue comme le nombre de phrase nécessaires à la description de la relation.
+La complexité peut être vue comme le nombre de phrases nécessaires à la description de la relation.
 La difficulté est associée à l’aide que cette relation donne au personnage.
-La complexité et la difficulté d’un personnage est la somme des complexité et difficulté de ses relations avec les autres joueurs.
+La complexité et la difficulté d’un personnage est la somme des complexités et difficultés de ses relations avec les autres joueurs.
 Si un personnage est associé à une grande complexité, sa fiche de personnage sera probablement longue.
-Il est cependant possible que sa fiche de personnage soit simple, mais qu’il découvre en cours de partie que la relation en question est beaucoup plus simple d’apparence (par exemple, dans le cas où la relation est asymétrique — l’un a une très forte idée de qui est le second, mais le second en sait très peu sur le premier —, la complexité de la relation sera la même pour les deux personnages impliqués… sans que les joueurs soient au courant !).
+Il est cependant possible que sa fiche de personnage soit simple, mais qu’il découvre en cours de partie que la relation en question est beaucoup plus complexe qu’il n’y parait (par exemple, dans le cas où la relation est asymétrique — l’un a une très forte idée de qui est le second, mais le second en sait très peu sur le premier —, la complexité de la relation sera la même pour les deux personnages impliqués… sans que les joueurs soient au courant !).
 Si un personnage est associé à une grande difficulté, il va probablement mourir durant la partie.
-La difficulté est aussi reliée à la quantité de frein qu’un joueur aura pour accomplir quoique ce soit.
+La difficulté est aussi reliée à la quantité de freins qu’un joueur aura pour accomplir quoique ce soit.
 Par exemple un personnage avec beaucoup de personnages prêts à l’aider (mais pour des raisons différentes) va avoir une grande complexité (le joueur va devoir mémoriser et gérer toutes ces relations en même temps), mais une faible difficulté (quelle que soit sa situation, il va probablement avoir assez de ressources pour s’en sortir sain et sauf).
-Au contraire, un personnage dont très peu de personnages s’intéresse à lui, mais qui est la cible d’un ou plusieurs assassins sera associé à une faible complexité (la fiche de personnage sera facile à lire, et il sera facile pour lui de se présenter aux autres personnages sans avoir à réfléchir à qui il parle exactement), mais une grande difficulté.
+Au contraire, un personnage auquel très peu d’autres personnages s’intéressent, mais qui est la cible d’un ou plusieurs assassins sera associé à une faible complexité (la fiche de personnage sera facile à lire, et il sera facile pour lui de se présenter aux autres personnages sans avoir à réfléchir à qui il parle exactement), mais une grande difficulté.
 Il est possible de spécifier une complexité et difficulté objectif pour chaque personnage en fonction des envies des joueurs.
 
 Un scénario se compose de plusieurs parties :
@@ -54,11 +54,12 @@ Un scénario se compose de plusieurs parties :
 
 Prenons un exemple assez stéréotypé, mais qui fixe les idées.
 * On demande une soirée enquête à deux joueurs. C’est un cas rare, mais c’est pour l’exemple.
-* Un élément de scénario attribut des genres à des personnages (c’est une caractéristique), il va par exemple dire que le premier joueur est une femme, et l’autre, un homme. Leur histoire va être mise à jour pour leur donner une date de naissance.
+* On peut initialement donner des caractéristiques aux personnages. Par exemple, le premier joueur veut vouloir jouer un personnage féminin. On ajoute cette caractéristique avant la génération de scénario.
+* Un élément de scénario attribut des genres à des personnages, il va par exemple dire que le second joueur est un un homme. Il ne peut pas changer la caractéristique du premier joueur, qui a déjà été choisi comme étant une femme. Les histoires des deux personnages va être mise à jour pour leur donner une date de naissance.
 * Un autre élément de scénario attribut au second joueur le statut de militaire (c’est une caractéristique). Son histoire va être mise à jour pour indiquer qu’il a participé à une école militaire, qui lui a valu ce titre.
-* Un élément de scénario s’active alors (il considère un militaire, il n’avait donc pas de possibilité de s’appliquer avant), et ajoute la caractéristique « chevalier » à ce même joueur. Son histoire va être mise à jour pour indiquer qu’il a été nommé chevalier à l’issue de sa formation militaire.
-* Un élément de scénario ajoute la caractéristique « famille royale » au premier joueur. Lors de la génération des fiches de personnages, cela sera probablement traduit en « reine » ou « princesse ».
-* Un élément de scénario ajoute une relation entre les deux joueurs : l’un est amoureux de l’autre. Nous avons alors une relation dite de confiance entre les deux joueurs, qui est vue comme une complexité moyenne et une faible difficulté. L’histoire de l’amoureux va être mise à jour pour indiquer quand et pourquoi le personnage est tombé amoureux.
+* Un élément de scénario s’active alors (il considère un militaire, il n’avait donc pas de possibilité de s’appliquer avant), et ajoute la caractéristique « chevalier » à ce même joueur. Son histoire va être mise à jour pour indiquer qu’il a été nommé chevalier à l’issue de sa formation militaire. Il est à noter qu’il est possible que le générateur décide d’appliquer cet élément de scénario sans savoir que le second joueur était militaire, mais le générateur va alors chercher à « valider » son choix en recherchant d’autres éléments de scénarios (typiquement celui appliqué à l’étape précédente).
+* Un élément de scénario ajoute la caractéristique « famille royale » au premier joueur. Lors de la génération des fiches de personnages, cela-ci sera probablement traduit en « reine » ou « princesse ».
+* Un élément de scénario ajoute une relation entre les deux joueurs : l’un est amoureux de l’autre. Nous avons alors une relation confiance entre les deux joueurs, qui est vue comme une complexité moyenne et une faible difficulté. L’histoire de l’amoureux va être mise à jour pour indiquer quand et pourquoi le personnage est tombé amoureux.
 * Un élément de scénario va s’activer par la caractéristique « famille royale » du joueur féminin pour l’associer à un château (un « objet » avec les caractéristiques « lieu » et « château »). L’objet est associé avec le joueur par une relation d’habitation.
 Le programme continue ainsi jusqu’à ce que les demandes de complexité et de difficulté des deux joueurs soient respectées.
 
@@ -66,5 +67,5 @@ Le programme continue ainsi jusqu’à ce que les demandes de complexité et de 
 
 GPL
 
-:construction: Les scénarios générés devraient être sans licence (comme un compilateur) : vérifier cela…
+Les scénarios générés sont cependant sans licence (comme la sortie d’un compilateur) : vous pouvez utilisez les soirée enquêtes générées comme bon vous semble.
 

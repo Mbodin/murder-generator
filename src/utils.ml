@@ -36,7 +36,6 @@ let rec unfold f i =
     v :: unfold f j
 
 let seq_range min max =
-  (* We assume i >= 0. *)
   unfold (fun j ->
     if j = max + 1 then None
     else Some (j, j + 1)) min
@@ -44,6 +43,13 @@ let seq_range min max =
 let seq_incl = seq_range 0
 
 let seq i = seq_incl (i - 1)
+
+let seq_range_array mi ma =
+  Array.init (fun i -> mi + i) (max 0 (max - min + 1))
+
+let seq_incl_array = seq_range_array 0
+
+let seq_array i = seq_incl_array (i - 1)
 
 let uniq l =
   let rec aux = function
@@ -74,6 +80,9 @@ let rec list_predicate_index f = function
   | _ :: l -> option_map ((+) 1) (list_predicate_index f l)
 
 let list_index e = list_predicate_index ((=) e)
+
+let shuffle = List.sort (fun _ _ -> Random.int 3 - 1)
+
 
 let swap (a, b) = (b, a)
 

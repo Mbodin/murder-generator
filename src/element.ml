@@ -168,6 +168,12 @@ let search_instantiation st e =
     in
   aux [] (Array.to_list redirection_array)
 
-let apply state e i =
-  TODO
+let apply state e inst =
+  Utils.array_fold_left2 (fun (state, diff) ei c ->
+    let (conss, attps, contps, evs, rs) = ei in
+    let (state, diff) = List.fold_left TODO (state, diff) attps in
+    let state = List.fold_left TODO state contps in
+    (* TODO: Event [evs] *)
+    let state = List.fold_left TODO state rs in
+    (state, diff)) (state, 0) e inst
 

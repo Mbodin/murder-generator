@@ -106,8 +106,8 @@ val array_sum : int array -> int
 (** Indicates how many elements of the array satisfy the predicates. **)
 val array_count : ('a -> bool) -> 'a array -> int
 
-(** Indicates whether all the elements of the array satisfies the predicate. **)
-val array_for_all : ('a -> bool) -> 'a array -> bool
+(** Fold through both array. They must have the same size. **)
+val array_fold_left2 : ('a -> 'b -> 'c -> 'a) -> 'a -> 'b array -> 'c array -> 'a
 
 
 module Id : sig

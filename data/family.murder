@@ -1,11 +1,13 @@
 
 category family
+begin
   :fr "famille"
   :en "family"
   :eo "familio"
 end
 
 category mystery
+begin
   :fr "mystère"
   :en "mystery"
   :eo "mistero"
@@ -17,6 +19,7 @@ contact known True
 contact known False
 
 element SiblingsKnowEachOthers
+begin
   category family
 
   let A be player with contact familyMember to B as Siblings
@@ -24,10 +27,10 @@ element SiblingsKnowEachOthers
 
   provide contact known from A to B as True
   provide contact known from B to A as True
-
 end
 
 element ParentsChildsKnowEachOthers
+begin
   category family
 
   let A be player with contact familyMember to B as Child
@@ -35,7 +38,6 @@ element ParentsChildsKnowEachOthers
 
   provide contact known from A to B as True
   provide contact known from B to A as True
-
 end
 
 
@@ -45,6 +47,7 @@ contact familyMember Parent
 contact familyMember Child
 
 element TrustedSiblings
+begin
   category family
 
   let A be player
@@ -53,12 +56,12 @@ element TrustedSiblings
   provide relation between A and B as Trust
   provide contact familyMember from A to B as Siblings
   provide contact familyMember from B to A as Siblings
-  provide event to A (* TODO *)
+  provide event to A after (* TODO *)
   provide event to B (* TODO *)
-
 end
 
 element HatingSiblings
+begin
   category family
 
   let A be player
@@ -69,10 +72,10 @@ element HatingSiblings
   provide contact familyMember from B to A as Siblings
   provide event to A (* TODO *)
   provide event to B (* TODO *)
-
 end
 
 element AsymmetricalSiblings
+begin
   category family
 
   let A be player
@@ -83,10 +86,10 @@ element AsymmetricalSiblings
   provide contact familyMember from B to A as Siblings
   provide event to A (* TODO *)
   provide event to B (* TODO *)
-
 end
 
 element LostSiblings
+begin
   category family
   category mystery
 
@@ -98,10 +101,10 @@ element LostSiblings
   provide contact familyMember from B to A as Siblings
   provide contact known from A to B as False
   provide contact known from B to A as False
-
 end
 
 element Parent
+begin
   category family
 
   let A be player
@@ -113,6 +116,5 @@ element Parent
 
   provide event to A (* TODO *)
   provide event to B (* TODO *)
-
 end
 

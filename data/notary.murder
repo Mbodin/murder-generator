@@ -1,45 +1,49 @@
 
 category money
+begin
   :fr "finance"
   :en "money"
   :eo "monaĵoj"
 end
 
 declare attribute richness
+begin
   category money
 end
 
 attribute richness Rich
+begin
   :fr:adj "riche"
   :en:adj "rich"
   :eo:adj "riĉa"
 end
 
 attribute richness Neutral
-end
 
 attribute richness Poor
+begin
   :fr:adj "pauvre"
   :en:adj "poor"
   :eo:adj "malriĉa"
 end
 
 element heritage
-
+begin
   let P be player
 
   provide attribute richness to P as Rich
 
   provide event to P (* TODO *)
-
 end
 
 
 declare contact financialDebt
+begin
   category money
 end
 
 contact financialDebt Small
+begin
   :fr:adj:fem "petite"
   :fr:adj:mas "petit"
   :en:adj "small"
@@ -47,6 +51,7 @@ contact financialDebt Small
 end
 
 contact financialDebt Large
+begin
   :fr:adj:fem "grande"
   :fr:adj:mas "grand"
   :en:adj "large"
@@ -54,6 +59,7 @@ contact financialDebt Large
 end
 
 contact financialDebt Old
+begin
   (* Large but from the old times: it would be awkward to require it now. *)
   :fr:adj:fem "vielle"
   :fr:adj:mas "vieux"
@@ -62,7 +68,7 @@ contact financialDebt Old
 end
 
 element CausalDebt
-
+begin
   let A be player with attribute richness as Neutral
                   with contact known to B as True
   let B be player with attribute richness as Neutral
@@ -74,11 +80,10 @@ element CausalDebt
 
   provide event to A (* TODO *)
   provide event to B (* TODO *)
-
 end
 
 element SmallDebtNeutralPoor
-
+begin
   let A be player with attribute richness as Poor
   let B be player with attribute richness as Neutral
                   with contact known to B as True
@@ -90,11 +95,10 @@ element SmallDebtNeutralPoor
 
   provide event to A (* TODO *)
   provide event to B (* TODO *)
-
 end
 
 element RichPaysItsDebt
-
+begin
   let A be player with attribute richness as Rich
                   with contact known to B as True
   let B be player
@@ -106,11 +110,10 @@ element RichPaysItsDebt
 
   provide event to A (* TODO *)
   provide event to B (* TODO *)
-
 end
 
 element TookMoneyToBuildAShopAndIsNowRich
-
+begin
   let A be player with attribute richness as Neutral
   let B be player
 
@@ -126,11 +129,10 @@ element TookMoneyToBuildAShopAndIsNowRich
   provide contact known from A to B as True
 
   provide event to B (* TODO: Got rich after the shop got working *)
-
 end
 
 element TookMoneyToBuildAShopButGotBankrupt
-
+begin
   let A be player with attribute richness as Neutral
   let B be player
 
@@ -146,24 +148,23 @@ element TookMoneyToBuildAShopButGotBankrupt
   provide contact known from A to B as True
 
   provide event to B (* TODO: Got bankrupt *)
-
 end
 
 element ImportantSeller
-
+begin
   let P be player
 
   provide attribute richness to B as Rich
   provide attribute job to B as Seller
 
   provide event to P (* TODO *)
-
 end
 
 
 declare contact favor
 
 contact favor Small
+begin
   :fr:adj:fem "petite"
   :fr:adj:mas "petit"
   :en:adj "small"
@@ -171,6 +172,7 @@ contact favor Small
 end
 
 contact favor Large
+begin
   :fr:adj:fem "grande"
   :fr:adj:mas "grand"
   :en:adj "large"
@@ -178,20 +180,18 @@ contact favor Large
 end
 
 element FinancialDebtSmallFavor
-
+begin
   let A be player with contact financialDebt to B as Small
   let B be player
 
   provide contact favor from A to B as Small
-
 end
 
 element FinancialDebtLargeFavor
-
+begin
   let A be player with contact financialDebt to B as Large
   let B be player
 
   provide contact favor from A to B as Large
-
 end
 

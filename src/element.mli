@@ -32,6 +32,11 @@ val search_instantiation : State.t -> element -> (character array * bool) option
 
 (** Apply the given element to the state according to this instantiation.
  * This function should only be applied to instantiations for which
- * [compatible_and_progress] returns [Some]. **)
-val apply : State.t -> element -> character array -> State.t
+ * [compatible_and_progress] returns [Some].
+ * It also provides the difference of attributes that have been fixed with the ones
+ * that have been created.  For instance, if an instantiation defines an attribute
+ * that was to be defined, if will return 1; if it adds an attribute to be defined,
+ * it will return -1.  Once the total number of attribute to be defined is zero,
+ * the state can be published. **)
+val apply : State.t -> element -> character array -> State.t * int
 

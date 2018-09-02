@@ -2,12 +2,14 @@
 declare attribute famousness
 
 attribute famousness Famous
+begin
   :fr:adj "célèbre"
   :en:adj "famous"
   :eo:adj "fama"
 end
 
 attribute famousness Unknown
+begin
   :fr:adj:mas "inconnu"
   :fr:adj:fem "inconnue"
   :en:adj "unknown"
@@ -15,21 +17,21 @@ attribute famousness Unknown
 end
 
 attribute famousness Hidden
+begin
   (* The character has been actively hidden from the general public:
     he or she wants not to be famous and actively seeks it. *)
 end
 
 element FamousKnown
-
+begin
   let A be player
   let B be player with attribute famousness as Famous
 
   provide contact known from B to A as True
-
 end
 
 element FamousCanDoFavors
-
+begin
   let A be player with attribute famousness as Famous
                   with contact favor to B as Small
   let B be player with attribute famousness as Unknown
@@ -38,6 +40,5 @@ element FamousCanDoFavors
 
   provide event to A (* TODO: Speak about B. *)
   provide event to B (* TODO: Ask about speaking about B. *)
-
 end
 

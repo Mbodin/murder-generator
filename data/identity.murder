@@ -1,15 +1,16 @@
 
 declare attribute born
-(* Only gods and abstract beings are not born, so this is kind of a silly attribute, but we permit it. *)
+(* Only gods and abstract beings are not born, so this is kind of a silly attribute,
+  but we allow it nevertheless. *)
 
 attribute born True
 
 element Birth
-
+begin
     let P be player
 
     provide attribute born to P as True
-    provide event to P (* TODO *)
+    provide instance event to P with no event before (* TODO *)
 
 end
 
@@ -17,6 +18,7 @@ end
 declare attribute gender
 
 attribute gender Male
+begin
   :en:adj "male"
   :eo:adj "iĉa"
   :eo:adj:plu "iĉaj"
@@ -26,9 +28,12 @@ attribute gender Male
   :eo:nom:plu "viroj"
   :eo:nom:acc "viron"
   :eo:nom:plu:acc "virojn"
+
+  add :fr:mas
 end
 
 attribute gender Female
+begin
   :en:adj "female"
   :eo:adj "ina"
   :eo:adj:plu "inaj"
@@ -38,30 +43,31 @@ attribute gender Female
   :eo:nom:plu "virinoj"
   :eo:nom:acc "virinon"
   :eo:nom:plu:acc "virinojn"
+
+  add :fr:fem
 end
 
 attribute gender NonBinary
 
 element MaleCharacter
-
+begin
   let P be player
 
   provide attribute gender as Male
-
 end
 
 element FemaleCharacter
-
+begin
   let P be player
 
   provide attribute gender as Female
-
 end
 
 
 declare attribute specy
 
 attribute specy Human
+begin
   :fr:adj:mas "humain"
   :fr:adj:fem "humaine"
   :fr:adj:plu:mas "humains"
@@ -107,6 +113,7 @@ end
 
 
 attribute specy Dwarf
+begin
   category fantasy
   :fr:adj:mas "nain"
   :fr:adj:fem "naine"
@@ -122,21 +129,22 @@ attribute specy Dwarf
 end
 
 attribute specy Elf
+begin
   category fantasy
   (* LATER: translations *)
 end
 
 attribute specy Alien
+begin
   category scienceFiction
   (* LATER: translations *)
 end
 
 
 element SpecyHuman
-
+begin
     let P be player with attribute born as True
 
     provide attribute specy to P as Human
-
 end
 

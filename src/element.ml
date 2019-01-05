@@ -70,6 +70,7 @@ let compatible_and_progress_player cst conss attps evs c =
     List.fold_left (function
       | None -> fun _ -> None
       | Some b -> fun (a, v) ->
+        let v = State.Fixed_value v in (* TODO: Reread *)
         match State.get_attribute_character cst c a with
         | None -> Some b
         | Some v' ->
@@ -87,6 +88,7 @@ let compatible_and_progress_player_inst inst cst conss attps contps evs c =
     match List.fold_left (function
       | None -> fun _ -> None
       | Some b -> fun (a, v) ->
+        let v = State.Fixed_value v in (* TODO: Reread *)
         match State.get_attribute_character cst c a with
         | None -> Some b
         | Some v' ->
@@ -171,9 +173,58 @@ let search_instantiation st e =
 let apply state e inst =
   Utils.array_fold_left2 (fun (state, diff) ei c ->
     let (conss, attps, contps, evs, rs) = ei in
-    let (state, diff) = List.fold_left TODO (state, diff) attps in
-    let state = List.fold_left TODO state contps in
+    let (state, diff) =
+      List.fold_left (fun (state, diff) -> function
+        | Attribute (a, v) ->
+          let cstate = State.get_character_state state in
+          let write _ =
+            State.write_attribute_character cstate c a (State.One_value_of [v]) in
+          let diff' =
+            match State.get_attribute_character cstate c a with
+            | None ->
+              write () ;
+              0
+            | Some v' ->
+              match v' with
+              | State.Fixed_value v' ->
+                assert (v = v') ;
+                0
+              | State.One_value_of l ->
+                assert (List.mem v l) ;
+                write () ;
+                1 in
+          (state, diff + diff')
+        | Contact (con, cha, v) ->
+          (state, diff) (* TODO *)
+        ) (state, diff) conss in
+    let (state, diff) =
+      List.fold_left (fun (state, diff) (attr, v) ->
+        let cstate = State.get_character_state state in
+        let write _ =
+          State.write_attribute_character cstate c attr (State.Fixed_value v) in
+        let diff' =
+          match State.get_attribute_character cstate c attr with
+          | None ->
+            write () ;
+            0
+          | Some v' ->
+            match v' with
+            | State.Fixed_value v' ->
+              assert (v = v') ;
+              0
+            | State.One_value_of l ->
+              assert (List.mem v l) ;
+              write () ;
+              1 in
+        (state, diff + diff')) (state, diff) attps in
+    let (state, diff) =
+      List.fold_left (fun (state, diff) _ ->
+        (state, diff) (* TODO *)) (state, diff) contps in
     (* TODO: Event [evs] *)
-    let state = List.fold_left TODO state rs in
+    let _ =
+      Array.iter2 (fun c' r ->
+        if c <> c' then
+          let r' = State.get_relation state c c' in
+          State.write_relation state c c' (Relations.compose r' r)) inst rs in
     (state, diff)) (state, 0) e inst
 

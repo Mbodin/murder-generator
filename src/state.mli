@@ -103,7 +103,9 @@ val get_contact_character : character_state -> character -> contact -> character
 (** Get all the contacts of a character from the character state. **)
 val get_all_contact_character : character_state -> character -> contact -> (character * contact_value attribute_value) list
 
-type t
+(** A state is just a combination of each state component. **)
+type t =
+  character_state * relation_state * History.state
 
 val get_relation : t -> character -> character -> Relations.t
 

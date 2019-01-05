@@ -45,7 +45,7 @@ let seq_incl = seq_range 0
 let seq i = seq_incl (i - 1)
 
 let seq_range_array mi ma =
-  Array.init (fun i -> mi + i) (max 0 (max - min + 1))
+  Array.init (max 0 (ma - mi + 1)) (fun i -> mi + i)
 
 let seq_incl_array = seq_range_array 0
 
@@ -81,7 +81,8 @@ let rec list_predicate_index f = function
 
 let list_index e = list_predicate_index ((=) e)
 
-let shuffle = List.sort (fun _ _ -> Random.int 3 - 1)
+let shuffle l =
+  List.sort (fun _ _ -> Random.int 3 - 1) l
 
 
 let swap (a, b) = (b, a)

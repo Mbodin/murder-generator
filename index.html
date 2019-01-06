@@ -7,18 +7,42 @@
     <meta name = "viewport" content = "width=device-width, initial-scale=1.0" />
   </head>
   <body>
-      Currently under construction.
+    Currently under construction.
 
-      <svg version = "1.1" baseProfile = "tiny" width = "100" height = "100" xmlns="http://www.w3.org/2000/svg" class = "loading">
+    <button onclick = "startLoading ()">Start loading</button>
+    <button onclick = "stopLoading ()">Stop loading</button>
+
+    <svg version = "1.1" baseProfile = "tiny" width = "100" height = "100" xmlns="http://www.w3.org/2000/svg" class = "loading">
+      <g id = "loading-global-transform" transform = "scale(1, 1)">
         <g transform = "translate(50, 50)">
           <g transform = "translate(-50, -50)">
             <circle cx = "50" cy = "50" r = "50" fill = "#75507b" />
             <path d = "M 50,20 A 30 30 0 0 1 80,50" fill = "none" stroke = "#ad7fa8" stroke-width = "5px" />
             <animateTransform attributeType = "xml" attributeName = "transform" type = "rotate" from = "0 50 50" to = "360 50 50" dur = "2s" additive = "sum" repeatCount = "indefinite" />
           </g>
-          <animateTransform attributeType = "xml" attributeName = "transform" type = "scale" additive = "sum" from = "0 0" to = "1 1" begin = "0s" dur = ".3s" repeatCount = "1" />
+          <animateTransform id = "loading-animation" attributeType = "xml" attributeName = "transform" type = "scale" additive = "sum" from = "0 0" to = "1 1" begin = "0s" dur = ".3s" repeatCount = "1" />
         </g>
-      </svg>
+      </g>
+    </svg>
+
+    <script>
+      var loadingAnimation = document.getElementById ('loading-animation')
+      var loadingGlobalTransform = document.getElementById ('loading-global-transform')
+
+      function startLoading (){
+        loadingAnimation.setAttribute ("from", "0 0")
+        loadingAnimation.setAttribute ("to", "1 1")
+        loadingGlobalTransform.setAttribute ("transform", "scale(1, 1)")
+        loadingAnimation.beginElement ()
+      }
+
+      function stopLoading (){
+        loadingAnimation.setAttribute ("from", "1 1")
+        loadingAnimation.setAttribute ("to", "0 0")
+        setTimeout (function () { loadingGlobalTransform.setAttribute ("transform", "scale(0, 0)") }, 298)
+        loadingAnimation.beginElement ()
+      }
+    </script>
   </body>
 </html>
 

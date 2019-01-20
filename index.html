@@ -29,17 +29,35 @@
       var loadingAnimation = document.getElementById ('loading-animation')
       var loadingGlobalTransform = document.getElementById ('loading-global-transform')
 
+      function isLoading (){
+        return (loadingAnimation.getAttribute ("to")[0] === "1")
+      }
+
       function startLoading (){
-        loadingAnimation.setAttribute ("from", "0 0")
+        if (isLoading ()) return
+
+        var startValue = loadingAnimation.animVal
+        if (startValue === undefined || !isLoading ()) startValue = "0 0"
+        loadingAnimation.removeAttribute ("values")
+        loadingAnimation.removeAttribute ("keyTimes")
+        loadingAnimation.setAttribute ("dur", "1s")
+        loadingAnimation.setAttribute ("from", startValue)
         loadingAnimation.setAttribute ("to", "1 1")
         loadingGlobalTransform.setAttribute ("transform", "scale(1, 1)")
         loadingAnimation.beginElement ()
       }
 
       function stopLoading (){
-        loadingAnimation.setAttribute ("from", "1 1")
+        if (!isLoading ()) return
+
+        var startValue = loadingAnimation.animVal
+        if (startValue === undefined || isLoading ()) startValue = "1 1"
+        loadingAnimation.setAttribute ("dur", "1s")
+        loadingAnimation.setAttribute ("from", startValue)
         loadingAnimation.setAttribute ("to", "0 0")
-        setTimeout (function () { loadingGlobalTransform.setAttribute ("transform", "scale(0, 0)") }, 298)
+        loadingAnimation.setAttribute ("values", startValue + ";0 0;0 0")
+        loadingAnimation.setAttribute ("keyTimes", "0;0.3;1")
+        setTimeout (function () { loadingGlobalTransform.setAttribute ("transform", "scale(0, 0)") }, 300)
         loadingAnimation.beginElement ()
       }
     </script>

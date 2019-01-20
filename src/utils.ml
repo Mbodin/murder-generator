@@ -129,11 +129,14 @@ let sum = List.fold_left (+) 0
 let array_sum = Array.fold_left (+) 0
 
 let array_count f = Array.fold_left (fun v x -> v + if f x then 1 else 0) 0
+
 let array_fold_left2 f i a1 a2 =
   let r = ref i in
   Array.iter2 (fun v1 v2 -> r := f !r v1 v2) a1 a2 ;
   !r
 
+let array_fold_lefti f acc a =
+  snd (Array.fold_left (fun (i, acc) e -> (1 + i, f i acc e)) (0, acc) a)
 
 module Id = struct
 

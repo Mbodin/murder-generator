@@ -26,7 +26,7 @@ val compatible_and_progress : State.t -> element -> character array -> bool opti
 
 (** Look for instantiations.
  * The second return value is the result of [compatible_and_progress] on this instantiation.
- * It tries as possible as can be to return an instantiation that progresses. **)
+ * It tries to return an instantiation that progresses. **)
 val search_instantiation : State.t -> element -> (character array * bool) option
 
 (** Apply the given element to the state according to this instantiation.
@@ -34,8 +34,10 @@ val search_instantiation : State.t -> element -> (character array * bool) option
  * [compatible_and_progress] returns [Some].
  * It also provides the difference of attributes that have been fixed with the ones
  * that have been created, as a number.  For instance, if an instantiation defines
- * an attribute that was to be defined, if will return 1; if it adds an attribute to
- * be defined, it will return -1.  Once the total number of attribute to be defined
- * is zero, the state can be published. **)
+ * an attribute that was to be defined (that is, for which
+ * [State.attribute_value_can_progress] returned true), it will return 1; if it adds
+ * an attribute to be defined, it will return -1.
+ * TODO: Partition the [int] as a map from attributes to int.
+ * Once the total number of attribute to be defined is zero, the state can be published. **)
 val apply : State.t -> element -> character array -> State.t * int
 

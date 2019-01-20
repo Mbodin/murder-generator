@@ -106,6 +106,9 @@ val array_sum : int array -> int
 (** Indicates how many elements of the array satisfy the predicates. **)
 val array_count : ('a -> bool) -> 'a array -> int
 
+(** Similar to [Array.fold_left], but the function takes the current index as argument. **)
+val array_fold_lefti : (int -> 'a -> 'b -> 'a) -> 'a -> 'b array -> 'a
+
 (** Fold through both array. They must have the same size. **)
 val array_fold_left2 : ('a -> 'b -> 'c -> 'a) -> 'a -> 'b array -> 'c array -> 'a
 

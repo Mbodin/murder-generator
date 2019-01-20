@@ -11,19 +11,37 @@ type element =
    * Relations.t array
   ) array
 
+(** States whether [v1] and [v2] are compatible and make some progress.
+ * The return value is expressed as for [compatible_and_progress]:
+ * [None] means that it is not compatible, [Some true] that it is
+ * compatible and progress, and [Some false] that it is compatible
+ * but does not progress. **)
+let compatible_and_progress_attribute_value v1 v2 =
+  Utils.option_map (State.attribute_value_progress v1)
+    (State.compose_attribute_value v1 v2)
+
+(** Merges two results of [compatible_and_progress]. **)
+let merge_progress b1 b2 =
+  match b1, b2 with
+  | None, _ | _, None -> None
+  | Some b1, Some b2 -> Some (b1 || b2)
+
 (** Checks whether the constraints [conss] are valid for the
  * character [c] in the character state [cst].
  * The contact case is given as argument as the function [f]. **)
 let respect_constraints_base f cst conss evs c =
-  List.fold_left (fun b cons ->
-    b && match cons with
-    | Attribute (a, v) ->
-      (match State.get_attribute_character cst c a with
-       | None -> true
-       | Some v' -> compose_attribute_value v v' <> None)
-    | Contact (con, cha, v) ->
-      f con cha v) true conss
-  && (* TODO: events [evs] *) true
+  merge_progress
+    (List.fold_left (fun b cons ->
+      merge_progress b
+        (match cons with
+        | Attribute (a, v1) ->
+          (match State.get_attribute_character cst c a with
+           | None -> Some false
+           | Some v2 ->
+             compatible_and_progress_attribute_value v1 v2)
+        | Contact (con, cha, v) ->
+          f con cha v)) (Some false) conss)
+    (* TODO: events [evs] *) (Some false)
 
 (** Checks whether the constraints [conss] are locally valid for the
  * character [c] in the character state [cst].
@@ -31,81 +49,33 @@ let respect_constraints_base f cst conss evs c =
  * Only local constraints are considered: no constraint depending on the
  * instantiation are checked at this point. **)
 let respect_constraints =
-  respect_constraints_base (fun _ _ _ -> true)
+  respect_constraints_base (fun _ _ _ -> Some false)
 
 (** As [respect_constraints], but takes an instanciation and thus also checks
  * global constraints. **)
 let respect_constraints_inst inst cst conss evs c =
-  respect_constraints_base (fun con cha v ->
-    let cha = inst.(Utils.Id.to_array cha) in
+  respect_constraints_base (fun con cha v1 ->
+    let cha = inst.(cha) in
     match State.get_contact_character cst c con cha with
-    | None -> true
-    | Some v' -> compose_attribute_value v v' <> None) cst conss evs c
-
-(** Takes a character state and some constraints for a player,
- * and returns the equivalent of [compatible_and_progress] for
- * this particular player.
- * Only local constraints are considered. **)
-let compatible_and_progress_player cst conss evs c =
-  if respect_constraints cst conss evs c then
-    List.fold_left (function
-      | None -> fun _ -> None
-      | Some b -> fun (a, v) ->
-        let v = State.Fixed_value v in (* TODO: Reread *)
-        match State.get_attribute_character cst c a with
-        | None -> Some b
-        | Some v' ->
-          match FIXME more_precise_attribute_value v v' with
-          | None -> None
-          | Some true -> Some true
-          | Some false ->
-            (** This case is about conflicting reasons why an attribute is placed. **)
-            None) (Some false) attps
-  else None
-
-(** Same as [compatible_and_progress_player], but also consider global constraints. **)
-let compatible_and_progress_player_inst inst cst conss attps contps evs c =
-  if respect_constraints_inst inst cst conss evs c then
-    match List.fold_left (function
-      | None -> fun _ -> None
-      | Some b -> fun (a, v) ->
-        let v = State.Fixed_value v in (* TODO: Reread *)
-        match State.get_attribute_character cst c a with
-        | None -> Some b
-        | Some v' ->
-          match FIXME more_precise_attribute_value v v' with
-          | None -> None
-          | Some true -> Some true
-          | Some false ->
-            (** This case is about conflicting reasons why an attribute is placed. **)
-            None) (Some false) attps with
-    | None -> None
-    | Some b ->
-      (* TODO: contacts [contps] *)
-      Some b
-  else None
+    | None -> Some false
+    | Some v2 -> compatible_and_progress_attribute_value v1 v2) cst conss evs c
 
 let compatible_and_progress st e inst =
   let cst = State.get_character_state st in
-  let abort = (None, 0) in
-  fst (Array.fold_left (fun (acc, i) c ->
-    match acc with
-    | None -> abort
-    | Some b ->
-      let (conss, attps, contps, evs, rs) = e.(i) in
-      match compatible_and_progress_player_inst inst cst conss attps contps evs c with
-      | None -> abort
-      | Some b' -> Some (b || b'), 1 + i) (Some false, 0) inst)
+  Utils.array_fold_lefti (fun i acc c ->
+    let (conss, evs, rs) = e.(i) in
+    merge_progress acc
+      (respect_constraints_inst inst cst conss evs c)) (Some false) inst
 
 let search_instantiation st e =
   let cst = State.get_character_state st in
   let all_players = State.all_players st in
   let possible_players_progress_no_progress =
     Array.map (fun ei ->
-      let (conss, attps, contps, evs, rs) = ei in
+      let (conss, evs, rs) = ei in
       let result_list =
         List.map (fun c ->
-          (c, compatible_and_progress_player cst conss attps evs c)) all_players in
+          (c, respect_constraints cst conss evs c)) all_players in
       let compatible_list =
         List.filter (fun (_, d) -> d <> None) result_list in
       let progress, no_progress =
@@ -153,54 +123,26 @@ let search_instantiation st e =
 
 let apply state e inst =
   Utils.array_fold_left2 (fun (state, diff) ei c ->
-    let (conss, attps, contps, evs, rs) = ei in
+    let (conss, evs, rs) = ei in
     let (state, diff) =
       List.fold_left (fun (state, diff) -> function
-        | Attribute (a, v) ->
+        | Attribute (a, v1) ->
           let cstate = State.get_character_state state in
-          let write _ =
-            State.write_attribute_character cstate c a (State.One_value_of [v]) in
           let diff' =
             match State.get_attribute_character cstate c a with
             | None ->
-              write () ;
-              0
-            | Some v' ->
-              match v' with
-              | State.Fixed_value v' ->
-                assert (v = v') ;
-                0
-              | State.One_value_of l ->
-                assert (List.mem v l) ;
-                write () ;
-                1 in
+              State.write_attribute_character cstate c a v1 ;
+              if State.attribute_value_can_progress v1 then -1 else 0
+            | Some v2 ->
+              match State.compose_attribute_value v1 v2 with
+              | None -> assert false
+              | Some v3 ->
+                State.write_attribute_character cstate c a v3 ;
+                if State.attribute_value_progress v2 v3 then 1 else 0 in
           (state, diff + diff')
         | Contact (con, cha, v) ->
           (state, diff) (* TODO *)
         ) (state, diff) conss in
-    let (state, diff) =
-      List.fold_left (fun (state, diff) (attr, v) ->
-        let cstate = State.get_character_state state in
-        let write _ =
-          State.write_attribute_character cstate c attr (State.Fixed_value v) in
-        let diff' =
-          match State.get_attribute_character cstate c attr with
-          | None ->
-            write () ;
-            0
-          | Some v' ->
-            match v' with
-            | State.Fixed_value v' ->
-              assert (v = v') ;
-              0
-            | State.One_value_of l ->
-              assert (List.mem v l) ;
-              write () ;
-              1 in
-        (state, diff + diff')) (state, diff) attps in
-    let (state, diff) =
-      List.fold_left (fun (state, diff) _ ->
-        (state, diff) (* TODO *)) (state, diff) contps in
     (* TODO: Event [evs] *)
     let _ =
       Array.iter2 (fun c' r ->

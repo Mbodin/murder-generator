@@ -85,13 +85,17 @@ type 'value attribute_value =
  * The underlying meaning is that this attribute must not be used. **)
 
 (** Compose the strictness flag, returning [None] when they are incompatible. **)
-val compose_strictness : strictness -> strictness -> option strictness
+val compose_strictness : strictness -> strictness -> strictness option
 
 (** Compose two attribute values, if they are compatible. **)
-val compose_attribute_value : attribute_value -> attribute_value -> option attribute_value
+val compose_attribute_value : 'a attribute_value -> 'a attribute_value -> 'a attribute_value option
 
 (** Given a transition from an attribute value to another, this function states whether the transition [One_value_of] to [Fixed_value] occured. **)
-val attribute_value_progress : attribute_value -> attribute_value -> bool
+val attribute_value_progress : 'a attribute_value -> 'a attribute_value -> bool
+
+(** States whether there exists another attribute value such that [attribute_value_progress] may make progress.
+ * An attribute value can only make progress once (from [One_value_of] to [Fixed_value]). **)
+val attribute_value_can_progress : 'a attribute_value -> bool
 
 (** Contacts between characters. **)
 type contact

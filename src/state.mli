@@ -43,6 +43,7 @@ type constructor_map
 (** An empty constructor map. **)
 val empty_constructor_map : constructor_map
 
+(* TODO: Factorize [value] and [contact_value], as well as [attribute] and [contact] (which should be called [contact_attribute]). *)
 (** Returns the name of an attribute. **)
 val attribute_name : constructor_map -> attribute -> string option
 
@@ -90,7 +91,7 @@ val compose_strictness : strictness -> strictness -> option strictness
 val compose_attribute_value : attribute_value -> attribute_value -> option attribute_value
 
 (** Given a transition from an attribute value to another, this function states whether the transition [One_value_of] to [Fixed_value] occured. **)
-val constraint_fixed_attribute_value : attribute_value -> attribute_value -> bool
+val attribute_value_progress : attribute_value -> attribute_value -> bool
 
 (** Contacts between characters. **)
 type contact

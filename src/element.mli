@@ -5,14 +5,13 @@ type character = State.character
 
 (** A constraint on a character **)
 type character_constraint =
-  | Attribute of State.attribute * State.value (** The given attribute must have this value. TODO LATER: Put a list of values here. **)
-  | Contact of State.contact * character * State.contact_value (** The given contact must exist with this other character with this value. *)
+  | Attribute of State.attribute * State.value State.attribute_value (** The given attribute value is provided by the element.
+                                                                      * Note that [State.attribute_value] can be of the form [State.One_value_of], in which case the attribute is required to be of this value, but also [State.Fixed_value], where the element actually provides an explanation for it. **)
+  | Contact of State.contact * int * State.contact_value State.attribute_value (** The given contact (identified in the local array) is provided by the element. **)
 
 type element =
   ((** Each players considered by the element are represented as a cell. **)
    character_constraint list (** The constraints on this player. **)
-   * (State.attribute * State.value) list (** The attributes provided to this player. **)
-   * (State.contact * int * State.contact_value) list (** The contacts provided to this player (identified in the local array). **)
    * History.event list (** The events that this element would provide to this player. **)
    * Relations.t array (** The relations that would be added to this player, for each characters. **)
   ) array
@@ -21,8 +20,8 @@ type element =
  * whether the event can be applied.
  * If not, it returns [None].
  * If the element can be applied, it states whether the element is making
- * progress, that is whether there exists at least one [State.One_value_of]
- * that would be changed into a [State.Fixed_value]. **)
+ * progress, that is whether there exists at least one attribute value that
+ * has been changed to something recognised by [State.attribute_value_progress]. **)
 val compatible_and_progress : State.t -> element -> character array -> bool option
 
 (** Look for instantiations.

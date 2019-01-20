@@ -2,50 +2,31 @@
 type character = Utils.Id.t
 
 type character_constraint =
-  | Attribute of State.attribute * State.value
-  | Contact of State.contact * character * State.contact_value
+  | Attribute of State.attribute * State.value State.attribute_value
+  | Contact of State.contact * int * State.contact_value State.attribute_value
 
 type element =
   (character_constraint list
-   * (State.attribute * State.value) list
-   * (State.contact * int * State.contact_value) list
    * History.event list
    * Relations.t array
   ) array
 
-(* TODO: Depreciated. *)
-(** Returns [None] if incompatible the current value [v2] is not
- * compatible with the proposed new value [v1].
- * If they are compatible, [Some true] is returned if [v1] is strictly
- * more precise than [v2], [Some false] otherwise. **)
-let more_precise_attribute_value v1 v2 =
-  match v1, v2 with
-  | State.Fixed_value v, State.Fixed_value v' ->
-    if v = v' then Some false else None
-  | State.Fixed_value v, State.One_value_of l ->
-    if List.mem v l then Some true
-    else None
-  | State.One_value_of l1, State.One_value_of l2 ->
-    if List.for_all (fun v -> List.mem v l2) l1 then
-      Some (List.exists (fun v -> not (List.mem v l1)) l2)
-    else None
-  | State.One_value_of l, State.Fixed_value v ->
-    if List.exists (fun v' -> v <> v') l then None
-    else Some false
-
+(** Checks whether the constraints [conss] are valid for the
+ * character [c] in the character state [cst].
+ * The contact case is given as argument as the function [f]. **)
 let respect_constraints_base f cst conss evs c =
   List.fold_left (fun b cons ->
     b && match cons with
     | Attribute (a, v) ->
       (match State.get_attribute_character cst c a with
        | None -> true
-       | Some v' -> more_precise_attribute_value (State.Fixed_value v) v' <> None)
+       | Some v' -> compose_attribute_value v v' <> None)
     | Contact (con, cha, v) ->
       f con cha v) true conss
   && (* TODO: events [evs] *) true
 
-(** Checks whether the constraints [conss] are valid for the character [c]
- * in the character state [cst].
+(** Checks whether the constraints [conss] are locally valid for the
+ * character [c] in the character state [cst].
  * Events are also checked to be addable to the characters’s events.
  * Only local constraints are considered: no constraint depending on the
  * instantiation are checked at this point. **)
@@ -59,14 +40,13 @@ let respect_constraints_inst inst cst conss evs c =
     let cha = inst.(Utils.Id.to_array cha) in
     match State.get_contact_character cst c con cha with
     | None -> true
-    | Some v' ->
-      more_precise_attribute_value (State.Fixed_value v) v' <> None) cst conss evs c
+    | Some v' -> compose_attribute_value v v' <> None) cst conss evs c
 
-(** Takes a character state, some constraints and provided attributes to
- * a player, and returns the equivalent of [compatible_and_progress] for
+(** Takes a character state and some constraints for a player,
+ * and returns the equivalent of [compatible_and_progress] for
  * this particular player.
  * Only local constraints are considered. **)
-let compatible_and_progress_player cst conss attps evs c =
+let compatible_and_progress_player cst conss evs c =
   if respect_constraints cst conss evs c then
     List.fold_left (function
       | None -> fun _ -> None
@@ -75,7 +55,7 @@ let compatible_and_progress_player cst conss attps evs c =
         match State.get_attribute_character cst c a with
         | None -> Some b
         | Some v' ->
-          match more_precise_attribute_value v v' with
+          match FIXME more_precise_attribute_value v v' with
           | None -> None
           | Some true -> Some true
           | Some false ->
@@ -93,7 +73,7 @@ let compatible_and_progress_player_inst inst cst conss attps contps evs c =
         match State.get_attribute_character cst c a with
         | None -> Some b
         | Some v' ->
-          match more_precise_attribute_value v v' with
+          match FIXME more_precise_attribute_value v v' with
           | None -> None
           | Some true -> Some true
           | Some false ->

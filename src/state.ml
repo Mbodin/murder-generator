@@ -99,8 +99,7 @@ let compose_attribute_value v1 v2 =
       Utils.option_map (fun s3 -> Fixed_value (v1, s3)) (compose_strictness s1 s2)
     else None
 
-
-let constraint_fixed_attribute_value v1 v2 =
+let attribute_value_progress v1 v2 =
   match v1, v2 with
   | One_value_of _, Fixed_value _ -> true
   | _, _ -> false

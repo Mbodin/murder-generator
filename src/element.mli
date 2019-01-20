@@ -5,7 +5,7 @@ type character = State.character
 
 (** A constraint on a character **)
 type character_constraint =
-  | Attribute of State.attribute * State.value (** The given attribute must have this value. TODO: Put a list of values here. **)
+  | Attribute of State.attribute * State.value (** The given attribute must have this value. TODO LATER: Put a list of values here. **)
   | Contact of State.contact * character * State.contact_value (** The given contact must exist with this other character with this value. *)
 
 type element =

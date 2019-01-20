@@ -72,9 +72,38 @@ let remove_constructor (mn, mc, al) a c =
   let l = List.filter ((<>) c) l in
   (mn, mc, PMap.add a l al)
 
+type strictness =
+  | NonStrict
+  | LowStrict
+  | Strict
+
+let compose_strictness s1 s2 =
+  match s1, s2 with
+  | Strict, _ | _, Strict -> None
+  | LowStrict, LowStrict -> None
+  | NonStrict, s | s, NonStrict -> Some s
+
 type 'value attribute_value =
-  | Fixed_value of 'value
+  | Fixed_value of 'value * strictness
   | One_value_of of 'value list
+
+let compose_attribute_value v1 v2 =
+  match v1, v2 with
+  | One_value_of l1, One_value_of l2 ->
+    let l3 = List.filter (fun v -> List.mem v l1) l2 in
+    if l3 = [] then None else Some l3
+  | One_value_of l1, Fixed_value (v2, s2) | Fixed_value (v2, s2), One_value_of l1 ->
+    if List.mem v l1 then Some (Fixed_value (v2, s2) else None
+  | Fixed_value (v1, s1), Fixed_value (v2, s2) ->
+    if v1 = v2 then
+      Utils.option_map (fun s3 -> Fixed_value (v1, s3)) (compose_strictness s1 s2)
+    else None
+
+
+let constraint_fixed_attribute_value v1 v2 =
+  match v1, v2 with
+  | One_value_of _, Fixed_value _ -> true
+  | _, _ -> false
 
 type attribute_map = (attribute, value attribute_value) PMap.t
 type contact_map = (contact, (character, contact_value attribute_value) PMap.t) PMap.t

@@ -13,6 +13,7 @@ type element =
    * Relations.t array
   ) array
 
+(* TODO: Depreciated. *)
 (** Returns [None] if incompatible the current value [v2] is not
  * compatible with the proposed new value [v1].
  * If they are compatible, [Some true] is returned if [v1] is strictly

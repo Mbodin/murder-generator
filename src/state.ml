@@ -42,7 +42,7 @@ module type Attribute = sig
     val remove_constructor : constructor_map -> attribute -> value -> constructor_map
   end
 
-module AttributeInst (_ : sig end) =
+module AttributeInst () =
   (* The unused parameter is used so that the maps in [empty_constructor_map]
    * are initialised with a different reference in each instantiations. *)
   struct
@@ -90,9 +90,9 @@ module AttributeInst (_ : sig end) =
 
   end
 
-module PlayerAttribute = AttributeInst (struct end)
+module PlayerAttribute = AttributeInst ()
 
-module ContactAttribute = AttributeInst (struct end)
+module ContactAttribute = AttributeInst ()
 
 type strictness =
   | NonStrict

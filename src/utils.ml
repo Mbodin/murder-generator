@@ -334,3 +334,27 @@ module BidirectionalList = struct
 
   end
 
+module PSet = struct
+
+    type 'a t = ('a, unit) PMap.t
+
+    let empty = PMap.empty
+
+    let is_empty = PMap.is_empty
+
+    let add e = PMap.add e ()
+
+    let remove = PMap.remove
+
+    let is_in e s =
+      try let _ = PMap.find e s in true
+      with Not_found -> false
+
+    let merge s1 s2 =
+      PMap.foldi (fun e _ -> add e) s1 s2
+
+    let inter s1 s2 =
+      PMap.foldi (fun e _ s -> if is_in e s2 then add e s else s) s1 empty
+
+  end
+

@@ -212,3 +212,18 @@ module BidirectionalList : sig
 
   end
 
+module PSet : sig
+    (** An implementation of sets based on [PMap]. **)
+
+    type 'a t
+
+    val empty : 'a t
+    val is_empty : 'a t -> bool
+    val add : 'a -> 'a t -> 'a t
+    val remove : 'a -> 'a t -> 'a t
+    val is_in : 'a -> 'a t -> bool
+    val merge : 'a t -> 'a t -> 'a t
+    val inter : 'a t -> 'a t -> 'a t
+
+  end
+

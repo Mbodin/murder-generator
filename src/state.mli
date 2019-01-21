@@ -28,41 +28,50 @@ val create_relation_state : int -> relation_state
 (** The state of attributes and contact of each character. **)
 type character_state
 
-(** The type of attributes. **)
-type attribute
+(** A signature for the various value/attribute structures.
+ * This signature is used in particular for the player attributes and the contact attributes. **)
+module type Attribute = sig
 
-(** The type of values. **)
-type value
+    (** The type of attributes. **)
+    type attribute
 
-(** Values are just constructor identifiers.
- * Each attribute is associated with a given set of possible constructors
- * (which are really just names).
- * The following table keeps track of the constructor names. **)
-type constructor_map
+    (** The type of values. **)
+    type value
 
-(** An empty constructor map. **)
-val empty_constructor_map : constructor_map
+    (** Values are just constructor identifiers.
+     * Each attribute is associated with a given set of possible constructors
+     * (which are really just names).
+     * The following table keeps track of the constructor names. **)
+    type constructor_map
 
-(* TODO: Factorize [value] and [contact_value], as well as [attribute] and [contact] (which should be called [contact_attribute]). *)
-(** Returns the name of an attribute. **)
-val attribute_name : constructor_map -> attribute -> string option
+    (** An empty constructor map. **)
+    val empty_constructor_map : constructor_map
 
-(** Returns the name of a constructor. **)
-val value_name : constructor_map -> value -> string option
+    (** Returns the name of an attribute. **)
+    val attribute_name : constructor_map -> attribute -> string option
 
-(** Returns the list of constructors associated with an attribute. **)
-val constructors : constructor_map -> attribute -> value list option
+    (** Returns the name of a constructor. **)
+    val value_name : constructor_map -> value -> string option
 
-(** Declare an attribute, returning its associated normal identifier
- * (if already declared, its normal identifier is still returned). **)
-val declare_attribute : constructor_map -> string -> attribute * constructor_map
+    (** Returns the list of constructors associated with an attribute. **)
+    val constructors : constructor_map -> attribute -> value list option
 
-(** Declare a new constructor for an attribute. **)
-val declare_constructor : constructor_map -> attribute -> string -> value * constructor_map
+    (** Declare an attribute, returning its associated normal identifier
+     * (if already declared, its normal identifier is still returned). **)
+    val declare_attribute : constructor_map -> string -> attribute * constructor_map
 
-(** Users can remove categories before the story generation.
- * This function removes a constructor, probably because it was associated an unwanted category. **)
-val remove_constructor : constructor_map -> attribute -> value -> constructor_map
+    (** Declare a new constructor for an attribute. **)
+    val declare_constructor : constructor_map -> attribute -> string -> value * constructor_map
+
+    (** Users can remove categories before the story generation.
+     * This function removes a constructor, probably because it was associated an unwanted category. **)
+    val remove_constructor : constructor_map -> attribute -> value -> constructor_map
+
+  end
+
+module PlayerAttribute : Attribute
+
+module ContactAttribute : Attribute
 
 (** The strictness flag indicates whether a value can be explained by different elements. **)
 type strictness =
@@ -97,33 +106,27 @@ val attribute_value_progress : 'a attribute_value -> 'a attribute_value -> bool
  * An attribute value can only make progress once (from [One_value_of] to [Fixed_value]). **)
 val attribute_value_can_progress : 'a attribute_value -> bool
 
-(** Contacts between characters. **)
-type contact
-
-(** values of contact. **)
-type contact_value
-
 (** Creates an empty character state for the given number n of characters,
  * each indexed from 0 to n - 1. **)
 val create_character_state : int -> character_state
 
 (** Get a character attribute from the character state. **)
-val get_attribute_character : character_state -> character -> attribute -> value attribute_value option
+val get_attribute_character : character_state -> character -> PlayerAttribute.attribute -> PlayerAttribute.value attribute_value option
 
 (** Get a character attribute from the character state.
  * If it is not present, the character set is non-functionally updated
  * to mark the attribute as being of need of a value (returning all the
  * constructors of its type). **)
-val force_get_attribute_character : constructor_map -> character_state -> character -> attribute -> value attribute_value
+val force_get_attribute_character : PlayerAttribute.constructor_map -> character_state -> character -> PlayerAttribute.attribute -> PlayerAttribute.value attribute_value
 
 (** Non-functionally associates the given attribute of the character to the given value. **)
-val write_attribute_character : character_state -> character -> attribute -> value attribute_value -> unit
+val write_attribute_character : character_state -> character -> PlayerAttribute.attribute -> PlayerAttribute.value attribute_value -> unit
 
 (** Get a contact from the character state, using the target character. **)
-val get_contact_character : character_state -> character -> contact -> character -> (contact_value attribute_value) option
+val get_contact_character : character_state -> character -> ContactAttribute.attribute -> character -> (ContactAttribute.value attribute_value) option
 
 (** Get all the contacts of a character from the character state. **)
-val get_all_contact_character : character_state -> character -> contact -> (character * contact_value attribute_value) list
+val get_all_contact_character : character_state -> character -> ContactAttribute.attribute -> (character * ContactAttribute.value attribute_value) list
 
 (** A state is just a combination of each state component. **)
 type t =

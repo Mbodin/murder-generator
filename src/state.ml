@@ -28,49 +28,71 @@ let write_relation_state a c1 c2 r =
     a.(c2).(c1) <- Relations.reverse r
   else a.(c2).(c1) <- r
 
-type attribute = Utils.Id.t
-type value = Utils.Id.t
+module type Attribute = sig
+    type attribute
+    type value
+    type constructor_map
 
-type contact = Utils.Id.t
-type contact_value = Utils.Id.t
+    val empty_constructor_map : constructor_map
+    val attribute_name : constructor_map -> attribute -> string option
+    val value_name : constructor_map -> value -> string option
+    val constructors : constructor_map -> attribute -> value list option
+    val declare_attribute : constructor_map -> string -> attribute * constructor_map
+    val declare_constructor : constructor_map -> attribute -> string -> value * constructor_map
+    val remove_constructor : constructor_map -> attribute -> value -> constructor_map
+  end
 
-type constructor_map =
-  string Utils.Id.map (** Attribute names **)
-  * string Utils.Id.map (** Constructor names **)
-  * (attribute, value list) PMap.t (** What constructors are associated to each attribute. **)
+module AttributeInst (_ : sig end) =
+  (* The unused parameter is used so that the maps in [empty_constructor_map]
+   * are initialised with a different reference in each instantiations. *)
+  struct
 
-let empty_constructor_map =
-  (Utils.Id.map_create (),
-   Utils.Id.map_create (),
-   PMap.empty)
+    type attribute = Utils.Id.t
+    type value = Utils.Id.t
 
-let attribute_name (m, _, _) a =
-  Utils.Id.map_inverse m a
+    type constructor_map =
+      string Utils.Id.map (** Attribute names **)
+      * string Utils.Id.map (** Constructor names **)
+      * (attribute, value list) PMap.t (** What constructors are associated to each attribute. **)
 
-let value_name (_, m, _) c =
-  Utils.Id.map_inverse m c
+    let empty_constructor_map =
+      (Utils.Id.map_create (),
+       Utils.Id.map_create (),
+       PMap.empty)
 
-let constructors (_, _, m) a =
-  try Some (PMap.find a m)
-  with Not_found -> None
+    let attribute_name (m, _, _) a =
+      Utils.Id.map_inverse m a
 
-let declare_attribute (mn, mc, al) a =
-  let (a, mn) = Utils.Id.map_insert_t mn a in
-  (a, (mn, mc, PMap.add a [] al))
+    let value_name (_, m, _) c =
+      Utils.Id.map_inverse m c
 
-let declare_constructor (mn, mc, al) a c =
-  let (c, mc) = Utils.Id.map_insert_t mc c in
-  let l =
-    try PMap.find a al
-    with Not_found -> assert false in
-  (c, (mn, mc, PMap.add a (c :: l) al))
+    let constructors (_, _, m) a =
+      try Some (PMap.find a m)
+      with Not_found -> None
 
-let remove_constructor (mn, mc, al) a c =
-  let l =
-    try PMap.find a al
-    with Not_found -> assert false in
-  let l = List.filter ((<>) c) l in
-  (mn, mc, PMap.add a l al)
+    let declare_attribute (mn, mc, al) a =
+      let (a, mn) = Utils.Id.map_insert_t mn a in
+      (a, (mn, mc, PMap.add a [] al))
+
+    let declare_constructor (mn, mc, al) a c =
+      let (c, mc) = Utils.Id.map_insert_t mc c in
+      let l =
+        try PMap.find a al
+        with Not_found -> assert false in
+      (c, (mn, mc, PMap.add a (c :: l) al))
+
+    let remove_constructor (mn, mc, al) a c =
+      let l =
+        try PMap.find a al
+        with Not_found -> assert false in
+      let l = List.filter ((<>) c) l in
+      (mn, mc, PMap.add a l al)
+
+  end
+
+module PlayerAttribute = AttributeInst (struct end)
+
+module ContactAttribute = AttributeInst (struct end)
 
 type strictness =
   | NonStrict
@@ -108,8 +130,8 @@ let attribute_value_can_progress = function
   | One_value_of l -> l <> []
   | Fixed_value (_, _) -> false
 
-type attribute_map = (attribute, value attribute_value) PMap.t
-type contact_map = (contact, (character, contact_value attribute_value) PMap.t) PMap.t
+type attribute_map = (PlayerAttribute.attribute, PlayerAttribute.value attribute_value) PMap.t
+type contact_map = (ContactAttribute.attribute, (character, ContactAttribute.value attribute_value) PMap.t) PMap.t
 
 type character_state =
   (attribute_map * contact_map) array
@@ -129,7 +151,7 @@ let force_get_attribute_character cm st c a =
   try PMap.find a (fst st.(Utils.Id.to_array c))
   with Not_found ->
     let l =
-      match constructors cm a with
+      match PlayerAttribute.constructors cm a with
       | Some l -> l
       | None -> assert false in
     let v = One_value_of l in

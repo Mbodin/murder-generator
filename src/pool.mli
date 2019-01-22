@@ -2,25 +2,19 @@
  * Deals with a pool of current elements, prioritising elements
  * that can explain the currently needed attributes. **)
 
-(** This module doesn’t need to precisely understand how attributes works,
- * just which element can provide which.
- * This type thus merges both kinds of attributes. **)
-type attribute =
-  | PlayerAttribute of State.PlayerAttribute.attribute
-  | ContactAttribute of State.ContactAttribute.attribute
-
 (** In this file, elements are supposed to be given as identifiers. **)
 type element = Utils.Id.t
 
 (** Register that an element exists, and that it may provide the following attributes. **)
-val add_element : element -> attribute list -> unit
+val add_element : element -> State.attribute list -> unit
 
 (** Unregister an element.
  * It won’t be considered by the pool. **)
 val remove_element : element -> unit
 
 (** The pool type.
- * Note that calls to [add_element] and [remove_element] invalidates any existing pool. **)
+ * Note that any call to [add_element] and [remove_element] may invalidate
+ * any existing pool. **)
 type t
 
 (** The empty pool. **)
@@ -39,14 +33,14 @@ val pick : t -> element option * t
 val pop : t -> element option * t
 
 (** Remove from the pool all elements that don’t provide this attribute. **)
-val restrict_only : t -> attribute -> t
+val restrict_only : t -> State.attribute -> t
 
 (** Remove from the pool all elements that provide this attribute. **)
-val restrict_but : t -> attribute -> t
+val restrict_but : t -> State.attribute -> t
 
 (** Add an element to the pool. **)
 val add : t -> element -> t
 
 (** Add all elements that provide this attribute to the pool. **)
-val add_attribute : t -> attribute -> t
+val add_attribute : t -> State.attribute -> t
 

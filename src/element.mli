@@ -39,11 +39,11 @@ val search_instantiation : State.t -> element -> (character array * bool) option
  * This function should only be applied to instantiations for which
  * [compatible_and_progress] returns [Some].
  * It also provides the difference of attributes that have been fixed with the ones
- * that have been created, as a number.  For instance, if an instantiation defines
- * an attribute that was to be defined (that is, for which
- * [State.attribute_value_can_progress] returned true), it will return 1; if it adds
- * an attribute to be defined, it will return -1.
- * TODO: Partition the [int] as a map from attributes to int.
+ * that have been created, as a number for each attribute.
+ * For instance, if an instantiation defines an attribute [a] that was to be defined
+ * (that is, for which [State.attribute_value_can_progress] returned true),
+ * it will associate [1] to [a]; if it adds an attribute to be defined, it will
+ * associate [-1] instead.
  * Once the total number of attribute to be defined is zero, the state can be published. **)
-val apply : State.t -> element -> character array -> State.t * int
+val apply : State.t -> element -> character array -> State.t * (State.attribute, int) PMap.t
 

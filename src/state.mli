@@ -73,6 +73,12 @@ module PlayerAttribute : Attribute
 
 module ContactAttribute : Attribute
 
+(** A generic attribute type for modules who don’t need to precisely
+ * understand how attributes work, merging both kinds of attributes. **)
+type attribute =
+  | PlayerAttribute of PlayerAttribute.attribute
+  | ContactAttribute of ContactAttribute.attribute
+
 (** The strictness flag indicates whether a value can be explained by different elements. **)
 type strictness =
   | NonStrict (** A non-strict value can be explained by as many elements as needed. For instance, how two persons know each other (there might be more than one reason for that). **)

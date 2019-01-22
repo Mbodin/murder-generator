@@ -124,22 +124,29 @@ let search_instantiation st e =
 let apply state e inst =
   Utils.array_fold_left2 (fun (state, diff) ei c ->
     let (conss, evs, rs) = ei in
+    let update_diff diff a i =
+      let old_value =
+        try PMap.find a diff
+        with Not_found -> 0 in
+      PMap.add a (old_value + i) diff in
     let (state, diff) =
       List.fold_left (fun (state, diff) -> function
         | Attribute (a, v1) ->
           let cstate = State.get_character_state state in
-          let diff' =
+          let diff =
             match State.get_attribute_character cstate c a with
             | None ->
               State.write_attribute_character cstate c a v1 ;
-              if State.attribute_value_can_progress v1 then -1 else 0
+              update_diff diff (State.PlayerAttribute a)
+                (if State.attribute_value_can_progress v1 then -1 else 0)
             | Some v2 ->
               match State.compose_attribute_value v1 v2 with
               | None -> assert false
               | Some v3 ->
                 State.write_attribute_character cstate c a v3 ;
-                if State.attribute_value_progress v2 v3 then 1 else 0 in
-          (state, diff + diff')
+                update_diff diff (State.PlayerAttribute a)
+                  (if State.attribute_value_progress v2 v3 then 1 else 0) in
+          (state, diff)
         | Contact (con, cha, v) ->
           (state, diff) (* TODO *)
         ) (state, diff) conss in
@@ -149,5 +156,5 @@ let apply state e inst =
         if c <> c' then
           let r' = State.get_relation state c c' in
           State.write_relation state c c' (Relations.compose r' r)) inst rs in
-    (state, diff)) (state, 0) e inst
+    (state, diff)) (state, PMap.empty) e inst
 

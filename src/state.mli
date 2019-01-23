@@ -64,7 +64,8 @@ module type Attribute = sig
     val declare_constructor : constructor_map -> attribute -> string -> value * constructor_map
 
     (** Users can remove categories before the story generation.
-     * This function removes a constructor, probably because it was associated an unwanted category. **)
+     * This function removes a constructor, probably because it was associated
+     * an unwanted category. **)
     val remove_constructor : constructor_map -> attribute -> value -> constructor_map
 
   end

@@ -43,6 +43,12 @@ type t = {
     filtered_out_attributes : State.attribute Utils.PSet.t (** Attributes meant to be removed from the pool. **)
   }
 
+let empty = {
+    current_elements = Utils.PSet.empty ;
+    pool = Utils.BidirectionalList.from_list [] ;
+    filtered_out_attributes = Utils.PSet.empty
+  }
+
 (** To avoid a costly iteration over the pool when removing elements relative
  * to a particular attribute, the removing is done lazily.
  * When removing an attribute, it is only stored in the set [filtered_out_attributes].
@@ -66,26 +72,21 @@ let normalize p =
     filtered_out_attributes = Utils.PSet.empty
   }
 
-let empty = {
-    current_elements = Utils.PSet.empty ;
-    pool = Utils.BidirectionalList.from_list [] ;
-    filtered_out_attributes = Utils.PSet.empty
-  }
+(** We often don’t want to fully normalize a pool, but to only ensure that
+ * the next element is not to be ignored.
+ * The following function deals with that. **)
+let partial_normalize p =
+  let rec aux l =
+    match Utils.BidirectionalList.match_left l with
+    | None -> empty
+    | Some (e, l') ->
+      if to_be_ignored p e then aux l'
+      else { p with pool = l } in
+  aux p.pool
 
 let is_empty p =
+  let p = partial_normalize p in
   Utils.BidirectionalList.is_empty p.pool
-
-let rec pop p =
-  match Utils.BidirectionalList.match_left p.pool with
-  | None -> (None, empty)
-  | Some (e, l) ->
-    let p' = {
-        current_elements = Utils.PSet.remove e p.current_elements ;
-        pool = l ;
-        filtered_out_attributes = p.filtered_out_attributes
-      } in
-    if to_be_ignored p e then pop p'
-    else (Some e, p')
 
 (** The interesting case of [add] is when adding an element which is marked
  * as an element to be ignored: this mean that the previous note stating
@@ -105,13 +106,26 @@ let add p e =
     filtered_out_attributes = p.filtered_out_attributes
   }
 
+let rec pop p =
+  match Utils.BidirectionalList.match_left p.pool with
+  | None -> (None, empty)
+  | Some (e, l) ->
+    let p' = {
+        current_elements = Utils.PSet.remove e p.current_elements ;
+        pool = l ;
+        filtered_out_attributes = p.filtered_out_attributes
+      } in
+    if to_be_ignored p e then pop p'
+    else (Some e, partial_normalize p')
+
 let pick p =
   let (r, p) = pop p in
   match r with
   | None -> (r, p)
   | Some e -> (Some e, add p e)
 
-let restrict f p a =
+(** Only keeps in the pool the elements that satisfy [f]. **)
+let filter f p a =
   let rec aux = function
   | [] -> empty
   | e :: l ->
@@ -119,13 +133,13 @@ let restrict f p a =
     else aux l
   in aux (Utils.BidirectionalList.to_list p.pool)
 
-let restrict_only = restrict (fun a l -> List.mem a l)
+let restrict = filter (fun a l -> List.mem a l)
 
-(** A naive implementation of [restrict_but] could be
- * [restrict (fun a l -> not (List.mem a l))].
- * We chose here to be lazy (assuming that the pool is large)
+(** A naive implementation of [filter_out] could be
+ * [filter (fun a l -> not (List.mem a l))].
+ * We here chose to be lazy (assuming that the pool is large)
  * and simply rely on the [filtered_out_attributes] mechanism. **)
-let restrict_but p a =
+let filter_out p a =
   { p with filtered_out_attributes = Utils.PSet.add a p.filtered_out_attributes }
 
 let add_attribute p a =

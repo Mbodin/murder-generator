@@ -6,4 +6,5 @@
 _build
 *.byte
 *.native
+*.js
 

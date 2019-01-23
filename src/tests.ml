@@ -1,4 +1,35 @@
 
+let test_pool =
+  let new_id = Utils.Id.new_id_function () in
+  let e1 = new_id () in
+  let e2 = new_id () in
+  let e3 = new_id () in
+  Pool.add_element e1 [] ;
+  Pool.add_element e2 [] ;
+  Pool.add_element e3 [] ;
+  let p = Pool.empty in
+  print_endline ("is_empty empty = " ^ string_of_bool (Pool.is_empty p)) ;
+  print_endline ("pick empty = " ^ match Pool.pick p with None, _ -> "None" | Some _, _ -> "Some") ;
+  print_endline ("pop empty = " ^ match Pool.pop p with None, _ -> "None" | Some _, _ -> "Some") ;
+  let p = Pool.add p e1 in
+  let p = Pool.add p e2 in
+  let p = Pool.add p e3 in
+  print_endline ("is_empty [e1; e2; e3] = " ^ string_of_bool (Pool.is_empty p)) ;
+  let rec foo p =
+    let o, p = Pool.pop p in
+    match o with
+    | None -> "[]"
+    | Some _ -> ";" ^ foo p in
+  print_endline ("pop* [e1; e2; e3] = " ^ foo p) ;
+  let rec bar i p =
+    if i = 0 then "-"
+    else
+      let o, p = Pool.pick p in
+      match o with
+      | None -> "[]"
+      | Some _ -> ";" ^ bar (i - 1) p in
+  print_endline ("pick^10 [e1; e2; e3] = " ^ bar 10 p)
+
 let test_relations =
   let open Relations in
   let b = [ Neutral; Hate; Trust; Chaotic; Undetermined; Avoidance ] in

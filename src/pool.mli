@@ -33,10 +33,10 @@ val pick : t -> element option * t
 val pop : t -> element option * t
 
 (** Remove from the pool all elements that don’t provide this attribute. **)
-val restrict_only : t -> State.attribute -> t
+val restrict : t -> State.attribute -> t
 
 (** Remove from the pool all elements that provide this attribute. **)
-val restrict_but : t -> State.attribute -> t
+val filter_out : t -> State.attribute -> t
 
 (** Add an element to the pool. **)
 val add : t -> element -> t

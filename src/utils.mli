@@ -22,25 +22,27 @@ val error_monad : ('a, 'b) plus -> ('b -> ('a, 'c) plus) -> ('a, 'c) plus
 (** Returns the tail of the list, the empty list being associated with the empty list. **)
 val safe_tail : 'a list -> 'a list
 
-(** Creates a list from a function providing the optional next element and iterator. The first element given is used to initialise the function and is not inserted into the list. **)
+(** Creates a list from a function providing the optional next element and iterator.
+ * The first element given is used to initialise the function and is not inserted
+ * into the list. **)
 val unfold : ('a -> ('b * 'a) option) -> 'a -> 'b list
 
-(** Builds the list of nth first elements, from 0 to n - 1. **)
+(** Builds the list of nth first elements, from [0] to [n - 1]. **)
 val seq : int -> int list
 
-(** Builds the list of nth first elements, from 0 to n. **)
+(** Builds the list of nth first elements, from [0] to [n]. **)
 val seq_incl : int -> int list
 
 (** Builds the list from i to j, included. **)
 val seq_range : int -> int -> int list
 
-(** Builds the array of nth first elements, from 0 to n - 1. **)
+(** Builds the array of nth first elements, from [0] to [n - 1]. **)
 val seq_array : int -> int array
 
-(** Builds the array of nth first elements, from 0 to n. **)
+(** Builds the array of nth first elements, from [0] to [n]. **)
 val seq_incl_array : int -> int array
 
-(** Builds the array from i to j, included. **)
+(** Builds the array from [i] to [j], included. **)
 val seq_range_array : int -> int -> int array
 
 
@@ -115,14 +117,21 @@ val array_fold_left2 : ('a -> 'b -> 'c -> 'a) -> 'a -> 'b array -> 'c array -> '
 
 module Id : sig
 
-    (** A type for identifiers. Integers are used internally, but hiding this fact in the signature helps preventing mistakes. **)
+    (** A type for identifiers.
+     * Integers are used internally, but hiding this fact in the signature
+     * helps preventing mistakes. **)
     type t (** = int **)
 
     (** Generates a new identifier. **)
     val new_id : unit -> t
 
-    (** If a large number of identifiers is generated, it is better to have a count just for the application and not a global one. This function thus returns a function counting for the specific usage to be applied. **)
+    (** If a large number of identifiers is generated, it is better to have
+     * a count just for the application and not a global one.
+     * This function thus returns a function counting for the specific usage
+     * to be applied. **)
     val new_id_function : unit -> unit -> t
+
+    (* TODO: Make [new_id_function] the new [new_id] by making the module [Id] generative (parameterised by [()]). *)
 
     (** Converts an identifier to a number that can be used as an array index. **)
     val to_array : t -> int
@@ -133,7 +142,11 @@ module Id : sig
     (** A type for a mapping from a type to identifiers. **)
     type 'a map
 
-    (** Get the identifier from the identifier map. The function may return None if the identifier is not in the mapping, but the important property is that if it returns Some for an object, this value is consistently different from the one of any other objects, expect of course for the same objects. **)
+    (** Get the identifier from the identifier map.
+     * The function may return [None] if the identifier is not in the mapping,
+     * but the important property is that if it returns Some for an object,
+     * this value is consistently different from the one of any other objects,
+     * expect of course for the same objects. **)
     val get_id : 'a map -> 'a -> t option
 
     (** Create a identifier map. **)
@@ -167,16 +180,21 @@ module UnionFind : sig
     val create_idt : unit -> Id.t t
     val create_int : unit -> int t
 
-    (** Inserts an element to the given union-find structure: it is now associated to a identifier. **)
+    (** Inserts an element to the given union-find structure:
+     * it is now associated to a identifier. **)
     val insert : 'a t -> 'a -> 'a t
 
-    (** Merges two elements of the union-find structure. If the elements are not present, it creates them in the structure. **)
+    (** Merges two elements of the union-find structure.
+     * If the elements are not present, it creates them in the structure. **)
     val merge : 'a t -> 'a -> 'a -> 'a t
 
-    (** States whether two elements are in the same equivalence class in the union-find.  Returns None if one element is not in the structure. **)
+    (** States whether two elements are in the same equivalence class in the
+     * union-find.
+     * Returns [None] if one element is not in the structure. **)
     val same_class : 'a t -> 'a -> 'a -> bool option
 
-    (** Same than same_class, but inserts the elements in the structure if they are not present. **)
+    (** Same than same_class, but inserts the elements in the structure
+     * if they are not present. **)
     val same_class_insert : 'a t -> 'a -> 'a -> bool * 'a t
 
     (** Fold along all classes of the union-find structure. **)
@@ -188,10 +206,13 @@ module UnionFind : sig
     (** Provides a list of equivalence classes. **)
     val to_list : 'a t -> 'a list
 
-    (** Provides one class of the union-find structure. There is no guarantee which one will be picked. Only returns None if the structure is empty. **)
+    (** Provides one class of the union-find structure.
+     * There is no guarantee which one will be picked.
+     * Only returns [None] if the structure is empty. **)
     val get_one_class : 'a t -> 'a option
 
-    (** Returns true if there is exactly or less than one class, that is if all elements of the union-find are from the same class. **)
+    (** Returns true if there is exactly or less than one class,
+     * that is if all elements of the union-find are from the same class. **)
     val one_class : 'a t -> bool
 
   end

@@ -1,5 +1,5 @@
 (** Module Element
- * Data structure and functions about elements **)
+ * Data structure and functions about story elements. **)
 
 type character = State.character
 
@@ -15,11 +15,11 @@ type character_constraint =
     (** The given contact (identified in the local array) is provided by the
      * element. **)
 
-type element =
+type t =
   ((** Each players considered by the element are represented as a cell. **)
    character_constraint list (** The constraints on this player. **)
    * History.event list (** The events that this element would provide to this player. **)
-   * Relations.t array (** The relations that would be added to this player, for each characters. **)
+   * Relation.t array (** The relations that would be added to this player, for each characters. **)
   ) array
 
 (** Given a state, an element, and an instantiation of the characters, states
@@ -28,14 +28,16 @@ type element =
  * If the element can be applied, it states whether the element is making
  * progress, that is whether there exists at least one attribute value that
  * has been changed to something recognised by [State.attribute_value_progress]. **)
-val compatible_and_progress : State.t -> element -> character array -> bool option
+val compatible_and_progress : State.t -> t -> character array -> bool option
 
 (** Look for instantiations.
  * The second return value is the result of [compatible_and_progress] on this instantiation.
  * It tries to return an instantiation that progresses. **)
-val search_instantiation : State.t -> element -> (character array * bool) option
+val search_instantiation : State.t -> t -> (character array * bool) option
 
 (** Apply the given element to the state according to this instantiation.
+ * This application is not functional (although the new state is returned,
+ * invalidating the previous one).
  * This function should only be applied to instantiations for which
  * [compatible_and_progress] returns [Some].
  * It also provides the difference of attributes that have been fixed with the ones
@@ -45,5 +47,9 @@ val search_instantiation : State.t -> element -> (character array * bool) option
  * it will associate [1] to [a]; if it adds an attribute to be defined, it will
  * associate [-1] instead.
  * Once the total number of attribute to be defined is zero, the state can be published. **)
-val apply : State.t -> element -> character array -> State.t * (State.attribute, int) PMap.t
+val apply : State.t -> t -> character array -> State.t * (State.attribute, int) PMap.t
+
+(** Get the resulting relation array from an instantiation.
+ * The input state is not modified by this function. **)
+val apply_relations : State.t -> t -> character array -> State.relation_state
 

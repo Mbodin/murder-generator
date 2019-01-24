@@ -84,6 +84,12 @@ let list_index e = list_predicate_index ((=) e)
 let shuffle l =
   List.sort (fun _ _ -> Random.int 3 - 1) l
 
+let rec argmax compare = function
+  | [] -> None
+  | [a] -> Some a
+  | a :: b :: l ->
+    if compare a b > 0 then argmax compare (a :: l)
+    else argmax compare (b :: l)
 
 let swap (a, b) = (b, a)
 

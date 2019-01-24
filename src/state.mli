@@ -8,14 +8,14 @@ type relation_state
 
 (** Returns the relation between the two characters.
  * The relations are usually symmetrical, but note how the asymmetrical
- * relation between c1 and c2 is represented by Asymmetrical (r1, r2)
- * where r1 is the relation from the point of view of c1.
+ * relation between [c1] and [c2] is represented by [Asymmetrical (r1, r2)]
+ * where [r1] is the relation from the point of view of [c1].
  * If a mapping is not present, it returns the default relation
- * Relations.Basic Relations.Neutral. *)
-val get_relation_state : relation_state -> character -> character -> Relations.t
+ * [Relation.Basic Relation.Neutral]. *)
+val get_relation_state : relation_state -> character -> character -> Relation.t
 
 (** Non-functionally update the relation state. **)
-val write_relation_state : relation_state -> character -> character -> Relations.t -> unit
+val write_relation_state : relation_state -> character -> character -> Relation.t -> unit
 
 (** The following exception is returned if one tries to write or read
  * a relation between two identical characters. **)
@@ -70,9 +70,13 @@ module type Attribute = sig
 
   end
 
-module PlayerAttribute : Attribute
+(** A module to express attributes and values for players. **)
+module PlayerAttribute : Attribute with type attribute = Utils.Id.t
+                                   and type value = Utils.Id.t
 
-module ContactAttribute : Attribute
+(** A module to express attributes and values for contacts between players. **)
+module ContactAttribute : Attribute with type attribute = Utils.Id.t
+                                    and type value = Utils.Id.t
 
 (** A generic attribute type for modules who don’t need to precisely
  * understand how attributes work, merging both kinds of attributes. **)
@@ -139,15 +143,23 @@ val get_all_contact_character : character_state -> character -> ContactAttribute
 type t =
   character_state * relation_state * History.state
 
-val get_relation : t -> character -> character -> Relations.t
+(** Read the relation between two different characters in a state. **)
+val get_relation : t -> character -> character -> Relation.t
 
-val write_relation : t -> character -> character -> Relations.t -> unit
+(** Non-functionally updates a relation in a state.
+ * The two characters have to be different.
+ * This function writes both directions of the relation
+ * (that is, there is no need to call both [write_relation s c1 c2 r]
+ * and [write_relation s c2 c1 (Relation.reverse r)] at the same time. **)
+val write_relation : t -> character -> character -> Relation.t -> unit
 
 (** Creates an empty state for the given number n of characters,
- * each indexed from 0 to n - 1. **)
+ * each indexed from [0] to [n - 1]. **)
 val create_state : int -> t
 
+(** Get the character state component of a state. **)
 val get_character_state : t -> character_state
 
+(** Returns the list of all players defined in this state. **)
 val all_players : t -> character list
 

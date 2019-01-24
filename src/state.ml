@@ -2,13 +2,13 @@
 type character = Utils.Id.t
 
 type relation_state =
-  Relations.t array array
+  Relation.t array array
 
 exception SelfRelation
 
 let create_relation_state n =
   Array.init (n - 1) (fun i ->
-    Array.make (n - 1 - i) (Relations.Basic Relations.Neutral, false))
+    Array.make (n - 1 - i) (Relation.Basic Relation.Neutral, false))
 
 let rec get_relation_state a c1 c2 =
   let c1 = Utils.Id.to_array c1 in
@@ -16,7 +16,7 @@ let rec get_relation_state a c1 c2 =
   if c1 = c2 then
     raise SelfRelation
   else if c1 > c2 then
-    Relations.reverse a.(c2).(c1)
+    Relation.reverse a.(c2).(c1)
   else a.(c1).(c2)
 
 let write_relation_state a c1 c2 r =
@@ -25,7 +25,7 @@ let write_relation_state a c1 c2 r =
   if c1 = c2 then
     raise SelfRelation
   else if c1 > c2 then
-    a.(c2).(c1) <- Relations.reverse r
+    a.(c2).(c1) <- Relation.reverse r
   else a.(c2).(c1) <- r
 
 module type Attribute = sig
@@ -44,7 +44,7 @@ module type Attribute = sig
 
 (** The unused parameter is used so that the maps in [empty_constructor_map]
  * are initialised with a different reference in each instantiations. *)
-module AttributeInst () =
+module AttributeInst = functor () ->
   struct
 
     type attribute = Utils.Id.t

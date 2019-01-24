@@ -23,6 +23,7 @@ let get_elements a =
   with Not_found -> []
 
 let add_element e l =
+  let l = Utils.shuffle l in
   all_elements := PMap.add e l !all_elements ;
   List.iter (fun a ->
     let l = get_elements a in
@@ -144,5 +145,5 @@ let filter_out p a =
   { p with filtered_out_attributes = Utils.PSet.add a p.filtered_out_attributes }
 
 let add_attribute p a =
-  List.fold_left add p (get_elements a)
+  List.fold_left add p (Utils.shuffle (get_elements a))
 

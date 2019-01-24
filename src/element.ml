@@ -5,10 +5,10 @@ type character_constraint =
   | Attribute of State.PlayerAttribute.attribute * State.PlayerAttribute.value State.attribute_value
   | Contact of State.ContactAttribute.attribute * int * State.ContactAttribute.value State.attribute_value
 
-type element =
+type t =
   (character_constraint list
    * History.event list
-   * Relations.t array
+   * Relation.t array
   ) array
 
 (** States whether [v1] and [v2] are compatible and make some progress.
@@ -155,6 +155,9 @@ let apply state e inst =
       Array.iter2 (fun c' r ->
         if c <> c' then
           let r' = State.get_relation state c c' in
-          State.write_relation state c c' (Relations.compose r' r)) inst rs in
+          State.write_relation state c c' (Relation.compose r' r)) inst rs in
     (state, diff)) (state, PMap.empty) e inst
+
+let apply_relations state e inst =
+  TODO
 

@@ -1,5 +1,11 @@
 (** Module Solver
- * Iterate over generators. **)
+ * Iterate over story elements. **)
+
+(** Evaluates the provided relation state with respect to the target
+ * difficulty and simplicity given to each player.
+ * The higher, the better the grade.
+ * Note that most grades are negative. **)
+val evaluate : State.relation_state -> int
 
 (*
 val solver_step : State.t -> (Generator.t * bool) Utils.BidirectionalList.t -> State.t * (Generator.t * bool) Utils.BidirectionalList.t
@@ -10,5 +16,5 @@ val solver_step : State.t -> (Generator.t * bool) Utils.BidirectionalList.t -> S
 *)
 
 (** Runs the solver until no one generator are left. **)
-val solver : State.constructor_map -> State.t -> Element.t list -> State.t
+val solver : (*TODO: all the constructors. State.constructor_map ->*) State.t -> Element.t list -> State.t
 

@@ -61,6 +61,10 @@ val list_index : 'a -> 'a list -> int option
 (** Returns the index of the first element matching the predicate in the list. **)
 val list_predicate_index : ('a -> bool) -> 'a list -> int option
 
+(** Given a transitive comparison function and a list, returns the greatest
+ * element of the list (or [None] if the list is empty). **)
+val argmax : ('a -> 'a -> int) -> 'a list -> 'a option
+
 (** Sorts and remove all duplicated element from the given list. **)
 val uniq : 'a list -> 'a list
 
@@ -131,7 +135,8 @@ module Id : sig
      * to be applied. **)
     val new_id_function : unit -> unit -> t
 
-    (* TODO: Make [new_id_function] the new [new_id] by making the module [Id] generative (parameterised by [()]). *)
+    (* TODO: Make [new_id_function] the new [new_id] by making the module [Id] generative (parameterised by [()]).
+     * (This is more complex than expected.) *)
 
     (** Converts an identifier to a number that can be used as an array index. **)
     val to_array : t -> int

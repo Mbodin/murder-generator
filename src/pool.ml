@@ -85,7 +85,8 @@ let partial_normalize p =
   aux p.pool
 
 let is_empty p =
-  let p = partial_normalize p in
+  let p = partial_normalize p in (* Technically, the invariant that the first element of the list is not ignored
+                                  * should hold and this normalisation should not be not needed. *)
   Utils.BidirectionalList.is_empty p.pool
 
 (** The interesting case of [add] is when adding an element which is marked

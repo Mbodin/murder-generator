@@ -5,9 +5,9 @@ To English-speaker: the following is in French, I will translate it when the pro
 
 # murder-generator
 
-Ce programme est un générateur de soirées enquête aléatoires (et très basiques).
-À noter que ce que j’appelle « soirée enquête » est plus communément appellé « huit clos » par la communauté rôliste en général.
-Il ne fait en effet que rarement référence à un meurtrier qu’il faudrait retrouver dans ces soirées enquête.
+Ce programme est un générateur de soirées-enquêtes aléatoires (et très basiques).
+À noter que ce que j’appelle « soirée-enquête » est plus communément appellé « huit clos » par la communauté rôliste en général.
+Il ne fait en effet que rarement référence à un meurtrier qu’il faudrait retrouver dans ces soirées-enquêtes.
 
 ## Prise en main
 
@@ -15,16 +15,16 @@ Il ne fait en effet que rarement référence à un meurtrier qu’il faudrait re
 
 ## Objectifs
 
-Les soirées enquête générées ont plusieurs objectifs :
-* Aider à la rédaction de soirées enquête. En effet, les scénarios générés n’ont pas pour objectif d’être trop complexes. En particulier, aucun élément sortant vraiment de l’ordinaire des soirées enquêtes ne sera présent. Vous ne sortirez donc pas de la lecture en disant « c’est génial ! ». Cependant, les relations entre les différents personnages ont pour but d’être équilibrées et intéressantes.
-* Avoir des soirées enquêtes personnalisées. Souvent, les joueurs de soirées enquête ont des requêtes très précises sur leur personnage. À tel point que souvent, une soirée enquête toute en main n’est pas suffisante pour satisfaire leur besoin de complexité. Ce programme est paramétré par les envies des différents joueurs, permettant par exemple de donner un personnage plus simple à jouer pour des débutants, ou assuré de mourir rapidement pour quelqu’un qui ne sera pas disponible sur toute la durée de la soirée enquête.
-* Permettre d’improviser rapidement une soirée enquête unique entre amis. En bonus, les soirées enquête générées étant aléatoires, il n’y a pas de raison d’avoir peur de se gâcher une soirée enquête connue, par exemple.
+Les soirées-enquêtes générées ont plusieurs objectifs :
+* Aider à la rédaction de soirées-enquêtes. En effet, les scénarios générés n’ont pas pour objectif d’être trop complexes. En particulier, aucun élément sortant vraiment de l’ordinaire des soirées enquêtes ne sera présent. Vous ne sortirez donc pas de la lecture en disant « c’est génial ! ». Cependant, les relations entre les différents personnages ont pour but d’être équilibrées et intéressantes.
+* Avoir des soirées-enquêtes personnalisées. Souvent, les joueurs de soirées enquête ont des requêtes très précises sur leur personnage. À tel point que souvent, une soirée enquête toute en main n’est pas suffisante pour satisfaire leur besoin de complexité. Ce programme est paramétré par les envies des différents joueurs, permettant par exemple de donner un personnage plus simple à jouer pour des débutants, ou assuré de mourir rapidement pour quelqu’un qui ne sera pas disponible sur toute la durée de la soirée enquête.
+* Permettre d’improviser rapidement une soirée-enquête unique entre amis. En bonus, les soirées enquête générées étant aléatoires, il n’y a pas de raison d’avoir peur de se gâcher une soirée enquête connue, par exemple.
 
 ## Raisons
 
 Ce logiciel a plusieurs raisons d’existences :
-* Écrire une soirée enquête est long. Je n’en ai personnellement plus le temps d’écrire des soirées comme [ce que j’ai pu écrire avant](https://github.com/Mbodin/murders). Mais j’ai toujours des idées, et je trouve dommage que personne ne puisse en profiter. Ce programme me permet (à moi, mais à n’importe qui d’autre, d’ailleurs) d’écrire l’élément de scénario que j’ai en tête sans avoir à écrire un scénario entier : cet élément de scénario sera alors choisi au hasard au fil des générations.
-* Écrire une soirée enquête est difficile. En particulier, en tant qu’auteur, j’ai souvent tendance à me focaliser sur l’univers, sur tout ce qui me fait rêver et rire. Souvent, le scénario a tendance à se concentrer sur une ou deux personnes en particulier. Très souvent, il y a deux ou trois personnages de ma soirée enquête qui ne sont que des remplissages : on les ajoute parce que l’on veut un certain nombre de joueur, ou pour brouiller les pistes, mais ces personnages se retrouvent relativement isolés. Le problème, c’est que les relations sont capitales dans une soirée enquête, et je ne suis jamais très content de laisser un joueur à part. Ce générateur essaye exactement d’optimiser ce problème : faire en sorte que tous les joueurs aient des relations intéressantes et équilibrés.
+* Écrire une soirée-enquête est long. Je n’en ai personnellement plus le temps d’écrire des soirées comme [ce que j’ai pu écrire avant](https://github.com/Mbodin/murders). Mais j’ai toujours des idées, et je trouve dommage que personne ne puisse en profiter. Ce programme me permet (à moi, mais à n’importe qui d’autre, d’ailleurs) d’écrire l’élément de scénario que j’ai en tête sans avoir à écrire un scénario entier : cet élément de scénario sera alors choisi au hasard au fil des générations.
+* Écrire une soirée-enquête est difficile. En particulier, en tant qu’auteur, j’ai souvent tendance à me focaliser sur l’univers, sur tout ce qui me fait rêver et rire. Souvent, le scénario a tendance à se concentrer sur une ou deux personnes en particulier. Très souvent, il y a deux ou trois personnages de ma soirée enquête qui ne sont que des remplissages : on les ajoute parce que l’on veut un certain nombre de joueur, ou pour brouiller les pistes, mais ces personnages se retrouvent relativement isolés. Le problème, c’est que les relations sont capitales dans une soirée enquête, et je ne suis jamais très content de laisser un joueur à part. Ce générateur essaye exactement d’optimiser ce problème : faire en sorte que tous les joueurs aient des relations intéressantes et équilibrés.
 
 ## Fonctionnement
 
@@ -53,7 +53,7 @@ Un scénario se compose de plusieurs parties :
 * Un ensemble d’objets, définis par leurs caractéristiques et leurs relations avec les personnages. Cette notion d’objet est très vague. On pourra par exemple imaginer une épée magique recherchée par un joueur et détenu par un autre, mais aussi un lieu, une pensée, etc.
 
 Prenons un exemple assez stéréotypé, mais qui fixe les idées.
-* On demande une soirée enquête à deux joueurs. C’est un cas rare, mais c’est pour l’exemple.
+* On demande une soirée-enquête à deux joueurs. C’est un cas rare, mais c’est pour l’exemple.
 * On peut initialement donner des caractéristiques aux personnages. Par exemple, le premier joueur veut vouloir jouer un personnage féminin. On ajoute cette caractéristique avant la génération de scénario.
 * Un élément de scénario attribut des genres à des personnages, il va par exemple dire que le second joueur est un un homme. Il ne peut pas changer la caractéristique du premier joueur, qui a déjà été choisi comme étant une femme. Les histoires des deux personnages va être mise à jour pour leur donner une date de naissance.
 * Un autre élément de scénario attribut au second joueur le statut de militaire (c’est une caractéristique). Son histoire va être mise à jour pour indiquer qu’il a participé à une école militaire, qui lui a valu ce titre.
@@ -67,5 +67,5 @@ Le programme continue ainsi jusqu’à ce que les demandes de complexité et de 
 
 GPL
 
-Les scénarios générés sont cependant sans licence (comme la sortie d’un compilateur) : vous pouvez utilisez les soirée enquêtes générées comme bon vous semble.
+Les scénarios générés sont cependant sans licence (comme la sortie d’un compilateur) : vous pouvez utilisez les soirées-enquêtes générées comme bon vous semble.
 

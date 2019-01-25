@@ -8,13 +8,12 @@ exception SelfRelation
 
 let create_relation_state n =
   Array.init (n - 1) (fun i ->
-    Array.make (n - 1 - i) (Relation.Basic Relation.Neutral, false))
+    Array.make (n - 1 - i) Relation.neutral)
 
-let rec get_relation_state a c1 c2 =
+let rec read_relation_state a c1 c2 =
   let c1 = Utils.Id.to_array c1 in
   let c2 = Utils.Id.to_array c2 in
-  if c1 = c2 then
-    raise SelfRelation
+  if c1 = c2 then Relation.neutral
   else if c1 > c2 then
     Relation.reverse a.(c2).(c1)
   else a.(c1).(c2)
@@ -174,15 +173,29 @@ let get_all_contact_character st c a =
 type t =
   character_state * relation_state * History.state
 
-let get_relation (_, a, _) = get_relation_state a
+let get_relation_state (_, a, _) = a
 
-let write_relation (_, a, _) = write_relation_state a
+let read_relation st = read_relation_state (get_relation_state st)
+
+let write_relation st = write_relation_state (get_relation_state st)
 
 let create_state n =
   (create_character_state n, create_relation_state n, History.create_state n)
 
 let get_character_state (st, _, _) = st
 
-let all_players (st, _, _) =
-  List.map Utils.Id.from_array (Utils.seq (Array.length st))
+let all_players_length l =
+  List.map Utils.Id.from_array (Utils.seq l)
+
+let number_of_player (st, _, _) = Array.length st
+
+let all_players st =
+  all_players_length (number_of_player st)
+
+(** Remember that relation state do not store self-relation and is
+ * thus one cell smaller than usual arrays. **)
+let number_of_player_relation_state st = 1 + Array.length st
+
+let all_players_relation st =
+  all_players_length (number_of_player_relation_state st)
 

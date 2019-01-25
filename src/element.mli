@@ -51,5 +51,5 @@ val apply : State.t -> t -> character array -> State.t * (State.attribute, int) 
 
 (** Get the resulting relation array from an instantiation.
  * The input state is not modified by this function. **)
-val apply_relations : State.t -> t -> character array -> State.relation_state
+val apply_relations : State.relation_state -> t -> character array -> State.relation_state
 

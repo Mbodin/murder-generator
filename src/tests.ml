@@ -31,7 +31,7 @@ let test_pool =
   print_endline ("pick^10 [e1; e2; e3] = " ^ bar 10 p)
 
 let test_relations =
-  let open Relations in
+  let open Relation in
   let b = [ Neutral; Hate; Trust; Chaotic; Undetermined; Avoidance ] in
   let l =
     List.map (fun r -> Basic r, false) b @

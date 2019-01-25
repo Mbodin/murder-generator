@@ -258,6 +258,8 @@ let compose (r1, s1) (r2, s2) =
   let (r, s) = compose_relation (normalise r1) (normalise r2) in
   (r, s || s1 || s2)
 
+let neutral = (Basic Neutral, false)
+
 let rec reverse_relation = function
   | Basic r -> Basic r
   | Asymmetrical (r1, r2) -> Asymmetrical (r2, r1)

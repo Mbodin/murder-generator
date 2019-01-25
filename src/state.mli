@@ -6,13 +6,13 @@ type character = History.character
 (** A mapping from pairs of characters to Relation.t. **)
 type relation_state
 
-(** Returns the relation between the two characters.
+(** Returns the relation between two characters.
  * The relations are usually symmetrical, but note how the asymmetrical
  * relation between [c1] and [c2] is represented by [Asymmetrical (r1, r2)]
  * where [r1] is the relation from the point of view of [c1].
- * If a mapping is not present, it returns the default relation
- * [Relation.Basic Relation.Neutral]. *)
-val get_relation_state : relation_state -> character -> character -> Relation.t
+ * If a mapping is not present or if both characters are the same,
+ * it returns the default relation [Relation.Basic Relation.Neutral]. **)
+val read_relation_state : relation_state -> character -> character -> Relation.t
 
 (** Non-functionally update the relation state. **)
 val write_relation_state : relation_state -> character -> character -> Relation.t -> unit
@@ -22,7 +22,7 @@ val write_relation_state : relation_state -> character -> character -> Relation.
 exception SelfRelation
 
 (** Creates an empty relation state for the given number n of characters,
- * each indexed from 0 to n - 1. **)
+ * each indexed from [0] to [n - 1]. **)
 val create_relation_state : int -> relation_state
 
 (** The state of attributes and contact of each character. **)
@@ -143,8 +143,11 @@ val get_all_contact_character : character_state -> character -> ContactAttribute
 type t =
   character_state * relation_state * History.state
 
+(** Get the [relation_state] component of the state. **)
+val get_relation_state : t -> relation_state
+
 (** Read the relation between two different characters in a state. **)
-val get_relation : t -> character -> character -> Relation.t
+val read_relation : t -> character -> character -> Relation.t
 
 (** Non-functionally updates a relation in a state.
  * The two characters have to be different.
@@ -160,6 +163,15 @@ val create_state : int -> t
 (** Get the character state component of a state. **)
 val get_character_state : t -> character_state
 
+(** Returns the size of the state, that its number of players. **)
+val number_of_player : t -> int
+
+(** Similar to [number_of_player], but from a relation state. **)
+val number_of_player_relation_state : relation_state -> int
+
 (** Returns the list of all players defined in this state. **)
 val all_players : t -> character list
+
+(** Similar to [all_players], but from a relation state. **)
+val all_players_relation : relation_state -> character list
 

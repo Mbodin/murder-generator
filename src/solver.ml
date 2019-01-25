@@ -1,26 +1,50 @@
 
-(** Given a state [s] and an element [e], returns [None] if the element
- * can’t be applied whilst increasing the evaluation of the state relations.
+type objective = {
+    difficulty : int ;
+    complexity : int
+  }
+
+(** Evaluates a character [c] in a relation state [s] compared to its objective [o].
+ * COmplexity is difficult to compensate later on, whilst difficulty
+ * is easy (it’s just applying an helping element).
+ * The evaluation thus punishes more to pass difficult to compensate thresholds. **)
+let evaluate_character o s c =
+  let collect f =
+    Utils.sum (List.map (Utils.compose f (State.read_relation_state s c))
+      (State.all_players_relation s)) in
+  let d = collect Relation.difficulty - o.difficulty in
+  let s = collect Relation.complexity - o.complexity in
+  (if s >= 0 then - 2 * s * s * s else s) - d * d
+
+let evaluate o s =
+  Utils.array_sum (Array.mapi (fun i o ->
+    evaluate_character o s (Utils.Id.from_array i)) o)
+
+  (** Given an array of objectives [o], a state [s], and an element [e],
+ * returns [None] if the element can’t be applied whilst increasing
+ * the evaluation of the state relations.
  * If it can, it returns a triple with:
  * - the instantiation that makes it so,
  * - whether the element helps progressing with the attribute values,
- * - the new evaluation of the relations.
+ * - the change in the relation evaluation.
  * The argument [evs] must be [evaluate (State.get_relation_state s)]
  * (it is passed to avoid recomputing it each time). **)
-let grade_evs s evs e =
+let grade_evs o s evs e =
   Utils.if_option (Element.search_instantiation s e) (fun (inst, progress) ->
-    let new_relations = Element.apply_relations s e inst in
-    let ev = evaluate new_relations in
-    if ev < evs then None
-    else Some (inst, progress, ev))
+    let new_relations =
+      Element.apply_relations (State.get_relation_state s) e inst in
+    let ev = evaluate o new_relations in
+    let dev = ev - evs in
+    if dev < 0 then None
+    else Some (inst, progress, dev))
 
 (** As [grade_evs], but withouth the need to provide the [evs] argument. **)
-let grade s =
-  grade_evs s (evaluate (State.get_relation_state s))
+let grade o s =
+  grade_evs o s (evaluate o (State.get_relation_state s))
 
 (** Takes a “grade” made of the progress of an element and the gain
  * of evaluation due to an element. **)
-let compare_grade (progress1, ev1) (progress2, ev2) =
+let compare_grade (progress1, dev1) (progress2, dev2) =
   (** [test] receives two booleans: if one has it and not the other,
    * then this one is definitely better.
    * Otherwise, we have to continue looking. **)
@@ -28,11 +52,9 @@ let compare_grade (progress1, ev1) (progress2, ev2) =
     if b1 && not b2 then 1
     else if b2 && not b1 then (-1)
     else c () in
-  test (ev1 > 0 && progress1) (ev2 > 0 && progress2) (fun _ ->
-    test (ev1 >= 0 && progress1) (ev2 >= 0 && progress2) (fun _ ->
-      test (ev1 > 0) (ev2 > 0) (fun _ ->
-        test (ev1 >= 0) (ev2 >= 0) (fun _ ->
-          compare ev1 ev2))))
+  test (dev1 > 0 && progress1) (dev2 > 0 && progress2) (fun _ ->
+    test (dev1 >= 0 && progress1) (dev2 >= 0 && progress2) (fun _ ->
+      compare dev1 dev2))
 
 (** This function iterates of the current state [s] and the pool [p].
  * It is parameterised by two numbers:
@@ -42,19 +64,19 @@ let compare_grade (progress1, ev1) (progress2, ev2) =
  * - [greedy]: In the case where the optimistic approach did not work,
  *   the function extracts up to this number of new elements, halting
  *   on the first one that applies. **)
-let step optimistic greedy s p =
-  let evs = evaluate (State.get_relation_state s) in
+let step o optimistic greedy s p =
+  let evs = evaluate o (State.get_relation_state s) in
   let rec optimistic_pick p = function
     | 0 -> (p, [])
     | n ->
       let (e, p) = Pool.pick p in
       match e with
-      | None -> (p, []) (* Recursive calls won’t magically make elements appear. *)
+      | None -> (p, [])
       | Some e ->
         let (p, l) = optimistic_pick p (n - 1) in
-        match grade_evs s evs e with
+        match grade_evs o s evs e with
         | None -> (p, l)
-        | Some (inst, progress, ev) -> (p, (e, inst, (progress, ev - evs)) :: l) in
+        | Some (inst, progress, dev) -> (p, (e, inst, (progress, dev)) :: l) in
   let (p, l) = optimistic_pick optimistic p in
   match argmax (fun (e1, inst1, g1) (e2, inst2, g2) -> compare_grade g1 g2) l with
   | Some (e, inst, g) -> (p, Some (Element.apply s e inst))
@@ -64,11 +86,11 @@ let step optimistic greedy s p =
       | n ->
         let (e, p) = Pool.pick p in
         match e with
-        | None -> (p, None) (* Recursive calls won’t magically make elements appear. *)
+        | None -> (p, None)
         | Some e ->
-          match grade_evs s evs e with
+          match grade_evs o s evs e with
           | None -> greedy_pick p (n - 1)
-          | Some (inst, progress, ev) -> (p, Some (Element.apply s e inst)) in
+          | Some (inst, progress, dev) -> (p, Some (Element.apply s e inst)) in
     greedy_pick p greedy
 
 

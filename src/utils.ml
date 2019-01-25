@@ -7,6 +7,8 @@ let assert_defend = true
 
 let id x = x
 
+let compose f g x = f (g x)
+
 let option_map f = function
   | Some x -> Some (f x)
   | None -> None

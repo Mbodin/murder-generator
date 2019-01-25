@@ -4,6 +4,9 @@
 (** Returns its argument. **)
 val id : 'a -> 'a
 
+(** Composes two functions. **)
+val compose : ('b -> 'c) -> ('a -> 'b) -> 'a -> 'c
+
 (** Maps the option type. **)
 val option_map : ('a -> 'b) -> 'a option -> 'b option
 

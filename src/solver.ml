@@ -1,4 +1,25 @@
 
+type global = {
+    element_register : Element.t Utils.Id.map (** The set of all registered elements. **) ;
+    constructor_informations : State.constructor_maps (** Informations about constructors. **) ;
+    pool_informations : Pool.global (** Informations needed by the pool. **)
+  }
+
+let empty_global = {
+    element_register = Utils.Id.map_create () ;
+    constructor_informations = State.empty_constructor_maps ;
+    pool_informations = Pool.empty_global
+  }
+
+let register_element g e =
+  let (eid, m) = Utils.Id.map_insert_t g.element_register e in
+  let attrs = Element.TODO in
+  { g with element_register = m ;
+           pool_informations = Pool.add_element g.pool_informations eid attrs }
+
+let filter_elements f =
+    TODO
+
 type objective = {
     difficulty : int ;
     complexity : int

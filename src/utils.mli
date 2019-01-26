@@ -152,7 +152,7 @@ module Id : sig
 
     (** Get the identifier from the identifier map.
      * The function may return [None] if the identifier is not in the mapping,
-     * but the important property is that if it returns Some for an object,
+     * but the important property is that if it returns [Some] for an object,
      * this value is consistently different from the one of any other objects,
      * expect of course for the same objects. **)
     val get_id : 'a map -> 'a -> t option

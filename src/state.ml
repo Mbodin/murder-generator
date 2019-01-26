@@ -93,6 +93,16 @@ module PlayerAttribute = AttributeInst ()
 
 module ContactAttribute = AttributeInst ()
 
+type constructor_maps = {
+    player : PlayerAttribute.constructor_map ;
+    contact : ContactAttribute.constructor_map
+  }
+
+let empty_constructor_maps = {
+    player = PlayerAttribute.empty_constructor_map ;
+    contact = ContactAttribute.empty_constructor_map
+  }
+
 type attribute =
   | PlayerAttribute of PlayerAttribute.attribute
   | ContactAttribute of ContactAttribute.attribute

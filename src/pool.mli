@@ -5,20 +5,24 @@
 (** In this file, elements are supposed to be given as identifiers. **)
 type element = Utils.Id.t
 
+(** A register of existing elements. **)
+type global
+
+(** An empty register. **)
+val empty_global : global
+
 (** Register that an element exists, and that it may provide the following attributes. **)
-val add_element : element -> State.attribute list -> unit
+val add_element : global -> element -> State.attribute list -> global
 
 (** Unregister an element.
  * It won’t be considered by the pool. **)
-val remove_element : element -> unit
+val remove_element : global -> element -> global
 
-(** The pool type.
- * Note that any call to [add_element] and [remove_element] may invalidate
- * any existing pool. **)
+(** The pool type. **)
 type t
 
 (** The empty pool. **)
-val empty : t
+val empty : global -> t
 
 (** States whether the pool is empty. **)
 val is_empty : t -> bool

@@ -78,6 +78,15 @@ module PlayerAttribute : Attribute with type attribute = Utils.Id.t
 module ContactAttribute : Attribute with type attribute = Utils.Id.t
                                     and type value = Utils.Id.t
 
+(** This data structure stores all the informations about constructors. **)
+type constructor_maps = {
+    player : PlayerAttribute.constructor_map ;
+    contact : ContactAttribute.constructor_map
+  }
+
+(** An empty structure. **)
+val empty_constructor_maps : constructor_maps
+
 (** A generic attribute type for modules who don’t need to precisely
  * understand how attributes work, merging both kinds of attributes. **)
 type attribute =

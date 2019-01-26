@@ -8,46 +8,62 @@ type element = Utils.Id.t
   *   elements (the elements that provide this attribute).
   * They are not supposed to be changed once pools are created. **)
 
-let all_elements = ref PMap.empty
+type global = {
+    all_elements : (element, State.attribute list) PMap.t ;
+    element_attribute : (State.attribute, element list) PMap.t ;
+  }
 
-let element_attribute = ref PMap.empty
+let empty_global = {
+    all_elements = PMap.empty ;
+    element_attribute = PMap.empty ;
+  }
 
 (** Returns the list of attributes associated to an element. **)
-let get_attributes e =
-  try PMap.find e !all_elements
+let get_attributes g e =
+  try PMap.find e g.all_elements
+  with Not_found -> []
+
+(** Internal function for function reading a global when being changed. **)
+let get_elements_from_element_attribute element_attribute a =
+  try PMap.find a element_attribute
   with Not_found -> []
 
 (** Returns the list of elements associated to an attribute. **)
-let get_elements a =
-  try PMap.find a !element_attribute
-  with Not_found -> []
+let get_elements g a =
+  get_elements_from_element_attribute g.element_attribute a
 
-let add_element e l =
-  let l = Utils.shuffle l in
-  all_elements := PMap.add e l !all_elements ;
-  List.iter (fun a ->
-    let l = get_elements a in
-    let l = if List.mem e l then l else e :: l in
-    element_attribute := PMap.add a l !element_attribute) l
+let add_element g e l =
+  let l = Utils.shuffle l in {
+      all_elements = PMap.add e l g.all_elements ;
+      element_attribute =
+        List.fold_left (fun element_attribute a ->
+          let l = get_elements_from_element_attribute element_attribute a in
+          let l = if List.mem e l then l else e :: l in
+          PMap.add a l element_attribute) g.element_attribute l
+  }
 
-let remove_element e =
-  let l = get_attributes e in
-  all_elements := PMap.remove e !all_elements ;
-  List.iter (fun a ->
-    let l = get_elements a in
-    let l = List.filter ((<>) e) l in
-    element_attribute := PMap.add a l !element_attribute) l
+let remove_element g e =
+  let l = get_attributes g e in {
+      all_elements = PMap.remove e g.all_elements ;
+      element_attribute =
+        List.fold_left (fun element_attribute a ->
+          let l = get_elements_from_element_attribute element_attribute a in
+          let l = List.filter ((<>) e) l in
+          PMap.add a l element_attribute) g.element_attribute l
+  }
 
 type t = {
     current_elements : element Utils.PSet.t ; (** The set of the current elements in the pool. **)
     pool : element Utils.BidirectionalList.t ; (** The pool. Each element is present at most once in the pool. **)
-    filtered_out_attributes : State.attribute Utils.PSet.t (** Attributes meant to be removed from the pool. **)
+    filtered_out_attributes : State.attribute Utils.PSet.t (** Attributes meant to be removed from the pool. **) ;
+    global : global
   }
 
-let empty = {
+let empty g = {
     current_elements = Utils.PSet.empty ;
     pool = Utils.BidirectionalList.from_list [] ;
-    filtered_out_attributes = Utils.PSet.empty
+    filtered_out_attributes = Utils.PSet.empty ;
+    global = g
   }
 
 (** To avoid a costly iteration over the pool when removing elements relative
@@ -56,7 +72,7 @@ let empty = {
  * This function states whether an element is meant to be ignored by this mechanism. **)
 let to_be_ignored p e =
   List.exists (fun a ->
-    Utils.PSet.is_in a p.filtered_out_attributes) (get_attributes e)
+    Utils.PSet.is_in a p.filtered_out_attributes) (get_attributes p.global e)
 
 (** The following operation actually performs the removal of the to-be-removed
  * elements of a pool. **)
@@ -70,7 +86,8 @@ let normalize p =
   let (s, l) = aux (Utils.BidirectionalList.to_list p.pool) in {
     current_elements = s ;
     pool = Utils.BidirectionalList.from_list l ;
-    filtered_out_attributes = Utils.PSet.empty
+    filtered_out_attributes = Utils.PSet.empty ;
+    global = p.global
   }
 
 (** We often don’t want to fully normalize a pool, but to only ensure that
@@ -79,7 +96,7 @@ let normalize p =
 let partial_normalize p =
   let rec aux l =
     match Utils.BidirectionalList.match_left l with
-    | None -> empty
+    | None -> empty p.global
     | Some (e, l') ->
       if to_be_ignored p e then aux l'
       else { p with pool = l } in
@@ -105,17 +122,19 @@ let add p e =
   else {
     current_elements = Utils.PSet.add e p.current_elements ;
     pool = Utils.BidirectionalList.add_right p.pool e ;
-    filtered_out_attributes = p.filtered_out_attributes
+    filtered_out_attributes = p.filtered_out_attributes ;
+    global = p.global
   }
 
 let rec pop p =
   match Utils.BidirectionalList.match_left p.pool with
-  | None -> (None, empty)
+  | None -> (None, empty p.global)
   | Some (e, l) ->
     let p' = {
         current_elements = Utils.PSet.remove e p.current_elements ;
         pool = l ;
-        filtered_out_attributes = p.filtered_out_attributes
+        filtered_out_attributes = p.filtered_out_attributes ;
+        global = p.global
       } in
     if to_be_ignored p e then pop p'
     else (Some e, partial_normalize p')
@@ -129,9 +148,9 @@ let pick p =
 (** Only keeps in the pool the elements that satisfy [f]. **)
 let filter f p a =
   let rec aux = function
-  | [] -> empty
+  | [] -> empty p.global
   | e :: l ->
-    if f a (get_attributes e) then add (aux l) e
+    if f a (get_attributes p.global e) then add (aux l) e
     else aux l
   in aux (Utils.BidirectionalList.to_list p.pool)
 
@@ -145,5 +164,5 @@ let filter_out p a =
   { p with filtered_out_attributes = Utils.PSet.add a p.filtered_out_attributes }
 
 let add_attribute p a =
-  List.fold_left add p (Utils.shuffle (get_elements a))
+  List.fold_left add p (Utils.shuffle (get_elements p.global a))
 

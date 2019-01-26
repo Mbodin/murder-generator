@@ -1,6 +1,19 @@
 (** Module Solver
  * Iterate over story elements. **)
 
+(** A global register of existing elements and meta-informations. **)
+type global
+
+(** An empty register. **)
+val empty_global : global
+
+(** Register that an element exists. **)
+val register_element : global -> Element.t -> global
+
+(** Only conserves from the registered elements the one satisfying
+ * the given predicate. **)
+val filter_elements : global -> (Element.t -> bool) -> global
+
 (** The target difficulty and simplicity measures for each player.
  * See the Relation module for more information. **)
 type objective = {
@@ -23,5 +36,5 @@ val solver_step : State.t -> (Generator.t * bool) Utils.BidirectionalList.t -> S
 *)
 
 (** Runs the solver until no one generator are left. **)
-val solver : (*TODO: all the constructors. State.constructor_map ->*) State.t -> objective array -> Element.t list -> State.t
+val solver : global -> State.t -> objective array -> State.t
 

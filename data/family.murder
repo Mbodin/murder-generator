@@ -1,16 +1,16 @@
 
 category family
 begin
-  :fr "famille"
-  :en "family"
-  :eo "familio"
+  ::fr "famille"
+  ::en "family"
+  ::eo "familio"
 end
 
 category mystery
 begin
-  :fr "mystère"
-  :en "mystery"
-  :eo "mistero"
+  ::fr "mystère"
+  ::en "mystery"
+  ::eo "mistero"
 end
 
 
@@ -56,8 +56,8 @@ begin
   provide relation between A and B as Trust
   provide contact familyMember from A to B as Siblings
   provide contact familyMember from B to A as Siblings
-  provide event to A after (* TODO *)
-  provide event to B (* TODO *)
+  (* TODO: provide event to A after *)
+  (* TODO: provide event to B *)
 end
 
 element HatingSiblings
@@ -70,8 +70,8 @@ begin
   provide relation between A and B as Explosive Trust Hate
   provide contact familyMember from A to B as Siblings
   provide contact familyMember from B to A as Siblings
-  provide event to A (* TODO *)
-  provide event to B (* TODO *)
+  (* TODO: provide event to A *)
+  (* TODO: provide event to B *)
 end
 
 element AsymmetricalSiblings
@@ -84,8 +84,8 @@ begin
   provide relation between A and B as Asymmetrical Trust Hate
   provide contact familyMember from A to B as Siblings
   provide contact familyMember from B to A as Siblings
-  provide event to A (* TODO *)
-  provide event to B (* TODO *)
+  (* TODO: provide event to A *)
+  (* TODO: provide event to B *)
 end
 
 element LostSiblings
@@ -114,7 +114,7 @@ begin
   provide contact familyMember from A to B as Parent
   provide contact familyMember from B to A as Child
 
-  provide event to A (* TODO *)
-  provide event to B (* TODO *)
+  (* TODO: provide event to A *)
+  (* TODO: provide event to B *)
 end
 

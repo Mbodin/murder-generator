@@ -13,8 +13,21 @@ type basic =
 (** The type of relations between players **)
 type relation =
   | Basic of basic (** A basic relation, as shown above. **)
-  | Asymmetrical of basic * basic (** There is some kind of asymmetry. For instance, one know things about the other (from a newspaper or from the point of view of other characters) but not the other: there would then probably be a relation Asymmetrical (Neutral, Undetermined). **)
-  | Explosive of relation * relation (** There is some kind of contradictions in the relation between the two characters. For instance, they love each others, but one is forced to do something against this player (which would probably be a relation Explosive (Basic Trust, Basic Chaotic)). These are really complex relations and the generator should avoid to create too many of them. **)
+  | Asymmetrical of basic * basic (** There is some kind of asymmetry.
+                                   * For instance, one know things about the other
+                                   * (from a newspaper or from the point of view of
+                                   * other characters) but not the other: there
+                                   * would then probably be a relation
+                                   * [Asymmetrical (Neutral, Undetermined)]. **)
+  | Explosive of relation * relation (** There is some kind of contradictions in
+                                      * the relation between the two characters.
+                                      * For instance, they love each others, but
+                                      * one is forced to do something against this
+                                      * player (this would probably be a relation
+                                      * [Explosive (Basic Trust, Basic Chaotic)]).
+                                      * These are really complex relations and the
+                                      * generator should avoid to create too many
+                                      * of them. **)
 
 (** This type is a relation coupled with a boolean stating
  * whether the relation is strong or not. **)

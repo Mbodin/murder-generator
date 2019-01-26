@@ -1,9 +1,9 @@
 
 category money
 begin
-  :fr "finance"
-  :en "money"
-  :eo "monaĵoj"
+  ::fr "finance"
+  ::en "money"
+  ::eo "monaĵoj"
 end
 
 declare attribute richness
@@ -13,18 +13,18 @@ end
 
 attribute richness Rich
 begin
-  :fr:adj "riche"
-  :en:adj "rich"
-  :eo:adj "riĉa"
+  ::fr:adj "riche"
+  ::en:adj "rich"
+  ::eo:adj "riĉa"
 end
 
 attribute richness Neutral
 
 attribute richness Poor
 begin
-  :fr:adj "pauvre"
-  :en:adj "poor"
-  :eo:adj "malriĉa"
+  ::fr:adj "pauvre"
+  ::en:adj "poor"
+  ::eo:adj "malriĉa"
 end
 
 element heritage
@@ -44,27 +44,27 @@ end
 
 contact financialDebt Small
 begin
-  :fr:adj:fem "petite"
-  :fr:adj:mas "petit"
-  :en:adj "small"
-  :eo:adj "malgranda"
+  ::fr:adj:fem "petite"
+  ::fr:adj:mas "petit"
+  ::en:adj "small"
+  ::eo:adj "malgranda"
 end
 
 contact financialDebt Large
 begin
-  :fr:adj:fem "grande"
-  :fr:adj:mas "grand"
-  :en:adj "large"
-  :eo:adj "granda"
+  ::fr:adj:fem "grande"
+  ::fr:adj:mas "grand"
+  ::en:adj "large"
+  ::eo:adj "granda"
 end
 
 contact financialDebt Old
 begin
   (* Large but from the old times: it would be awkward to require it now. *)
-  :fr:adj:fem "vielle"
-  :fr:adj:mas "vieux"
-  :en:adj "old"
-  :eo:adj "malnova"
+  ::fr:adj:fem "vielle"
+  ::fr:adj:mas "vieux"
+  ::en:adj "old"
+  ::eo:adj "malnova"
 end
 
 element CausalDebt
@@ -78,8 +78,8 @@ begin
 
   provide relation between A and B as Asymmetrical Trust Neutral
 
-  provide event to A (* TODO *)
-  provide event to B (* TODO *)
+  (* TODO: provide event to A *)
+  (* TODO: provide event to B *)
 end
 
 element SmallDebtNeutralPoor
@@ -93,8 +93,8 @@ begin
   provide relation between A and B as Asymmetrical Avoidance Undetermined
   provide contact known from A to B as True
 
-  provide event to A (* TODO *)
-  provide event to B (* TODO *)
+  (* TODO: provide event to A *)
+  (* TODO: provide event to B *)
 end
 
 element RichPaysItsDebt
@@ -108,8 +108,8 @@ begin
   provide relation between A and B as Asymmetrical Neutral Undetermined
   provide contact known from B to A as True
 
-  provide event to A (* TODO *)
-  provide event to B (* TODO *)
+  (* TODO: provide event to A *)
+  (* TODO: provide event to B *)
 end
 
 element TookMoneyToBuildAShopAndIsNowRich
@@ -117,8 +117,8 @@ begin
   let A be player with attribute richness as Neutral
   let B be player
 
-  provide event to A (* TODO: Money exchange *)
-  provide event to B (* TODO: Money exchange *)
+  (* provide event to A (* TODO: Money exchange *) *)
+  (* provide event to B (* TODO: Money exchange *) *)
 
   provide contact financialDebt from B to A as Old
   provide attribute richness to B as Rich
@@ -128,7 +128,7 @@ begin
   provide contact known from B to A as True
   provide contact known from A to B as True
 
-  provide event to B (* TODO: Got rich after the shop got working *)
+  (* provide event to B (* TODO: Got rich after the shop got working *) *)
 end
 
 element TookMoneyToBuildAShopButGotBankrupt
@@ -147,7 +147,7 @@ begin
   provide contact known from B to A as True
   provide contact known from A to B as True
 
-  provide event to B (* TODO: Got bankrupt *)
+  (* provide event to B (* TODO: Got bankrupt *) *)
 end
 
 element ImportantSeller
@@ -157,7 +157,7 @@ begin
   provide attribute richness to B as Rich
   provide attribute job to B as Seller
 
-  provide event to P (* TODO *)
+  (* provide event to P (* TODO *) *)
 end
 
 
@@ -165,18 +165,18 @@ declare contact favor
 
 contact favor Small
 begin
-  :fr:adj:fem "petite"
-  :fr:adj:mas "petit"
-  :en:adj "small"
-  :eo:adj "malgranda"
+  ::fr:adj:fem "petite"
+  ::fr:adj:mas "petit"
+  ::en:adj "small"
+  ::eo:adj "malgranda"
 end
 
 contact favor Large
 begin
-  :fr:adj:fem "grande"
-  :fr:adj:mas "grand"
-  :en:adj "large"
-  :eo:adj "granda"
+  ::fr:adj:fem "grande"
+  ::fr:adj:mas "grand"
+  ::en:adj "large"
+  ::eo:adj "granda"
 end
 
 element FinancialDebtSmallFavor

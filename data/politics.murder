@@ -3,17 +3,17 @@ declare attribute famousness
 
 attribute famousness Famous
 begin
-  :fr:adj "célèbre"
-  :en:adj "famous"
-  :eo:adj "fama"
+  translation fr:adj "célèbre"
+  translation en:adj "famous"
+  translation eo:adj "fama"
 end
 
 attribute famousness Unknown
 begin
-  :fr:adj:mas "inconnu"
-  :fr:adj:fem "inconnue"
-  :en:adj "unknown"
-  :eo:adj "malfama"
+  translation fr:adj:mas "inconnu"
+  translation fr:adj:fem "inconnue"
+  translation en:adj "unknown"
+  translation eo:adj "malfama"
 end
 
 attribute famousness Hidden
@@ -27,7 +27,7 @@ begin
   let A be player
   let B be player with attribute famousness as Famous
 
-  provide contact known from B to A as True
+  provide compatible contact known from B to A as True
 end
 
 element FamousCanDoFavors
@@ -38,7 +38,23 @@ begin
 
   provide relation between A and B as Trust
 
-  provide event to A (* TODO: Speak about B. *)
-  provide event to B (* TODO: Ask about speaking about B. *)
+  (* provide event to A TODO: Speak about B. *)
+  (* provide event to B TODO: Ask about speaking about B. *)
+end
+
+element FamousCanMakeOneKnown
+begin
+  let A be player with attribute famousness as Famous
+                  with contact favor to B as Small
+  let B be player
+  let C be player
+
+  (* provide event to A TODO: Speak about B to C. *)
+  (* provide event to B TODO: Spoke about B to C. *)
+  (* provide event to C TODO: Hears about B. *)
+
+  provide contact known from C to B as True
+  provide compatible contact favor from B to A as Small
+  provide relation between A and B as Asymmetrical Neutral Trust
 end
 

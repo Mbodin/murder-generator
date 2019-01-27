@@ -9,7 +9,7 @@ element Birth
 begin
     let P be player
 
-    provide attribute born to P as True
+    provide strict attribute born to P as True
     (* TODO: provide instance event to P with no event before *)
 end
 
@@ -18,32 +18,32 @@ declare attribute gender
 
 attribute gender Male
 begin
-  :en:adj "male"
-  :eo:adj "iĉa"
-  :eo:adj:plu "iĉaj"
-  :eo:adj:acc "iĉan"
-  :eo:adj:plu:acc "iĉajn"
-  :eo:nom "viro"
-  :eo:nom:plu "viroj"
-  :eo:nom:acc "viron"
-  :eo:nom:plu:acc "virojn"
+  translation en:adj "male"
+  translation eo:adj "iĉa"
+  translation eo:adj:plu "iĉaj"
+  translation eo:adj:acc "iĉan"
+  translation eo:adj:plu:acc "iĉajn"
+  translation eo:nom "viro"
+  translation eo:nom:plu "viroj"
+  translation eo:nom:acc "viron"
+  translation eo:nom:plu:acc "virojn"
 
-  add :fr:mas
+  add fr:mas
 end
 
 attribute gender Female
 begin
-  :en:adj "female"
-  :eo:adj "ina"
-  :eo:adj:plu "inaj"
-  :eo:adj:acc "inan"
-  :eo:adj:plu:acc "inajn"
-  :eo:nom "virino"
-  :eo:nom:plu "virinoj"
-  :eo:nom:acc "virinon"
-  :eo:nom:plu:acc "virinojn"
+  translation en:adj "female"
+  translation eo:adj "ina"
+  translation eo:adj:plu "inaj"
+  translation eo:adj:acc "inan"
+  translation eo:adj:plu:acc "inajn"
+  translation eo:nom "virino"
+  translation eo:nom:plu "virinoj"
+  translation eo:nom:acc "virinon"
+  translation eo:nom:plu:acc "virinojn"
 
-  add :fr:fem
+  add fr:fem
 end
 
 attribute gender NonBinary
@@ -52,14 +52,14 @@ element MaleCharacter
 begin
   let P be player
 
-  provide attribute gender as Male
+  provide strict attribute gender as Male
 end
 
 element FemaleCharacter
 begin
   let P be player
 
-  provide attribute gender as Female
+  provide strict attribute gender as Female
 end
 
 
@@ -67,63 +67,63 @@ declare attribute specy
 
 attribute specy Human
 begin
-  ::fr:adj:mas "humain"
-  ::fr:adj:fem "humaine"
-  ::fr:adj:plu:mas "humains"
-  ::fr:adj:plu:fem "humaines"
-  ::fr:nom "une personne":fem
-  ::fr:nom:mas "un homme":mas
-  ::fr:nom:fem "une femme":fem
-  ::fr:nom:plu "des personnes":plu:fem
-  ::fr:nom:plu:mas "des hommes":plu:mas
-  ::fr:nom:plu:fem "des femmes":plu:fem
-  ::fr:nom:def "la personne":fem
-  ::fr:nom:def:mas "l'homme":mas
-  ::fr:nom:def:fem "la femme":fem
-  ::fr:nom:def:plu "les personnes":plu:fem
-  ::fr:nom:def:plu:mas "les hommes":plu:mas
-  ::fr:nom:def:plu:fem "les femmes":plu:fem
-  ::en:adj "human"
-  ::en:nom "human being"
-  ::en:nom:mas "man"
-  ::en:nom:fem "woman"
-  ::en:nom:plu "human beings"
-  ::en:nom:plu:mas "men"
-  ::en:nom:plu:fem "women"
-  ::en:nom:def "the human being"
-  ::en:nom:def:mas "the man"
-  ::en:nom:def:fem "the woman"
-  ::en:nom:def:plu "the human beings"
-  ::en:nom:def:plu:mas "the men"
-  ::en:nom:def:plu:fem "the women"
-  ::eo:adj "homa"
-  ::eo:adj:plu "homaj"
-  ::eo:adj:acc "homan"
-  ::eo:adj:acc:plu "homajn"
-  ::eo:nom "homo"
-  ::eo:nom:plu "homoj"
-  ::eo:nom:acc "homon"
-  ::eo:nom:acc:plu "homojn"
-  ::eo:nom:def "la homo"
-  ::eo:nom:def:plu "la homoj"
-  ::eo:nom:def:acc "la homon"
-  ::eo:nom:def:acc:plu "la homojn"
+  translation fr:adj:mas "humain"
+  translation fr:adj:fem "humaine"
+  translation fr:adj:plu:mas "humains"
+  translation fr:adj:plu:fem "humaines"
+  translation fr:nom "une personne":fem
+  translation fr:nom:mas "un homme":mas
+  translation fr:nom:fem "une femme":fem
+  translation fr:nom:plu "des personnes":plu:fem
+  translation fr:nom:plu:mas "des hommes":plu:mas
+  translation fr:nom:plu:fem "des femmes":plu:fem
+  translation fr:nom:def "la personne":fem
+  translation fr:nom:def:mas "l'homme":mas
+  translation fr:nom:def:fem "la femme":fem
+  translation fr:nom:def:plu "les personnes":plu:fem
+  translation fr:nom:def:plu:mas "les hommes":plu:mas
+  translation fr:nom:def:plu:fem "les femmes":plu:fem
+  translation en:adj "human"
+  translation en:nom "human being"
+  translation en:nom:mas "man"
+  translation en:nom:fem "woman"
+  translation en:nom:plu "human beings"
+  translation en:nom:plu:mas "men"
+  translation en:nom:plu:fem "women"
+  translation en:nom:def "the human being"
+  translation en:nom:def:mas "the man"
+  translation en:nom:def:fem "the woman"
+  translation en:nom:def:plu "the human beings"
+  translation en:nom:def:plu:mas "the men"
+  translation en:nom:def:plu:fem "the women"
+  translation eo:adj "homa"
+  translation eo:adj:plu "homaj"
+  translation eo:adj:acc "homan"
+  translation eo:adj:acc:plu "homajn"
+  translation eo:nom "homo"
+  translation eo:nom:plu "homoj"
+  translation eo:nom:acc "homon"
+  translation eo:nom:acc:plu "homojn"
+  translation eo:nom:def "la homo"
+  translation eo:nom:def:plu "la homoj"
+  translation eo:nom:def:acc "la homon"
+  translation eo:nom:def:acc:plu "la homojn"
 end
 
 
 attribute specy Dwarf
 begin
   category fantasy
-  ::fr:adj:mas "nain"
-  ::fr:adj:fem "naine"
-  ::fr:adj:plu:mas "nains"
-  ::fr:adj:plu:fem "naines"
-  ::fr:nom:mas "un nain":mas
-  ::fr:nom:fem "une naine":fem
-  ::fr:nom:plu "des nains":plu:mas
-  ::fr:nom:def:mas "le nain":mas
-  ::fr:nom:def:fem "la naine":fem
-  ::fr:nom:def:plu "les nains":plu:mas
+  translation fr:adj:mas "nain"
+  translation fr:adj:fem "naine"
+  translation fr:adj:plu:mas "nains"
+  translation fr:adj:plu:fem "naines"
+  translation fr:nom:mas "un nain":mas
+  translation fr:nom:fem "une naine":fem
+  translation fr:nom:plu "des nains":plu:mas
+  translation fr:nom:def:mas "le nain":mas
+  translation fr:nom:def:fem "la naine":fem
+  translation fr:nom:def:plu "les nains":plu:mas
   (* LATER: Other translations *)
 end
 
@@ -144,6 +144,6 @@ element SpecyHuman
 begin
     let P be player with attribute born as True
 
-    provide attribute specy to P as Human
+    provide strict attribute specy to P as Human
 end
 

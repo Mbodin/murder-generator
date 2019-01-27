@@ -1,5 +1,5 @@
 { (** Module Lexer. **)
-  open Parser
+  open Token
   exception SyntaxError of string
 }
 
@@ -20,16 +20,18 @@ rule lex = parse
   | "category"              { CATEGORY }
   | "element"               { ELEMENT }
   | "attribute"             { ATTRIBUTE }
-  | "relation"              { RELATION }
   | "contact"               { CONTACT }
+  | "relation"              { RELATION }
   | "player"                { PLAYER }
   | "event"                 { EVENT }
 
+  | "all"                   { ALL }
+
   | "declare"               { DECLARE }
   | "provide"               { PROVIDE }
-  | "add"                   { ADD }
   | "let"                   { LET }
   | "be"                    { BE }
+
   | "with"                  { WITH }
   | "and"                   { AND }
   | "or"                    { OR }
@@ -37,6 +39,9 @@ rule lex = parse
   | "to"                    { TO }
   | "between"               { BETWEEN }
   | "as"                    { AS }
+
+  | "strict"                { STRICT }
+  | "compatible"            { COMPATIBLE }
 
   | "Neutral"               { NEUTRAL }
   | "Hate"                  { HATE }
@@ -50,6 +55,8 @@ rule lex = parse
 
   | ident as id             { IDENT id }
 
+  | "translation"           { TRANSLATION }
+  | "add"                   { ADD }
   | ':'                     { COLON }
   | '"' (strctn as str) '"' { STRING str }
 

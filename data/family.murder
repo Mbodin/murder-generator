@@ -1,16 +1,16 @@
 
 category family
 begin
-  ::fr "famille"
-  ::en "family"
-  ::eo "familio"
+  translation fr "famille"
+  translation en "family"
+  translation eo "familio"
 end
 
 category mystery
 begin
-  ::fr "mystère"
-  ::en "mystery"
-  ::eo "mistero"
+  translation fr "mystère"
+  translation en "mystery"
+  translation eo "mistero"
 end
 
 
@@ -54,8 +54,8 @@ begin
   let B be player
 
   provide relation between A and B as Trust
-  provide contact familyMember from A to B as Siblings
-  provide contact familyMember from B to A as Siblings
+  provide strict contact familyMember from A to B as Siblings
+  provide strict contact familyMember from B to A as Siblings
   (* TODO: provide event to A after *)
   (* TODO: provide event to B *)
 end
@@ -68,8 +68,8 @@ begin
   let B be player
 
   provide relation between A and B as Explosive Trust Hate
-  provide contact familyMember from A to B as Siblings
-  provide contact familyMember from B to A as Siblings
+  provide strict contact familyMember from A to B as Siblings
+  provide strict contact familyMember from B to A as Siblings
   (* TODO: provide event to A *)
   (* TODO: provide event to B *)
 end
@@ -82,8 +82,8 @@ begin
   let B be player
 
   provide relation between A and B as Asymmetrical Trust Hate
-  provide contact familyMember from A to B as Siblings
-  provide contact familyMember from B to A as Siblings
+  provide strict contact familyMember from A to B as Siblings
+  provide strict contact familyMember from B to A as Siblings
   (* TODO: provide event to A *)
   (* TODO: provide event to B *)
 end
@@ -97,10 +97,10 @@ begin
   let B be player
 
   provide relation between A and B as Strong Neutral
-  provide contact familyMember from A to B as Siblings
-  provide contact familyMember from B to A as Siblings
-  provide contact known from A to B as False
-  provide contact known from B to A as False
+  provide strict contact familyMember from A to B as Siblings
+  provide strict contact familyMember from B to A as Siblings
+  provide compatible contact known from A to B as False
+  provide compatible contact known from B to A as False
 end
 
 element Parent
@@ -111,8 +111,8 @@ begin
   let B be player
 
   provide relation between A and B as Trust
-  provide contact familyMember from A to B as Parent
-  provide contact familyMember from B to A as Child
+  provide strict contact familyMember from A to B as Parent
+  provide strict contact familyMember from B to A as Child
 
   (* TODO: provide event to A *)
   (* TODO: provide event to B *)

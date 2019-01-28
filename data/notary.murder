@@ -1,82 +1,82 @@
 
-category money
+category Money
 begin
   translation fr "finance"
   translation en "money"
   translation eo "monaĵoj"
 end
 
-declare attribute richness
+declare attribute Richness
 begin
-  category money
+  category Money
 end
 
-attribute richness Rich
+attribute Richness Rich
 begin
   translation fr:adj "riche"
   translation en:adj "rich"
   translation eo:adj "riĉa"
 end
 
-attribute richness Neutral
+attribute Richness Neutral
 
-attribute richness Poor
+attribute Richness Poor
 begin
   translation fr:adj "pauvre"
   translation en:adj "poor"
   translation eo:adj "malriĉa"
 end
 
-element heritage
+element Heritage
 begin
   let P be player
 
-  provide compatible attribute richness to P as Rich
+  provide compatible attribute Richness to P as Rich
 
   (* TODO: provide event to P *)
 end
 
 
-declare contact financialDebt
+declare contact FinancialDebt
 begin
-  category money
+  category Money
 end
 
-contact financialDebt Small
+contact FinancialDebt Small
 begin
-  transation fr:adj:fem "petite"
-  transation fr:adj:mas "petit"
-  transation en:adj "small"
-  transation eo:adj "malgranda"
+  translation fr:adj:fem "petite"
+  translation fr:adj:mas "petit"
+  translation en:adj "small"
+  translation eo:adj "malgranda"
 end
 
-contact financialDebt Large
+contact FinancialDebt Large
 begin
-  transation fr:adj:fem "grande"
-  transation fr:adj:mas "grand"
-  transation en:adj "large"
-  transation eo:adj "granda"
+  translation fr:adj:fem "grande"
+  translation fr:adj:mas "grand"
+  translation en:adj "large"
+  translation eo:adj "granda"
 end
 
-contact financialDebt Old
+contact FinancialDebt Old
 begin
   (* Large but from the old times: it would be awkward to require it now. *)
-  transation fr:adj:fem "vielle"
-  transation fr:adj:mas "vieux"
-  transation en:adj "old"
-  transation eo:adj "malnova"
+  translation fr:adj:fem "vielle"
+  translation fr:adj:mas "vieux"
+  translation en:adj "old"
+  translation eo:adj "malnova"
 end
 
 element CausalDebt
 begin
-  let A be player with attribute richness as Neutral
-                  with contact known to B as True
-  let B be player with attribute richness as Neutral
-                  with contact known to A as True
+  let A be player with attribute Richness as Neutral
+                  with contact Known to B as True
+  let B be player with attribute Richness as Neutral
+                  with contact Known to A as True
 
-  provide compatible contact financialDebt from A to B as Small
+  provide compatible contact FinancialDebt from A to B as Small
 
-  provide relation between A and B as Asymmetrical Trust Neutral
+  provide relation between A and B as asymmetrical trust neutral
 
   (* TODO: provide event to A *)
   (* TODO: provide event to B *)
@@ -84,14 +84,14 @@ end
 
 element SmallDebtNeutralPoor
 begin
-  let A be player with attribute richness as Poor
-  let B be player with attribute richness as Neutral
-                  with contact known to B as True
+  let A be player with attribute Richness as Poor
+  let B be player with attribute Richness as Neutral
+                  with contact Known to B as True
 
-  provide compatible contact financialDebt from A to B as Small
+  provide compatible contact FinancialDebt from A to B as Small
 
-  provide relation between A and B as Asymmetrical Avoidance Undetermined
-  provide compatible contact known from A to B as True
+  provide relation between A and B as asymmetrical avoidance undetermined
+  provide compatible contact Known from A to B as True
 
   (* TODO: provide event to A *)
   (* TODO: provide event to B *)
@@ -99,14 +99,14 @@ end
 
 element RichPaysItsDebt
 begin
-  let A be player with attribute richness as Rich
-                  with contact known to B as True
+  let A be player with attribute Richness as Rich
+                  with contact Known to B as True
   let B be player
 
-  provide contact financialDebt from A to B as Large
+  provide contact FinancialDebt from A to B as Large
 
-  provide relation between A and B as Asymmetrical Neutral Undetermined
-  provide compatible contact known from B to A as True
+  provide relation between A and B as asymmetrical neutral undetermined
+  provide compatible contact Known from B to A as True
 
   (* TODO: provide event to A *)
   (* TODO: provide event to B *)
@@ -114,38 +114,38 @@ end
 
 element TookMoneyToBuildAShopAndIsNowRich
 begin
-  let A be player with attribute richness as Neutral
+  let A be player with attribute Richness as Neutral
   let B be player
 
   (* provide event to A (* TODO: Money exchange *) *)
   (* provide event to B (* TODO: Money exchange *) *)
 
-  provide contact financialDebt from B to A as Old
-  provide attribute richness to B as Rich
-  provide attribute job to B as Seller
+  provide contact FinancialDebt from B to A as Old
+  provide attribute Richness to B as Rich
+  provide attribute Job to B as Seller
 
-  provide relation between B and A as Asymmetrical Trust Undetermined
-  provide compatible contact known from B to A as True
-  provide compatible contact known from A to B as True
+  provide relation between B and A as asymmetrical trust undetermined
+  provide compatible contact Known from B to A as True
+  provide compatible contact Known from A to B as True
 
   (* provide event to B (* TODO: Got rich after the shop got working *) *)
 end
 
 element TookMoneyToBuildAShopButGotBankrupt
 begin
-  let A be player with attribute richness as Neutral
+  let A be player with attribute Richness as Neutral
   let B be player
 
   (* provide event to A TODO: Money exchange *)
   (* provide event to B TODO: Money exchange *)
 
-  provide contact financialDebt from B to A as Large
-  provide attribute richness to B as Poor
-  provide attribute job to B as Seller
+  provide contact FinancialDebt from B to A as Large
+  provide attribute Richness to B as Poor
+  provide attribute Job to B as Seller
 
-  provide relation between B and A as Asymmetrical Avoidance Hate
-  provide compatible contact known from B to A as True
-  provide compatible contact known from A to B as True
+  provide relation between B and A as asymmetrical avoidance hate
+  provide compatible contact Known from B to A as True
+  provide compatible contact Known from A to B as True
 
   (* provide event to B (* TODO: Got bankrupt *) *)
 end
@@ -154,46 +154,46 @@ element ImportantSeller
 begin
   let P be player
 
-  provide compatible attribute richness to B as Rich
-  provide compatible attribute job to B as Seller
+  provide compatible attribute Richness to B as Rich
+  provide compatible attribute Job to B as Seller
 
   (* provide event to P (* TODO *) *)
 end
 
 
-declare contact favor
+declare contact Favor
 
-contact favor Large
+contact Favor Large
 begin
-  transation fr:adj:fem "grande"
-  transation fr:adj:mas "grand"
-  transation en:adj "large"
-  transation eo:adj "granda"
+  translation fr:adj:fem "grande"
+  translation fr:adj:mas "grand"
+  translation en:adj "large"
+  translation eo:adj "granda"
 end
 
-contact favor Small
+contact Favor Small
 begin
-  transation fr:adj:fem "petite"
-  transation fr:adj:mas "petit"
-  transation en:adj "small"
-  transation eo:adj "malgranda"
+  translation fr:adj:fem "petite"
+  translation fr:adj:mas "petit"
+  translation en:adj "small"
+  translation eo:adj "malgranda"
 
   compatible with Large
 end
 
 element FinancialDebtSmallFavor
 begin
-  let A be player with contact financialDebt to B as Small
+  let A be player with contact FinancialDebt to B as Small
   let B be player
 
-  provide compatible contact favor from A to B as Small
+  provide compatible contact Favor from A to B as Small
 end
 
 element FinancialDebtLargeFavor
 begin
-  let A be player with contact financialDebt to B as Large
+  let A be player with contact FinancialDebt to B as Large
   let B be player
 
-  provide compatible contact favor from A to B as Large
+  provide compatible contact Favor from A to B as Large
 end
 

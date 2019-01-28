@@ -1,18 +1,32 @@
 { (** Module Lexer. **)
-  open Token
+  open Lexing
+  open Parser
+
   exception SyntaxError of string
+
+  let next_line lexbuf =
+    let pos = lexbuf.lex_curr_p in
+    lexbuf.lex_curr_p <-
+      { pos with pos_bol = lexbuf.lex_curr_pos ; pos_lnum = 1 + pos.pos_lnum }
+
+  let current_position lexbuf =
+    let pos = lexbuf.lex_curr_p in
+    (if pos.pos_fname <> "" then "file “" ^ pos.pos_fname ^ "”, " else "")
+    ^ "line " ^ string_of_int pos.pos_lnum ^ ", "
+    ^ "character " ^ string_of_int (pos.pos_cnum - pos.pos_bol + 1)
 }
 
-let space = ' ' | '\t' | '\n'
+let space = ' ' | '\t'
+let newline = '\n' | '\r' | "\r\n"
 
 let letter = ['a'-'z' 'A'-'Z']
-let number = ['0'-'9']
+let digit = ['0'-'9']
 
-let ident = letter (letter | number | '_')*
+let ident = letter (letter | digit | '_')*
 
-let strctn = [^ '\n' '"']*
+let strctn = [^ '\n' '\r' '"']*
 
-rule lex = parse
+rule read = parse
 
   | "begin"                 { BEGIN }
   | "end"                   { END }
@@ -43,36 +57,37 @@ rule lex = parse
   | "strict"                { STRICT }
   | "compatible"            { COMPATIBLE }
 
-  | "Neutral"               { NEUTRAL }
-  | "Hate"                  { HATE }
-  | "Trust"                 { TRUST }
-  | "Chaotic"               { CHAOTIC }
-  | "Undetermined"          { UNDETERMINED }
-  | "Avoidance"             { AVOIDANCE }
-  | "Asymmetrical"          { ASYMMETRICAL }
-  | "Explosive"             { EXPLOSIVE }
-  | "Strong"                { STRONG }
-
-  | ident as id             { IDENT id }
+  | "neutral"               { NEUTRAL }
+  | "hate"                  { HATE }
+  | "trust"                 { TRUST }
+  | "chaotic"               { CHAOTIC }
+  | "undetermined"          { UNDETERMINED }
+  | "avoidance"             { AVOIDANCE }
+  | "asymmetrical"          { ASYMMETRICAL }
+  | "explosive"             { EXPLOSIVE }
+  | "strong"                { STRONG }
 
   | "translation"           { TRANSLATION }
   | "add"                   { ADD }
   | ':'                     { COLON }
   | '"' (strctn as str) '"' { STRING str }
 
-  | space+                  { lex lexbuf }
-  | "(*"                    { comment lexbuf ; lex lexbuf }
+  | ident as id             { IDENT id }
 
-  | _                       { raise (SyntaxError ("Unexpected char: " ^
-                                      Lexing.lexeme lexbuf)) }
+  | space+                  { read lexbuf }
+  | "(*"                    { comment lexbuf ; read lexbuf }
+
+  | newline                 { next_line lexbuf ; read lexbuf }
   | eof                     { EOF }
+  | _                       { raise (SyntaxError ("Unexpected char: “" ^
+                                      lexeme lexbuf ^ "”.")) }
 
 and comment = parse         
 
   | "(*"                    { comment lexbuf ; comment lexbuf }
   | "*)"                    { () }
 
+  | newline                 { next_line lexbuf ; comment lexbuf }
   | eof                     { raise (SyntaxError "Incomplete comment") }
-  | _                       { raise (SyntaxError ("Unexpected char: " ^
-                                      Lexing.lexeme lexbuf)) }
+  | _                       { comment lexbuf }
 

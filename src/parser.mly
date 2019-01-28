@@ -25,11 +25,10 @@ open Ast
 main: l = list (declaration); EOF { l }
 
 declaration:
-  | DECLARE; k = attribute_kind; id = IDENT
-    { DeclareInstance (k, id) }
-  | k = attribute_kind; attr = IDENT; constructor = IDENT;
-    inner = loption (block)
-    { DeclareConstructor (k, attr, constructor, inner) }
+  | DECLARE; k = attribute_kind; id = IDENT; b = loption (block)
+    { DeclareInstance (k, id, b) }
+  | k = attribute_kind; attr = IDENT; constructor = IDENT; b = loption (block)
+    { DeclareConstructor (k, attr, constructor, b) }
   | CATEGORY; name = IDENT; c = loption (block)
     { DeclareCategory (name, c) }
   | ELEMENT; name = IDENT; c = block

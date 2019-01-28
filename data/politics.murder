@@ -1,22 +1,22 @@
 
-declare attribute famousness
+declare attribute Famousness
 
-attribute famousness Famous
+attribute Famousness Famous
 begin
   translation fr:adj "célèbre"
   translation en:adj "famous"
   translation eo:adj "fama"
 end
 
-attribute famousness Unknown
+attribute Famousness UnKnown
 begin
   translation fr:adj:mas "inconnu"
   translation fr:adj:fem "inconnue"
-  translation en:adj "unknown"
+  translation en:adj "unKnown"
   translation eo:adj "malfama"
 end
 
-attribute famousness Hidden
+attribute Famousness Hidden
 begin
   (* The character has been actively hidden from the general public:
     he or she wants not to be famous and actively seeks it. *)
@@ -25,18 +25,18 @@ end
 element FamousKnown
 begin
   let A be player
-  let B be player with attribute famousness as Famous
+  let B be player with attribute Famousness as Famous
 
-  provide compatible contact known from B to A as True
+  provide compatible contact Known from B to A as True
 end
 
 element FamousCanDoFavors
 begin
-  let A be player with attribute famousness as Famous
-                  with contact favor to B as Small
-  let B be player with attribute famousness as Unknown
+  let A be player with attribute Famousness as Famous
+                  with contact Favor to B as Small
+  let B be player with attribute Famousness as UnKnown
 
-  provide relation between A and B as Trust
+  provide relation between A and B as trust
 
   (* provide event to A TODO: Speak about B. *)
   (* provide event to B TODO: Ask about speaking about B. *)
@@ -44,8 +44,8 @@ end
 
 element FamousCanMakeOneKnown
 begin
-  let A be player with attribute famousness as Famous
-                  with contact favor to B as Small
+  let A be player with attribute Famousness as Famous
+                  with contact Favor to B as Small
   let B be player
   let C be player
 
@@ -53,8 +53,8 @@ begin
   (* provide event to B TODO: Spoke about B to C. *)
   (* provide event to C TODO: Hears about B. *)
 
-  provide contact known from C to B as True
-  provide compatible contact favor from B to A as Small
-  provide relation between A and B as Asymmetrical Neutral Trust
+  provide contact Known from C to B as True
+  provide compatible contact Favor from B to A as Small
+  provide relation between A and B as asymmetrical neutral trust
 end
 

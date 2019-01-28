@@ -1,12 +1,12 @@
 
-category family
+category Family
 begin
   translation fr "famille"
   translation en "family"
   translation eo "familio"
 end
 
-category mystery
+category Mystery
 begin
   translation fr "mystère"
   translation en "mystery"
@@ -14,105 +14,105 @@ begin
 end
 
 
-declare contact known
-contact known True
-contact known False
+declare contact Known
+contact Known True
+contact Known False
+
+declare contact FamilyMember
+contact FamilyMember Siblings
+contact FamilyMember Parent
+contact FamilyMember Child
 
 element SiblingsKnowEachOthers
 begin
-  category family
+  category Family
 
-  let A be player with contact familyMember to B as Siblings
-  let B be player with contact familyMember to A as Siblings
+  let A be player with contact FamilyMember to B as Siblings
+  let B be player with contact FamilyMember to A as Siblings
 
-  provide contact known from A to B as True
-  provide contact known from B to A as True
+  provide contact Known from A to B as True
+  provide contact Known from B to A as True
 end
 
 element ParentsChildsKnowEachOthers
 begin
-  category family
+  category Family
 
-  let A be player with contact familyMember to B as Child
-  let B be player with contact familyMember to A as Parent
+  let A be player with contact FamilyMember to B as Child
+  let B be player with contact FamilyMember to A as Parent
 
-  provide contact known from A to B as True
-  provide contact known from B to A as True
+  provide contact Known from A to B as True
+  provide contact Known from B to A as True
 end
 
 
-declare contact familyMember
-contact familyMember Siblings
-contact familyMember Parent
-contact familyMember Child
-
 element TrustedSiblings
 begin
-  category family
+  category Family
 
   let A be player
   let B be player
 
-  provide relation between A and B as Trust
-  provide strict contact familyMember from A to B as Siblings
-  provide strict contact familyMember from B to A as Siblings
+  provide relation between A and B as trust
+  provide strict contact FamilyMember from A to B as Siblings
+  provide strict contact FamilyMember from B to A as Siblings
   (* TODO: provide event to A after *)
   (* TODO: provide event to B *)
 end
 
 element HatingSiblings
 begin
-  category family
+  category Family
 
   let A be player
   let B be player
 
-  provide relation between A and B as Explosive Trust Hate
-  provide strict contact familyMember from A to B as Siblings
-  provide strict contact familyMember from B to A as Siblings
+  provide relation between A and B as explosive trust hate
+  provide strict contact FamilyMember from A to B as Siblings
+  provide strict contact FamilyMember from B to A as Siblings
   (* TODO: provide event to A *)
   (* TODO: provide event to B *)
 end
 
 element AsymmetricalSiblings
 begin
-  category family
+  category Family
 
   let A be player
   let B be player
 
-  provide relation between A and B as Asymmetrical Trust Hate
-  provide strict contact familyMember from A to B as Siblings
-  provide strict contact familyMember from B to A as Siblings
+  provide relation between A and B as asymmetrical trust hate
+  provide strict contact FamilyMember from A to B as Siblings
+  provide strict contact FamilyMember from B to A as Siblings
   (* TODO: provide event to A *)
   (* TODO: provide event to B *)
 end
 
 element LostSiblings
 begin
-  category family
-  category mystery
+  category Family
+  category Mystery
 
   let A be player
   let B be player
 
-  provide relation between A and B as Strong Neutral
-  provide strict contact familyMember from A to B as Siblings
-  provide strict contact familyMember from B to A as Siblings
-  provide compatible contact known from A to B as False
-  provide compatible contact known from B to A as False
+  provide relation between A and B as strong neutral
+  provide strict contact FamilyMember from A to B as Siblings
+  provide strict contact FamilyMember from B to A as Siblings
+  provide compatible contact Known from A to B as False
+  provide compatible contact Known from B to A as False
 end
 
 element Parent
 begin
-  category family
+  category Family
 
   let A be player
   let B be player
 
-  provide relation between A and B as Trust
-  provide strict contact familyMember from A to B as Parent
-  provide strict contact familyMember from B to A as Child
+  provide relation between A and B as trust
+  provide strict contact FamilyMember from A to B as Parent
+  provide strict contact FamilyMember from B to A as Child
 
   (* TODO: provide event to A *)
   (* TODO: provide event to B *)

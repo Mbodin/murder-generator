@@ -1,13 +1,14 @@
 
 let test_pool =
   let new_id = Utils.Id.new_id_function () in
+  let g = Pool.empty_global in
   let e1 = new_id () in
   let e2 = new_id () in
   let e3 = new_id () in
-  Pool.add_element e1 [] ;
-  Pool.add_element e2 [] ;
-  Pool.add_element e3 [] ;
-  let p = Pool.empty in
+  let g = Pool.add_element g e1 [] in
+  let g = Pool.add_element g e2 [] in
+  let g = Pool.add_element g e3 [] in
+  let p = Pool.empty g in
   print_endline ("is_empty empty = " ^ string_of_bool (Pool.is_empty p)) ;
   print_endline ("pick empty = " ^ match Pool.pick p with None, _ -> "None" | Some _, _ -> "Some") ;
   print_endline ("pop empty = " ^ match Pool.pop p with None, _ -> "None" | Some _, _ -> "Some") ;
@@ -54,4 +55,28 @@ let test_relations =
     print_string ")." ;
     print_newline ()
   done
+
+let test_parser =
+  let read_file f =
+    print_endline ("Reading file " ^ f) ;
+    let buf = Lexing.from_channel (open_in f) in
+    buf.lex_curr_p <- {
+        Lexing.pos_fname = f ;
+        Lexing.pos_lnum = 1 ;
+        Lexing.pos_bol = 0 ;
+        Lexing.pos_cnum = 0
+      } ;
+    let ast =
+      try Parser.main Lexer.read buf with
+      | Parser.Error ->
+        print_endline ("Error: Parser error " ^
+                        Lexer.current_position buf ^ ".") ;
+        []
+      | Lexer.SyntaxError msg ->
+        print_endline ("Error: Lexer error " ^
+                        Lexer.current_position buf ^ ": " ^ msg) ;
+        [] in
+    () in
+  List.iter read_file
+    ["data/family.murder"; "data/identity.murder"; "data/notary.murder"; "data/politics.murder"]
 

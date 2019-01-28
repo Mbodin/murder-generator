@@ -1,22 +1,22 @@
 
-declare attribute born
+declare attribute Born
 (* Only gods and abstract beings are not born, so this is kind of a
  * silly attribute, but we allow it nevertheless. *)
 
-attribute born True
+attribute Born True
 
 element Birth
 begin
     let P be player
 
-    provide strict attribute born to P as True
+    provide strict attribute Born to P as True
     (* TODO: provide instance event to P with no event before *)
 end
 
 
-declare attribute gender
+declare attribute Gender
 
-attribute gender Male
+attribute Gender Male
 begin
   translation en:adj "male"
   translation eo:adj "iĉa"
@@ -31,7 +31,7 @@ begin
   add fr:mas
 end
 
-attribute gender Female
+attribute Gender Female
 begin
   translation en:adj "female"
   translation eo:adj "ina"
@@ -46,26 +46,26 @@ begin
   add fr:fem
 end
 
-attribute gender NonBinary
+attribute Gender NonBinary
 
 element MaleCharacter
 begin
   let P be player
 
-  provide strict attribute gender as Male
+  provide strict attribute Gender to P as Male
 end
 
 element FemaleCharacter
 begin
   let P be player
 
-  provide strict attribute gender as Female
+  provide strict attribute Gender to P as Female
 end
 
 
-declare attribute specy
+declare attribute Specy
 
-attribute specy Human
+attribute Specy Human
 begin
   translation fr:adj:mas "humain"
   translation fr:adj:fem "humaine"
@@ -110,10 +110,9 @@ begin
   translation eo:nom:def:acc:plu "la homojn"
 end
 
-
-attribute specy Dwarf
+attribute Specy Dwarf
 begin
-  category fantasy
+  category Fantasy
   translation fr:adj:mas "nain"
   translation fr:adj:fem "naine"
   translation fr:adj:plu:mas "nains"
@@ -127,23 +126,23 @@ begin
   (* LATER: Other translations *)
 end
 
-attribute specy Elf
+attribute Specy Elf
 begin
-  category fantasy
+  category Fantasy
   (* LATER: translations *)
 end
 
-attribute specy Alien
+attribute Specy Alien
 begin
-  category scienceFiction
+  category ScienceFiction
   (* LATER: translations *)
 end
 
 
 element SpecyHuman
 begin
-    let P be player with attribute born as True
+    let P be player with attribute Born as True
 
-    provide strict attribute specy to P as Human
+    provide strict attribute Specy to P as Human
 end
 

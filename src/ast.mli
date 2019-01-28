@@ -24,9 +24,11 @@ type command =
   | ProvideAttribute of State.strictness * string * string * string
   | ProvideContact of State.strictness * string * string * string * string
 
+type block = command list
+
 type declaration =
-  | DeclareInstance of attribute_kind * string
-  | DeclareConstructor of attribute_kind * string * string * command list
-  | DeclareCategory of string * command list
-  | DeclareElement of string * command list
+  | DeclareInstance of attribute_kind * string * block
+  | DeclareConstructor of attribute_kind * string * string * block
+  | DeclareCategory of string * block
+  | DeclareElement of string * block
 

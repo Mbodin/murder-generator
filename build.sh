@@ -8,7 +8,11 @@ else
 fi
 
 # Compile to bytecode
-ocamlbuild -I src -pkg extlib -use-menhir $TARGET.byte
+ocamlbuild -I src \
+           -pkg extlib \
+           -use-menhir -menhir "menhir --explain" \
+           -tag "optimize(3)" \
+           $TARGET.byte
 
 # Translate to JavaScript
 js_of_ocaml $TARGET.byte

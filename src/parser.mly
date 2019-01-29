@@ -1,5 +1,12 @@
 %{ (** Module Parser. **)
-   (** This is the main parsing file. **)
+   (** This is the main parsing file.
+    * This parser however structures relatively few information:
+    * see the module Driver for an additional structuration.
+    * In particular, each blocks are parsed the same way,
+    * even if, for instance, let-be declarations can’t appear
+    * in a category declaration.  Yet, this parser accepts them.
+    * However, the driver won’t. **)
+
 open Ast
 %}
 
@@ -15,7 +22,7 @@ open Ast
 %token          STRICT COMPATIBLE
 %token          NEUTRAL HATE TRUST CHAOTIC UNDETERMINED AVOIDANCE
 %token          ASYMMETRICAL EXPLOSIVE STRONG
-%token<string>  IDENT STRING
+%token<string>  LIDENT UIDENT STRING
 %token          TRANSLATION ADD COLON
 
 %start<Ast.declaration list> main
@@ -25,13 +32,13 @@ open Ast
 main: l = list (declaration); EOF { l }
 
 declaration:
-  | DECLARE; k = attribute_kind; id = IDENT; b = loption (block)
+  | DECLARE; k = attribute_kind; id = UIDENT; b = loption (block)
     { DeclareInstance (k, id, b) }
-  | k = attribute_kind; attr = IDENT; constructor = IDENT; b = loption (block)
+  | k = attribute_kind; attr = UIDENT; constructor = UIDENT; b = loption (block)
     { DeclareConstructor (k, attr, constructor, b) }
-  | CATEGORY; name = IDENT; c = loption (block)
+  | CATEGORY; name = UIDENT; c = loption (block)
     { DeclareCategory (name, c) }
-  | ELEMENT; name = IDENT; c = block
+  | ELEMENT; name = UIDENT; c = block
     { DeclareElement (name, c) }
 
 attribute_kind:
@@ -40,41 +47,49 @@ attribute_kind:
 
 block: BEGIN; l = list (command); END { l }
 
-language_tags: tags = list (COLON; tag = IDENT { tag }) { tags }
+language_tags: tags = list (COLON; tag = LIDENT { tag }) { tags }
 
 command:
-  | CATEGORY; c = IDENT
+  | CATEGORY; c = UIDENT
     { OfCategory c }
-  | TRANSLATION; lang = IDENT; tags = language_tags;
+  | TRANSLATION; lang = LIDENT; tags = language_tags;
     l = list ( str = STRING; tags = language_tags
                { TranslationString (str, tags) }
-             | id = IDENT; tags = language_tags
+             | id = UIDENT; tags = language_tags
                { TranslationVariable (id, tags) });
     { Translation (lang, tags, l) }
-  | ADD; lang = IDENT; tags = language_tags
+  | ADD; lang = LIDENT; tags = language_tags
     { Add (lang, tags) }
-  | COMPATIBLE; WITH; v = IDENT
+  | COMPATIBLE; WITH; v = UIDENT
     { CompatibleWith v }
-  | LET; v = IDENT; BE; PLAYER;
+  | LET; v = UIDENT; BE; PLAYER;
     l = list (player_constraint)
     { LetPlayer (v, l) }
-  | PROVIDE; RELATION; BETWEEN;
-    p1 = IDENT; AND; p2 = IDENT;
+  | PROVIDE; RELATION;
+    d = target_destination;
     AS; r = relation
-    { ProvideRelation (p1, p2, r) }
-  | PROVIDE; s = strictness; ATTRIBUTE;
-    a = IDENT; TO; p = IDENT;
-    AS; v = IDENT
+    { ProvideRelation (d, r) }
+  | PROVIDE; s = strictness;
+    ATTRIBUTE; a = UIDENT;
+    TO; p = UIDENT;
+    AS; v = UIDENT
     { ProvideAttribute (s, a, p, v) }
-  | PROVIDE; s = strictness; CONTACT;
-    c = IDENT; FROM; p1 = IDENT; TO; p2 = IDENT;
-    AS; v = IDENT
-    { ProvideContact (s, c, p1, p2, v) }
+  | PROVIDE; s = strictness;
+    CONTACT; c = UIDENT;
+    d = target_destination;
+    AS; v = UIDENT
+    { ProvideContact (s, c, d, v) }
+
+target_destination:
+  | FROM; p1 = UIDENT; TO; p2 = UIDENT
+    { FromTo (p1, p2) }
+  | BETWEEN; p1 = UIDENT; AND; p2 = UIDENT
+    { Between (p1, p2) }
 
 player_constraint:
-  | WITH; ATTRIBUTE; a = IDENT; AS; v = IDENT
+  | WITH; ATTRIBUTE; a = UIDENT; AS; v = UIDENT
     { HasAttribute (a, v) }
-  | WITH; CONTACT; c = IDENT; TO; p = IDENT; AS; v = IDENT
+  | WITH; CONTACT; c = UIDENT; TO; p = UIDENT; AS; v = UIDENT
     { HasContact (c, p, v) }
 
 relation: b = boption (STRONG { }); r = relation_content { (r, b) }

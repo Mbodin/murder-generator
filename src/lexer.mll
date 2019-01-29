@@ -1,4 +1,5 @@
 { (** Module Lexer. **)
+
   open Lexing
   open Parser
 
@@ -22,7 +23,7 @@ let newline = '\n' | '\r' | "\r\n"
 let letter = ['a'-'z' 'A'-'Z']
 let digit = ['0'-'9']
 
-let ident = letter (letter | digit | '_')*
+let ident = (letter | digit | '_')*
 
 let strctn = [^ '\n' '\r' '"']*
 
@@ -72,7 +73,8 @@ rule read = parse
   | ':'                     { COLON }
   | '"' (strctn as str) '"' { STRING str }
 
-  | ident as id             { IDENT id }
+  | (['a'-'z'] ident) as id { LIDENT id }
+  | (['A'-'Z'] ident) as id { UIDENT id }
 
   | space+                  { read lexbuf }
   | "(*"                    { comment lexbuf ; read lexbuf }

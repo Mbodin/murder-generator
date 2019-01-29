@@ -6,14 +6,6 @@ begin
   translation eo "familio"
 end
 
-category Mystery
-begin
-  translation fr "mystère"
-  translation en "mystery"
-  translation eo "mistero"
-end
-
-
 declare contact Known
 contact Known True
 contact Known False
@@ -91,7 +83,6 @@ end
 element LostSiblings
 begin
   category Family
-  category Mystery
 
   let A be player
   let B be player

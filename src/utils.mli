@@ -160,6 +160,7 @@ module Id : sig
     (** Create a identifier map. **)
     val map_create : unit -> 'a map
 
+    (* TODO: Remove these two and make the map foldable. *)
     (** Create a identifier map specialised for the type t. **)
     val t_map_create : t map
     (** Create a identifier map specialised for the type int. **)

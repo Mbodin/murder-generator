@@ -161,7 +161,7 @@ module Id = struct
     let to_array = id
     let from_array = id
 
-
+    (* TODO: Remove the [Int] case. *)
     type _ map =
       | Map : ('a, t) PMap.t (** Forwards map **) * (t, 'a) PMap.t (** Reverse map **) * int (** Fresh identifier **) -> 'a map
       | Int : t map (* No need to create new identifiers for integers! *)

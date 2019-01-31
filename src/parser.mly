@@ -73,12 +73,22 @@ command:
     ATTRIBUTE; a = UIDENT;
     TO; p = UIDENT;
     AS; v = UIDENT
-    { ProvideAttribute (s, a, p, v) }
+    { ProvideAttribute {
+          attribute_strictness = s ;
+          attribute_name = a ;
+          attribute_player = p ;
+          attribute_value = v
+        } }
   | PROVIDE; s = strictness;
     CONTACT; c = UIDENT;
     d = target_destination;
     AS; v = UIDENT
-    { ProvideContact (s, c, d, v) }
+    { ProvideContact {
+          contact_strictness = s ;
+          contact_name = c ;
+          contact_destination = d ;
+          contact_value = v
+        } }
 
 target_destination:
   | FROM; p1 = UIDENT; TO; p2 = UIDENT

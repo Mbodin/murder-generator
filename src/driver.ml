@@ -1,4 +1,16 @@
 
+(** Separates each components of the type [Ast.command] into a separate list. **)
+type block = {
+    of_category : string list ;
+    translation : Ast.translation list ;
+    add : Ast.add list ;
+    compatible_with : string list ;
+    let_player : Ast.let_player list ;
+    provide_relation : Ast.provide_relation list ;
+    provide_attribute : Ast.provide_attribute list ;
+    provide_contact : Ast.provide_contact list
+  }
+
 type intermediary = {
     categories_to_be_defined : string Utils.PSet.t (** A set of categories expected
                                                     * to be declared. **) ;
@@ -34,7 +46,7 @@ let is_intermediary_final i =
 
 let all_categories i =
   (* TODO: Add a fold operator on [Utils.Id.map] *)
-  Utils.Id.fold_map (fun id _ l -> id :: l) [] i.categories_names
+  Utils.Id.map_fold (fun _ id l -> id :: l) [] i.categories_names
 
 (** Extracts each category dependency from a block,
  * returning them as another list. **)

@@ -25,15 +25,32 @@ type target_destination =
   | FromTo of string * string
   | Between of string * string
 
+type translation = language * language_tag list * translation_item list
+type add = language * language_tag list
+type let_player = string * player_constraint list
+type provide_relation = target_destination * Relation.t
+type provide_attribute = {
+    attribute_strictness : State.strictness ;
+    attribute_name : string ;
+    attribute_player : string ;
+    attribute_value : string
+  }
+type provide_contact = {
+    contact_strictness : State.strictness ;
+    contact_name : string ;
+    contact_destination : target_destination ;
+    contact_value : string
+  }
+
 type command =
   | OfCategory of string
-  | Translation of language * language_tag list * translation_item list
-  | Add of language * language_tag list
+  | Translation of translation
+  | Add of add
   | CompatibleWith of string
-  | LetPlayer of string * player_constraint list
-  | ProvideRelation of target_destination * Relation.t
-  | ProvideAttribute of State.strictness * string * string * string
-  | ProvideContact of State.strictness * string * target_destination * string
+  | LetPlayer of let_player
+  | ProvideRelation of provide_relation
+  | ProvideAttribute of provide_attribute
+  | ProvideContact of provide_contact
 
 type block = command list
 

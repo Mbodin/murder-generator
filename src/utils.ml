@@ -161,46 +161,44 @@ module Id = struct
     let to_array = id
     let from_array = id
 
-    (* TODO: Remove the [Int] case. *)
-    type _ map =
-      | Map : ('a, t) PMap.t (** Forwards map **) * (t, 'a) PMap.t (** Reverse map **) * int (** Fresh identifier **) -> 'a map
-      | Int : t map (* No need to create new identifiers for integers! *)
+    type 'a map = {
+        forwards : ('a, t) PMap.t (** Forwards map **) ;
+        reverse : (t, 'a) PMap.t (** Reverse map **) ;
+        fresh : int (** Fresh identifier **)
+      }
 
-    let map_create _ =
-      Map (PMap.empty, PMap.empty, 0)
+    let map_create _ = {
+        forwards = PMap.empty ;
+        reverse = PMap.empty ;
+        fresh = 0
+      }
 
-    let t_map_create =
-      Int
-    let int_map_create =
-      t_map_create
-
-    let map_insert_t (type a) : a map -> a -> t * a map = function
-      | Map (m, mi, f) -> fun o ->
-        (try
-           let i = PMap.find o m in
-           (i, Map (m, mi, f))
-         with Not_found ->
-           let i = f in
-           (i, Map (PMap.add o i m, PMap.add i o mi, 1 + f)))
-      | Int -> fun i ->
-        (i, Int)
+    let map_insert_t m o =
+      try
+        let i = PMap.find o m.forwards in
+        (i, m)
+      with Not_found ->
+        let i = m.fresh in
+        let m = {
+            forwards = PMap.add o i m.forwards ;
+            reverse = PMap.add i o m.reverse ;
+            fresh = 1 + m.fresh
+          } in
+        (i, m)
 
     let map_insert m e =
       snd (map_insert_t m e)
 
-    let get_id (type a) : a map -> a -> t option = function
-      | Map (m, _, f) -> fun o ->
-        (try Some (PMap.find o m)
-         with Not_found -> None)
-      | Int -> fun i ->
-        Some i
+    let get_id m o =
+      try Some (PMap.find o m.forwards)
+      with Not_found -> None
 
-    let map_inverse (type a) : a map -> t -> a option = function
-      | Map (_, mi, f) -> fun i ->
-        (try Some (PMap.find i mi)
-         with Not_found -> None)
-      | Int -> fun i ->
-        Some i
+    let map_inverse m i =
+      try Some (PMap.find i m.reverse)
+      with Not_found -> None
+
+    let map_fold f i m =
+      PMap.foldi f m.forwards i
 
   end
 
@@ -210,9 +208,6 @@ module UnionFind = struct
       'a Id.map * (Id.t, Id.t) PMap.t ref
 
     let create _ = (Id.map_create (), ref PMap.empty)
-
-    let create_idt _ = (Id.t_map_create, ref PMap.empty)
-    let create_int = create_idt
 
     let insert_idt (m, p) e =
       let (i, m) =

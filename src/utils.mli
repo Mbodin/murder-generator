@@ -160,12 +160,6 @@ module Id : sig
     (** Create a identifier map. **)
     val map_create : unit -> 'a map
 
-    (* TODO: Remove these two and make the map foldable. *)
-    (** Create a identifier map specialised for the type t. **)
-    val t_map_create : t map
-    (** Create a identifier map specialised for the type int. **)
-    val int_map_create : int map
-
     (** Inserts an object to an identifier map, giving it an identifier.
      * If the object is already associated an identifier, the old one is returned. **)
     val map_insert : 'a map -> 'a -> 'a map
@@ -174,6 +168,8 @@ module Id : sig
 
     (** Return the object corresponding to this identifier. **)
     val map_inverse : 'a map -> t -> 'a option
+
+    val map_fold : ('b -> t -> 'a -> 'a) -> 'a -> 'b map -> 'a
 
   end
 
@@ -184,10 +180,6 @@ module UnionFind : sig
 
     (** Creates an empty union-find structure. **)
     val create : unit -> 'a t
-
-    (** Variant for specialised versions of the union-find structure. **)
-    val create_idt : unit -> Id.t t
-    val create_int : unit -> int t
 
     (** Inserts an element to the given union-find structure:
      * it is now associated to a identifier. **)

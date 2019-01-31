@@ -11,6 +11,17 @@ type block = {
     provide_contact : Ast.provide_contact list
   }
 
+let empty_block = {
+    of_category = [] ;
+    translation = [] ;
+    add = [] ;
+    compatible_with = [] ;
+    let_player = [] ;
+    provide_relation = [] ;
+    provide_attribute = [] ;
+    provide_contact = []
+  }
+
 type intermediary = {
     categories_to_be_defined : string Utils.PSet.t (** A set of categories expected
                                                     * to be declared. **) ;
@@ -45,52 +56,124 @@ let is_intermediary_final i =
   Utils.PSet.is_empty i.categories_to_be_defined
 
 let all_categories i =
-  (* TODO: Add a fold operator on [Utils.Id.map] *)
   Utils.Id.map_fold (fun _ id l -> id :: l) [] i.categories_names
 
-(** Extracts each category dependency from a block,
- * returning them as another list. **)
-let get_category_block =
-  let rec aux accBlock accCategory = function
-  | [] -> (accBlock, accCategory)
+(** This type is used as an internal type to express the kind of expected
+ * command type in a given block. **)
+type command_type =
+  | OfCategory
+  | Translation
+  | Add
+  | CompatibleWith
+  | LetPlayer
+  | ProvideRelation
+  | ProvideAttribute
+  | ProvideContact
+
+(** Converts command types to string, for easier-to-understand error messages. **)
+let command_type_to_string = function
+  | OfCategory -> "category"
+  | Translation -> "translation"
+  | Add -> "add"
+  | CompatibleWith -> "category compatibility"
+  | LetPlayer -> "player declaration"
+  | ProvideRelation -> "relation provision"
+  | ProvideAttribute -> "attribute provision"
+  | ProvideContact -> "contact provision"
+
+exception UnexpectedCommandInBlock of string * string
+
+exception DefinedTwice of string * string
+
+(** Converts an [Ast.block] into a [block].
+ * It takes a list of command types and checks that only these are present
+ * in the given block: all the other kinds will thus be empty lists.
+ * This function reverses the order of declaration in the block
+ * (although this shouldn’t impact on anything). **)
+let convert_block block_name expected =
+  let check c =
+    if not (List.mem c expected) then
+      raise (UnexpectedCommandInBlock (block_name, command_type_to_string c)) in
+  let rec aux acc = function
+  | [] -> acc
   | c :: l ->
-    let (accBlock, accCategory) =
-      match c with
-      | Ast.OfCategory c -> (accBlock, c :: accCategory)
-      | _ -> (c :: accBlock, accCategory) in
-    aux accBlock accCategory l
-  in aux [] []
+    aux
+      (match c with
+      | Ast.OfCategory c ->
+        check OfCategory ;
+        { acc with of_category = c :: acc.of_category }
+      | Ast.Translation t ->
+        check Translation ;
+        { acc with translation = t :: acc.translation }
+      | Ast.Add a ->
+        check Add ;
+        { acc with add = a :: acc.add }
+      | Ast.CompatibleWith c ->
+        check CompatibleWith ;
+        { acc with compatible_with = c :: acc.compatible_with }
+      | Ast.LetPlayer l ->
+        check LetPlayer ;
+        { acc with let_player = l :: acc.let_player }
+      | Ast.ProvideRelation p ->
+        check ProvideRelation ;
+        { acc with provide_relation = p :: acc.provide_relation }
+      | Ast.ProvideAttribute p ->
+        check ProvideAttribute ;
+        { acc with provide_attribute = p :: acc.provide_attribute }
+      | Ast.ProvideContact p ->
+        check ProvideContact ;
+        { acc with provide_contact = p :: acc.provide_contact }) l
+  in aux empty_block
 
 let prepare_declarations =
   List.fold_left (fun i -> function
     | Ast.DeclareInstance (Ast.Attribute, attribute, block) ->
-      let (block, categories) = get_category_block block in
+      let block =
+        convert_block attribute [OfCategory] block in
       let (id, state) =
         State.PlayerAttribute.declare_attribute
           i.constructor_information.State.player attribute in
+      let id = State.PlayerAttribute id in
+      if PMap.mem id i.attribute_dependencies then
+        raise (DefinedTwice ("attribute", attribute)) ;
       { i with constructor_information =
                  { i.constructor_information with State.player = state } ;
                attribute_dependencies =
-                 PMap.add (State.PlayerAttribute id) categories
-                   i.attribute_dependencies }
-    | Ast.DeclareInstance (Ast.Contact, attribute, block) ->
-      let (block, categories) = get_category_block block in
+                 PMap.add id block.of_category i.attribute_dependencies }
+    | Ast.DeclareInstance (Ast.Contact, contact, block) ->
+      let block =
+        convert_block contact [OfCategory] block in
       let (id, state) =
         State.ContactAttribute.declare_attribute
-          i.constructor_information.State.contact attribute in
+          i.constructor_information.State.contact contact in
+      let id = State.ContactAttribute id in
+      if PMap.mem id i.attribute_dependencies then
+        raise (DefinedTwice ("contact", contact)) ;
       { i with constructor_information =
                  { i.constructor_information with State.contact = state } ;
                attribute_dependencies =
-                 PMap.add (State.ContactAttribute id) categories
-                   i.attribute_dependencies }
+                 PMap.add id block.of_category i.attribute_dependencies }
     | Ast.DeclareConstructor (kind, attribute, constructor, block) ->
+      let block =
+        convert_block attribute [OfCategory; Translation; Add;
+                                 CompatibleWith] block in
       TODO
-      ()
     | Ast.DeclareCategory (name, block) ->
+      let block =
+        convert_block attribute [OfCategory; Translation] block in
+      (* TODO: Check if already defined. *)
+      let i =
+        { i with categories_names = Utils.Id.map_insert i.categories_names name } in
+      (* TODO: Check if in [i.categories_to_be_defined]. *)
+      (* TODO: Update [i.category_dependencies]. *)
+      (* TODO: Store the translations in a generic type for translations. *)
       TODO
-      categories_names := Utils.Id.map_insert !categories_names name
-      (* TODO: Extracts all the information of the block. *)
     | Ast.DeclareElement (name, block) ->
+      let block =
+        convert_block attribute [OfCategory; LetPlayer; ProvideRelation;
+                                 ProvideAttribute; ProvideContact] block in
+      let i =
+        { i with elements_names = Utils.Id.map_insert i.elements_names name } in
       TODO
-      elements_names := Utils.Id.map_insert !elements_names name)
+  )
 

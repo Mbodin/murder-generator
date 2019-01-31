@@ -5,10 +5,19 @@
 (** A type to store intermediate informations about parsing. **)
 type intermediary
 
+(** States that the block named as a the first string has an invalid
+ * command in its block, which is described by the second string. **)
+exception UnexpectedCommandInBlock of string * string
+
+(** An error indicating that something of kind described by the first
+ * string has been defined twice, the second string being its name. **)
+exception DefinedTwice of string * string
+
 (** Treating the data sent from the parser is done in two phases.
  * The first phase is to assimilate each globally declared names
  * into identifiers.
- * It expects the previously computed [intermediary] type. **)
+ * It expects the previously computed [intermediary] type.
+ * This function might throw [UnexpectedCommandInBlock] or [DefinedTwice]. **)
 val prepare_declarations : intermediary -> Ast.declaration list -> intermediary
 
 (** An initial empty [intermediary] element. **)

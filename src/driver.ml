@@ -22,6 +22,11 @@ let empty_block = {
     provide_contact = []
   }
 
+(* TODO: Why not storing directly [string] as identifiers as soon as found
+ * and storing the identifiers of the waiting things to be defined?
+ * This would enable to embed the type [state] (or at least the informations
+ * about categories, attributes, and constructors) directly inside the type
+ * [intermediary]. *)
 type intermediary = {
     categories_to_be_defined : string Utils.PSet.t (** A set of categories expected
                                                     * to be declared. **) ;
@@ -125,55 +130,63 @@ let convert_block block_name expected =
         { acc with provide_contact = p :: acc.provide_contact }) l
   in aux empty_block
 
-let prepare_declarations =
-  List.fold_left (fun i -> function
-    | Ast.DeclareInstance (Ast.Attribute, attribute, block) ->
-      let block =
-        convert_block attribute [OfCategory] block in
-      let (id, state) =
-        State.PlayerAttribute.declare_attribute
-          i.constructor_information.State.player attribute in
-      let id = State.PlayerAttribute id in
-      if PMap.mem id i.attribute_dependencies then
-        raise (DefinedTwice ("attribute", attribute)) ;
-      { i with constructor_information =
-                 { i.constructor_information with State.player = state } ;
-               attribute_dependencies =
-                 PMap.add id block.of_category i.attribute_dependencies }
-    | Ast.DeclareInstance (Ast.Contact, contact, block) ->
-      let block =
-        convert_block contact [OfCategory] block in
-      let (id, state) =
-        State.ContactAttribute.declare_attribute
-          i.constructor_information.State.contact contact in
-      let id = State.ContactAttribute id in
-      if PMap.mem id i.attribute_dependencies then
-        raise (DefinedTwice ("contact", contact)) ;
-      { i with constructor_information =
-                 { i.constructor_information with State.contact = state } ;
-               attribute_dependencies =
-                 PMap.add id block.of_category i.attribute_dependencies }
-    | Ast.DeclareConstructor (kind, attribute, constructor, block) ->
-      let block =
-        convert_block attribute [OfCategory; Translation; Add;
-                                 CompatibleWith] block in
-      TODO
-    | Ast.DeclareCategory (name, block) ->
-      let block =
-        convert_block attribute [OfCategory; Translation] block in
-      (* TODO: Check if already defined. *)
-      let i =
-        { i with categories_names = Utils.Id.map_insert i.categories_names name } in
-      (* TODO: Check if in [i.categories_to_be_defined]. *)
-      (* TODO: Update [i.category_dependencies]. *)
-      (* TODO: Store the translations in a generic type for translations. *)
-      TODO
-    | Ast.DeclareElement (name, block) ->
-      let block =
-        convert_block attribute [OfCategory; LetPlayer; ProvideRelation;
-                                 ProvideAttribute; ProvideContact] block in
-      let i =
-        { i with elements_names = Utils.Id.map_insert i.elements_names name } in
-      TODO
-  )
+let prepare_declaration i = function
+  | Ast.DeclareInstance (Ast.Attribute, attribute, block) ->
+    let block =
+      convert_block attribute [OfCategory] block in
+    let (id, state) =
+      State.PlayerAttribute.declare_attribute
+        i.constructor_information.State.player attribute in
+    let id = State.PlayerAttribute id in
+    if PMap.mem id i.attribute_dependencies then
+      raise (DefinedTwice ("attribute", attribute)) ;
+    { i with constructor_information =
+               { i.constructor_information with State.player = state } ;
+             attribute_dependencies =
+               PMap.add id block.of_category i.attribute_dependencies }
+  | Ast.DeclareInstance (Ast.Contact, contact, block) ->
+    let block =
+      convert_block contact [OfCategory] block in
+    let (id, state) =
+      State.ContactAttribute.declare_attribute
+        i.constructor_information.State.contact contact in
+    let id = State.ContactAttribute id in
+    if PMap.mem id i.attribute_dependencies then
+      raise (DefinedTwice ("contact", contact)) ;
+    { i with constructor_information =
+               { i.constructor_information with State.contact = state } ;
+             attribute_dependencies =
+               PMap.add id block.of_category i.attribute_dependencies }
+  | Ast.DeclareConstructor (kind, attribute, constructor, block) ->
+    let block =
+      convert_block attribute [OfCategory; Translation; Add;
+                               CompatibleWith] block in
+    (* TODO: Check if the attribute has already been defined.
+     * If yes, parse the block now.  Otherwise, put it in a list to be parsed later on. *)
+    TODO
+  | Ast.DeclareCategory (name, block) ->
+    let block =
+      convert_block attribute [OfCategory; Translation] block in
+    if Utils.Id.get_id i.categories_names name <> None then
+      raise (DefinedTwice ("category", name)) ;
+    let i =
+      { i with categories_names = Utils.Id.map_insert i.categories_names name ;
+               categories_to_be_defined =
+                 Utils.PSet.remove name i.categories_to_be_defined ;
+               category_dependencies =
+                 PMap.add name block.of_category i.category_dependencies } in
+    (* TODO: Store the translations in a generic type for translations. *)
+    TODO
+  | Ast.DeclareElement (name, block) ->
+    let block =
+      convert_block attribute [OfCategory; LetPlayer; ProvideRelation;
+                               ProvideAttribute; ProvideContact] block in
+    let i =
+      { i with elements_names = Utils.Id.map_insert i.elements_names name } in
+    TODO
+
+let normalise i = i (*TODO*)
+
+let prepare_declarations i l =
+  normalise (List.fold_left prepare_declaration i l)
 

@@ -151,10 +151,9 @@ module Id : sig
     type 'a map
 
     (** Get the identifier from the identifier map.
-     * The function may return [None] if the identifier is not in the mapping,
-     * but the important property is that if it returns [Some] for an object,
-     * this value is consistently different from the one of any other objects,
-     * expect of course for the same objects. **)
+     * Returns [None] if the identifier is not in the mapping.
+     * Returns [Some id] where [id] is the identifier if the object
+     * is in the map. **)
     val get_id : 'a map -> 'a -> t option
 
     (** Create a identifier map. **)
@@ -220,31 +219,67 @@ module UnionFind : sig
 
 module BidirectionalList : sig
 
-    (** A list whose elements can be easily taken and added from and to both directions. **)
+    (** A list whose elements can be easily taken and added from and
+     * to both directions. **)
     type 'a t
 
+    (** Checks whether the list is empty. **)
     val is_empty : 'a t -> bool
+
+    (** If the list is empty, returns [None], otherwise returns the head
+     * and the tail from the left side of the list. **)
     val match_left : 'a t -> ('a * 'a t) option
+
+    (** Same as [match_left], but from the right side of the list. **)
     val match_right : 'a t -> ('a t * 'a) option
+
+    (** Add an element to the left of the list. **)
     val add_left : 'a -> 'a t -> 'a t
+
+    (** Add an element to the right of the list. **)
     val add_right : 'a t -> 'a -> 'a t
+
+    (** Converts a usual list to a bidirectional list.
+     * The head of the list is on the left of the bidirectional list. **)
     val from_list : 'a list -> 'a t
+
+    (** Converts the bidirectional list into a list, from left to right. **)
     val to_list : 'a t -> 'a list
+
+    (** Check whether all the elements of the list satisfy the given predicate. **)
     val for_all : ('a -> bool) -> 'a t -> bool
+
+    (** Check whether there exists at least one element in the list satisfying
+     * the given predicate. **)
+    val exists : ('a -> bool) -> 'a t -> bool
 
   end
 
 module PSet : sig
-    (** An implementation of sets based on [PMap]. **)
 
+    (** An implementation of sets based on [PMap]. **)
     type 'a t
 
+    (** The empty set. **)
     val empty : 'a t
+
+    (** Check whether a set is empty. **)
     val is_empty : 'a t -> bool
+
+    (** Add an element to a set. **)
     val add : 'a -> 'a t -> 'a t
+
+    (** Removes an element from a set.
+     * If the element is not present, the set is left unchanged. **)
     val remove : 'a -> 'a t -> 'a t
+
+    (** Checks whether an element is present in the set. **)
     val is_in : 'a -> 'a t -> bool
+
+    (** Merges two sets. **)
     val merge : 'a t -> 'a t -> 'a t
+
+    (** Computes the intersection of two sets. **)
     val inter : 'a t -> 'a t -> 'a t
 
   end

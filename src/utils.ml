@@ -335,6 +335,9 @@ module BidirectionalList = struct
     let for_all p (ll, lr) =
       List.for_all p ll && List.for_all p lr
 
+    let exists p (ll, lr) =
+      List.exists p ll || List.exists p lr
+
   end
 
 module PSet = struct

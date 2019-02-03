@@ -35,6 +35,7 @@ module type Attribute = sig
     val empty_constructor_map : constructor_map
     val attribute_name : constructor_map -> attribute -> string option
     val value_name : constructor_map -> value -> string option
+    val value_attribute : constructor_map -> value -> attribute option
     val constructors : constructor_map -> attribute -> value list option
     val declare_attribute : constructor_map -> string -> attribute * constructor_map
     val declare_constructor : constructor_map -> attribute -> string -> value * constructor_map
@@ -51,8 +52,10 @@ module AttributeInst = functor () ->
 
     type constructor_map =
       string Utils.Id.map (** Attribute names **)
-      * string Utils.Id.map (** Constructor names **)
-      * (attribute, value list) PMap.t (** What constructors are associated to each attribute. **)
+      * (attribute * string) Utils.Id.map (** Constructor related attribute and
+                                           * names. **)
+      * (attribute, value list) PMap.t (** Which constructors are associated to each
+                                        * attribute. **)
 
     let empty_constructor_map =
       (Utils.Id.map_create (),
@@ -63,7 +66,10 @@ module AttributeInst = functor () ->
       Utils.Id.map_inverse m a
 
     let value_name (_, m, _) c =
-      Utils.Id.map_inverse m c
+      Utils.option_map snd (Utils.Id.map_inverse m c)
+
+    let value_attribute (_, m, _) c =
+      Utils.option_map fst (Utils.Id.map_inverse m c)
 
     let constructors (_, _, m) a =
       try Some (PMap.find a m)
@@ -74,7 +80,7 @@ module AttributeInst = functor () ->
       (a, (mn, mc, PMap.add a [] al))
 
     let declare_constructor (mn, mc, al) a c =
-      let (c, mc) = Utils.Id.map_insert_t mc c in
+      let (c, mc) = Utils.Id.map_insert_t mc (a, c) in
       let l =
         try PMap.find a al
         with Not_found -> assert false in

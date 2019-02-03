@@ -353,20 +353,34 @@ module PSet = struct
     let remove = PMap.remove
 
     let is_in e s =
-      try let _ = PMap.find e s in true
+      try PMap.find e s ; true
       with Not_found -> false
 
     let fold f i s =
       PMap.foldi (fun e _ -> f e) s i
 
-    let merge s =
-      fold add s
+    let merge s = fold add s
 
     let inter s1 s2 =
       fold (fun e -> if is_in e s2 then add e else id) empty s1
 
     let map f =
       fold (fun e -> add (f e)) empty
+
+    let partition f =
+      fold (fun e (sy, sn) ->
+        if f e then (add e sy, sn) else (sy, add e sn)) (empty, empty)
+
+    let partition_map f =
+      fold (fun e (sl, sr) ->
+        match f e with
+        | Left v -> (add v sl, sr)
+        | Right v -> (sl, add v sr)) (empty, empty)
+
+    let from_list l =
+      List.fold_left (fun s e -> add e s) empty l
+
+    let domain m = PMap.map (fun _ -> ()) m
 
   end
 

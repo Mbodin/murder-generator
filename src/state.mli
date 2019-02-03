@@ -53,6 +53,9 @@ module type Attribute = sig
     (** Returns the name of a constructor. **)
     val value_name : constructor_map -> value -> string option
 
+    (** Returns the associated attribute of a constructor. **)
+    val value_attribute : constructor_map -> value -> attribute option
+
     (** Returns the list of constructors associated with an attribute. **)
     val constructors : constructor_map -> attribute -> value list option
 

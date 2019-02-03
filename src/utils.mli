@@ -288,5 +288,19 @@ module PSet : sig
     (** Maps the set to a function. **)
     val map : ('a -> 'b) -> 'a t -> 'b t
 
+    (** Given a predicate, splits the set into a set of elements
+     * satisfying the predicate and a set of elements that don’t. **)
+    val partition : ('a -> bool) -> 'a t -> 'a t * 'a t
+
+    (** Same as [partition], but the predicate maps each value to
+     * a different type whether they satisfy the predicate. **)
+    val partition_map : ('a -> ('b, 'c) plus) -> 'a t -> 'b t * 'c t
+
+    (** Converts a list into a set. **)
+    val from_list : 'a list -> 'a t
+
+    (** Returns the domain of a map. **)
+    val domain : ('a, 'b) PMap.t -> 'a t
+
   end
 

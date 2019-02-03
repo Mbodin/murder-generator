@@ -26,39 +26,32 @@ type state = {
     categories_names : string Utils.Id.map (** All declared category names. **) ;
     elements_names : string Utils.Id.map (** All declared element names. **) ;
     constructor_information : State.constructor_maps (** The constructor maps. **) ;
-    category_dependencies : (Utils.Id.t, string list) PMap.t (** For each category,
-                                                              * associates its list
-                                                              * of category dependencies.
-                                                              * It has to be given as
-                                                              * string as some might
-                                                              * not yet have been loaded. **) ;
-    attribute_dependencies : (State.attribute, string list) PMap.t (** Similarly, the
-                                                                    * dependencies
-                                                                    * of each attribute. **) ;
-    (* TODO *)
+    category_dependencies :
+      (Utils.Id.t, Utils.Id.t Utils.PSet.t) PMap.t
+      (** For each category, associates its set of category dependencies.
+       * Note that this list is global: it also comprises the dependencies
+       * of each dependencies, and so on. **) ;
+    attribute_dependencies :
+      (State.attribute, Utils.Id.t Utils.PSet.t) PMap.t
+      (** Similarly, the dependencies of each attribute. **) ;
+    constructor_dependencies :
+      (Utils.Id.t, Utils.Id.t Utils.PSet.t) PMap.t
+      (** Similarly, the dependencies of each constructor. **) ;
+    (* TODO: Elements and translations. *)
   }
 
-(* TODO: Why not storing directly [string] as identifiers as soon as found
- * and storing the identifiers of the waiting things to be defined?
- * This would enable to embed the type [state] (or at least the informations
- * about categories, attributes, and constructors) directly inside the type
- * [intermediary]. *)
 type intermediary = {
     current_state : state ; (** The current state. **)
-    categories_to_be_defined : Utils.Id.t Utils.PSet.t (** A set of categories expected
-                                                        * to be declared. **) ;
-                                                        (* TODO: Instead of a set, put a
-                                                         * map from category identifiers
-                                                         * to three sets: a set of categories,
-                                                         * of attributes, and of attribute
-                                                         * constructors that depends on them
-                                                         * (and the same from attributes (to be
-                                                         * defined) to constructors).
-                                                         * That way, one can directly propagates
-                                                         * the category dependencies along the
-                                                         * parsing, without having to go back.
-                                                         * This map is constantly updated. *)
-    (* TODO: We need to store a lot more information. *)
+    categories_to_be_defined :
+      (Utils.Id.t, Utils.Id.t Utils.PSet.t
+                   * State.attribute Utils.PSet.t
+                   * Utils.Id.t Utils.PSet.t) PMap.t
+      (** The set of categories expected to be declared.
+       * For each of these, we also put thee sets to which the category dependencies
+       * should be attached: they are respectively the set of category identifiers,
+       * of attributes, and of constructors. **) ;
+    attributes_to_be_defined : (State.attribute, Utils.Id.t Utils.PSet.t) PMap.t
+      (** Similarly, the set of attributes expected to be declared. **)
   }
 
 let empty_state = {
@@ -67,23 +60,38 @@ let empty_state = {
     constructor_information = State.empty_constructor_maps ;
     category_dependencies = PMap.empty ;
     attribute_dependencies = PMap.empty ;
+    constructor_dependencies = PMap.empty ;
     (* TODO *)
   }
 
 let empty_intermediary = {
     current_state = empty_state ;
-    categories_to_be_defined = Utils.PSet.empty ;
-    (* TODO *)
+    categories_to_be_defined = PMap.empty ;
+    attributes_to_be_defined = PMap.empty
   }
 
 let categories_to_be_defined i =
   Utils.PSet.map (fun id ->
     match Utils.Id.map_inverse i.current_state.categories_names id with
     | Some c -> c
-    | None -> assert false) i.categories_to_be_defined
+    | None -> assert false) (Utils.PSet.domain i.categories_to_be_defined)
+
+let attributes_to_be_defined i =
+  Utils.PSet.partition_map (function
+    | State.PlayerAttribute id ->
+      (match State.PlayerAttribute.attribute_name
+        i.current_state.constructor_information.player id with
+      | Some c -> Utils.Left c
+      | None -> assert false)
+    | State.ContactAttribute id ->
+      (match State.ContactAttribute.attribute_name
+        i.current_state.constructor_information.contact id with
+      | Some c -> Utils.Right c
+      | None -> assert false)) (Utils.PSet.domain i.attributes_to_be_defined)
 
 let is_intermediary_final i =
-  Utils.PSet.is_empty i.categories_to_be_defined
+  PMap.is_empty i.categories_to_be_defined
+  && PMap.is_empty i.attributes_to_be_defined
 
 let all_categories i =
   Utils.Id.map_fold (fun _ id l -> id :: l) [] i.categories_names
@@ -114,6 +122,8 @@ let command_type_to_string = function
 exception UnexpectedCommandInBlock of string * string
 
 exception DefinedTwice of string * string
+
+exception CircularDependency of string
 
 (** Converts an [Ast.block] into a [block].
  * It takes a list of command types and checks that only these are present
@@ -155,57 +165,73 @@ let convert_block block_name expected =
         { acc with provide_contact = p :: acc.provide_contact }) l
   in aux empty_block
 
-let prepare_declaration i = function
-  | Ast.DeclareInstance (Ast.Attribute, attribute, block) ->
-    let block =
-      convert_block attribute [OfCategory] block in
+let category_to_id i id =
+  match Utils.Id.get_id i.current_state.categories_names id with
+  | Some name -> name
+  | None -> assert false
+
+let prepare_declaration i =
+  let category_names_to_id_set l =
+    Utils.PSet.from_list (List.map (category_to_id i) l) in
+  let declare_instance declare extract update constructor en name block =
+    let block = convert_block name [OfCategory] block in
     let (id, state) =
-      State.PlayerAttribute.declare_attribute
-        i.current_state.constructor_information.State.player attribute in
-    let id = State.PlayerAttribute id in
+      declare (extract i.current_state.constructor_information) name in
+    let id = constructor id in
     if PMap.mem id i.current_state.attribute_dependencies then
-      raise (DefinedTwice ("attribute", attribute)) ;
+      raise (DefinedTwice (en, name)) ;
+    (* TODO: attributes_to_be_defined *)
     { i with current_state =
       { i.current_state with
           constructor_information =
-             { i.current_state.constructor_information with State.player = state } ;
-           attribute_dependencies =
-             PMap.add id block.of_category i.current_state.attribute_dependencies } }
-  | Ast.DeclareInstance (Ast.Contact, contact, block) ->
-    let block =
-      convert_block contact [OfCategory] block in
-    let (id, state) =
-      State.ContactAttribute.declare_attribute
-        i.current_state.constructor_information.State.contact contact in
-    let id = State.ContactAttribute id in
-    if PMap.mem id i.current_state.attribute_dependencies then
-      raise (DefinedTwice ("contact", contact)) ;
-    { i with current_state =
-      { i.current_state with
-          constructor_information =
-            { i.current_state.constructor_information with State.contact = state } ;
+            update i.current_state.constructor_information state ;
           attribute_dependencies =
-            PMap.add id block.of_category i.current_state.attribute_dependencies } }
+            PMap.add id (category_names_to_id_set block.of_category)
+              i.current_state.attribute_dependencies } } in
+  let declare_category name block =
+    let block =
+      convert_block attribute [OfCategory; Translation] block in
+    let (id, categories_names) = TODO i.categories_names name in
+    if PMap.mem id i.current_state.category_dependencies then
+      raise (DefinedTwice ("category", name)) ;
+    if List.mem name block.of_category then
+      raise (CircularDependency name) ;
+    let (cat_dep, att_dep, constr_dep) =
+      try PMap.find id i.categories_to_be_defined
+      with Not_found -> (Utils.PSet.empty, Utils.PSet.empty, Utils.PSet.empty) in
+    (* TODO: Deal with these dependencies *)
+    (* TODO: Store the translations in a generic type for translations. *)
+    { i with
+        categories_to_be_defined =
+          Utils.PSet.remove name i.categories_to_be_defined ;
+        current_state =
+          { i.current_state with
+              categories_names = categories_names ;
+              category_dependencies =
+                (* TODO: Also fetch the dependencies’s dependencies. *)
+                PMap.add name (category_names_to_id_set block.of_category)
+                  i.current_state.category_dependencies } } in
+  function
+  | Ast.DeclareInstance (Ast.Attribute, attribute, block) ->
+    declare_instance State.PlayerAttribute.declare_attribute
+                     (fun m -> m.State.player)
+                     (fun i state -> { i with State.player = state })
+                     (fun id -> State.PlayerAttribute id) "attribute"
+                     attribute block
+  | Ast.DeclareInstance (Ast.Contact, contact, block) ->
+    declare_instance State.ContactAttribute.declare_attribute
+                     (fun m -> m.State.contact)
+                     (fun i state -> { i with State.contact = state })
+                     (fun id -> State.ContactAttribute id) "contact"
+                     contact block
   | Ast.DeclareConstructor (kind, attribute, constructor, block) ->
     let block =
       convert_block attribute [OfCategory; Translation; Add;
                                CompatibleWith] block in
-    (* TODO: Check if the attribute has already been defined.
-     * If yes, parse the block now.  Otherwise, put it in a list to be parsed later on. *)
-    TODO
+    (* TODO *)
+    i
   | Ast.DeclareCategory (name, block) ->
-    let block =
-      convert_block attribute [OfCategory; Translation] block in
-    if Utils.Id.get_id i.categories_names name <> None then
-      raise (DefinedTwice ("category", name)) ;
-    let i =
-      { i with categories_names = Utils.Id.map_insert i.categories_names name ;
-               categories_to_be_defined =
-                 Utils.PSet.remove name i.categories_to_be_defined ;
-               category_dependencies =
-                 PMap.add name block.of_category i.category_dependencies } in
-    (* TODO: Store the translations in a generic type for translations. *)
-    TODO
+    declare_category name block
   | Ast.DeclareElement (name, block) ->
     let block =
       convert_block attribute [OfCategory; LetPlayer; ProvideRelation;

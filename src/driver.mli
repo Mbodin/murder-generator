@@ -13,6 +13,9 @@ exception UnexpectedCommandInBlock of string * string
  * string has been defined twice, the second string being its name. **)
 exception DefinedTwice of string * string
 
+(** An error indicating that there is a loop in category dependencies. **)
+exception CircularDependency of string
+
 (** Treating the data sent from the parser is done in two phases.
  * The first phase is to assimilate each globally declared names
  * into identifiers.
@@ -32,6 +35,9 @@ val is_intermediary_final : intermediary -> bool
 
 (** Returns a set of missing categories. **)
 val categories_to_be_defined : intermediary -> string Utils.PSet.t
+
+(** Returns a set of missing attributes and contacts. **)
+val attributes_to_be_defined : intermediary -> (string Utils.PSet.t * string Utils.PSet.t)
 
 (** This type stores all the informations returned by [parse]. **)
 type state

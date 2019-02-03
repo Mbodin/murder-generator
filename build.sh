@@ -15,5 +15,5 @@ ocamlbuild -I src \
            $TARGET.byte
 
 # Translate to JavaScript
-js_of_ocaml $TARGET.byte
+js_of_ocaml -pretty $TARGET.byte
 

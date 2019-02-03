@@ -282,5 +282,11 @@ module PSet : sig
     (** Computes the intersection of two sets. **)
     val inter : 'a t -> 'a t -> 'a t
 
+    (** Folds over the set. **)
+    val fold : ('a -> 'b -> 'b) -> 'b -> 'a t -> 'b
+
+    (** Maps the set to a function. **)
+    val map : ('a -> 'b) -> 'a t -> 'b t
+
   end
 

@@ -272,7 +272,7 @@ module UnionFind = struct
       List.fold_left (fun a e -> f e a) i (to_list mp)
 
     let iter f =
-      fold (fun e () -> f e) ()
+      fold (fun e _ -> f e) ()
 
     exception Found
 
@@ -356,11 +356,17 @@ module PSet = struct
       try let _ = PMap.find e s in true
       with Not_found -> false
 
-    let merge s1 s2 =
-      PMap.foldi (fun e _ -> add e) s1 s2
+    let fold f i s =
+      PMap.foldi (fun e _ -> f e) s i
+
+    let merge s =
+      fold add s
 
     let inter s1 s2 =
-      PMap.foldi (fun e _ s -> if is_in e s2 then add e s else s) s1 empty
+      fold (fun e -> if is_in e s2 then add e else id) empty s1
+
+    let map f =
+      fold (fun e -> add (f e)) empty
 
   end
 

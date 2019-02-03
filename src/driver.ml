@@ -22,14 +22,7 @@ let empty_block = {
     provide_contact = []
   }
 
-(* TODO: Why not storing directly [string] as identifiers as soon as found
- * and storing the identifiers of the waiting things to be defined?
- * This would enable to embed the type [state] (or at least the informations
- * about categories, attributes, and constructors) directly inside the type
- * [intermediary]. *)
-type intermediary = {
-    categories_to_be_defined : string Utils.PSet.t (** A set of categories expected
-                                                    * to be declared. **) ;
+type state = {
     categories_names : string Utils.Id.map (** All declared category names. **) ;
     elements_names : string Utils.Id.map (** All declared element names. **) ;
     constructor_information : State.constructor_maps (** The constructor maps. **) ;
@@ -42,11 +35,33 @@ type intermediary = {
     attribute_dependencies : (State.attribute, string list) PMap.t (** Similarly, the
                                                                     * dependencies
                                                                     * of each attribute. **) ;
+    (* TODO *)
+  }
+
+(* TODO: Why not storing directly [string] as identifiers as soon as found
+ * and storing the identifiers of the waiting things to be defined?
+ * This would enable to embed the type [state] (or at least the informations
+ * about categories, attributes, and constructors) directly inside the type
+ * [intermediary]. *)
+type intermediary = {
+    current_state : state ; (** The current state. **)
+    categories_to_be_defined : Utils.Id.t Utils.PSet.t (** A set of categories expected
+                                                        * to be declared. **) ;
+                                                        (* TODO: Instead of a set, put a
+                                                         * map from category identifiers
+                                                         * to three sets: a set of categories,
+                                                         * of attributes, and of attribute
+                                                         * constructors that depends on them
+                                                         * (and the same from attributes (to be
+                                                         * defined) to constructors).
+                                                         * That way, one can directly propagates
+                                                         * the category dependencies along the
+                                                         * parsing, without having to go back.
+                                                         * This map is constantly updated. *)
     (* TODO: We need to store a lot more information. *)
   }
 
-let empty_intermediary = {
-    categories_to_be_defined = Utils.PSet.empty ;
+let empty_state = {
     categories_names = Utils.Id.map_create () ;
     elements_names = Utils.Id.map_create () ;
     constructor_information = State.empty_constructor_maps ;
@@ -55,7 +70,17 @@ let empty_intermediary = {
     (* TODO *)
   }
 
-let categories_to_be_defined i = i.categories_to_be_defined
+let empty_intermediary = {
+    current_state = empty_state ;
+    categories_to_be_defined = Utils.PSet.empty ;
+    (* TODO *)
+  }
+
+let categories_to_be_defined i =
+  Utils.PSet.map (fun id ->
+    match Utils.Id.map_inverse i.current_state.categories_names id with
+    | Some c -> c
+    | None -> assert false) i.categories_to_be_defined
 
 let is_intermediary_final i =
   Utils.PSet.is_empty i.categories_to_be_defined
@@ -136,27 +161,31 @@ let prepare_declaration i = function
       convert_block attribute [OfCategory] block in
     let (id, state) =
       State.PlayerAttribute.declare_attribute
-        i.constructor_information.State.player attribute in
+        i.current_state.constructor_information.State.player attribute in
     let id = State.PlayerAttribute id in
-    if PMap.mem id i.attribute_dependencies then
+    if PMap.mem id i.current_state.attribute_dependencies then
       raise (DefinedTwice ("attribute", attribute)) ;
-    { i with constructor_information =
-               { i.constructor_information with State.player = state } ;
-             attribute_dependencies =
-               PMap.add id block.of_category i.attribute_dependencies }
+    { i with current_state =
+      { i.current_state with
+          constructor_information =
+             { i.current_state.constructor_information with State.player = state } ;
+           attribute_dependencies =
+             PMap.add id block.of_category i.current_state.attribute_dependencies } }
   | Ast.DeclareInstance (Ast.Contact, contact, block) ->
     let block =
       convert_block contact [OfCategory] block in
     let (id, state) =
       State.ContactAttribute.declare_attribute
-        i.constructor_information.State.contact contact in
+        i.current_state.constructor_information.State.contact contact in
     let id = State.ContactAttribute id in
-    if PMap.mem id i.attribute_dependencies then
+    if PMap.mem id i.current_state.attribute_dependencies then
       raise (DefinedTwice ("contact", contact)) ;
-    { i with constructor_information =
-               { i.constructor_information with State.contact = state } ;
-             attribute_dependencies =
-               PMap.add id block.of_category i.attribute_dependencies }
+    { i with current_state =
+      { i.current_state with
+          constructor_information =
+            { i.current_state.constructor_information with State.contact = state } ;
+          attribute_dependencies =
+            PMap.add id block.of_category i.current_state.attribute_dependencies } }
   | Ast.DeclareConstructor (kind, attribute, constructor, block) ->
     let block =
       convert_block attribute [OfCategory; Translation; Add;

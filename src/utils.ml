@@ -382,5 +382,8 @@ module PSet = struct
 
     let domain m = PMap.map (fun _ -> ()) m
 
+    let flatten s =
+      fold merge empty s
+
   end
 

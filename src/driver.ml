@@ -51,7 +51,8 @@ type intermediary = {
        * should be attached: they are respectively the set of category identifiers,
        * of attributes, and of constructors. **) ;
     attributes_to_be_defined : (State.attribute, Utils.Id.t Utils.PSet.t) PMap.t
-      (** Similarly, the set of attributes expected to be declared. **)
+      (** Similarly, the set of attributes expected to be declared. **) ;
+    elements : (Utils.Id.t * block) list (** An element, waiting to be treated. **)
   }
 
 let empty_state = {
@@ -67,7 +68,8 @@ let empty_state = {
 let empty_intermediary = {
     current_state = empty_state ;
     categories_to_be_defined = PMap.empty ;
-    attributes_to_be_defined = PMap.empty
+    attributes_to_be_defined = PMap.empty ;
+    elements = []
   }
 
 let categories_to_be_defined i =
@@ -173,6 +175,11 @@ let category_to_id i id =
 let prepare_declaration i =
   let category_names_to_id_set l =
     Utils.PSet.from_list (List.map (category_to_id i) l) in
+  let dependencies_of_dependencies s =
+    Utils.PSet.merge s
+      (Utils.PSet.flatten (Utils.PSet.map (fun id ->
+         try PMap.find id i.current_state.category_dependencies
+         with Not_found -> Utils.PSet.empty) s)) in
   let declare_instance declare extract update constructor en name block =
     let block = convert_block name [OfCategory] block in
     let (id, state) =
@@ -181,6 +188,8 @@ let prepare_declaration i =
     if PMap.mem id i.current_state.attribute_dependencies then
       raise (DefinedTwice (en, name)) ;
     (* TODO: attributes_to_be_defined *)
+    (* TODO: Fetch the dependencies of the dependencies. *)
+    (* TODO: For each missing dependency, update [categories_to_be_defined]. *)
     { i with current_state =
       { i.current_state with
           constructor_information =
@@ -190,27 +199,32 @@ let prepare_declaration i =
               i.current_state.attribute_dependencies } } in
   let declare_category name block =
     let block =
-      convert_block attribute [OfCategory; Translation] block in
-    let (id, categories_names) = TODO i.categories_names name in
+      convert_block name [OfCategory; Translation] block in
+    let (id, categories_names) =
+      Utils.Id.map_insert_t i.current_state.categories_names name in
     if PMap.mem id i.current_state.category_dependencies then
       raise (DefinedTwice ("category", name)) ;
-    if List.mem name block.of_category then
+    let deps =
+      dependencies_of_dependencies (category_names_to_id_set block.of_category) in
+    if Utils.PSet.is_in id deps then
       raise (CircularDependency name) ;
+    let categories_to_be_defined =
+      PMap.mapi (fun idc (cats, atts, consts) ->
+        if Utils.PSet.is_in idc deps then
+          (Utils.PSet.add id cats, atts, consts)
+        else (cats, atts, consts)) (PMap.remove id i.categories_to_be_defined) in
     let (cat_dep, att_dep, constr_dep) =
       try PMap.find id i.categories_to_be_defined
       with Not_found -> (Utils.PSet.empty, Utils.PSet.empty, Utils.PSet.empty) in
     (* TODO: Deal with these dependencies *)
     (* TODO: Store the translations in a generic type for translations. *)
     { i with
-        categories_to_be_defined =
-          Utils.PSet.remove name i.categories_to_be_defined ;
+        categories_to_be_defined = categories_to_be_defined ;
         current_state =
           { i.current_state with
               categories_names = categories_names ;
               category_dependencies =
-                (* TODO: Also fetch the dependencies’s dependencies. *)
-                PMap.add name (category_names_to_id_set block.of_category)
-                  i.current_state.category_dependencies } } in
+                PMap.add id deps i.current_state.category_dependencies } } in
   function
   | Ast.DeclareInstance (Ast.Attribute, attribute, block) ->
     declare_instance State.PlayerAttribute.declare_attribute
@@ -233,15 +247,39 @@ let prepare_declaration i =
   | Ast.DeclareCategory (name, block) ->
     declare_category name block
   | Ast.DeclareElement (name, block) ->
+    (match Utils.Id.get_id i.current_state.elements_names name with
+     | None -> ()
+     | Some _ -> raise (DefinedTwice ("element", name))) ;
+    let (id, elements) =
+      Utils.Id.map_insert_t i.current_state.elements_names name in
     let block =
-      convert_block attribute [OfCategory; LetPlayer; ProvideRelation;
-                               ProvideAttribute; ProvideContact] block in
-    let i =
-      { i with elements_names = Utils.Id.map_insert i.elements_names name } in
-    TODO
+      convert_block name [OfCategory; LetPlayer; ProvideRelation;
+                          ProvideAttribute; ProvideContact] block in
+    { i with
+        elements = (id, block) :: i.elements ;
+        current_state =
+          { i.current_state with elements_names = elements } }
 
-let normalise i = i (*TODO*)
+let normalise i = i (* FIXME: Do we need this function? *)
 
 let prepare_declarations i l =
   normalise (List.fold_left prepare_declaration i l)
+
+let parse i =
+  (* TODO: Parse each elements. *)
+  i.current_state
+
+let translates_category s = (* TODO *) failwith "TODO"
+
+let get_category_dependencies s id =
+  PMap.find id s.category_dependencies
+
+let get_attribute_dependencies s id =
+  PMap.find id s.attribute_dependencies
+
+let elements s = (* TODO *) failwith "TODO"
+
+let get_element_dependencies s id = (* TODO *) failwith "TODO"
+
+let get_all_elements s cats = (* TODO *) failwith "TODO"
 

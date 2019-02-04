@@ -62,11 +62,11 @@ val all_categories : state -> Utils.Id.t list
 
 (** Takes a category identifier and returns the list of categories
  * that this category depends on. **)
-val get_category_dependencies : state -> Utils.Id.t -> Utils.Id.t list
+val get_category_dependencies : state -> Utils.Id.t -> Utils.Id.t Utils.PSet.t
 
 (** Takes an attribute and returns the list of categories
  * that this attribute depends on. **)
-val get_attribute_dependencies : state -> State.attribute -> Utils.Id.t list
+val get_attribute_dependencies : state -> State.attribute -> Utils.Id.t Utils.PSet.t
 
 (* TODO: The same for constructors.
  * (* TODO: The equivalent of State.attribute, but with attribute constructors
@@ -74,7 +74,7 @@ val get_attribute_dependencies : state -> State.attribute -> Utils.Id.t list
 
 (** Takes an element identifier and returns the list of categories
  * that this element depends on. **)
-val get_element_dependencies : state -> Utils.Id.t -> Utils.Id.t list
+val get_element_dependencies : state -> Utils.Id.t -> Utils.Id.t Utils.PSet.t
 
 (** Returns the translations for categories. **)
 val translates_category : state -> Utils.Id.t Translation.t

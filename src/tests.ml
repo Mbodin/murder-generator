@@ -66,17 +66,24 @@ let test_parser =
         Lexing.pos_bol = 0 ;
         Lexing.pos_cnum = 0
       } ;
-    let ast =
-      try Parser.main Lexer.read buf with
-      | Parser.Error ->
-        print_endline ("Error: Parser error " ^
-                        Lexer.current_position buf ^ ".") ;
-        []
-      | Lexer.SyntaxError msg ->
-        print_endline ("Error: Lexer error " ^
-                        Lexer.current_position buf ^ ": " ^ msg) ;
-        [] in
-    () in
-  List.iter read_file
-    ["data/family.murder"; "data/identity.murder"; "data/notary.murder"; "data/politics.murder"]
+    try Parser.main Lexer.read buf with
+    | Parser.Error ->
+      print_endline ("Error: Parser error " ^
+                      Lexer.current_position buf ^ ".") ;
+      []
+    | Lexer.SyntaxError msg ->
+      print_endline ("Error: Lexer error " ^
+                      Lexer.current_position buf ^ ": " ^ msg) ;
+      [] in
+  let asts =
+    List.map read_file
+      ["data/family.murder"; "data/identity.murder"; "data/notary.murder";
+       "data/politics.murder"] in
+  let i =
+    List.fold_left Driver.prepare_declarations Driver.empty_intermediary asts in
+  if not (Driver.is_intermediary_final i) then
+    print_endline "Non final intermediary!" ;
+  let s =
+    Driver.parse i in
+  ()
 

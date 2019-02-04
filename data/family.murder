@@ -83,6 +83,7 @@ end
 element LostSiblings
 begin
   category Family
+  category DarkSecrets
 
   let A be player
   let B be player

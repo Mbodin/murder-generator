@@ -162,7 +162,8 @@ module Id : sig
     (** Inserts an object to an identifier map, giving it an identifier.
      * If the object is already associated an identifier, the old one is returned. **)
     val map_insert : 'a map -> 'a -> 'a map
-    (** As for map_insert, but also returns the chosen identifier.  **)
+
+    (** Similar to [map_insert], but also returns the chosen identifier.  **)
     val map_insert_t : 'a map -> 'a -> t * 'a map
 
     (** Return the object corresponding to this identifier. **)
@@ -301,6 +302,9 @@ module PSet : sig
 
     (** Returns the domain of a map. **)
     val domain : ('a, 'b) PMap.t -> 'a t
+
+    (** Merges a set of set into a single set. **)
+    val flatten : 'a t t -> 'a t
 
   end
 

@@ -10,8 +10,11 @@ val compose : ('b -> 'c) -> ('a -> 'b) -> 'a -> 'c
 (** Maps the option type. **)
 val option_map : ('a -> 'b) -> 'a option -> 'b option
 
-(** The monadic version of option_map **)
+(** The monadic version of [option_map] **)
 val if_option : 'a option -> ('a -> 'b option) -> 'b option
+
+(** Extracts the content of an option type, with a default value. **)
+val unsome_default : 'a -> 'a option -> 'a
 
 (** The sum type of two types. **)
 type ('a, 'b) plus =

@@ -1,0 +1,28 @@
+(* This file is not a real murder file, just a test to see whether the parser
+ * can detect ill-formed files. *)
+
+contact Contact Constructor
+begin
+    category A
+end
+
+declare contact Contact
+begin
+    category B
+end
+
+category A
+begin
+    category B
+end
+
+category B
+begin
+    category C
+end
+
+category C
+begin
+    (*category A*)
+end
+

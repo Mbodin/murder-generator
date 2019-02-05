@@ -17,6 +17,10 @@ let if_option = function
   | None -> fun _ -> None
   | Some x -> fun f -> f x
 
+let unsome_default d = function
+  | None -> d
+  | Some x -> x
+
 type ('a, 'b) plus =
   | Left of 'a
   | Right of 'b

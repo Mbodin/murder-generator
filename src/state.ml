@@ -55,7 +55,10 @@ module AttributeInst = functor () ->
       * (attribute * string) Utils.Id.map (** Constructor related attribute and
                                            * names. **)
       * (attribute, value list) PMap.t (** Which constructors are associated to each
-                                        * attribute. **)
+                                        * attribute.
+                                        * TODO/FIXME: Do we still need this now that
+                                        * attributes are essentially part of the
+                                        * constructor? **)
 
     let empty_constructor_map =
       (Utils.Id.map_create (),

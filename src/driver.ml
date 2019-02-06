@@ -195,6 +195,29 @@ let prepare_declaration i =
   let category_names_to_dep_dep l =
     let (category_names, s) = category_names_to_id_set l in
     (category_names, dependencies_of_dependencies s) in
+  (** Updates the given dependencies [dependencies] by adding the set of
+   * categories [deps] to the set [ldeps] of objects. **)
+  let update_dependencies dependencies ldeps deps =
+    Utils.PSet.fold (fun o dependencies ->
+        let s =
+          try PMap.find o dependencies
+          with Not_found -> assert false in
+        PMap.add o (Utils.PSet.merge s deps) dependencies)
+      dependencies ldeps in
+  (** Updates the field [categories_to_be_defined] by applying a function
+    * [update] to each of the values present in [deps].
+    * If the mapping doesn’t exists, it will first be initialised with
+    * empty sets. **)
+  let update_categories_to_be_defined deps update =
+    Utils.PSet.fold (fun c categories_to_be_defined ->
+      if category_exists c then categories_to_be_defined
+      else
+        let sets =
+          try PMap.find c categories_to_be_defined
+          with Not_found ->
+            (Utils.PSet.empty, Utils.PSet.empty, Utils.PSet.empty) in
+        PMap.add c (update sets) categories_to_be_defined)
+      i.categories_to_be_defined deps in
   (** Declare attribute and contact instances. **)
   let declare_instance declare extract update constructor en name block =
     let block = convert_block name [OfCategory] block in
@@ -211,24 +234,12 @@ let prepare_declaration i =
     (** We inform each undefined category that this attribute and its dependencies
      * depends on it. **)
     let categories_to_be_defined =
-      Utils.PSet.fold (fun c categories_to_be_defined ->
-        if category_exists c then categories_to_be_defined
-        else
-          let (cats, attrs, constrs) =
-            try PMap.find c categories_to_be_defined
-            with Not_found ->
-              (Utils.PSet.empty, Utils.PSet.empty, Utils.PSet.empty) in
-          PMap.add c (cats, Utils.PSet.add id attrs,
-                      Utils.PSet.merge constrs constr_deps)
-            categories_to_be_defined) i.categories_to_be_defined deps in
+      update_categories_to_be_defined deps (fun (cats, attrs, constrs) ->
+        (cats, Utils.PSet.add id attrs, Utils.PSet.merge constrs constr_deps)) in
     (** We also update each dependent constructors **)
     let constructor_dependencies =
-      Utils.PSet.fold (fun c constructor_dependencies ->
-        let s =
-          try PMap.find c constructor_dependencies
-          with Not_found -> assert false in
-        PMap.add c (Utils.PSet.merge s deps) constructor_dependencies)
-      i.current_state.constructor_dependencies constr_deps in
+      update_dependencies i.current_state.constructor_dependencies
+        constr_deps deps in
     { i with
         categories_to_be_defined = categories_to_be_defined ;
         attributes_to_be_defined = PMap.remove id i.attributes_to_be_defined ;
@@ -240,6 +251,46 @@ let prepare_declaration i =
               constructor_dependencies = constructor_dependencies ;
               attribute_dependencies =
                 PMap.add id deps i.current_state.attribute_dependencies } } in
+  (** Declare constructor instances. **)
+  let declare_constructor declare declare_constructor extract update en
+      attribute constructor block =
+    let block =
+      convert_block attribute [OfCategory; Translation; Add;
+                               CompatibleWith] block in
+    let (attribute, state) =
+      declare (extract i.current_state.constructor_information) attribute in
+    let (id, state) =
+      declare_constructor state attribute constructor in
+    if PMap.mem id i.current_state.constructor_dependencies then
+      raise (DefinedTwice (en ^ " constructor", constructor)) ;
+    let (category_names, deps) = category_names_to_dep_dep block.of_category in
+    (* TODO: Deal with [Translation], [Add], and [CompatibleWith]. *)
+    (* TODO *)
+    { i with
+        current_state =
+          { i.current_state with
+              constructor_information =
+                update i.current_state.constructor_information state ;
+              (* TODO: constructor_dependencies = ?? *)
+          } } in
+  (** The functions [declare_instance] and [declare_constructor] are called
+   * with similar functions, depending only on whether given an attribute
+   * or a contact.
+   * This function provides the right arguments to these functions. **)
+  (* FIXME: Can this be done nicely? *)
+  (*let depending_on_kind f = function
+    | Ast.Attribute ->
+      f State.PlayerAttribute.declare_attribute
+        (fun m -> m.State.player)
+        (fun i state -> { i with State.player = state })
+        (fun id -> State.PlayerAttribute id)
+        "attribute"
+    | Ast.Contact ->
+      f State.ContactAttribute.declare_attribute
+        (fun m -> m.State.contact)
+        (fun i state -> { i with State.contact = state })
+        (fun id -> State.ContactAttribute id)
+        "contact" in*)
   function
   | Ast.DeclareInstance (Ast.Attribute, attribute, block) ->
     declare_instance State.PlayerAttribute.declare_attribute
@@ -253,27 +304,20 @@ let prepare_declaration i =
                      (fun i state -> { i with State.contact = state })
                      (fun id -> State.ContactAttribute id) "contact"
                      contact block
-  | Ast.DeclareConstructor (kind, attribute, constructor, block) ->
-    (* As of [DeclareInstance], this needs to be separated between attributes
-     * and contacts.
-     * I guess that a lot of arguments will be in common and that a function
-     * can actually provide the constructors, etc.  This would be a nice way
-     * to factorise. *)
-    let block =
-      convert_block attribute [OfCategory; Translation; Add;
-                               CompatibleWith] block in
-    (* TODO:
-    let (attribute, state) =
-      declare (extract i.current_state.constructor_information) attribute in
-    let attribute = constructor attribute in
-    let (id, state) =
-      State.declare_constructor state attribute constructor in
-    if PMap.mem id i.current_state.constructor_dependencies then
-      raise (DefinedTwice (en, name)) ;
-    let (category_names, deps) = category_names_to_dep_dep block.of_category in
-    (* TODO: Deal with [Translation], [Add], and [CompatibleWith]. *)
-    *)
-    i
+  | Ast.DeclareConstructor (Ast.Attribute, attribute, constructor, block) ->
+    declare_constructor State.PlayerAttribute.declare_attribute
+                        State.PlayerAttribute.declare_constructor
+                        (fun m -> m.State.player)
+                        (fun i state -> { i with State.player = state })
+                        "attribute"
+                        attribute constructor block
+  | Ast.DeclareConstructor (Ast.Contact, attribute, constructor, block) ->
+    declare_constructor State.ContactAttribute.declare_attribute
+                        State.ContactAttribute.declare_constructor
+                        (fun m -> m.State.contact)
+                        (fun i state -> { i with State.contact = state })
+                        "contact"
+                        attribute constructor block
   | Ast.DeclareCategory (name, block) ->
     let block =
       convert_block name [OfCategory; Translation] block in
@@ -291,41 +335,22 @@ let prepare_declaration i =
     (** We inform each undefined category that this category and its dependencies
      * depends on it. **)
     let categories_to_be_defined =
-      Utils.PSet.fold (fun c categories_to_be_defined ->
-        if category_exists c then categories_to_be_defined
-        else
-          let (cats, attrs, constrs) =
-            try PMap.find c categories_to_be_defined
-            with Not_found ->
-              (Utils.PSet.empty, Utils.PSet.empty, Utils.PSet.empty) in
-          PMap.add c (Utils.PSet.add id (Utils.PSet.merge cats cat_dep),
-                      Utils.PSet.merge attrs att_dep,
-                      Utils.PSet.merge constrs constr_dep)
-            categories_to_be_defined)
-      (PMap.remove id i.categories_to_be_defined) deps in
+      update_categories_to_be_defined deps (fun (cats, attrs, constrs) ->
+        (Utils.PSet.add id (Utils.PSet.merge cats cat_dep),
+         Utils.PSet.merge attrs att_dep,
+         Utils.PSet.merge constrs constr_dep)) in
+    let categories_to_be_defined =
+      PMap.remove id categories_to_be_defined in
     (** We propagate the local dependencies to all elements that waited to know
      * about them. **)
     let category_dependencies =
-      Utils.PSet.fold (fun c category_dependencies ->
-          let s =
-            try PMap.find c category_dependencies
-            with Not_found -> assert false in
-          PMap.add c (Utils.PSet.merge s deps) category_dependencies)
-        (PMap.add id deps i.current_state.category_dependencies) cat_dep in
+      update_dependencies (PMap.add id deps i.current_state.category_dependencies)
+        cat_dep deps in
     let attribute_dependencies =
-      Utils.PSet.fold (fun a attribute_dependencies ->
-          let s =
-            try PMap.find a attribute_dependencies
-            with Not_found -> assert false in
-          PMap.add a (Utils.PSet.merge s deps) attribute_dependencies)
-        i.current_state.attribute_dependencies att_dep in
+      update_dependencies i.current_state.attribute_dependencies att_dep deps in
     let constructor_dependencies =
-      Utils.PSet.fold (fun c constructor_dependencies ->
-          let s =
-            try PMap.find c constructor_dependencies
-            with Not_found -> assert false in
-          PMap.add c (Utils.PSet.merge s deps) constructor_dependencies)
-        i.current_state.constructor_dependencies constr_dep in
+      update_dependencies i.current_state.constructor_dependencies
+        constr_dep deps in
     (* TODO: Deal with translations. *)
     { i with
         categories_to_be_defined = categories_to_be_defined ;
@@ -349,10 +374,8 @@ let prepare_declaration i =
         current_state =
           { i.current_state with elements_names = elements } }
 
-let normalise i = i (* FIXME: Do we need this function? *)
-
 let prepare_declarations i l =
-  normalise (List.fold_left prepare_declaration i l)
+  List.fold_left prepare_declaration i l
 
 let parse i =
   (* TODO: Parse each elements. *)

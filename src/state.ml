@@ -39,12 +39,10 @@ module type Attribute = sig
     val constructors : constructor_map -> attribute -> value list option
     val declare_attribute : constructor_map -> string -> attribute * constructor_map
     val declare_constructor : constructor_map -> attribute -> string -> value * constructor_map
-    val remove_constructor : constructor_map -> attribute -> value -> constructor_map
+    val remove_constructor : constructor_map -> value -> constructor_map
   end
 
-(** The unused parameter is used so that the maps in [empty_constructor_map]
- * are initialised with a different reference in each instantiations. *)
-module AttributeInst = functor () ->
+module AttributeInst () =
   struct
 
     type attribute = Utils.Id.t
@@ -52,13 +50,12 @@ module AttributeInst = functor () ->
 
     type constructor_map =
       string Utils.Id.map (** Attribute names **)
-      * (attribute * string) Utils.Id.map (** Constructor related attribute and
-                                           * names. **)
-      * (attribute, value list) PMap.t (** Which constructors are associated to each
-                                        * attribute.
-                                        * TODO/FIXME: Do we still need this now that
-                                        * attributes are essentially part of the
-                                        * constructor? **)
+      * (attribute * string) Utils.Id.map (** The map storing each constructor.
+                                           * The attribute is part of the
+                                           * constructor, with the constructor
+                                           * name. **)
+      * (attribute, value list) PMap.t (** Which constructors is associated to which
+                                        * attribute. **)
 
     let empty_constructor_map =
       (Utils.Id.map_create (),
@@ -89,7 +86,12 @@ module AttributeInst = functor () ->
         with Not_found -> assert false in
       (c, (mn, mc, PMap.add a (c :: l) al))
 
-    let remove_constructor (mn, mc, al) a c =
+    let remove_constructor m c =
+      let a =
+        match value_attribute m c with
+        | None -> assert false
+        | Some a -> a in
+      let (mn, mc, al) = m in
       let l =
         try PMap.find a al
         with Not_found -> assert false in

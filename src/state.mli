@@ -56,7 +56,7 @@ module type Attribute = sig
     (** Returns the associated attribute of a constructor. **)
     val value_attribute : constructor_map -> value -> attribute option
 
-    (** Returns the list of constructors associated with an attribute. **)
+    (** Returns the list of constructors associated to an attribute. **)
     val constructors : constructor_map -> attribute -> value list option
 
     (** Declare an attribute, returning its associated normal identifier
@@ -68,8 +68,8 @@ module type Attribute = sig
 
     (** Users can remove categories before the story generation.
      * This function removes a constructor, probably because it was associated
-     * an unwanted category. **)
-    val remove_constructor : constructor_map -> attribute -> value -> constructor_map
+     * to an unwanted category. **)
+    val remove_constructor : constructor_map -> value -> constructor_map
 
   end
 

@@ -21,8 +21,13 @@ type character_constraint =
 type t =
   ((** Each players considered by the element are represented as a cell. **)
    character_constraint list (** The constraints on this player. **)
-   * History.event list (** The events that this element would provide to this player. **)
-   * Relation.t array (** The relations that would be added to this player, for each characters. **)
+   * History.event list (** The events that this element would provide to
+                         * this player. **)
+   * Relation.t array (** The relations that would be added to this player,
+                       * for each characters.
+                       * This array can be less than the number of players
+                       * in this element ([Neutral] is then assumed for all
+                       * other cells). **)
   ) array
 
 (** Given a state, an element, and an instantiation of the characters, states

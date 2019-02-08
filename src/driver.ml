@@ -37,7 +37,8 @@ type state = {
     constructor_dependencies :
       (State.constructor, Utils.Id.t Utils.PSet.t) PMap.t
       (** Similarly, the dependencies of each constructor. **) ;
-    (* TODO: Elements and translations. *)
+    elements : (Utils.Id.t, Element.t) PMap.t
+    (* TODO: Translations. *)
   }
 
 type intermediary = {
@@ -54,7 +55,8 @@ type intermediary = {
       (State.attribute, State.constructor Utils.PSet.t) PMap.t
       (** Similarly, the set of attributes expected to be declared and their
        * dependent constructors. **) ;
-    elements : (Utils.Id.t * block) list (** An element, waiting to be treated. **)
+    elements : (Utils.Id.t * string * block) list
+      (** An element, waiting to be treated. **)
   }
 
 let empty_state = {
@@ -63,7 +65,8 @@ let empty_state = {
     constructor_information = State.empty_constructor_maps ;
     category_dependencies = PMap.empty ;
     attribute_dependencies = PMap.empty ;
-    constructor_dependencies = PMap.empty
+    constructor_dependencies = PMap.empty ;
+    elements = PMap.empty
   }
 
 let empty_intermediary = {
@@ -124,7 +127,7 @@ let command_type_to_string = function
 
 exception UnexpectedCommandInBlock of string * string
 
-exception DefinedTwice of string * string
+exception DefinedTwice of string * string * string option
 
 exception CircularDependency of string
 
@@ -228,7 +231,7 @@ let prepare_declaration i =
       declare (extract i.current_state.constructor_information) name in
     let id = constructor id in
     if attribute_exists id then
-      raise (DefinedTwice (en, name)) ;
+      raise (DefinedTwice (en, name, None)) ;
     let (category_names, deps) = category_names_to_dep_dep block.of_category in
     (** We consider each constructor dependent on this attribute. **)
     let constr_deps =
@@ -268,8 +271,7 @@ let prepare_declaration i =
     let id = constructor_constructor id in
     let attribute = attribute_constructor attribute in
     if PMap.mem id i.current_state.constructor_dependencies then
-      raise (DefinedTwice (en ^ " constructor",
-               constructor ^ " (" ^ attribute_name ^ ")")) ;
+      raise (DefinedTwice (en ^ " constructor", constructor, Some attribute_name)) ;
     let (category_names, deps) = category_names_to_dep_dep block.of_category in
     (** If the associated attribute is already defined, we fetch its dependencies,
      * otherwise, we leave a note for it to add these dependencies when finally
@@ -336,7 +338,7 @@ let prepare_declaration i =
     let (id, category_names) =
       Utils.Id.map_insert_t category_names name in
     if category_exists id then
-      raise (DefinedTwice ("category", name)) ;
+      raise (DefinedTwice ("category", name, None)) ;
     if Utils.PSet.is_in id deps then
       raise (CircularDependency name) ;
     (** We consider each elements dependent on this category. **)
@@ -374,23 +376,45 @@ let prepare_declaration i =
   | Ast.DeclareElement (name, block) ->
     (match Utils.Id.get_id i.current_state.elements_names name with
      | None -> ()
-     | Some _ -> raise (DefinedTwice ("element", name))) ;
+     | Some _ -> raise (DefinedTwice ("element", name, None))) ;
     let (id, elements) =
       Utils.Id.map_insert_t i.current_state.elements_names name in
     let block =
       convert_block name [OfCategory; LetPlayer; ProvideRelation;
                           ProvideAttribute; ProvideContact] block in
     { i with
-        elements = (id, block) :: i.elements ;
+        elements = (id, name, block) :: i.elements ;
         current_state =
           { i.current_state with elements_names = elements } }
 
 let prepare_declarations i l =
   List.fold_left prepare_declaration i l
 
+(** Parses generates an element from a [state] and a [block]. **)
+let parse_element st element_name block =
+  let n = List.length block.let_player in
+  let player_names =
+    List.fold_left (fun player_names (name, _) ->
+        if Utils.Id.get_id player_names name <> None then
+          raise (DefinedTwice ("player", name, Some element_name)) ;
+        Utils.Id.map_insert player_names name)
+      (Utils.Id.map_create ()) block.let_player in
+  (* TODO *)
+  (* TODO: Also, we may want to optimize the size of the element in
+   * memory by minimizing the size of the relation array.
+   * Not only we can make it half the size by halting at the diagonal,
+   * but we can also rotate the players’s identifiers to make the one
+   * with the more neutral relations at the end, effectively removing
+   * the need to store them in the relation array.
+   * This is important as we assume that there will be a lot of elements. *)
+  failwith "TODO"
+
 let parse i =
-  (* TODO: Parse each elements. *)
-  i.current_state
+  let elements =
+    List.fold_left (fun elements (id, name, block) ->
+        PMap.add id (parse_element i.current_state name block) elements)
+      i.current_state.elements i.elements in
+  { i.current_state with elements = elements }
 
 let translates_category s = (* TODO *) failwith "TODO"
 

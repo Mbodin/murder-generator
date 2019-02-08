@@ -10,8 +10,9 @@ type intermediary
 exception UnexpectedCommandInBlock of string * string
 
 (** An error indicating that something of kind described by the first
- * string has been defined twice, the second string being its name. **)
-exception DefinedTwice of string * string
+ * string has been defined twice, the second string being its name,
+ * and the third an optionnal position. **)
+exception DefinedTwice of string * string * string option
 
 (** An error indicating that there is a loop in category dependencies. **)
 exception CircularDependency of string

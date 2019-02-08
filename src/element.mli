@@ -5,13 +5,16 @@ type character = State.character
 
 (** A constraint on a character **)
 type character_constraint =
-  | Attribute of State.PlayerAttribute.attribute * State.PlayerAttribute.value State.attribute_value
+  | Attribute of State.PlayerAttribute.attribute
+                 * State.PlayerAttribute.constructor State.attribute_value
     (** The given attribute value is provided by the element.
-      * Note that [State.attribute_value] can be of the form [State.One_value_of],
-      * in which case the attribute is required to be of this value, but also
-      * [State.Fixed_value], where the element actually provides an explanation
-      * for it. **)
-  | Contact of State.ContactAttribute.attribute * int * State.ContactAttribute.value State.attribute_value
+      * Note that [State.attribute_constructor] can be of the form
+      * [State.One_value_of], in which case the attribute is required to be of
+      * this value, but also [State.Fixed_value], where the element actually
+      * provides an explanation for it. **)
+  | Contact of State.ContactAttribute.attribute
+               * int
+               * State.ContactAttribute.constructor State.attribute_value
     (** The given contact (identified in the local array) is provided by the
      * element. **)
 

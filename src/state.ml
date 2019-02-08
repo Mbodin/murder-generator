@@ -29,24 +29,24 @@ let write_relation_state a c1 c2 r =
 
 module type Attribute = sig
     type attribute
-    type value
+    type constructor
     type constructor_map
 
     val empty_constructor_map : constructor_map
     val attribute_name : constructor_map -> attribute -> string option
-    val value_name : constructor_map -> value -> string option
-    val value_attribute : constructor_map -> value -> attribute option
-    val constructors : constructor_map -> attribute -> value list option
+    val constructor_name : constructor_map -> constructor -> string option
+    val constructor_attribute : constructor_map -> constructor -> attribute option
+    val constructors : constructor_map -> attribute -> constructor list option
     val declare_attribute : constructor_map -> string -> attribute * constructor_map
-    val declare_constructor : constructor_map -> attribute -> string -> value * constructor_map
-    val remove_constructor : constructor_map -> value -> constructor_map
+    val declare_constructor : constructor_map -> attribute -> string -> constructor * constructor_map
+    val remove_constructor : constructor_map -> constructor -> constructor_map
   end
 
 module AttributeInst () =
   struct
 
     type attribute = Utils.Id.t
-    type value = Utils.Id.t
+    type constructor = Utils.Id.t
 
     type constructor_map =
       string Utils.Id.map (** Attribute names **)
@@ -54,8 +54,8 @@ module AttributeInst () =
                                            * The attribute is part of the
                                            * constructor, with the constructor
                                            * name. **)
-      * (attribute, value list) PMap.t (** Which constructors is associated to which
-                                        * attribute. **)
+      * (attribute, constructor list) PMap.t (** Which constructors is associated
+                                              * to which attribute. **)
 
     let empty_constructor_map =
       (Utils.Id.map_create (),
@@ -65,10 +65,10 @@ module AttributeInst () =
     let attribute_name (m, _, _) a =
       Utils.Id.map_inverse m a
 
-    let value_name (_, m, _) c =
+    let constructor_name (_, m, _) c =
       Utils.option_map snd (Utils.Id.map_inverse m c)
 
-    let value_attribute (_, m, _) c =
+    let constructor_attribute (_, m, _) c =
       Utils.option_map fst (Utils.Id.map_inverse m c)
 
     let constructors (_, _, m) a =
@@ -88,7 +88,7 @@ module AttributeInst () =
 
     let remove_constructor m c =
       let a =
-        match value_attribute m c with
+        match constructor_attribute m c with
         | None -> assert false
         | Some a -> a in
       let (mn, mc, al) = m in
@@ -117,6 +117,10 @@ let empty_constructor_maps = {
 type attribute =
   | PlayerAttribute of PlayerAttribute.attribute
   | ContactAttribute of ContactAttribute.attribute
+
+type constructor =
+  | PlayerConstructor of PlayerAttribute.constructor
+  | ContactConstructor of ContactAttribute.constructor
 
 type strictness =
   | NonStrict
@@ -154,8 +158,11 @@ let attribute_value_can_progress = function
   | One_value_of l -> l <> []
   | Fixed_value (_, _) -> false
 
-type attribute_map = (PlayerAttribute.attribute, PlayerAttribute.value attribute_value) PMap.t
-type contact_map = (ContactAttribute.attribute, (character, ContactAttribute.value attribute_value) PMap.t) PMap.t
+type attribute_map =
+  (PlayerAttribute.attribute, PlayerAttribute.constructor attribute_value) PMap.t
+type contact_map =
+  (ContactAttribute.attribute,
+    (character, ContactAttribute.constructor attribute_value) PMap.t) PMap.t
 
 type character_state =
   (attribute_map * contact_map) array

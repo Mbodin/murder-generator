@@ -22,11 +22,6 @@ let empty_block = {
     provide_contact = []
   }
 
-(** Constructors have to be separated by their attribute,
- * to differentiate whether their attribute should be taken
- * from the attribute or contact maps. **)
-type constructor = Ast.attribute_kind * Utils.Id.t
-
 type state = {
     category_names : string Utils.Id.map (** All declared category names. **) ;
     elements_names : string Utils.Id.map (** All declared element names. **) ;
@@ -40,7 +35,7 @@ type state = {
       (State.attribute, Utils.Id.t Utils.PSet.t) PMap.t
       (** Similarly, the dependencies of each attribute. **) ;
     constructor_dependencies :
-      (constructor, Utils.Id.t Utils.PSet.t) PMap.t
+      (State.constructor, Utils.Id.t Utils.PSet.t) PMap.t
       (** Similarly, the dependencies of each constructor. **) ;
     (* TODO: Elements and translations. *)
   }
@@ -50,12 +45,13 @@ type intermediary = {
     categories_to_be_defined :
       (Utils.Id.t, Utils.Id.t Utils.PSet.t
                    * State.attribute Utils.PSet.t
-                   * constructor Utils.PSet.t) PMap.t
+                   * State.constructor Utils.PSet.t) PMap.t
       (** The set of categories expected to be declared.
        * For each of these, we also put thee sets to which the category dependencies
        * should be attached: they are respectively the set of category identifiers,
        * of attributes, and of constructors. **) ;
-    attributes_to_be_defined : (State.attribute, constructor Utils.PSet.t) PMap.t
+    attributes_to_be_defined :
+      (State.attribute, State.constructor Utils.PSet.t) PMap.t
       (** Similarly, the set of attributes expected to be declared and their
        * dependent constructors. **) ;
     elements : (Utils.Id.t * block) list (** An element, waiting to be treated. **)
@@ -225,7 +221,8 @@ let prepare_declaration i =
   (** Declare attribute and contact instances.
    * See the declarations [attribute_functions] and [contact_functions] below
    * to understand the large tuple argument. **)
-  let declare_instance (_, declare, _, extract, update, constructor, en) name block =
+  let declare_instance (declare, _, extract, update, constructor, _, en)
+      name block =
     let block = convert_block name [OfCategory] block in
     let (id, state) =
       declare (extract i.current_state.constructor_information) name in
@@ -258,8 +255,9 @@ let prepare_declaration i =
               attribute_dependencies =
                 PMap.add id deps i.current_state.attribute_dependencies } } in
   (** Declare constructor instances. **)
-  let declare_constructor (kind, declare, declare_constructor, extract, update,
-      attribute_constructor, en) attribute_name constructor block =
+  let declare_constructor (declare, declare_constructor, extract, update,
+        attribute_constructor, constructor_constructor, en)
+      attribute_name constructor block =
     let block =
       convert_block attribute_name [OfCategory; Translation; Add;
                                     CompatibleWith] block in
@@ -267,7 +265,7 @@ let prepare_declaration i =
       declare (extract i.current_state.constructor_information) attribute_name in
     let (id, state) =
       declare_constructor state attribute constructor in
-    let id = (kind, id) in
+    let id = constructor_constructor id in
     let attribute = attribute_constructor attribute in
     if PMap.mem id i.current_state.constructor_dependencies then
       raise (DefinedTwice (en ^ " constructor",
@@ -307,20 +305,20 @@ let prepare_declaration i =
    * or a contact.
    * The following tuples store each instantiations of these functions. **)
   let attribute_functions =
-    (Ast.Attribute,
-     State.PlayerAttribute.declare_attribute,
+    (State.PlayerAttribute.declare_attribute,
      State.PlayerAttribute.declare_constructor,
      (fun m -> m.State.player),
      (fun i state -> { i with State.player = state }),
      (fun id -> State.PlayerAttribute id),
+     (fun id -> State.PlayerConstructor id),
      "attribute") in
   let contact_functions =
-    (Ast.Contact,
-     State.ContactAttribute.declare_attribute,
+    (State.ContactAttribute.declare_attribute,
      State.ContactAttribute.declare_constructor,
      (fun m -> m.State.contact),
      (fun i state -> { i with State.contact = state }),
      (fun id -> State.ContactAttribute id),
+     (fun id -> State.ContactConstructor id),
      "contact") in
   function
   | Ast.DeclareInstance (Ast.Attribute, attribute, block) ->

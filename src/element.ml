@@ -2,8 +2,11 @@
 type character = Utils.Id.t
 
 type character_constraint =
-  | Attribute of State.PlayerAttribute.attribute * State.PlayerAttribute.value State.attribute_value
-  | Contact of State.ContactAttribute.attribute * int * State.ContactAttribute.value State.attribute_value
+  | Attribute of State.PlayerAttribute.attribute
+                 * State.PlayerAttribute.constructor State.attribute_value
+  | Contact of State.ContactAttribute.attribute
+               * int
+               * State.ContactAttribute.constructor State.attribute_value
 
 type t =
   (character_constraint list

@@ -107,8 +107,8 @@ relation: b = boption (STRONG { }); r = relation_content { (r, b) }
 relation_content:
   | b = basic_relation
     { Relation.Basic b }
-  | ASYMMETRICAL; b1 = basic_relation; b2 = basic_relation
-    { Relation.Asymmetrical (b1, b2) }
+  | ASYMMETRICAL; r1 = relation_content; r2 = relation_content
+    { Relation.asymmetrical_relation r1 r2 }
   | EXPLOSIVE; r1 = relation_content; r2 = relation_content
     { Relation.Explosive (r1, r2) }
 

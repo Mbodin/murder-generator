@@ -268,3 +268,35 @@ let rec reverse_relation = function
 
 let reverse (r, s) = (reverse_relation r, s)
 
+let rec asymmetrical_relation r1 r2 =
+  match r1, r2 with
+  | Explosive (r1a, r1b), _ ->
+    let ra = asymmetrical_relation r1a r2 in
+    let rb = asymmetrical_relation r1b r2 in
+    if ra = Basic Neutral then rb
+    else if rb = Basic Neutral then ra
+    else Explosive (ra, rb)
+  | _, Explosive (r2a, r2b) ->
+    let ra = asymmetrical_relation r1 r2a in
+    let rb = asymmetrical_relation r1 r2b in
+    if ra = Basic Neutral then rb
+    else if rb = Basic Neutral then ra
+    else Explosive (ra, rb)
+  | Basic b1, Basic b2 ->
+    if b1 = Neutral && b2 = Neutral then Basic Neutral
+    else Asymmetrical (b1, b2)
+  | Asymmetrical (b1, b2), Basic b3 ->
+    if b3 = Neutral then r1
+    else Explosive (Asymmetrical (b1, b3), Basic b3)
+  | Basic b1, Asymmetrical (b2, b3) ->
+    (** We have to reverse [b2] and [b3] here. **)
+    let r2 = Asymmetrical (b3, b2) in
+    if b1 = Neutral then r2
+    else Explosive (Basic b3, r2)
+  | Asymmetrical (b1, b2), Asymmetrical (b3, b4) ->
+    (** Tricky case, there are two inversions here. **)
+    Explosive (Asymmetrical (b1, b4), Asymmetrical (b2, b3))
+
+let asymmetrical (r1, s1) (r2, s2) =
+  (asymmetrical_relation r1 r2, s1 || s2)
+

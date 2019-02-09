@@ -172,6 +172,8 @@ module Id : sig
     (** Return the object corresponding to this identifier. **)
     val map_inverse : 'a map -> t -> 'a option
 
+    (** Folds along the map.
+     * The order is not specified. **)
     val map_fold : ('b -> t -> 'a -> 'a) -> 'a -> 'b map -> 'a
 
   end

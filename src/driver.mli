@@ -17,6 +17,10 @@ exception DefinedTwice of string * string * string option
 (** An error indicating that there is a loop in category dependencies. **)
 exception CircularDependency of string
 
+(** An error indicating that a player has been associated a relation to
+ * itself in the given element. **)
+exception SelfRelation of string * string
+
 (** Treating the data sent from the parser is done in two phases.
  * The first phase is to assimilate each globally declared names
  * into identifiers.

@@ -131,6 +131,8 @@ exception DefinedTwice of string * string * string option
 
 exception CircularDependency of string
 
+exception SelfRelation of string * string
+
 (** Converts an [Ast.block] into a [block].
  * It takes a list of command types and checks that only these are present
  * in the given block: all the other kinds will thus be empty lists.
@@ -399,15 +401,48 @@ let parse_element st element_name block =
           raise (DefinedTwice ("player", name, Some element_name)) ;
         Utils.Id.map_insert player_names name)
       (Utils.Id.map_create ()) block.let_player in
-  (* TODO *)
-  (* TODO: Also, we may want to optimize the size of the element in
-   * memory by minimizing the size of the relation array.
-   * Not only we can make it half the size by halting at the diagonal,
-   * but we can also rotate the players’s identifiers to make the one
-   * with the more neutral relations at the end, effectively removing
-   * the need to store them in the relation array.
-   * This is important as we assume that there will be a lot of elements. *)
-  failwith "TODO"
+  let get_player p =
+    match Utils.Id.get_id player_names p with
+    | None -> assert false
+    | Some i -> i in
+  (** We first consider relations. **)
+  let relations =
+    (** We create this triangle of relations.
+     * Each index is associated with its greatest non-[neutral] index plus one,
+     * or [0] is the entire array is filled with [neutral]. **)
+    let triangle =
+      Array.init n (fun i -> (Array.make i Relation.neutral, 0)) in
+    let write i j r =
+      if r <> Relation.neutral then (
+        if i = j then (
+          let player_name =
+            match Utils.Id.map_inverse player_names i with
+            | Some name -> name
+            | None -> assert false in
+          raise (SelfRelation (player_name, element_name))) ;
+        let i = Utils.Id.to_array i in
+        let j = Utils.Id.to_array j in
+        let (i, j, r) =
+          if i < j then (i, j, r)
+          else (j, i, Relation.reverse r) in
+        let (a, m) = triangle.(j) in
+        a.(i) <- Relation.compose a.(i) r ;
+        triangle.(j) <- (a, max m (i + 1))) in
+    List.iter (fun (td, r) ->
+      match td with
+      | Ast.Between (p1, p2) ->
+        write (get_player p1) (get_player p2) r
+      | Ast.FromTo (p1, p2) ->
+        write (get_player p1) (get_player p2)
+          (Relation.asymmetrical r Relation.neutral)) block.provide_relation ;
+    (** We now try to minimize each array.
+     * Note that we could try to change player identifiers to optimize
+     * space even more, but this might take additional resources needlessly. **)
+    Array.map (fun (a, m) -> Array.sub a 0 m) triangle in
+  let element = Array.map (fun a -> ([], [], a)) relations in
+  (* TODO: Dependencies, as well as the fields [of_category], [let_player],
+   * [provide_attribute] and [provide_contact] of [block]. *)
+  element
 
 let parse i =
   let elements =

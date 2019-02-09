@@ -155,11 +155,11 @@ let apply state e inst =
         ) (state, diff) conss in
     (* TODO: Event [evs] *)
     let _ =
-      Array.iter (fun c' ->
-        Array.iter (fun r ->
-          if c <> c' then
-            let r' = State.read_relation state c c' in
-            State.write_relation state c c' (Relation.compose r' r)) rs) inst in
+      Array.iteri (fun i r ->
+        let c' = inst.(i) in
+        if c <> c' then
+          let r' = State.read_relation state c c' in
+          State.write_relation state c c' (Relation.compose r' r)) rs in
     (state, diff)) (state, PMap.empty) e inst
 
 let apply_relations state e inst =
@@ -167,11 +167,11 @@ let apply_relations state e inst =
     State.create_relation_state (State.number_of_player_relation_state state) in
   Array.iter2 (fun ei c ->
     let (conss, evs, rs) = ei in
-    Array.iter (fun c' ->
-      Array.iter (fun r ->
-        if c <> c' then
-          let r' = State.read_relation_state state c c' in
-          State.write_relation_state result c c'
-            (Relation.compose r' r)) rs) inst) e inst ;
+    Array.iteri (fun i r ->
+      let c' = inst.(i) in
+      if c <> c' then
+        let r' = State.read_relation_state state c c' in
+        State.write_relation_state result c c'
+          (Relation.compose r' r)) rs) e inst ;
   result
 

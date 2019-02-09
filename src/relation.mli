@@ -63,3 +63,10 @@ val to_string : t -> string
  * [Asymmetrical (t1, t2)] are replaced by [Asymmetrical (t2, t1)]. **)
 val reverse : t -> t
 
+(** Like [Asymmetrical], but combining two arbitrary relations instead of just
+ * basic ones. **)
+val asymmetrical : t -> t -> t
+
+(** Like [asymmetrical], but combining two [relation]s instead **)
+val asymmetrical_relation : relation -> relation -> relation
+

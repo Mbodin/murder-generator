@@ -39,6 +39,8 @@ module type Attribute = sig
     val constructors : constructor_map -> attribute -> constructor list option
     val declare_attribute : constructor_map -> string -> attribute * constructor_map
     val declare_constructor : constructor_map -> attribute -> string -> constructor * constructor_map
+    val get_attribute : constructor_map -> string -> attribute option
+    val get_constructor : constructor_map -> attribute -> string -> constructor option
     val remove_constructor : constructor_map -> constructor -> constructor_map
   end
 
@@ -85,6 +87,12 @@ module AttributeInst () =
         try PMap.find a al
         with Not_found -> assert false in
       (c, (mn, mc, PMap.add a (c :: l) al))
+
+    let get_attribute (mn, _, _) a =
+      Utils.Id.get_id mn a
+
+    let get_constructor (_, mc, _) a c =
+      Utils.Id.get_id mc (a, c)
 
     let remove_constructor m c =
       let a =

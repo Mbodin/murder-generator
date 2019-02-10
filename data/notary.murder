@@ -154,8 +154,8 @@ element ImportantSeller
 begin
   let P be player
 
-  provide compatible attribute Richness to B as Rich
-  provide compatible attribute Job to B as Seller
+  provide compatible attribute Richness to P as Rich
+  provide compatible attribute Job to P as Seller
 
   (* provide event to P (* TODO *) *)
 end

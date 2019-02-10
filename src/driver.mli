@@ -5,14 +5,19 @@
 (** A type to store intermediate informations about parsing. **)
 type intermediary
 
-(** States that the block named as a the first string has an invalid
+(** States that the block named as the first string has an invalid
  * command in its block, which is described by the second string. **)
 exception UnexpectedCommandInBlock of string * string
 
 (** An error indicating that something of kind described by the first
  * string has been defined twice, the second string being its name,
- * and the third an optionnal position. **)
+ * and the third an optional position. **)
 exception DefinedTwice of string * string * string option
+
+(** An error indicating that something of kind described by the first
+ * string has been used without being declared, the second string being its name,
+ * and the third an optional position. **)
+exception Undeclared of string * string * string option
 
 (** An error indicating that there is a loop in category dependencies. **)
 exception CircularDependency of string
@@ -48,7 +53,8 @@ val attributes_to_be_defined : intermediary -> (string Utils.PSet.t * string Uti
 type state
 
 (** Once each file have been parsed and put into a single [intermediary] result,
- * one can treat the full data and produce a final state. **)
+ * one can treat the full data and produce a final state.
+ * This function might throw any of the exceptions defined in this file. **)
 val parse : intermediary -> state
 
 (** This map stores the identifiers of each element. **)

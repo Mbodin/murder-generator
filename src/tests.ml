@@ -78,7 +78,7 @@ let test_parser =
   let asts =
     List.map read_file
       ["data/family.murder"; "data/identity.murder"; "data/notary.murder";
-       "data/politics.murder"; "data/test.murder"] in
+       "data/politics.murder"; "data/job.murder"; "data/test.murder"] in
   let i =
     List.fold_left Driver.prepare_declarations Driver.empty_intermediary asts in
   if not (Driver.is_intermediary_final i) then

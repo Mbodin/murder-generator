@@ -84,9 +84,9 @@ begin
   translation fr:nom:def:plu:mas "les hommes":plu:mas
   translation fr:nom:def:plu:fem "les femmes":plu:fem
   translation en:adj "human"
-  translation en:nom "human being"
-  translation en:nom:mas "man"
-  translation en:nom:fem "woman"
+  translation en:nom "a human being"
+  translation en:nom:mas "a man"
+  translation en:nom:fem "a woman"
   translation en:nom:plu "human beings"
   translation en:nom:plu:mas "men"
   translation en:nom:plu:fem "women"

@@ -37,6 +37,9 @@ type state = {
     constructor_dependencies :
       (State.constructor, Utils.Id.t Utils.PSet.t) PMap.t
       (** Similarly, the dependencies of each constructor. **) ;
+    elements_dependencies :
+      (Utils.Id.t, Utils.Id.t Utils.PSet.t) PMap.t
+      (** Similarly, the dependencies of each element. **) ;
     elements : (Utils.Id.t, Element.t) PMap.t
     (* TODO: Translations. *)
   }
@@ -66,6 +69,7 @@ let empty_state = {
     category_dependencies = PMap.empty ;
     attribute_dependencies = PMap.empty ;
     constructor_dependencies = PMap.empty ;
+    elements_dependencies = PMap.empty ;
     elements = PMap.empty
   }
 
@@ -129,6 +133,8 @@ exception UnexpectedCommandInBlock of string * string
 
 exception DefinedTwice of string * string * string option
 
+exception Undeclared of string * string * string option
+
 exception CircularDependency of string
 
 exception SelfRelation of string * string
@@ -173,6 +179,28 @@ let convert_block block_name expected =
         { acc with provide_contact = p :: acc.provide_contact }) l
   in aux empty_block
 
+(** Takes a list of category names and returns a set of category identifiers,
+ * as well as the possibly-changed [category_names] field. **)
+let category_names_to_id_set state l =
+  List.fold_left (fun (category_names, s) name ->
+      let (id, category_names) = Utils.Id.map_insert_t category_names name in
+      (category_names, Utils.PSet.add id s))
+    (state.category_names, Utils.PSet.empty) l
+
+(** Takes a set of categories and returns a set of categories
+ * (the original set plus their dependencies). **)
+let dependencies_of_dependencies state s =
+  Utils.PSet.merge s
+   (Utils.PSet.flatten (Utils.PSet.map (fun id ->
+     try PMap.find id state.category_dependencies
+     with Not_found -> Utils.PSet.empty) s))
+
+(** A useful composition of [dependencies_of_dependencies] and
+ * [category_names_to_id_set]. **)
+let category_names_to_dep_dep state l =
+  let (category_names, s) = category_names_to_id_set state l in
+  (category_names, dependencies_of_dependencies state s)
+
 (** This function parses basically everything but elements in a declaration. **)
 let prepare_declaration i =
   (** States whether a category has been defined. **)
@@ -181,25 +209,6 @@ let prepare_declaration i =
   (** States whether an attribute has been defined. **)
   let attribute_exists id =
     PMap.mem id i.current_state.attribute_dependencies in
-  (** Takes a list of category names and returns a set of category identifiers,
-   * as well as the possibly-changed [category_names] field. **)
-  let category_names_to_id_set l =
-    List.fold_left (fun (category_names, s) name ->
-        let (id, category_names) = Utils.Id.map_insert_t category_names name in
-        (category_names, Utils.PSet.add id s))
-      (i.current_state.category_names, Utils.PSet.empty) l in
-  (** Takes a set of categories and returns a set of categories
-   * (the original set plus their dependencies). **)
-  let dependencies_of_dependencies s =
-    Utils.PSet.merge s
-     (Utils.PSet.flatten (Utils.PSet.map (fun id ->
-       try PMap.find id i.current_state.category_dependencies
-       with Not_found -> Utils.PSet.empty) s)) in
-  (** A useful composition of [dependencies_of_dependencies] and
-   * [category_names_to_id_set]. **)
-  let category_names_to_dep_dep l =
-    let (category_names, s) = category_names_to_id_set l in
-    (category_names, dependencies_of_dependencies s) in
   (** Updates the given dependencies [dependencies] by adding the set of
    * categories [deps] to the set [ldeps] of objects. **)
   let update_dependencies dependencies ldeps deps =
@@ -234,7 +243,8 @@ let prepare_declaration i =
     let id = constructor id in
     if attribute_exists id then
       raise (DefinedTwice (en, name, None)) ;
-    let (category_names, deps) = category_names_to_dep_dep block.of_category in
+    let (category_names, deps) =
+      category_names_to_dep_dep i.current_state block.of_category in
     (** We consider each constructor dependent on this attribute. **)
     let constr_deps =
       try PMap.find id i.attributes_to_be_defined
@@ -274,7 +284,8 @@ let prepare_declaration i =
     let attribute = attribute_constructor attribute in
     if PMap.mem id i.current_state.constructor_dependencies then
       raise (DefinedTwice (en ^ " constructor", constructor, Some attribute_name)) ;
-    let (category_names, deps) = category_names_to_dep_dep block.of_category in
+    let (category_names, deps) =
+      category_names_to_dep_dep i.current_state block.of_category in
     (** If the associated attribute is already defined, we fetch its dependencies,
      * otherwise, we leave a note for it to add these dependencies when finally
      * defined. **)
@@ -336,7 +347,8 @@ let prepare_declaration i =
   | Ast.DeclareCategory (name, block) ->
     let block =
       convert_block name [OfCategory; Translation] block in
-    let (category_names, deps) = category_names_to_dep_dep block.of_category in
+    let (category_names, deps) =
+      category_names_to_dep_dep i.current_state block.of_category in
     let (id, category_names) =
       Utils.Id.map_insert_t category_names name in
     if category_exists id then
@@ -392,6 +404,15 @@ let prepare_declaration i =
 let prepare_declarations i l =
   List.fold_left prepare_declaration i l
 
+let get_category_dependencies s id =
+  PMap.find id s.category_dependencies
+
+let get_attribute_dependencies s id =
+  PMap.find id s.attribute_dependencies
+
+let get_constructor_dependencies s id =
+  PMap.find id s.constructor_dependencies
+
 (** Parses generates an element from a [state] and a [block]. **)
 let parse_element st element_name block =
   let n = List.length block.let_player in
@@ -403,7 +424,7 @@ let parse_element st element_name block =
       (Utils.Id.map_create ()) block.let_player in
   let get_player p =
     match Utils.Id.get_id player_names p with
-    | None -> assert false
+    | None -> raise (Undeclared ("player", p, Some element_name))
     | Some i -> i in
   (** We first consider relations. **)
   let relations =
@@ -440,24 +461,53 @@ let parse_element st element_name block =
      * space even more, but this might take additional resources needlessly. **)
     Array.map (fun (a, m) -> Array.sub a 0 m) triangle in
   let element = Array.map (fun a -> ([], [], a)) relations in
-  (* TODO: Dependencies, as well as the fields [of_category], [let_player],
-   * [provide_attribute] and [provide_contact] of [block]. *)
-  element
+  let (_, deps) = category_names_to_dep_dep st block.of_category in
+  let add_constraint p c =
+    let p = Utils.Id.to_array (get_player p) in
+    let (cl, el, rs) = element.(p) in
+    element.(p) <- (c :: cl, el, rs) in
+  (** We now consider attributes. **)
+  let deps =
+    List.fold_left (fun deps pa ->
+        let aid =
+          match State.PlayerAttribute.get_attribute
+                  st.constructor_information.player pa.Ast.attribute_name with
+          | None ->
+            raise (Undeclared ("attribute", pa.attribute_name,
+              Some element_name))
+          | Some id -> id in
+        let cid =
+          match State.PlayerAttribute.get_constructor
+                  st.constructor_information.player aid pa.Ast.attribute_value with
+          | None ->
+            raise (Undeclared ("constructor", pa.attribute_value,
+              Some element_name))
+          | Some id -> id in
+        add_constraint pa.attribute_player
+          (Element.Attribute (aid,
+            State.Fixed_value (cid, pa.attribute_strictness))) ;
+        let cid = State.PlayerConstructor cid in
+        let ndeps =
+          try get_constructor_dependencies st cid
+          with Not_found -> assert false in
+        Utils.PSet.merge deps ndeps)
+      deps block.provide_attribute in
+  (* TODO: The fields [let_player], [provide_attribute] and [provide_contact]
+   * of [block]. *)
+  (element, deps)
 
 let parse i =
-  let elements =
-    List.fold_left (fun elements (id, name, block) ->
-        PMap.add id (parse_element i.current_state name block) elements)
-      i.current_state.elements i.elements in
-  { i.current_state with elements = elements }
+  let (elements, elements_dependencies) =
+    List.fold_left (fun (elements, elements_dependencies) (id, name, block) ->
+        let (element, deps) = parse_element i.current_state name block in
+        (PMap.add id element elements, PMap.add id deps elements_dependencies))
+      (i.current_state.elements, i.current_state.elements_dependencies)
+      i.elements in
+  { i.current_state with
+      elements_dependencies = elements_dependencies ;
+      elements = elements }
 
 let translates_category s = (* TODO *) failwith "TODO"
-
-let get_category_dependencies s id =
-  PMap.find id s.category_dependencies
-
-let get_attribute_dependencies s id =
-  PMap.find id s.attribute_dependencies
 
 let elements s = (* TODO *) failwith "TODO"
 

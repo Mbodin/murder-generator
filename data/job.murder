@@ -1,0 +1,27 @@
+
+declare attribute Job
+
+attribute Job Seller
+begin
+  translation fr:nom:fem "une commerçante"
+  translation fr:nom:mas "un commerçant"
+  translation fr:nom:def:fem "la commerçante"
+  translation fr:nom:def:mas "le commerçant"
+  translation fr:nom:plu:fem "des commerçantes"
+  translation fr:nom:plu:mas "des commerçants"
+  translation fr:nom:def:plu:fem "les commerçantes"
+  translation fr:nom:def:plu:mas "les commerçants"
+  translation en:nom "a seller"
+  translation en:nom:plu "sellers"
+  translation en:nom:def "the seller"
+  translation en:nom:def:plu "the sellers"
+  translation eo:nom "komercisto"
+  translation eo:nom:acc "komerciston"
+  translation eo:nom:def "la komercisto"
+  translation eo:nom:def:acc "la komerciston"
+  translation eo:nom:plu "komercistoj"
+  translation eo:nom:acc:plu "komercistojn"
+  translation eo:nom:def:plu "la komercistoj"
+  translation eo:nom:def:acc:plu "la komercistojn"
+end
+

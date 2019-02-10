@@ -60,11 +60,18 @@ module type Attribute = sig
     val constructors : constructor_map -> attribute -> constructor list option
 
     (** Declare an attribute, returning its associated normal identifier
-     * (if already declared, its normal identifier is still returned). **)
+     * (if already declared, its previously-set identifier is still returned). **)
     val declare_attribute : constructor_map -> string -> attribute * constructor_map
 
-    (** Declare a new constructor for an attribute. **)
+    (** Declare a new constructor for an attribute.
+     * (if already declared, its previously-set identifier is still returned). **)
     val declare_constructor : constructor_map -> attribute -> string -> constructor * constructor_map
+
+    (** Get the attribute identifier from its name. **)
+    val get_attribute : constructor_map -> string -> attribute option
+
+    (** Get the constructor identifier from its attribute and its name. **)
+    val get_constructor : constructor_map -> attribute -> string -> constructor option
 
     (** Users can remove categories before the story generation.
      * This function removes a constructor, probably because it was associated

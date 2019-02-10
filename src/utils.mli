@@ -291,6 +291,13 @@ module PSet : sig
     (** Folds over the set. **)
     val fold : ('a -> 'b -> 'b) -> 'b -> 'a t -> 'b
 
+    (** Check whether all the elements of the set satisfy the given predicate. **)
+    val for_all : ('a -> bool) -> 'a t -> bool
+
+    (** Check whether there exists at least one element in the set satisfying
+     * the given predicate. **)
+    val exists : ('a -> bool) -> 'a t -> bool
+
     (** Maps the set to a function. **)
     val map : ('a -> 'b) -> 'a t -> 'b t
 

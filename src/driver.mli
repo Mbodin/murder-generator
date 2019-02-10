@@ -58,9 +58,9 @@ type state
 val parse : intermediary -> state
 
 (** This map stores the identifiers of each element. **)
-val elements : state -> Element.t Utils.Id.map
+val elements : state -> (Utils.Id.t, Element.t) PMap.t
 
-(** Takes an element identifier as argument as returns the list of categories
+(** Takes an element identifier as argument as returns the set of categories
  * that this element depends on. **)
 val get_element_dependencies : state -> Utils.Id.t -> Utils.Id.t list
 

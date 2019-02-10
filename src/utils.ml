@@ -389,5 +389,11 @@ module PSet = struct
     let flatten s =
       fold merge empty s
 
+    let for_all p =
+      fold (fun e b -> b && p e) true
+
+    let exists p =
+      fold (fun e b -> b || p e) false
+
   end
 

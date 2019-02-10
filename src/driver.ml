@@ -58,7 +58,7 @@ type intermediary = {
       (State.attribute, State.constructor Utils.PSet.t) PMap.t
       (** Similarly, the set of attributes expected to be declared and their
        * dependent constructors. **) ;
-    elements : (Utils.Id.t * string * block) list
+    waiting_elements : (Utils.Id.t * string * block) list
       (** An element, waiting to be treated. **)
   }
 
@@ -77,7 +77,7 @@ let empty_intermediary = {
     current_state = empty_state ;
     categories_to_be_defined = PMap.empty ;
     attributes_to_be_defined = PMap.empty ;
-    elements = []
+    waiting_elements = []
   }
 
 let categories_to_be_defined i =
@@ -90,12 +90,12 @@ let attributes_to_be_defined i =
   Utils.PSet.partition_map (function
     | State.PlayerAttribute id ->
       (match State.PlayerAttribute.attribute_name
-        i.current_state.constructor_information.player id with
+        i.current_state.constructor_information.State.player id with
       | Some c -> Utils.Left c
       | None -> assert false)
     | State.ContactAttribute id ->
       (match State.ContactAttribute.attribute_name
-        i.current_state.constructor_information.contact id with
+        i.current_state.constructor_information.State.contact id with
       | Some c -> Utils.Right c
       | None -> assert false)) (Utils.PSet.domain i.attributes_to_be_defined)
 
@@ -201,6 +201,30 @@ let category_names_to_dep_dep state l =
   let (category_names, s) = category_names_to_id_set state l in
   (category_names, dependencies_of_dependencies state s)
 
+ (** Some subfunctions of [prepare_declaration] and [parse_element] use similar
+ * functions, only depending on whether called on attributes or contacts.
+ * The following tuples store each instantiations of the needed functions. **)
+let attribute_functions =
+  (State.PlayerAttribute.declare_attribute,
+   State.PlayerAttribute.declare_constructor,
+   State.PlayerAttribute.get_attribute,
+   State.PlayerAttribute.get_constructor,
+   (fun m -> m.State.player),
+   (fun i state -> { i with State.player = state }),
+   (fun id -> State.PlayerAttribute id),
+   (fun id -> State.PlayerConstructor id),
+   "attribute")
+let contact_functions =
+  (State.ContactAttribute.declare_attribute,
+   State.ContactAttribute.declare_constructor,
+   State.ContactAttribute.get_attribute,
+   State.ContactAttribute.get_constructor,
+   (fun m -> m.State.contact),
+   (fun i state -> { i with State.contact = state }),
+   (fun id -> State.ContactAttribute id),
+   (fun id -> State.ContactConstructor id),
+   "contact")
+
 (** This function parses basically everything but elements in a declaration. **)
 let prepare_declaration i =
   (** States whether a category has been defined. **)
@@ -233,9 +257,9 @@ let prepare_declaration i =
         PMap.add c (update sets) categories_to_be_defined)
       i.categories_to_be_defined deps in
   (** Declare attribute and contact instances.
-   * See the declarations [attribute_functions] and [contact_functions] below
+   * See the declarations [attribute_functions] and [contact_functions]
    * to understand the large tuple argument. **)
-  let declare_instance (declare, _, extract, update, constructor, _, en)
+  let declare_instance (declare, _, _, _, extract, update, constructor, _, en)
       name block =
     let block = convert_block name [OfCategory] block in
     let (id, state) =
@@ -269,8 +293,10 @@ let prepare_declaration i =
               constructor_dependencies = constructor_dependencies ;
               attribute_dependencies =
                 PMap.add id deps i.current_state.attribute_dependencies } } in
-  (** Declare constructor instances. **)
-  let declare_constructor (declare, declare_constructor, extract, update,
+  (** Declare constructor instances.
+   * Similar to [declare_instance], see the declarations [attribute_functions] and
+   * [contact_functions] to understand the large tuple argument. **)
+  let declare_constructor (declare, declare_constructor, _, _, extract, update,
         attribute_constructor, constructor_constructor, en)
       attribute_name constructor block =
     let block =
@@ -315,26 +341,6 @@ let prepare_declaration i =
                 update i.current_state.constructor_information state ;
                 constructor_dependencies =
                   PMap.add id deps i.current_state.constructor_dependencies } } in
-  (** The functions [declare_instance] and [declare_constructor] are called
-   * with similar functions, depending only on whether given an attribute
-   * or a contact.
-   * The following tuples store each instantiations of these functions. **)
-  let attribute_functions =
-    (State.PlayerAttribute.declare_attribute,
-     State.PlayerAttribute.declare_constructor,
-     (fun m -> m.State.player),
-     (fun i state -> { i with State.player = state }),
-     (fun id -> State.PlayerAttribute id),
-     (fun id -> State.PlayerConstructor id),
-     "attribute") in
-  let contact_functions =
-    (State.ContactAttribute.declare_attribute,
-     State.ContactAttribute.declare_constructor,
-     (fun m -> m.State.contact),
-     (fun i state -> { i with State.contact = state }),
-     (fun id -> State.ContactAttribute id),
-     (fun id -> State.ContactConstructor id),
-     "contact") in
   function
   | Ast.DeclareInstance (Ast.Attribute, attribute, block) ->
     declare_instance attribute_functions attribute block
@@ -397,7 +403,7 @@ let prepare_declaration i =
       convert_block name [OfCategory; LetPlayer; ProvideRelation;
                           ProvideAttribute; ProvideContact] block in
     { i with
-        elements = (id, name, block) :: i.elements ;
+        waiting_elements = (id, name, block) :: i.waiting_elements ;
         current_state =
           { i.current_state with elements_names = elements } }
 
@@ -415,6 +421,7 @@ let get_constructor_dependencies s id =
 
 (** Parses generates an element from a [state] and a [block]. **)
 let parse_element st element_name block =
+  (** Before anything, we get the number and names of each declared players. **)
   let n = List.length block.let_player in
   let player_names =
     List.fold_left (fun player_names (name, _) ->
@@ -462,38 +469,79 @@ let parse_element st element_name block =
     Array.map (fun (a, m) -> Array.sub a 0 m) triangle in
   let element = Array.map (fun a -> ([], [], a)) relations in
   let (_, deps) = category_names_to_dep_dep st block.of_category in
+  (** Now that the basic information have been gotten, we can add any constraint
+   * using this function with side effects. **)
   let add_constraint p c =
-    let p = Utils.Id.to_array (get_player p) in
+    let p = Utils.Id.to_array p in
     let (cl, el, rs) = element.(p) in
     element.(p) <- (c :: cl, el, rs) in
+  (** Retrieve the attribute identifier given by this name.
+   * At this stage, it has to be defined.
+   * See the declarations [attribute_functions] and [contact_functions] to
+   * understand the large tuple argument.**)
+  let get_attribute_id (_, _, get_attribute, _, get_state, _, _ , _, en) name =
+    match get_attribute (get_state st.constructor_information) name with
+    | None -> raise (Undeclared (en, name, Some element_name))
+    | Some id -> id in
+  (** Similar to [get_attribute_id], but for constructors. **)
+  let get_constructor_id (_, _, get_attribute, get_constructor, get_state,
+        _, _ , _, en) aid name =
+    match get_constructor (get_state st.constructor_information) aid name with
+    | None -> raise (Undeclared (en ^ " constructor", name, Some element_name))
+    | Some id -> id in
+  (** Merges the current dependencies with the ones of the given constructor.
+   * Note that the corresponding attribute’s dependencies already have been
+   * reported to the constructor: there is no need for an additional merge. **)
+  let merge_with_constructor_dependencies deps cid =
+    let ndeps =
+      try get_constructor_dependencies st cid
+      with Not_found -> assert false in
+    Utils.PSet.merge deps ndeps in
   (** We now consider attributes. **)
   let deps =
     List.fold_left (fun deps pa ->
-        let aid =
-          match State.PlayerAttribute.get_attribute
-                  st.constructor_information.player pa.Ast.attribute_name with
-          | None ->
-            raise (Undeclared ("attribute", pa.attribute_name,
-              Some element_name))
-          | Some id -> id in
+        let aid = get_attribute_id attribute_functions pa.Ast.attribute_name in
         let cid =
-          match State.PlayerAttribute.get_constructor
-                  st.constructor_information.player aid pa.Ast.attribute_value with
-          | None ->
-            raise (Undeclared ("constructor", pa.attribute_value,
-              Some element_name))
-          | Some id -> id in
-        add_constraint pa.attribute_player
+          get_constructor_id attribute_functions aid pa.Ast.attribute_value in
+        add_constraint (get_player pa.Ast.attribute_player)
           (Element.Attribute (aid,
-            State.Fixed_value (cid, pa.attribute_strictness))) ;
-        let cid = State.PlayerConstructor cid in
-        let ndeps =
-          try get_constructor_dependencies st cid
-          with Not_found -> assert false in
-        Utils.PSet.merge deps ndeps)
+            State.Fixed_value (cid, pa.Ast.attribute_strictness))) ;
+        merge_with_constructor_dependencies deps (State.PlayerConstructor cid))
       deps block.provide_attribute in
-  (* TODO: The fields [let_player], [provide_attribute] and [provide_contact]
-   * of [block]. *)
+  (** We then consider contacts. **)
+  let deps =
+    List.fold_left (fun deps pc ->
+        let aid = get_attribute_id contact_functions pc.Ast.contact_name in
+        let cid = get_constructor_id contact_functions aid pc.Ast.contact_value in
+        let add p1 p2 =
+          add_constraint (get_player p1)
+            (Element.Contact (aid, Utils.Id.to_array (get_player p2),
+              State.Fixed_value (cid, pc.Ast.contact_strictness))) in
+        let _ =
+          match pc.Ast.contact_destination with
+          | Ast.FromTo (p1, p2) -> add p1 p2
+          | Ast.Between (p1, p2) -> add p1 p2 ; add p2 p1 in
+        merge_with_constructor_dependencies deps (State.ContactConstructor cid))
+      deps block.provide_contact in
+  (** We finally consider player constraints. **)
+  let deps =
+    List.fold_left (fun deps (p, pc) ->
+      let p = get_player p in
+      List.fold_left (fun deps -> function
+          | Ast.HasAttribute (a, c) ->
+            let aid = get_attribute_id attribute_functions a in
+            let cid = get_constructor_id attribute_functions aid c in
+            add_constraint p
+              (Element.Attribute (aid, State.One_value_of [cid])) ;
+            merge_with_constructor_dependencies deps (State.PlayerConstructor cid)
+          | Ast.HasContact (a, p', c) ->
+            let aid = get_attribute_id contact_functions a in
+            let cid = get_constructor_id contact_functions aid c in
+            add_constraint p
+              (Element.Contact (aid, Utils.Id.to_array (get_player p'),
+                State.One_value_of [cid])) ;
+            merge_with_constructor_dependencies deps (State.ContactConstructor cid))
+        deps pc) deps block.let_player in
   (element, deps)
 
 let parse i =
@@ -502,16 +550,21 @@ let parse i =
         let (element, deps) = parse_element i.current_state name block in
         (PMap.add id element elements, PMap.add id deps elements_dependencies))
       (i.current_state.elements, i.current_state.elements_dependencies)
-      i.elements in
+      i.waiting_elements in
   { i.current_state with
       elements_dependencies = elements_dependencies ;
       elements = elements }
 
 let translates_category s = (* TODO *) failwith "TODO"
 
-let elements s = (* TODO *) failwith "TODO"
+let elements s = s.elements
 
-let get_element_dependencies s id = (* TODO *) failwith "TODO"
+let get_element_dependencies s e =
+  PMap.find e s.elements_dependencies
 
-let get_all_elements s cats = (* TODO *) failwith "TODO"
+let get_all_elements s cats =
+  PMap.foldi (fun e deps el ->
+    if Utils.PSet.for_all (fun c -> Utils.PSet.is_in c cats) deps then
+      e :: el
+    else el) s.elements_dependencies []
 

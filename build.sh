@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/usr/bin/env sh
+set -ev
 
 if [ -z $1 ]
 then

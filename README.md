@@ -65,7 +65,7 @@ Le programme continue ainsi jusqu’à ce que les demandes de complexité et de 
 
 # License
 
-GPL
+GPL version 3
 
 Les scénarios générés sont cependant sans licence (comme la sortie d’un compilateur) : vous pouvez utilisez les soirées-enquêtes générées comme bon vous semble.
 

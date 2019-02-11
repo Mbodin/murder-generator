@@ -3,14 +3,12 @@
   <head>
     <meta charset="utf-8" />
     <title>Murder generator</title>
-    <link rel = "stylesheet" type = "text/css" href = "styles.css" />
+    <link rel = "stylesheet" type = "text/css" href = "web/styles.css" />
     <meta name = "viewport" content = "width=device-width, initial-scale=1.0" />
   </head>
   <body>
-    Currently under construction.
 
-    <button onclick = "startLoading ()">Start loading</button>
-    <button onclick = "stopLoading ()">Stop loading</button>
+    <div id = "response"></div>
 
     <svg version = "1.1" baseProfile = "tiny" width = "100" height = "100" xmlns="http://www.w3.org/2000/svg" class = "loading">
       <g id = "loading-global-transform" transform = "scale(1, 1)">
@@ -26,8 +24,11 @@
     </svg>
 
     <script>
-      var loadingAnimation = document.getElementById ('loading-animation')
-      var loadingGlobalTransform = document.getElementById ('loading-global-transform')
+      /* @license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3-or-Later */
+
+      var loadingAnimation = document.getElementById ("loading-animation")
+      var loadingGlobalTransform = document.getElementById ("loading-global-transform")
+      var responseDiv = document.getElementById ("responseDiv")
 
       function isLoading (){
         return (loadingAnimation.getAttribute ("to")[0] === "1")
@@ -36,7 +37,7 @@
       function startLoading (){
         if (isLoading ()) return
 
-        var startValue = loadingAnimation.animVal
+        var startValue = la.animVal
         if (startValue === undefined || !isLoading ()) startValue = "0 0"
         loadingAnimation.removeAttribute ("values")
         loadingAnimation.removeAttribute ("keyTimes")
@@ -44,7 +45,7 @@
         loadingAnimation.setAttribute ("from", startValue)
         loadingAnimation.setAttribute ("to", "1 1")
         loadingGlobalTransform.setAttribute ("transform", "scale(1, 1)")
-        loadingAnimation.beginElement ()
+        la.beginElement ()
       }
 
       function stopLoading (){
@@ -60,6 +61,42 @@
         setTimeout (function () { loadingGlobalTransform.setAttribute ("transform", "scale(0, 0)") }, 300)
         loadingAnimation.beginElement ()
       }
+
+      function error (e){
+        stopLoading ()
+
+        var p = document.createElement ("p")
+        response.appendChild (p)
+        p.appendChild (document.createTextNode ("An error occurred! "))
+        var a = document.createElement ("a")
+        a.setAttribute ("href", "https://github.com/Mbodin/murder-generator/issues")
+        a.appendChild (document.createTextNode ("Please report it."))
+        p.appendChild (a)
+        p.appendChild (document.createTextNode (" Error details: " + e))
+      }
+
+      (function (){
+        startLoading ()
+
+        var request = new XMLHttpRequest()
+        request.open ("GET", "web/main.js")
+        request.onerror = function (){
+            error ("An error occurred when fetching the main script.")
+          }
+        request.onload = function (){
+            if (request.status != 200){
+              error (request.status + ": " + request.statusText)
+            } else {
+              try {
+                eval (request.responseText)
+              } catch (e){
+                error (e)
+              }
+            }
+          }
+        request.send ()
+      }) ()
+      /* @license-end */
     </script>
   </body>
 </html>

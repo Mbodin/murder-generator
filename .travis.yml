@@ -8,7 +8,7 @@ addons:
       - m4
       - opam
 
-before_install:
+install:
   # Download and use opam2
   - wget -O ${HOME}/opam https://github.com/ocaml/opam/releases/download/2.0.0-beta6/opam-2.0.0-beta6-x86_64-linux
   - chmod +x ${HOME}/opam
@@ -19,12 +19,11 @@ before_install:
   - ${HOME}/opam init --compiler=${OCAML_VERSION}
   - eval `${HOME}/opam config env`
   - export OPAMVERBOSE=1
-  - ${HOME}/opam switch
   - ${HOME}/opam switch ${OCAML_VERSION}
   - eval `${HOME}/opam config env`
   - ${HOME}/opam install ocamlfind extlib js_of_ocaml
 
-install:
+script:
   - ./build.sh && mv main.js web/
 
 deploy:

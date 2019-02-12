@@ -1,0 +1,28 @@
+
+language: c
+env:
+  - OCAML_VERSION=4.07.0
+addons:
+  apt:
+    packages:
+      - opam
+
+before_install:
+  - opam init --compiler=${OCAML_VERSION}
+  - eval `opam config env`
+  - export OPAMVERBOSE=1
+  - opam switch ${OCAML_VERSION}
+  - eval `opam config env`
+  - opam install ocamlfind extlib js_of_ocaml
+
+install:
+  - ./build.sh && mv main.js web/
+
+deploy:
+  provider: pages
+  skip-cleanup: true
+  github-token: $GITHUB_TOKEN
+  keep-history: true
+  on:
+    branch: gh-pages
+

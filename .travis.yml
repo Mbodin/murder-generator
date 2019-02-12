@@ -10,7 +10,7 @@ addons:
 
 before_install:
   # Download and use opam2
-  - wget -O ${HOME}/opam https://github.com/ocaml/opam/releases/download/2.0.0/opam-2.0.0-x86_64-linux
+  - wget -O ${HOME}/opam https://github.com/ocaml/opam/releases/download/2.0.0-beta6/opam-2.0.0-beta6-x86_64-linux
   - chmod +x ${HOME}/opam
   # Some opam boilerplate
   - export OPAMYES=1

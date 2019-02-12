@@ -5,6 +5,7 @@ env:
 addons:
   apt:
     packages:
+      - bubblewrap
       - opam
 
 before_install:

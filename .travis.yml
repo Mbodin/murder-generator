@@ -8,8 +8,7 @@ addons:
       - opam
 
 before_install:
-  - opam init --compiler=${OCAML_VERSION}
-  - eval `opam config env`
+  - opam init # --compiler=${OCAML_VERSION}
   - export OPAMVERBOSE=1
   - opam switch ${OCAML_VERSION}
   - eval `opam config env`

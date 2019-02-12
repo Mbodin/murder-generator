@@ -5,12 +5,12 @@ env:
 addons:
   apt:
     packages:
-      - bubblewrap
+      - m4
       - opam
 
 before_install:
   # Download and use opam2
-  - wget -O ${HOME}/opam https://github.com/ocaml/opam/releases/download/2.0.3/opam-2.0.3-x86_64-linux
+  - wget -O ${HOME}/opam https://github.com/ocaml/opam/releases/download/2.0.0/opam-2.0.0-x86_64-linux
   - chmod +x ${HOME}/opam
   # Some opam boilerplate
   - export OPAMYES=1
@@ -19,10 +19,10 @@ before_install:
   - ${HOME}/opam init --compiler=${OCAML_VERSION}
   - eval `${HOME}/opam config env`
   - export OPAMVERBOSE=1
-  - opam switch
-  - opam switch ${OCAML_VERSION}
-  - eval `opam config env`
-  - opam install ocamlfind extlib js_of_ocaml
+  - ${HOME}/opam switch
+  - ${HOME}/opam switch ${OCAML_VERSION}
+  - eval `${HOME}/opam config env`
+  - ${HOME}/opam install ocamlfind extlib js_of_ocaml
 
 install:
   - ./build.sh && mv main.js web/

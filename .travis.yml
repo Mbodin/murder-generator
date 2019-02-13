@@ -2,7 +2,10 @@
 language: c
 env:
   global:
-    - OPAMYES=true OPAMJOBS=2 OPAMVERBOSE=true OCAML_VERSION=4.07.0
+    - OPAMYES=true
+    - OPAMJOBS=2
+    - OPAMVERBOSE=true
+    - OCAML_VERSION=4.07.0
 addons:
   apt:
     packages:
@@ -15,10 +18,9 @@ cache:
 
 install:
   # Download and use opam2
-  # - wget -O ${HOME}/opam https://github.com/ocaml/opam/releases/download/2.0.0-beta6/opam-2.0.0-beta6-x86_64-linux
-  # - chmod +x ${HOME}/opam
-  # Init opam, and the default switch with the right ocaml version
-  - opam init -a # --compiler=${OCAML_VERSION}
+  - wget -O ${HOME}/opam https://github.com/ocaml/opam/releases/download/2.0.0-beta6/opam-2.0.0-beta6-x86_64-linux
+  - chmod +x ${HOME}/opam
+  - opam init --compiler=${OCAML_VERSION}
   - eval `opam config env`
   - opam switch ${OCAML_VERSION}
   - eval `opam config env`

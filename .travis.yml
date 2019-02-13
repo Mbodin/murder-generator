@@ -10,21 +10,21 @@ addons:
   apt:
     packages:
       - m4
-      - opam
+      # - opam
 
 cache:
   directories:
-    - ~/.opam
+    - ${HOME}/.opam
 
 install:
   # Download and use opam2
   - wget -O ${HOME}/opam https://github.com/ocaml/opam/releases/download/2.0.0-beta6/opam-2.0.0-beta6-x86_64-linux
   - chmod +x ${HOME}/opam
-  - opam init --compiler=${OCAML_VERSION}
-  - eval `opam config env`
-  - opam switch ${OCAML_VERSION}
-  - eval `opam config env`
-  - opam install ocamlfind extlib js_of_ocaml
+  - ${HOME}/opam init --compiler=${OCAML_VERSION}
+  - eval `${HOME}/opam config env`
+  - ${HOME}/opam switch ${OCAML_VERSION}
+  - eval `${HOME}/opam config env`
+  - ${HOME}/opam install ocamlfind extlib js_of_ocaml
 
 script:
   - ./build.sh && mv main.js web/

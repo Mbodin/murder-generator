@@ -18,7 +18,12 @@ body {
   transform: translate(-50%, -50%) ;
 }
 
-p {
+#response {
+  max-width: 1000px ;
+  margin: 0 auto ;
+}
+
+.block {
   border: 4px solid #5c3566 ;
   border-radius: 10px ;
   padding: 5px ;

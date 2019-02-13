@@ -1,27 +1,28 @@
 
 language: c
 env:
-  - OCAML_VERSION=4.07.0
+  global:
+    - OPAMYES=true OPAMJOBS=2 OPAMVERBOSE=true OCAML_VERSION=4.07.0
 addons:
   apt:
     packages:
       - m4
       - opam
 
+cache:
+  directories:
+    - ~/.opam
+
 install:
   # Download and use opam2
-  - wget -O ${HOME}/opam https://github.com/ocaml/opam/releases/download/2.0.0-beta6/opam-2.0.0-beta6-x86_64-linux
-  - chmod +x ${HOME}/opam
-  # Some opam boilerplate
-  - export OPAMYES=1
-  - export OPAMJOBS=2
+  # - wget -O ${HOME}/opam https://github.com/ocaml/opam/releases/download/2.0.0-beta6/opam-2.0.0-beta6-x86_64-linux
+  # - chmod +x ${HOME}/opam
   # Init opam, and the default switch with the right ocaml version
-  - ${HOME}/opam init --compiler=${OCAML_VERSION}
-  - eval `${HOME}/opam config env`
-  - export OPAMVERBOSE=1
-  - ${HOME}/opam switch ${OCAML_VERSION}
-  - eval `${HOME}/opam config env`
-  - ${HOME}/opam install ocamlfind extlib js_of_ocaml
+  - opam init -a # --compiler=${OCAML_VERSION}
+  - eval `opam config env`
+  - opam switch ${OCAML_VERSION}
+  - eval `opam config env`
+  - opam install ocamlfind extlib js_of_ocaml
 
 script:
   - ./build.sh && mv main.js web/
@@ -30,7 +31,7 @@ deploy:
   provider: pages
   skip-cleanup: true
   github-token: $GITHUB_TOKEN
-  keep-history: true
+  # keep-history: true
   on:
     branch: master
 

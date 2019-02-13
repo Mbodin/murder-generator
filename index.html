@@ -67,6 +67,7 @@
         stopLoading ()
 
         var p = document.createElement ("p")
+        p.setAttribute ("class", "block")
         response.appendChild (p)
         p.appendChild (document.createTextNode ("An error occurred! "))
         var a = document.createElement ("a")

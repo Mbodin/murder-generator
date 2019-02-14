@@ -26,14 +26,18 @@ install:
   - eval `${HOME}/opam config env`
   - ${HOME}/opam install ocamlfind extlib js_of_ocaml
 
+after_install:
+  - ./build.sh murderFiles
+
 script:
   - ./build.sh && mv main.js web/
+  - ./build.sh tests.byte && ./tests.byte
 
 deploy:
   provider: pages
   skip-cleanup: true
   github-token: $GITHUB_TOKEN
-  # keep-history: true
+  target-branch: gh-pages
   on:
     branch: master
 

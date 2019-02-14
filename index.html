@@ -66,15 +66,19 @@
       function error (e){
         stopLoading ()
 
+        var div = document.createElement ("div")
+        div.setAttribute ("class", "block")
         var p = document.createElement ("p")
-        p.setAttribute ("class", "block")
-        response.appendChild (p)
+        div.appendChild (p)
+        response.appendChild (div)
         p.appendChild (document.createTextNode ("An error occurred! "))
         var a = document.createElement ("a")
         a.setAttribute ("href", "https://github.com/Mbodin/murder-generator/issues")
-        a.appendChild (document.createTextNode ("Please report it."))
+        a.appendChild (document.createTextNode ("Please report it"))
         p.appendChild (a)
+        p = document.createElement ("p")
         p.appendChild (document.createTextNode (" Error details: " + e))
+        div.appendChild (p)
       }
 
       (function (){

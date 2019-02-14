@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-set -ev
+set -e
 
 COLOR="\e[35m"
 
@@ -23,7 +23,7 @@ else
     exit 0
   fi
 
-  if expr match "$1" ".*\.js"
+  if expr match "$1" ".*\.js" > /dev/null
   then
     JS="true"
   else

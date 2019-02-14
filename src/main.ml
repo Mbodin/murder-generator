@@ -12,5 +12,5 @@ let get_file url =
   request##send Js.null
 
 let _ =
-  failwith "This is a test.  Please do not report it."
+  failwith "This is actually just a test.  Please do not report it."
 

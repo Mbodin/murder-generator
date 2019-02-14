@@ -39,7 +39,7 @@ let test_relations =
     List.concat (List.map (fun r1 -> List.map (fun r2 -> Asymmetrical (r1, r2), false) b) b) @
     List.concat (List.map (fun r1 -> List.map (fun r2 -> Explosive (Basic r1, Basic r2), false) b) b)
   in
-  for i = 0 to 50 do
+  for i = 0 to 5 do
     let r1 = Utils.select_any l in
     let r2 = Utils.select_any l in
     let r = compose r1 r2 in
@@ -75,6 +75,7 @@ let test_parser =
       print_endline ("Error: Lexer error " ^
                       Lexer.current_position buf ^ ": " ^ msg) ;
       [] in
+  print_endline ("Total number of files: " ^ string_of_int (List.length MurderFiles.files)) ;
   let asts =
     List.map read_file MurderFiles.files in
   let i =

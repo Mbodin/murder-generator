@@ -32,9 +32,25 @@ body {
 
 a {
   color: #75507b ;
+  text-decoration: none ;
+}
+
+a::after {
+  content: " →" ;
+  font-weight: bold ;
+  opacity: 0 ;
+  padding-left: 0px ;
+  padding-right: 4px ;
 }
 
 a:hover {
-  color: #ad7fa8 ;
+  color: #5c3566 ;
+}
+
+a:hover::after {
+  opacity: 1 ;
+  padding-left: 4px ;
+  padding-right: 0px ;
+  transition: .3s ;
 }
 

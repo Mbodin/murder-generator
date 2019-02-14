@@ -33,8 +33,8 @@ fi
 
 # Compile to bytecode
 echo "${COLOR}Compiling to bytecode as $TARGET.byte…\e[0m"
-ocamlbuild -I src \
-           -pkg extlib \
+ocamlbuild -use-ocamlfind -I src \
+           -pkgs extlib,lwt,js_of_ocaml,js_of_ocaml-lwt,js_of_ocaml-ppx \
            -use-menhir -menhir "menhir --explain" \
            -tag "optimize(3)" \
            $TARGET.byte

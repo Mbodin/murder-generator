@@ -16,6 +16,7 @@ addons:
     packages:
       - m4
       # - opam
+      - expect-dev # for unbuffer
 
 cache:
   directories:
@@ -29,14 +30,15 @@ install:
   - eval `${HOME}/opam config env`
   - ${HOME}/opam switch ${OCAML_VERSION}
   - eval `${HOME}/opam config env`
-  - ${HOME}/opam install ocamlfind extlib js_of_ocaml
+  - ${HOME}/opam install ocamlfind extlib menhir
+  - ${HOME}/opam install js_of_ocaml js_of_ocaml-ppx js_of_ocaml-lwt
 
 before_script:
-  - ./build.sh murderFiles
+  - unbuffer ./build.sh murderFiles
 
 script:
-  - ./build.sh && mv main.js web/
-  - ./build.sh tests.byte && ./tests.byte
+  - unbuffer ./build.sh && mv main.js web/
+  - unbuffer ./build.sh tests.byte && ./tests.byte
 
 deploy:
   provider: pages

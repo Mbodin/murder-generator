@@ -8,11 +8,11 @@ type result =
   | Relation_event (** An event that changed the way a character relates
                     * with another one. **)
     of character (** The character in question **)
-       * Relations.t (** How the character now perceive this new relation.
-                      * Note that in case of a compound relation, this
-                      * relation is from the point of view of the player:
-                      * asymmetrical relations should probably never
-                      * appear here. **)
+       * Relation.t (** How the character now perceive this new relation.
+                     * Note that in case of a compound relation, this
+                     * relation is from the point of view of the player:
+                     * asymmetrical relations should probably never
+                     * appear here. **)
 
 (** A moment in time. **)
 type date =

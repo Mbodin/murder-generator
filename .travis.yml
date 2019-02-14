@@ -1,11 +1,16 @@
 
 language: c
+
+os:
+  - linux
+
 env:
   global:
     - OPAMYES=true
     - OPAMJOBS=2
     - OPAMVERBOSE=true
     - OCAML_VERSION=4.07.0
+
 addons:
   apt:
     packages:
@@ -26,7 +31,7 @@ install:
   - eval `${HOME}/opam config env`
   - ${HOME}/opam install ocamlfind extlib js_of_ocaml
 
-after_install:
+before_script:
   - ./build.sh murderFiles
 
 script:

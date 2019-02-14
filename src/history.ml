@@ -4,7 +4,7 @@ type character = Utils.Id.t
 type result =
   | Relation_event
     of character
-       * Relations.t
+       * Relation.t
 
 type date =
   int

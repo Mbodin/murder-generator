@@ -77,7 +77,7 @@
         a.appendChild (document.createTextNode ("Please report it"))
         p.appendChild (a)
         p = document.createElement ("p")
-        p.appendChild (document.createTextNode (" Error details: " + e))
+        p.appendChild (document.createTextNode ("Error details: " + e))
         div.appendChild (p)
       }
 
@@ -85,21 +85,20 @@
         startLoading ()
 
         var request = new XMLHttpRequest()
-        request.open ("GET", "web/main.js")
-        request.onerror = function (){
-            error ("An error occurred when fetching the main script.")
-          }
-        request.onload = function (){
-            if (request.status != 200){
-              error (request.status + ": " + request.statusText)
-            } else {
-              try {
-                eval (request.responseText)
-              } catch (e){
-                error (e)
+        request.onreadystatechange = function (){
+            if (this.readyState === 4){
+              if (request.status !== 200){
+                error ("Error when fetching the main script. " + request.status + ": " + request.statusText)
+              } else {
+                try {
+                  eval (request.responseText)
+                } catch (e){
+                  error (e)
+                }
               }
             }
           }
+        request.open ("GET", "web/main.js", true)
         request.send ()
       }) ()
       /* @license-end */

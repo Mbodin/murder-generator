@@ -80,18 +80,14 @@ let normalise r =
     | Explosive (r1, r2) ->
       aux (aux l r1) r2
     | Basic b -> Utils.Left b :: l
-    | Asymmetrical (b1, b2) -> Utils.Right (b1, b2) :: l
-  in
+    | Asymmetrical (b1, b2) -> Utils.Right (b1, b2) :: l in
   match List.sort compare (aux [] r) with
   | x :: l ->
     let f = function
-    | Utils.Left b -> Basic b
-    | Utils.Right (b1, b2) -> Asymmetrical (b1, b2)
-    in
+      | Utils.Left b -> Basic b
+      | Utils.Right (b1, b2) -> Asymmetrical (b1, b2) in
     List.fold_left (fun r x -> Explosive (f x, r)) (f x) l
-  | [] ->
-    InOut.should_not_happen "Empty list computed during relation normalisation" ;
-    Basic Neutral
+  | [] -> assert false
 
 let simplify r =
   let rec aux l = function

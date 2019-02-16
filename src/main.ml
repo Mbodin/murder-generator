@@ -46,10 +46,15 @@ let _ =
   try%lwt
     let%lwt txt = InOut.get_file "web/translations.json" in
     let all = Deriving_Json.from_string [%derive.json: translations array] txt in
+    let all = Array.to_list all in
+    let all = Utils.shuffle all in
     InOut.clear_response () ;
     InOut.print_block (InOut.Text "Just a test.") ;
+    List.iter (fun t ->
+      InOut.print_block (InOut.P [InOut.LinkContinuation (t.name, fun _ ->
+        InOut.print_block (InOut.P [InOut.Text t.underConstruction]))])) all ;
     Lwt.fail (Invalid_argument ("This is actually just a test.  Please do not report it. Test: "
-               ^ string_of_int (Array.length all)))
+               ^ string_of_int (List.length all)))
   with e ->
     let (errorOccurred, reportIt, there, details) = !errorTranslations in
     InOut.print_block (InOut.Div [

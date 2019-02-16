@@ -73,7 +73,13 @@ let rec block_node = function
     ignore (a##setAttribute (Js.string "href") (Js.string link)) ;
     (a :> Dom_html.element Js.t)
   | LinkContinuation (text, cont) ->
-    failwith "TODO: Not yet implemented"
+    let a = Dom_html.createA document in
+    let text = Dom_html.document##createTextNode (Js.string text) in
+    ignore (Dom.appendChild a text) ;
+    ignore (a##setAttribute (Js.string "href") (Js.string "void(42)")) ;
+    Lwt.async (fun _ ->
+      Lwt_js_events.clicks a (fun _ _ -> Lwt.return (cont ()))) ;
+    (a :> Dom_html.element Js.t)
   | Node n -> n
 
 (** Returns the [response] div from the main webpage. **)

@@ -20,6 +20,7 @@ let get_file url =
 type block =
   | Div of block list
   | P of block list
+  | CenterP of block list
   | Text of string
   | Link of string * string
   | LinkContinuation of string * (unit -> unit)
@@ -29,6 +30,7 @@ let rec add_spaces =
   let need_space = function
     | Div _ -> false
     | P _ -> false
+    | CenterP _ -> false
     | Text _ -> true
     | Link _ -> true
     | LinkContinuation _ -> true
@@ -47,20 +49,29 @@ let rec add_spaces =
     | P l ->
       let l = List.map add_spaces l in
       P (aux l)
+    | CenterP l ->
+      let l = List.map add_spaces l in
+      CenterP (aux l)
     | e -> e
 
 let document = Dom_html.window##.document
 
-let rec block_node = function
+let rec block_node =
+  let appendChilds e =
+    List.iter (fun b -> ignore (Dom.appendChild e (block_node b))) in
+  function
   | Div l ->
     let div = Dom_html.createDiv document in
-    List.iter (fun b ->
-      ignore (Dom.appendChild div (block_node b))) l ;
+    appendChilds div l ;
     (div :> Dom_html.element Js.t)
   | P l ->
     let p = Dom_html.createP document in
-    List.iter (fun b ->
-      ignore (Dom.appendChild p (block_node b))) l ;
+    appendChilds p l ;
+    (p :> Dom_html.element Js.t)
+  | CenterP l ->
+    let p = Dom_html.createP document in
+    ignore (p##setAttribute (Js.string "class") (Js.string ".center")) ;
+    appendChilds p l ;
     (p :> Dom_html.element Js.t)
   | Text text ->
     let span = Dom_html.createSpan document in
@@ -76,7 +87,7 @@ let rec block_node = function
     let a = Dom_html.createA document in
     let text = Dom_html.document##createTextNode (Js.string text) in
     ignore (Dom.appendChild a text) ;
-    ignore (a##setAttribute (Js.string "href") (Js.string "void(42)")) ;
+    ignore (a##setAttribute (Js.string "href") (Js.string "javascript:void(42)")) ;
     Lwt.async (fun _ ->
       Lwt_js_events.clicks a (fun _ _ -> Lwt.return (cont ()))) ;
     (a :> Dom_html.element Js.t)

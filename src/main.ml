@@ -35,6 +35,7 @@ let _ =
   try%lwt
     InOut.clear_response () ;
     let%lwt translations =
+      (** Getting the translations file. **)
       let translations_file = "web/translations.json" in
       let%lwt translations = InOut.get_file translations_file in
       match Yojson.Safe.from_string ~fname:translations_file translations with
@@ -59,16 +60,29 @@ let _ =
       | _ ->
         Lwt.fail (Invalid_argument
           ("The file “" ^ translations_file ^ "” is not a list.")) in
-    let translations = Utils.shuffle translations in
+    (** Shuffling languages, but putting the user languages on top. **)
+    let translations =
+      let userLangs =
+        let navigator = Dom_html.window##.navigator in
+        let to_list o =
+          match Js.Optdef.to_option o with
+          | None -> []
+          | Some a -> [Js.to_string a] in
+        to_list navigator##.language @ to_list navigator##.userLanguage in
+      let (matching, nonmatching) =
+        List.partition (fun m -> List.mem (PMap.find "iso639" m) userLangs)
+          translations in
+      Utils.shuffle matching @ Utils.shuffle nonmatching in
+    (** Showing to the user all available languages. **)
     let%lwt translations =
       let (res, w) = Lwt.task () in
-      List.iter (fun m ->
+      InOut.print_block (InOut.Div (List.map (fun m ->
         let get = get_translation m in
-        InOut.print_block (InOut.P [InOut.LinkContinuation (get "name", fun _ ->
+        InOut.CenterP [InOut.LinkContinuation (get "name", fun _ ->
           InOut.clear_response () ;
           errorTranslations :=
-            (get "errorOccurred", get "reportIt", get "there", get "errorDetails") ;
-          Lwt.wakeup_later w m)])) translations ;
+            (get "errorOccurred", get "report", get "there", get "errorDetails") ;
+          Lwt.wakeup_later w m)]) translations)) ;
       stopLoading () ;%lwt
       res in
     let get_translation = get_translation translations in

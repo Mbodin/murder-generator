@@ -30,6 +30,11 @@ body {
   margin: 5px ;
 }
 
+.center {
+  text-align: center ;
+  margin: auto ;
+}
+
 a {
   color: #75507b ;
   text-decoration: none ;

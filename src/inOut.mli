@@ -8,6 +8,7 @@ val get_file : string -> string Lwt.t
 type block =
   | Div of block list (** A div node. **)
   | P of block list (** A paragraph node. **)
+  | CenterP of block list (** A paragraph node whose content is centered. **)
   | Text of string (** A simple text. **)
   | Link of string * string (** A link and its associated address. **)
   | LinkContinuation of string * (unit -> unit) (** A link and its associated

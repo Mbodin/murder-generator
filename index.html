@@ -47,6 +47,7 @@
         loadingAnimation.setAttribute ("to", "1 1")
         loadingGlobalTransform.setAttribute ("transform", "scale(1, 1)")
         la.beginElement ()
+        loadingAnimation.style.zIndex = "1"
       }
 
       function stopLoading (){
@@ -61,6 +62,7 @@
         loadingAnimation.setAttribute ("keyTimes", "0;0.3;1")
         setTimeout (function () { loadingGlobalTransform.setAttribute ("transform", "scale(0, 0)") }, 300)
         loadingAnimation.beginElement ()
+        loadingAnimation.style.zIndex = "-1"
       }
 
       function error (e){

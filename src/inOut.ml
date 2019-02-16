@@ -7,9 +7,9 @@ let get_file url =
     Js.wrap_callback (fun _ ->
       if request##.readyState = XmlHttpRequest.DONE then (
         if request##.status = 200 then
-          Lwt.wakeup w (Js.to_string request##.responseText)
+          Lwt.wakeup_later w (Js.to_string request##.responseText)
         else
-          Lwt.wakeup_exn w (Invalid_argument
+          Lwt.wakeup_later_exn w (Invalid_argument
                ("Error when fetching " ^ url ^ ". "
                 ^ string_of_int request##.status ^ " :"
                 ^ Js.to_string request##.statusText)))) ;

@@ -2,24 +2,6 @@
  * This file is the one compiled to JavaScript, then fetched and executed
  * to run the whole program. **)
 
-type translations = {
-    iso639 : string ;
-    name : string ;
-    there : string ;
-    underConstruction : string ;
-    participate : string ;
-    description : string ;
-    openSource : string ;
-    error : string ;
-    report : string ;
-    howManyPlayers : string ;
-    experience : string ;
-    beginner : string ;
-    experienced : string
-  } [@@deriving json] (* FIXME: This deriving is not that great:
-                         it imposes OCaml’s marshalling’s scheme
-                         which is not human readable. *)
-
 (** The translations needed to print error messages. **)
 let errorTranslations =
   ref ("An error occurred!", "Please report it", "there", "Error details:")
@@ -41,35 +23,67 @@ let startLoading _ =
   loading := true ;
   Lwt.return ()
 
+(** Given a map from key to their translation, finds the corresponding key. **)
+let get_translation m key =
+  let iso = PMap.find "iso639" m in
+  try PMap.find key m
+  with Not_found ->
+    failwith ("No key “" ^ key ^ "” found for translation “" ^ iso ^ "”.")
+
 (** The main script. **)
 let _ =
   try%lwt
     InOut.clear_response () ;
-    InOut.print_block (InOut.Text "Just a test.") ;
-    let%lwt txt = InOut.get_file "web/translations.json" in
-    let all =
-      try
-        Deriving_Json.from_string [%derive.json: translations array] txt
-      with e ->
-        Dom_html.window##alert (Js.string ("Test: G; " ^ Printexc.to_string e)) ;
-        raise e in
-    Dom_html.window##alert (Js.string "Test: C") ;
-    let all = Array.to_list all in
-    let all = Utils.shuffle all in
-    List.iter (fun t ->
-      InOut.print_block (InOut.P [InOut.LinkContinuation (t.name, fun _ ->
-        InOut.print_block (InOut.P [InOut.Text t.underConstruction]))])) all ;
-    stopLoading ()
+    let%lwt translations =
+      let translations_file = "web/translations.json" in
+      let%lwt translations = InOut.get_file translations_file in
+      match Yojson.Safe.from_string ~fname:translations_file translations with
+      | `List l ->
+        Lwt.return (
+          List.mapi (fun i ->
+            let current =
+              "The " ^ string_of_int (i + 1) ^ "th element"
+              ^ " of the file “" ^ translations_file ^ "”" in function
+            | `Assoc l ->
+              let m =
+                PMap.of_enum (ExtList.List.enum (List.map (function
+                  | key, `String str -> (key, str)
+                  | (key, _) ->
+                    failwith (current ^ " associates the field “" ^ key
+                              ^ "” to something else than a string.")) l)) in
+              if not (PMap.mem "iso639" m) then
+                failwith (current ^ " has no key “iso639”.") ;
+              m
+            | _ ->
+              failwith (current ^ " is not an object.")) l)
+      | _ ->
+        Lwt.fail (Invalid_argument
+          ("The file “" ^ translations_file ^ "” is not a list.")) in
+    let translations = Utils.shuffle translations in
+    let%lwt translations =
+      let (res, w) = Lwt.task () in
+      List.iter (fun m ->
+        let get = get_translation m in
+        InOut.print_block (InOut.P [InOut.LinkContinuation (get "name", fun _ ->
+          InOut.clear_response () ;
+          errorTranslations :=
+            (get "errorOccurred", get "reportIt", get "there", get "errorDetails") ;
+          Lwt.wakeup_later w m)])) translations ;
+      stopLoading () ;%lwt
+      res in
+    let get_translation = get_translation translations in
+    (* TODO *)
+    InOut.print_block (InOut.P [InOut.Text (get_translation "underConstruction")]) ;
+    Lwt.return ()
   with e ->
-    Dom_html.window##alert (Js.string ("Test: E; " ^ Printexc.to_string e)) ;
-    let (errorOccurred, reportIt, there, details) = !errorTranslations in
+    let (errorOccurred, reportIt, there, errorDetails) = !errorTranslations in
     InOut.print_block (InOut.Div [
         InOut.P [
             InOut.Text errorOccurred ; InOut.Text reportIt ;
             InOut.Link (there, "https://github.com/Mbodin/murder-generator/issues")
           ] ;
         InOut.P [
-            InOut.Text details ;
+            InOut.Text errorDetails ;
             InOut.Text (Printexc.to_string e)
           ]
       ]) ;

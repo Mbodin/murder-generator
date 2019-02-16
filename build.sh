@@ -35,7 +35,7 @@ fi
 # Compile to bytecode
 echo "${COLOR}Compiling to bytecode as $TARGET.byte…${ROLOC}"
 ocamlbuild -use-ocamlfind -I src \
-           -pkgs extlib,lwt,lwt_ppx,js_of_ocaml,js_of_ocaml-lwt,js_of_ocaml-ppx,ppx_deriving,js_of_ocaml-ppx.deriving,js_of_ocaml.deriving \
+           -pkgs extlib,yojson,lwt,lwt_ppx,js_of_ocaml,js_of_ocaml-lwt,js_of_ocaml-ppx,ppx_deriving,js_of_ocaml-ppx.deriving,js_of_ocaml.deriving \
            -use-menhir -menhir "menhir --explain" \
            -tag "optimize(3)" \
            $TARGET.byte

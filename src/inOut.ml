@@ -84,8 +84,8 @@ let rec block_node = function
 
 (** Returns the [response] div from the main webpage. **)
 let get_response _ =
-  Js.Opt.get (Dom_html.document##getElementById (Js.string "responseDiv")) (fun _ ->
-    failwith "The element [responseDiv] has not been found in the webpage.")
+  Js.Opt.get (Dom_html.document##getElementById (Js.string "response")) (fun _ ->
+    failwith "The element [response] has not been found in the webpage.")
 
 let clear_response _ =
   let response = get_response () in

@@ -46,14 +46,11 @@ let _ =
   try%lwt
     InOut.clear_response () ;
     InOut.print_block (InOut.Text "Just a test.") ;
-    Dom_html.window##alert (Js.string "Test: A") ;
     let%lwt txt = InOut.get_file "web/translations.json" in
-    Dom_html.window##alert (Js.string "Test: B") ;
     let all =
       try
         Deriving_Json.from_string [%derive.json: translations array] txt
       with e ->
-        Dom_html.window##alert (Js.string "Test: F") ;
         Dom_html.window##alert (Js.string ("Test: G; " ^ Printexc.to_string e)) ;
         raise e in
     Dom_html.window##alert (Js.string "Test: C") ;
@@ -64,7 +61,6 @@ let _ =
         InOut.print_block (InOut.P [InOut.Text t.underConstruction]))])) all ;
     stopLoading ()
   with e ->
-    Dom_html.window##alert (Js.string "Test: D") ;
     Dom_html.window##alert (Js.string ("Test: E; " ^ Printexc.to_string e)) ;
     let (errorOccurred, reportIt, there, details) = !errorTranslations in
     InOut.print_block (InOut.Div [

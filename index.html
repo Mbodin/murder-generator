@@ -29,7 +29,7 @@
 
       var loadingAnimation = document.getElementById ("loading-animation")
       var loadingGlobalTransform = document.getElementById ("loading-global-transform")
-      var responseDiv = document.getElementById ("responseDiv")
+      var responseDiv = document.getElementById ("response")
 
       function isLoading (){
         return (loadingAnimation.getAttribute ("to")[0] === "1")
@@ -70,7 +70,7 @@
         div.setAttribute ("class", "block")
         var p = document.createElement ("p")
         div.appendChild (p)
-        response.appendChild (div)
+        responseDiv.appendChild (div)
         p.appendChild (document.createTextNode ("An error occurred! "))
         var a = document.createElement ("a")
         a.setAttribute ("href", "https://github.com/Mbodin/murder-generator/issues")

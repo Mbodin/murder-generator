@@ -1,23 +1,32 @@
 (** Module InOut
- * Contains functions to input or output messages.
- * This module typically comes in various version depending on the context where the program is executed. **)
+ * Contains functions for intputs and outputs. **)
 
+(** Fetch a file from an adress and returns its content. **)
+val get_file : string -> string Lwt.t
 
-(** Print a message on the console. **)
-val message : string -> unit
+(** A simplified representation of DOM’s nodes. **)
+type block =
+  | Div of block list (** A div node. **)
+  | P of block list (** A paragraph node. **)
+  | Text of string (** A simple text. **)
+  | Link of string * string (** A link and its associated address. **)
+  | LinkContinuation of string * (unit -> unit) (** A link and its associated
+                                                 * continuation. **)
+  | Node of Dom.node Js.t (** For all cases where more control is needed, we can
+                           * directly send a node. **)
 
-(** If a place of the program should never be executed, call this function instead of assert false and return a default value: this will help users declare a bug. **)
-val should_not_happen : string -> unit
+(** Adds the expected spaces between block elements. **)
+val add_spaces : block -> block
 
-(** A type to change already written messages. **)
-type t
+(** Converts the block to a node. **)
+val block_node : block -> Dom.node Js.t
 
-(** Print a message on a new line, and return an object to change the message. **)
-val print : string -> t
+(** Adds the node to the [response] div in the main webpage. **)
+val print_node : Dom.node Js.t -> unit
 
-(** Update the message adressed by the object. **)
-val update : t -> string -> unit
+(** A composition of [add_spaces], [block_node], and [print_node]. **)
+val print_block : block -> unit
 
-(** Print more than one messages on the same line, each of which is associated with an object. **)
-val prints : string list -> t list
+(** Clears the [response] div in the main webpage. **)
+val clear_response : unit -> unit
 

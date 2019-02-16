@@ -30,7 +30,7 @@ install:
   - ${HOME}/opam switch ${OCAML_VERSION}
   - eval `${HOME}/opam config env`
   - ${HOME}/opam install ocamlfind extlib menhir
-  - ${HOME}/opam install js_of_ocaml js_of_ocaml-ppx js_of_ocaml-lwt
+  - ${HOME}/opam install js_of_ocaml js_of_ocaml-ppx lwt_ppx js_of_ocaml-lwt
   - ${HOME}/opam install ppx_deriving js_of_ocaml-ppx_deriving_json
 
 before_script:

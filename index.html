@@ -11,7 +11,7 @@
 
     <div id = "response"></div>
 
-    <svg version = "1.1" baseProfile = "tiny" width = "100" height = "100" xmlns="http://www.w3.org/2000/svg" class = "loading">
+    <svg version = "1.1" baseProfile = "tiny" width = "100" height = "100" xmlns="http://www.w3.org/2000/svg" id = "loadingSVG">
       <g id = "loading-global-transform" transform = "scale(1, 1)">
         <g transform = "translate(50, 50)">
           <g transform = "translate(-50, -50)">
@@ -27,63 +27,65 @@
     <script>
       /* @license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3-or-Later */
 
-      var loadingAnimation = document.getElementById ("loading-animation")
-      var loadingGlobalTransform = document.getElementById ("loading-global-transform")
-      var responseDiv = document.getElementById ("response")
-
-      function isLoading (){
-        return (loadingAnimation.getAttribute ("to")[0] === "1")
-      }
-
-      function startLoading (){
-        if (isLoading ()) return
-
-        var startValue = la.animVal
-        if (startValue === undefined || !isLoading ()) startValue = "0 0"
-        loadingAnimation.removeAttribute ("values")
-        loadingAnimation.removeAttribute ("keyTimes")
-        loadingAnimation.setAttribute ("dur", "1s")
-        loadingAnimation.setAttribute ("from", startValue)
-        loadingAnimation.setAttribute ("to", "1 1")
-        loadingGlobalTransform.setAttribute ("transform", "scale(1, 1)")
-        la.beginElement ()
-        loadingAnimation.style.zIndex = "1"
-      }
-
-      function stopLoading (){
-        if (!isLoading ()) return
-
-        var startValue = loadingAnimation.animVal
-        if (startValue === undefined || isLoading ()) startValue = "1 1"
-        loadingAnimation.setAttribute ("dur", "1s")
-        loadingAnimation.setAttribute ("from", startValue)
-        loadingAnimation.setAttribute ("to", "0 0")
-        loadingAnimation.setAttribute ("values", startValue + ";0 0;0 0")
-        loadingAnimation.setAttribute ("keyTimes", "0;0.3;1")
-        setTimeout (function () { loadingGlobalTransform.setAttribute ("transform", "scale(0, 0)") }, 300)
-        loadingAnimation.beginElement ()
-        loadingAnimation.style.zIndex = "-1"
-      }
-
-      function error (e){
-        stopLoading ()
-
-        var div = document.createElement ("div")
-        div.setAttribute ("class", "block")
-        var p = document.createElement ("p")
-        div.appendChild (p)
-        responseDiv.appendChild (div)
-        p.appendChild (document.createTextNode ("An error occurred! "))
-        var a = document.createElement ("a")
-        a.setAttribute ("href", "https://github.com/Mbodin/murder-generator/issues")
-        a.appendChild (document.createTextNode ("Please report it"))
-        p.appendChild (a)
-        p = document.createElement ("p")
-        p.appendChild (document.createTextNode ("Error details: " + e))
-        div.appendChild (p)
-      }
-
       (function (){
+
+        var loadingAnimation = document.getElementById ("loading-animation")
+        var loadingGlobalTransform = document.getElementById ("loading-global-transform")
+        var loadingSVG = document.getElementById ("loadingSVG")
+        var responseDiv = document.getElementById ("response")
+
+        function isLoading (){
+          return (loadingAnimation.getAttribute ("to")[0] === "1")
+        }
+
+        function startLoading (){
+          if (isLoading ()) return
+
+          var startValue = la.animVal
+          if (startValue === undefined || !isLoading ()) startValue = "0 0"
+          loadingAnimation.removeAttribute ("values")
+          loadingAnimation.removeAttribute ("keyTimes")
+          loadingAnimation.setAttribute ("dur", "1s")
+          loadingAnimation.setAttribute ("from", startValue)
+          loadingAnimation.setAttribute ("to", "1 1")
+          loadingGlobalTransform.setAttribute ("transform", "scale(1, 1)")
+          la.beginElement ()
+          loadingSVG.style.zIndex = "1"
+        }
+
+        function stopLoading (){
+          if (!isLoading ()) return
+
+          var startValue = loadingAnimation.animVal
+          if (startValue === undefined || isLoading ()) startValue = "1 1"
+          loadingAnimation.setAttribute ("dur", "1s")
+          loadingAnimation.setAttribute ("from", startValue)
+          loadingAnimation.setAttribute ("to", "0 0")
+          loadingAnimation.setAttribute ("values", startValue + ";0 0;0 0")
+          loadingAnimation.setAttribute ("keyTimes", "0;0.3;1")
+          setTimeout (function () { loadingGlobalTransform.setAttribute ("transform", "scale(0, 0)") }, 300)
+          loadingAnimation.beginElement ()
+          loadingSVG.style.zIndex = "-1"
+        }
+
+        function error (e){
+          stopLoading ()
+
+          var div = document.createElement ("div")
+          div.setAttribute ("class", "block")
+          var p = document.createElement ("p")
+          div.appendChild (p)
+          responseDiv.appendChild (div)
+          p.appendChild (document.createTextNode ("An error occurred! "))
+          var a = document.createElement ("a")
+          a.setAttribute ("href", "https://github.com/Mbodin/murder-generator/issues")
+          a.appendChild (document.createTextNode ("Please report it"))
+          p.appendChild (a)
+          p = document.createElement ("p")
+          p.appendChild (document.createTextNode ("Error details: " + e))
+          div.appendChild (p)
+        }
+
         startLoading ()
 
         var request = new XMLHttpRequest()

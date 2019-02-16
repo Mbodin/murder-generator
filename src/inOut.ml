@@ -70,7 +70,7 @@ let rec block_node =
     (p :> Dom_html.element Js.t)
   | CenterP l ->
     let p = Dom_html.createP document in
-    ignore (p##setAttribute (Js.string "class") (Js.string ".center")) ;
+    ignore (p##setAttribute (Js.string "class") (Js.string "center")) ;
     appendChilds p l ;
     (p :> Dom_html.element Js.t)
   | Text text ->

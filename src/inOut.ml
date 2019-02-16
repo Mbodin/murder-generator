@@ -23,7 +23,7 @@ type block =
   | Text of string
   | Link of string * string
   | LinkContinuation of string * (unit -> unit)
-  | Node of Dom.node Js.t
+  | Node of Dom_html.element Js.t
 
 let rec add_spaces =
   let need_space = function
@@ -49,25 +49,29 @@ let rec add_spaces =
       P (aux l)
     | e -> e
 
+let document = Dom_html.window##.document
+
 let rec block_node = function
   | Div l ->
-    let div = Dom_html.document##createElement (Js.string "div") in
+    let div = Dom_html.createDiv document in
     List.iter (fun b ->
-      ignore (div##appendChild (block_node b))) l ;
-    Obj.magic div (* TODO *)
+      ignore (Dom.appendChild div (block_node b))) l ;
+    (div :> Dom_html.element Js.t)
   | P l ->
-    let p = Dom_html.document##createElement (Js.string "p") in
+    let p = Dom_html.createP document in
     List.iter (fun b ->
-      ignore (p##appendChild (block_node b))) l ;
-    Obj.magic p (* TODO *)
+      ignore (Dom.appendChild p (block_node b))) l ;
+    (p :> Dom_html.element Js.t)
   | Text text ->
-    Obj.magic (* TODO *) (Dom_html.document##createTextNode (Js.string text))
+    let span = Dom_html.createSpan document in
+    Dom.appendChild span (Dom_html.document##createTextNode (Js.string text)) ;
+    (span :> Dom_html.element Js.t)
   | Link (text, link) ->
-    let a = Dom_html.document##createElement (Js.string "a") in
+    let a = Dom_html.createA document in
     let text = Dom_html.document##createTextNode (Js.string text) in
     ignore (Dom.appendChild a text) ;
     ignore (a##setAttribute (Js.string "href") (Js.string link)) ;
-    Obj.magic (* TODO *) a
+    (a :> Dom_html.element Js.t)
   | LinkContinuation (text, cont) ->
     failwith "TODO: Not yet implemented"
   | Node n -> n
@@ -87,9 +91,9 @@ let clear_response _ =
 
 let print_node n =
   let response = get_response () in
-  let div = Dom_html.document##createElement (Js.string "div") in
+  let div = Dom_html.createDiv document in
   div##setAttribute (Js.string "class") (Js.string "block") ;
-  ignore (div##appendChild n) ;
+  ignore (Dom.appendChild div n) ;
   ignore (Dom.appendChild response div)
 
 let print_block =

@@ -12,14 +12,14 @@ type block =
   | Link of string * string (** A link and its associated address. **)
   | LinkContinuation of string * (unit -> unit) (** A link and its associated
                                                  * continuation. **)
-  | Node of Dom.node Js.t (** For all cases where more control is needed, we can
-                           * directly send a node. **)
+  | Node of Dom_html.element Js.t (** For all cases where more control is needed,
+                                   * we can directly send a node. **)
 
 (** Adds the expected spaces between block elements. **)
 val add_spaces : block -> block
 
 (** Converts the block to a node. **)
-val block_node : block -> Dom.node Js.t
+val block_node : block -> Dom_html.element Js.t
 
 (** Adds the node to the [response] div in the main webpage. **)
 val print_node : Dom.node Js.t -> unit

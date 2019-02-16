@@ -47,6 +47,7 @@ let _ =
     let%lwt txt = InOut.get_file "web/translations.json" in
     let all = Deriving_Json.from_string [%derive.json: translations array] txt in
     InOut.clear_response () ;
+    InOut.print_block (InOut.Text "Just a test.") ;
     Lwt.fail (Invalid_argument ("This is actually just a test.  Please do not report it. Test: "
                ^ string_of_int (Array.length all)))
   with e ->

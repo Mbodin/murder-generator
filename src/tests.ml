@@ -57,32 +57,17 @@ let test_relations =
   done
 
 let test_parser =
+  print_endline ("Total number of files: " ^
+                 string_of_int (List.length MurderFiles.files)) ;
   let read_file f =
     print_endline ("Reading file " ^ f) ;
     let buf = Lexing.from_channel (open_in f) in
-    buf.lex_curr_p <- {
-        Lexing.pos_fname = f ;
-        Lexing.pos_lnum = 1 ;
-        Lexing.pos_bol = 0 ;
-        Lexing.pos_cnum = 0
-      } ;
-    try Parser.main Lexer.read buf with
-    | Parser.Error ->
-      print_endline ("Error: Parser error " ^
-                      Lexer.current_position buf ^ ".") ;
-      []
-    | Lexer.SyntaxError msg ->
-      print_endline ("Error: Lexer error " ^
-                      Lexer.current_position buf ^ ": " ^ msg) ;
-      [] in
-  print_endline ("Total number of files: " ^ string_of_int (List.length MurderFiles.files)) ;
-  let asts =
-    List.map read_file MurderFiles.files in
+    Driver.parse_lexbuf f buf in
+  let asts = List.map read_file MurderFiles.files in
   let i =
     List.fold_left Driver.prepare_declarations Driver.empty_intermediary asts in
   if not (Driver.is_intermediary_final i) then
     print_endline "Non final intermediary!" ;
-  let s =
-    Driver.parse i in
+  let s = Driver.parse i in
   ()
 

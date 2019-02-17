@@ -1,4 +1,22 @@
 
+let parse_lexbuf fileName lexbuf =
+  lexbuf.Lexing.lex_curr_p <- {
+      Lexing.pos_fname = fileName ;
+      Lexing.pos_lnum = 1 ;
+      Lexing.pos_bol = 0 ;
+      Lexing.pos_cnum = 0
+    } ;
+  try Parser.main Lexer.read lexbuf with
+  | Parser.Error ->
+    failwith ("Error: Parser error " ^
+              Lexer.current_position lexbuf ^ ".") ;
+    []
+  | Lexer.SyntaxError msg ->
+    failwith ("Error: Lexer error " ^
+              Lexer.current_position lexbuf ^ ": " ^ msg) ;
+    []
+
+
 (** Separates each components of the type [Ast.command] into a separate list. **)
 type block = {
     of_category : string list ;

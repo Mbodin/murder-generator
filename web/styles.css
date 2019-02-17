@@ -57,5 +57,30 @@ a:hover::after {
   padding-left: 4px ;
   padding-right: 0px ;
   transition: .3s ;
+  transition-timing-function: linear;
+}
+
+a.previous::after {
+  content: none ;
+}
+
+a.previous::before {
+  content: "← " ;
+  font-weight: bold ;
+  opacity: 0 ;
+  padding-left: 4px ;
+  padding-right: 0px ;
+}
+
+a:hover::before {
+  opacity: 1 ;
+  padding-left: 0px ;
+  padding-right: 4px ;
+  transition: .3s ;
+  transition-timing-function: linear;
+}
+
+input {
+  margin: 1px 1em ;
 }
 

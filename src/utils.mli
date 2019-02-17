@@ -312,6 +312,9 @@ module PSet : sig
     (** Converts a list into a set. **)
     val from_list : 'a list -> 'a t
 
+    (** Converts a set into a list. **)
+    val to_list : 'a t -> 'a list
+
     (** Returns the domain of a map. **)
     val domain : ('a, 'b) PMap.t -> 'a t
 

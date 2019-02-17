@@ -381,6 +381,9 @@ module PSet = struct
         | Left v -> (add v sl, sr)
         | Right v -> (sl, add v sr)) (empty, empty)
 
+    let to_list s =
+      fold (fun e l -> e :: l) [] s
+
     let from_list l =
       List.fold_left (fun s e -> add e s) empty l
 

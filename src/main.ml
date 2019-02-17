@@ -30,49 +30,75 @@ let get_translation m key =
   with Not_found ->
     failwith ("No key “" ^ key ^ "” found for translation “" ^ iso ^ "”.")
 
+(** Getting and parsing the translations file. **)
+let get_translations _ =
+  let%lwt translations =
+    let translations_file = "web/translations.json" in
+    let%lwt translations = InOut.get_file translations_file in
+    match Yojson.Safe.from_string ~fname:translations_file translations with
+    | `List l ->
+      Lwt.return (
+        List.mapi (fun i ->
+          let current =
+            "The " ^ string_of_int (i + 1) ^ "th element"
+            ^ " of the file “" ^ translations_file ^ "”" in function
+          | `Assoc l ->
+            let m =
+              PMap.of_enum (ExtList.List.enum (List.map (function
+                | key, `String str -> (key, str)
+                | (key, _) ->
+                  failwith (current ^ " associates the field “" ^ key
+                            ^ "” to something else than a string.")) l)) in
+            if not (PMap.mem "iso639" m) then
+              failwith (current ^ " has no key “iso639”.") ;
+            m
+          | _ ->
+            failwith (current ^ " is not an object.")) l)
+    | _ ->
+      Lwt.fail (Invalid_argument
+        ("The file “" ^ translations_file ^ "” is not a list.")) in
+  (** Shuffling languages, but putting the user languages on top. **)
+  let userLangs =
+    let navigator = Dom_html.window##.navigator in
+    let to_list o =
+      match Js.Optdef.to_option o with
+      | None -> []
+      | Some a -> [Js.to_string a] in
+    to_list navigator##.language @ to_list navigator##.userLanguage in
+  let (matching, nonmatching) =
+    List.partition (fun m -> List.mem (PMap.find "iso639" m) userLangs)
+      translations in
+  Lwt.return (Utils.shuffle matching @ Utils.shuffle nonmatching)
+
+(** Get and parse each data file. **)
+let get_data _ =
+  let intermediate = ref Driver.empty_intermediary in
+  Lwt_list.iter_p (fun fileName ->
+      let%lwt file = InOut.get_file fileName in
+      let lexbuf = Lexing.from_string file in
+      let file = Driver.parse_lexbuf fileName lexbuf in
+      intermediate := Driver.prepare_declarations !intermediate file ;
+      Lwt.return ())
+    MurderFiles.files ;%lwt
+  if not (Driver.is_intermediary_final !intermediate) then (
+    let categories = Driver.categories_to_be_defined !intermediate in
+    let (attributes, contacts) = Driver.attributes_to_be_defined !intermediate in
+    let missing str s =
+      " Missing " ^ str ^ ": " ^ String.concat ", " (Utils.PSet.to_list s) ^ "." in
+    Lwt.fail (Invalid_argument
+      ("Non final intermediary after parsing all files."
+       ^ missing "categories" categories
+       ^ missing "attributes" attributes
+       ^ missing "contacts" contacts)))
+  else Lwt.return (Driver.parse !intermediate)
+
 (** The main script. **)
 let _ =
   try%lwt
     InOut.clear_response () ;
-    let%lwt translations =
-      (** Getting the translations file. **)
-      let translations_file = "web/translations.json" in
-      let%lwt translations = InOut.get_file translations_file in
-      match Yojson.Safe.from_string ~fname:translations_file translations with
-      | `List l ->
-        Lwt.return (
-          List.mapi (fun i ->
-            let current =
-              "The " ^ string_of_int (i + 1) ^ "th element"
-              ^ " of the file “" ^ translations_file ^ "”" in function
-            | `Assoc l ->
-              let m =
-                PMap.of_enum (ExtList.List.enum (List.map (function
-                  | key, `String str -> (key, str)
-                  | (key, _) ->
-                    failwith (current ^ " associates the field “" ^ key
-                              ^ "” to something else than a string.")) l)) in
-              if not (PMap.mem "iso639" m) then
-                failwith (current ^ " has no key “iso639”.") ;
-              m
-            | _ ->
-              failwith (current ^ " is not an object.")) l)
-      | _ ->
-        Lwt.fail (Invalid_argument
-          ("The file “" ^ translations_file ^ "” is not a list.")) in
-    (** Shuffling languages, but putting the user languages on top. **)
-    let translations =
-      let userLangs =
-        let navigator = Dom_html.window##.navigator in
-        let to_list o =
-          match Js.Optdef.to_option o with
-          | None -> []
-          | Some a -> [Js.to_string a] in
-        to_list navigator##.language @ to_list navigator##.userLanguage in
-      let (matching, nonmatching) =
-        List.partition (fun m -> List.mem (PMap.find "iso639" m) userLangs)
-          translations in
-      Utils.shuffle matching @ Utils.shuffle nonmatching in
+    (** We request the data without forcing it yet. **)
+    let data = get_data () in
+    let%lwt translations = get_translations () in
     (** Showing to the user all available languages. **)
     let%lwt translations =
       let (res, w) = Lwt.task () in
@@ -122,23 +148,31 @@ let _ =
       InOut.print_block (InOut.CenterP [
         InOut.LinkContinuation (get_translation "next", fun _ ->
           InOut.clear_response () ;
-          let playerNumber = int_of_string (Js.to_string playerNumber##.value) in
-          if playerNumber < 0 then
-            failwith "Please enter a positive number of players." ;
-          let generalLevel = float_of_string (Js.to_string generalLevel##.value) in
-          if generalLevel < 0. || generalLevel > 100. then
-            failwith ("The general level should be a percentage, "
-                      ^ "but is out of bounds.") ;
+          let playerNumber =
+            max 0 (int_of_string (Js.to_string playerNumber##.value)) in
+          let generalLevel =
+            max 0. (min 100.
+              (float_of_string (Js.to_string generalLevel##.value))) in
           let generalLevel = generalLevel /. 100. in
           let generalLevel = generalLevel *. generalLevel in
           let complexityDifficulty =
             5 + int_of_float (generalLevel *. 45.) in
           Lwt.wakeup_later w (playerNumber, complexityDifficulty)) ]) ;
       res in
+    (** Asking about categories. **)
+    let%lwt data = data in
+    let translate_categories = Driver.translates_category data in
     (* TODO *)
     InOut.print_block (InOut.P [
       InOut.Text ("This is just a test: " ^ string_of_int playerNumber
                   ^ ", " ^ string_of_int complexityDifficulty)]) ;
+    InOut.print_block (InOut.P [
+      InOut.Text ("Another test: " ^
+                  String.concat ", " (List.map (fun c ->
+                    let lang = get_translation "iso639" in
+                    match Translation.translate translate_categories c lang with
+                    | None -> "<none>"
+                    | Some t -> t) (Driver.all_categories data)))]) ;
     InOut.print_block (InOut.P [
       InOut.Text (get_translation "underConstruction") ;
       InOut.Text (get_translation "participate") ;

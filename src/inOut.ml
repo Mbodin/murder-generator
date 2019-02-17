@@ -70,7 +70,7 @@ let rec block_node =
     (p :> Dom_html.element Js.t)
   | CenterP l ->
     let p = Dom_html.createP document in
-    ignore (p##setAttribute (Js.string "class") (Js.string "center")) ;
+    p##.className := Js.string "center" ;
     appendChilds p l ;
     (p :> Dom_html.element Js.t)
   | Text text ->
@@ -81,13 +81,13 @@ let rec block_node =
     let a = Dom_html.createA document in
     let text = Dom_html.document##createTextNode (Js.string text) in
     ignore (Dom.appendChild a text) ;
-    ignore (a##setAttribute (Js.string "href") (Js.string link)) ;
+    a##.href := Js.string link ;
     (a :> Dom_html.element Js.t)
   | LinkContinuation (text, cont) ->
     let a = Dom_html.createA document in
     let text = Dom_html.document##createTextNode (Js.string text) in
     ignore (Dom.appendChild a text) ;
-    ignore (a##setAttribute (Js.string "href") (Js.string "javascript:void(42)")) ;
+    a##.href := Js.string "javascript:void(42)" ;
     Lwt.async (fun _ ->
       Lwt_js_events.clicks a (fun _ _ -> Lwt.return (cont ()))) ;
     (a :> Dom_html.element Js.t)
@@ -109,7 +109,7 @@ let clear_response _ =
 let print_node n =
   let response = get_response () in
   let div = Dom_html.createDiv document in
-  div##setAttribute (Js.string "class") (Js.string "block") ;
+  div##.className := Js.string "block" ;
   ignore (Dom.appendChild div n) ;
   ignore (Dom.appendChild response div)
 

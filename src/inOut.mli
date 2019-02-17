@@ -4,6 +4,8 @@
 (** Fetch a file from an adress and returns its content. **)
 val get_file : string -> string Lwt.t
 
+val document : Dom_html.document Js.t
+
 (** A simplified representation of DOM’s nodes. **)
 type block =
   | Div of block list (** A div node. **)

@@ -57,9 +57,9 @@ command:
                { TranslationString (str, tags) }
              | id = UIDENT; tags = language_tags
                { TranslationVariable (id, tags) });
-    { Translation (lang, tags, l) }
+    { Translation (Translation.from_iso639 lang, tags, l) }
   | ADD; lang = LIDENT; tags = language_tags
-    { Add (lang, tags) }
+    { Add (Translation.from_iso639 lang, tags) }
   | COMPATIBLE; WITH; v = UIDENT
     { CompatibleWith v }
   | LET; v = UIDENT; BE; PLAYER;

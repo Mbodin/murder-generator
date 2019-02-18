@@ -29,6 +29,11 @@ exception CircularDependency of string
  * itself in the given element. **)
 exception SelfRelation of string * string
 
+(** An unexpected translation item has been given in an element of the kind
+ * described by the first argument, whose name is the second argument.
+ * The third and fourth argument indicates which translation is invalid. **)
+exception TranslationError of string * string * Ast.language * Ast.language_tag list
+
 (** Treating the data sent from the parser is done in two phases.
  * The first phase is to assimilate each globally declared names
  * into identifiers.

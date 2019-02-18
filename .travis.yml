@@ -8,7 +8,7 @@ env:
   global:
     - OPAMYES=true
     - OPAMJOBS=2
-    - OPAMVERBOSE=true
+    # - OPAMVERBOSE=true
     - OCAML_VERSION=4.07.0
 
 addons:

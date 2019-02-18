@@ -87,6 +87,9 @@ let rec list_predicate_index f = function
 
 let list_index e = list_predicate_index ((=) e)
 
+let list_fold_lefti f i l =
+  fst (List.fold_left (fun (a, i) e -> (f i a e, 1 + i)) (i, 0) l)
+
 let shuffle l =
   List.sort (fun _ _ -> Random.int 3 - 1) l
 

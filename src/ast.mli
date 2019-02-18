@@ -10,7 +10,7 @@ type attribute_kind =
   | Attribute
   | Contact
 
-type language = string
+type language = Translation.language
 type language_tag = string
 
 type translation_item =

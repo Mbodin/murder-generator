@@ -9,12 +9,10 @@ let parse_lexbuf fileName lexbuf =
   try Parser.main Lexer.read lexbuf with
   | Parser.Error ->
     failwith ("Error: Parser error " ^
-              Lexer.current_position lexbuf ^ ".") ;
-    []
+              Lexer.current_position lexbuf ^ ".")
   | Lexer.SyntaxError msg ->
     failwith ("Error: Lexer error " ^
-              Lexer.current_position lexbuf ^ ": " ^ msg) ;
-    []
+              Lexer.current_position lexbuf ^ ": " ^ msg)
 
 
 (** Separates each components of the type [Ast.command] into a separate list. **)
@@ -58,7 +56,9 @@ type state = {
     elements_dependencies :
       (Utils.Id.t, Utils.Id.t Utils.PSet.t) PMap.t
       (** Similarly, the dependencies of each element. **) ;
-    elements : (Utils.Id.t, Element.t) PMap.t
+    elements : (Utils.Id.t, Element.t) PMap.t ;
+    category_translation : Utils.Id.t Translation.t
+      (** All translations for categories. **)
     (* TODO: Translations. *)
   }
 
@@ -88,7 +88,8 @@ let empty_state = {
     attribute_dependencies = PMap.empty ;
     constructor_dependencies = PMap.empty ;
     elements_dependencies = PMap.empty ;
-    elements = PMap.empty
+    elements = PMap.empty ;
+    category_translation = Translation.empty
   }
 
 let empty_intermediary = {
@@ -156,6 +157,9 @@ exception Undeclared of string * string * string option
 exception CircularDependency of string
 
 exception SelfRelation of string * string
+
+exception TranslationError of string * string * Ast.language * Ast.language_tag list
+
 
 (** Converts an [Ast.block] into a [block].
  * It takes a list of command types and checks that only these are present
@@ -402,7 +406,17 @@ let prepare_declaration i =
     let constructor_dependencies =
       update_dependencies i.current_state.constructor_dependencies
         constr_dep deps in
-    (* TODO: Deal with translations. *)
+    let category_translation =
+      List.fold_left (fun translation (lg, tags, items) ->
+          if tags <> [] then
+            raise (TranslationError ("category", name, lg, tags)) ;
+          let str =
+            String.concat "" (List.map (function
+              | Ast.TranslationString (str, []) -> str
+              | _ ->
+                raise (TranslationError ("category", name, lg, tags))) items) in
+          Translation.add translation lg id str)
+        i.current_state.category_translation block.translation in
     { i with
         categories_to_be_defined = categories_to_be_defined ;
         current_state =
@@ -410,7 +424,8 @@ let prepare_declaration i =
               category_names = category_names ;
               category_dependencies = category_dependencies ;
               attribute_dependencies = attribute_dependencies ;
-              constructor_dependencies = constructor_dependencies } }
+              constructor_dependencies = constructor_dependencies ;
+              category_translation = category_translation } }
   | Ast.DeclareElement (name, block) ->
     (match Utils.Id.get_id i.current_state.elements_names name with
      | None -> ()
@@ -573,7 +588,7 @@ let parse i =
       elements_dependencies = elements_dependencies ;
       elements = elements }
 
-let translates_category s = (* TODO *) failwith "TODO"
+let translates_category s = s.category_translation
 
 let elements s = s.elements
 

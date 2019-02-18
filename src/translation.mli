@@ -4,8 +4,14 @@
 (** A type to store informations about translations for a given type. **)
 type 'a t
 
-(** Languages are just defined by their two/three-letters code. **)
-type language = string
+(** The type of language. **)
+type language
+
+(** Returns the two/three-letters code corresponding to the provided language. **)
+val iso639 : language -> string
+
+(** Converts the two/three-letters code to the corresponding language. **)
+val from_iso639 : string -> language
 
 (** An empty map. **)
 val empty : 'a t
@@ -16,4 +22,10 @@ val add : 'a t -> language -> 'a -> string -> 'a t
 (** Translates an object to a given language.
  * Returns [None] if the object has not been translated to this language. **)
 val translate : 'a t -> 'a -> language -> string option
+
+(** [from_json fileName fileContent] reads the [fileContent] string as a
+ * JSON object representing translations in different languages.
+ * It then returns a translation object as well as the list of the found
+ * languages in the file. **)
+val from_json : string -> string -> string t * language list
 

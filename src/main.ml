@@ -23,40 +23,12 @@ let startLoading _ =
   loading := true ;
   Lwt.return ()
 
-(** Given a map from key to their translation, finds the corresponding key. **)
-let get_translation m key =
-  let iso = PMap.find "iso639" m in
-  try PMap.find key m
-  with Not_found ->
-    failwith ("No key “" ^ key ^ "” found for translation “" ^ iso ^ "”.")
-
 (** Getting and parsing the translations file. **)
 let get_translations _ =
-  let%lwt translations =
+  let%lwt (translation, languages) =
     let translations_file = "web/translations.json" in
     let%lwt translations = InOut.get_file translations_file in
-    match Yojson.Safe.from_string ~fname:translations_file translations with
-    | `List l ->
-      Lwt.return (
-        List.mapi (fun i ->
-          let current =
-            "The " ^ string_of_int (i + 1) ^ "th element"
-            ^ " of the file “" ^ translations_file ^ "”" in function
-          | `Assoc l ->
-            let m =
-              PMap.of_enum (ExtList.List.enum (List.map (function
-                | key, `String str -> (key, str)
-                | (key, _) ->
-                  failwith (current ^ " associates the field “" ^ key
-                            ^ "” to something else than a string.")) l)) in
-            if not (PMap.mem "iso639" m) then
-              failwith (current ^ " has no key “iso639”.") ;
-            m
-          | _ ->
-            failwith (current ^ " is not an object.")) l)
-    | _ ->
-      Lwt.fail (Invalid_argument
-        ("The file “" ^ translations_file ^ "” is not a list.")) in
+    Lwt.return (Translation.from_json translations_file translations) in
   (** Shuffling languages, but putting the user languages on top. **)
   let userLangs =
     let navigator = Dom_html.window##.navigator in
@@ -66,9 +38,9 @@ let get_translations _ =
       | Some a -> [Js.to_string a] in
     to_list navigator##.language @ to_list navigator##.userLanguage in
   let (matching, nonmatching) =
-    List.partition (fun m -> List.mem (PMap.find "iso639" m) userLangs)
-      translations in
-  Lwt.return (Utils.shuffle matching @ Utils.shuffle nonmatching)
+    List.partition (fun lg ->
+      List.mem (Translation.iso639 lg) userLangs) languages in
+  Lwt.return (translation, Utils.shuffle matching @ Utils.shuffle nonmatching)
 
 (** Get and parse each data file. **)
 let get_data _ =
@@ -96,22 +68,28 @@ let get_data _ =
 let _ =
   try%lwt
     InOut.clear_response () ;
+    let%lwt (translation, languages) = get_translations () in
+    let get_translation lg key =
+      match Translation.translate translation key lg with
+      | Some str -> str
+      | None ->
+        failwith ("No key “" ^ key ^ "” found for language “"
+                  ^ (Translation.iso639 lg) ^ "”.") in
     (** We request the data without forcing it yet. **)
     let data = get_data () in
-    let%lwt translations = get_translations () in
     (** Showing to the user all available languages. **)
-    let%lwt translations =
+    let%lwt language =
       let (res, w) = Lwt.task () in
-      InOut.print_block (InOut.Div (List.map (fun m ->
-        let get = get_translation m in
+      InOut.print_block (InOut.Div (List.map (fun lg ->
+        let get = get_translation lg in
         InOut.CenterP [ InOut.LinkContinuation (get "name", fun _ ->
           InOut.clear_response () ;
           errorTranslations :=
             (get "error", get "report", get "there", get "errorDetails") ;
-          Lwt.wakeup_later w m) ]) translations)) ;
+          Lwt.wakeup_later w lg) ]) languages)) ;
       stopLoading () ;%lwt
       res in
-    let get_translation = get_translation translations in
+    let get_translation = get_translation language in
     (** Describing the project to the user. **)
     InOut.print_block (InOut.P [
       InOut.Text (get_translation "description") ;
@@ -137,7 +115,7 @@ let _ =
       ignore (generalLevel##setAttribute (Js.string "max") (Js.string "100")) ;
       generalLevel##.value := Js.string "50" ;
       InOut.print_block (InOut.Div [
-          InOut.P [ InOut.Text (get_translation "howManyPlayers") ] ;
+          InOut.P [ InOut.Text (get_translation "experience") ] ;
           InOut.CenterP [
             InOut.Text (get_translation "beginner") ;
             InOut.Node (generalLevel :> Dom_html.element Js.t) ;
@@ -169,8 +147,7 @@ let _ =
     InOut.print_block (InOut.P [
       InOut.Text ("Another test: " ^
                   String.concat ", " (List.map (fun c ->
-                    let lang = get_translation "iso639" in
-                    match Translation.translate translate_categories c lang with
+                    match Translation.translate translate_categories c language with
                     | None -> "<none>"
                     | Some t -> t) (Driver.all_categories data)))]) ;
     InOut.print_block (InOut.P [

@@ -1,5 +1,5 @@
 
-let test_pool =
+let test_pool _ =
   let new_id = Utils.Id.new_id_function () in
   let g = Pool.empty_global in
   let e1 = new_id () in
@@ -31,7 +31,7 @@ let test_pool =
       | Some _ -> ";" ^ bar (i - 1) p in
   print_endline ("pick^10 [e1; e2; e3] = " ^ bar 10 p)
 
-let test_relations =
+let test_relations _ =
   let open Relation in
   let b = [ Neutral; Hate; Trust; Chaotic; Undetermined; Avoidance ] in
   let l =

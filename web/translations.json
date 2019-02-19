@@ -10,10 +10,14 @@
     "report": "Bonvole sciigu ĝin",
     "errorDetails": "Erardetaloj:",
     "next": "Sekva etapo",
+    "previous": "Antaŭa etapo",
     "howManyPlayers": "Kiom da ludantoj (krom ludestroj) planas vi en tiu scenaro?",
     "experience": "Kiom spertan ĝenerale taksas vi viajn ludantojn?",
     "beginner": "Komencantoj",
-    "experienced": "Spertuloj"
+    "experienced": "Spertuloj",
+    "lengthOfCharacterSheets": "Ĉu vi ĝenerale pliŝatas longajn roldokumentojn, plenaj je respondecoj sed ankaŭ rimedoj por plenumi ilin, aŭ mallongajn roldokumentojn, kun intensaj konfliktoj sed kelkfoje karikaturaj?",
+    "longSheets": "Longaj roldokumentoj",
+    "shortSheets": "Mallongaj roldokumentoj"
   },
   { "iso639": "fr",
     "name": "Français",
@@ -26,10 +30,14 @@
     "report": "Merci de la rapporter",
     "errorDetails": "Détails de l’erreur :",
     "next": "Étape suivante",
+    "previous": "Étape précédente",
     "howManyPlayers": "Combien de joueurs (sans compter les maîtres de jeu) prévoyez vous pour ce scénario ?",
     "experience": "D’une manière générale, comment estimez-vous l’expérience de vos joueurs ?",
     "beginner": "Débutants",
-    "experienced": "Avertis"
+    "experienced": "Avertis",
+    "lengthOfCharacterSheets": "Préférez-vous en général des fiches de personnages longues, avec beaucoup de responsabilité mais avec les moyens de les gérer, ou des fiches de personnages courtes, avec des conflits intenses mais parfois caricaturaux ?",
+    "longSheets": "Fiches de personnages longues",
+    "shortSheets": "Fiches de personnages courtes"
   },
   { "iso639": "en",
     "name": "English",
@@ -42,9 +50,13 @@
     "report": "Please report it",
     "errorDetails": "Error details:",
     "next": "Next step",
+    "previous": "Previous précédente",
     "howManyPlayers": "How many players (without counting game masters) do you plan for this scenario?",
     "experience": "How do you globally estimates your players’s experience?",
     "beginner": "Beginners",
-    "experienced": "Experienced"
+    "experienced": "Experienced",
+    "lengthOfCharacterSheets": "Do you generally prefer long character sheets, filled with responsibility as well as the associated abilities, or short character sheets, with intense conflicts but sometimes slightly cartoonish?",
+    "longSheets": "Long character sheets",
+    "shortSheets": "Short character sheets"
   }
 ]

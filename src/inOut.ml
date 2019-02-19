@@ -1,3 +1,5 @@
+open Js_of_ocaml
+
 
 let get_file url =
   let (res, w) = Lwt.task () in
@@ -115,4 +117,22 @@ let print_node n =
 
 let print_block =
   Utils.compose print_node (Utils.compose block_node add_spaces)
+
+
+let createNumberInput d =
+  let input = Dom_html.createInput ~_type:(Js.string "number") document in
+  ignore (input##setAttribute (Js.string "min") (Js.string "0")) ;
+  ignore (input##setAttribute (Js.string "max")
+           (Js.string (string_of_int max_int))) ;
+  input##.value := Js.string (string_of_int d) ;
+  ((input :> Dom_html.element Js.t), fun _ ->
+    max 0 (int_of_string (Js.to_string input##.value)))
+
+let createPercentageInput d =
+  let input = Dom_html.createInput ~_type:(Js.string "range") document in
+  ignore (input##setAttribute (Js.string "min") (Js.string "0")) ;
+  ignore (input##setAttribute (Js.string "max") (Js.string "1000")) ;
+  input##.value := Js.string (string_of_float (1000. *. d)) ;
+  ((input :> Dom_html.element Js.t), fun _ ->
+    (max 0. (min 1000. (float_of_string (Js.to_string input##.value)))) /. 1000.)
 

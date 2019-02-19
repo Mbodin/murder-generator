@@ -2,6 +2,9 @@
  * This file is the one compiled to JavaScript, then fetched and executed
  * to run the whole program. **)
 
+open Js_of_ocaml
+
+
 (** The translations needed to print error messages. **)
 let errorTranslations =
   ref ("An error occurred!", "Please report it", "there", "Error details:")
@@ -98,44 +101,48 @@ let _ =
                   "https://github.com/Mbodin/murder-generator")
         ]) ;
     (** Asking the first basic questions about the murder party. **)
-    let%lwt (playerNumber, complexityDifficulty) =
-      let playerNumber =
-        Dom_html.createInput ~_type:(Js.string "number") InOut.document in
-      ignore (playerNumber##setAttribute (Js.string "min") (Js.string "0")) ;
-      ignore (playerNumber##setAttribute (Js.string "max")
-                                         (Js.string (string_of_int max_int))) ;
-      playerNumber##.value := Js.string "13" ;
+    let%lwt (playerNumber, complexity, difficulty) =
+      let (playerNumber, readPlayerNumber) = InOut.createNumberInput 13 in
       InOut.print_block (InOut.P [
           InOut.Text (get_translation "howManyPlayers") ;
-          InOut.Node (playerNumber :> Dom_html.element Js.t)
+          InOut.Node playerNumber
         ]) ;
-      let generalLevel =
-        Dom_html.createInput ~_type:(Js.string "range") InOut.document in
-      ignore (generalLevel##setAttribute (Js.string "min") (Js.string "0")) ;
-      ignore (generalLevel##setAttribute (Js.string "max") (Js.string "100")) ;
-      generalLevel##.value := Js.string "50" ;
+      let (generalLevel, readGeneralLevel) =
+        InOut.createPercentageInput 0.5 in
       InOut.print_block (InOut.Div [
           InOut.P [ InOut.Text (get_translation "experience") ] ;
           InOut.CenterP [
             InOut.Text (get_translation "beginner") ;
-            InOut.Node (generalLevel :> Dom_html.element Js.t) ;
+            InOut.Node generalLevel ;
             InOut.Text (get_translation "experienced")
+          ]
+        ]) ;
+      let (generalComplexity, readGeneralComplexity) =
+        InOut.createPercentageInput 0.5 in
+      InOut.print_block (InOut.Div [
+          InOut.P [ InOut.Text (get_translation "lengthOfCharacterSheets") ] ;
+          InOut.CenterP [
+            InOut.Text (get_translation "longSheets") ;
+            InOut.Node generalComplexity ;
+            InOut.Text (get_translation "shortSheets")
           ]
         ]) ;
       let (res, w) = Lwt.task () in
       InOut.print_block (InOut.CenterP [
         InOut.LinkContinuation (get_translation "next", fun _ ->
           InOut.clear_response () ;
-          let playerNumber =
-            max 0 (int_of_string (Js.to_string playerNumber##.value)) in
-          let generalLevel =
-            max 0. (min 100.
-              (float_of_string (Js.to_string generalLevel##.value))) in
-          let generalLevel = generalLevel /. 100. in
+          let playerNumber = readPlayerNumber () in
+          let generalLevel = readGeneralLevel () in
+          let generalComplexity = readGeneralComplexity () in
           let generalLevel = generalLevel *. generalLevel in
           let complexityDifficulty =
-            5 + int_of_float (generalLevel *. 45.) in
-          Lwt.wakeup_later w (playerNumber, complexityDifficulty)) ]) ;
+            10. +. generalLevel *. 90. in
+          let complexity =
+            int_of_float (0.5 +. complexityDifficulty *. generalComplexity) in
+          let difficulty =
+            int_of_float (0.5 +. complexityDifficulty
+                                *. (1. -. generalComplexity)) in
+          Lwt.wakeup_later w (playerNumber, complexity, difficulty)) ]) ;
       res in
     (** Asking about categories. **)
     let%lwt data = data in
@@ -143,7 +150,8 @@ let _ =
     (* TODO *)
     InOut.print_block (InOut.P [
       InOut.Text ("This is just a test: " ^ string_of_int playerNumber
-                  ^ ", " ^ string_of_int complexityDifficulty)]) ;
+                  ^ ", " ^ string_of_int complexity
+                  ^ ", " ^ string_of_int difficulty)]) ;
     InOut.print_block (InOut.P [
       InOut.Text ("Another test: " ^
                   String.concat ", " (List.map (fun c ->

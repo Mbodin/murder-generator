@@ -1,9 +1,9 @@
 
 category Money
 begin
-  translation fr "finance"
-  translation en "money"
-  translation eo "monaĵoj"
+  translation fr "Finance"
+  translation en "Money"
+  translation eo "Monaĵoj"
 end
 
 declare attribute Richness

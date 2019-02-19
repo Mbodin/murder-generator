@@ -1,9 +1,9 @@
 
 category Family
 begin
-  translation fr "famille"
-  translation en "family"
-  translation eo "familio"
+  translation fr "Famille"
+  translation en "Family"
+  translation eo "Familio"
 end
 
 declare contact Known

@@ -210,18 +210,22 @@ let category_names_to_id_set state l =
     (state.category_names, Utils.PSet.empty) l
 
 (** Takes a set of categories and returns a set of categories
- * (the original set plus their dependencies). **)
-let dependencies_of_dependencies state s =
+ * (the original set plus their dependencies).
+ * It also takes a boolean [throw] indicating whether it should
+ * raise an exception if a category has not been declared yet. **)
+let dependencies_of_dependencies throw state s =
   Utils.PSet.merge s
    (Utils.PSet.flatten (Utils.PSet.map (fun id ->
      try PMap.find id state.category_dependencies
-     with Not_found -> Utils.PSet.empty) s))
+     with Not_found ->
+       if throw then raise Not_found
+       else Utils.PSet.empty) s))
 
 (** A useful composition of [dependencies_of_dependencies] and
  * [category_names_to_id_set]. **)
-let category_names_to_dep_dep state l =
+let category_names_to_dep_dep throw state l =
   let (category_names, s) = category_names_to_id_set state l in
-  (category_names, dependencies_of_dependencies state s)
+  (category_names, dependencies_of_dependencies throw state s)
 
  (** Some subfunctions of [prepare_declaration] and [parse_element] use similar
  * functions, only depending on whether called on attributes or contacts.
@@ -247,14 +251,16 @@ let contact_functions =
    (fun id -> State.ContactConstructor id),
    "contact")
 
+(** States whether a category has been defined. **)
+let category_exists state id =
+  PMap.mem id state.category_dependencies
+
+(** States whether an attribute has been defined. **)
+let attribute_exists state id =
+  PMap.mem id state.attribute_dependencies
+
 (** This function parses basically everything but elements in a declaration. **)
 let prepare_declaration i =
-  (** States whether a category has been defined. **)
-  let category_exists id =
-    PMap.mem id i.current_state.category_dependencies in
-  (** States whether an attribute has been defined. **)
-  let attribute_exists id =
-    PMap.mem id i.current_state.attribute_dependencies in
   (** Updates the given dependencies [dependencies] by adding the set of
    * categories [deps] to the set [ldeps] of objects. **)
   let update_dependencies dependencies ldeps deps =
@@ -270,7 +276,7 @@ let prepare_declaration i =
     * empty sets. **)
   let update_categories_to_be_defined deps update =
     Utils.PSet.fold (fun c categories_to_be_defined ->
-      if category_exists c then categories_to_be_defined
+      if category_exists i.current_state c then categories_to_be_defined
       else
         let sets =
           try PMap.find c categories_to_be_defined
@@ -287,10 +293,10 @@ let prepare_declaration i =
     let (id, state) =
       declare (extract i.current_state.constructor_information) name in
     let id = constructor id in
-    if attribute_exists id then
+    if attribute_exists i.current_state id then
       raise (DefinedTwice (en, name, None)) ;
     let (category_names, deps) =
-      category_names_to_dep_dep i.current_state block.of_category in
+      category_names_to_dep_dep false i.current_state block.of_category in
     (** We consider each constructor dependent on this attribute. **)
     let constr_deps =
       try PMap.find id i.attributes_to_be_defined
@@ -333,7 +339,7 @@ let prepare_declaration i =
     if PMap.mem id i.current_state.constructor_dependencies then
       raise (DefinedTwice (en ^ " constructor", constructor, Some attribute_name)) ;
     let (category_names, deps) =
-      category_names_to_dep_dep i.current_state block.of_category in
+      category_names_to_dep_dep false i.current_state block.of_category in
     (** If the associated attribute is already defined, we fetch its dependencies,
      * otherwise, we leave a note for it to add these dependencies when finally
      * defined. **)
@@ -376,10 +382,10 @@ let prepare_declaration i =
     let block =
       convert_block name [OfCategory; Translation] block in
     let (category_names, deps) =
-      category_names_to_dep_dep i.current_state block.of_category in
+      category_names_to_dep_dep false i.current_state block.of_category in
     let (id, category_names) =
       Utils.Id.map_insert_t category_names name in
-    if category_exists id then
+    if category_exists i.current_state id then
       raise (DefinedTwice ("category", name, None)) ;
     if Utils.PSet.is_in id deps then
       raise (CircularDependency name) ;
@@ -501,7 +507,18 @@ let parse_element st element_name block =
      * space even more, but this might take additional resources needlessly. **)
     Array.map (fun (a, m) -> Array.sub a 0 m) triangle in
   let element = Array.map (fun a -> ([], [], a)) relations in
-  let (_, deps) = category_names_to_dep_dep st block.of_category in
+  let (_, deps) =
+    try category_names_to_dep_dep true st block.of_category
+    with Not_found ->
+      try
+        let c =
+          List.find (fun c ->
+            match Utils.Id.get_id st.category_names c with
+            | None -> true
+            | Some id ->
+              not (category_exists st id)) block.of_category in
+        raise (Undeclared ("category", c, Some element_name))
+      with Not_found -> assert false in
   (** Now that the basic information have been gotten, we can add any constraint
    * using this function with side effects. **)
   let add_constraint p c =

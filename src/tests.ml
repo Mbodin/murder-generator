@@ -67,7 +67,7 @@ let test_parser =
   let i =
     List.fold_left Driver.prepare_declarations Driver.empty_intermediary asts in
   if not (Driver.is_intermediary_final i) then
-    print_endline "Non final intermediary!" ;
+    failwith "Non final intermediary!" ;
   let s = Driver.parse i in
   ()
 

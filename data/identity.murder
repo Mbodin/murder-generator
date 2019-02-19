@@ -138,6 +138,21 @@ begin
   (* LATER: translations *)
 end
 
+(* FIXME: This may not be the best name and translations… *)
+category Fantasy
+begin
+  translation fr "Merveilleux"
+  translation en "Fantasy"
+  translation eo "Miraĵoj"
+end
+
+category ScienceFiction
+begin
+  translation fr "Science-fiction"
+  translation en "Science fiction"
+  translation eo "Sciencfikcio"
+end
+
 
 element SpecyHuman
 begin

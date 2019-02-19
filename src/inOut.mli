@@ -33,3 +33,11 @@ val print_block : block -> unit
 (** Clears the [response] div in the main webpage. **)
 val clear_response : unit -> unit
 
+(** Create a (positive) number input with default value given as argument.
+ * It also returns a function reading it. **)
+val createNumberInput : int -> Dom_html.element Js.t * (unit -> int)
+
+(** Create a range input between [0.] and [1.].
+ * As of [createNumberInput], it also returns a function reading it. **)
+val createPercentageInput : float -> Dom_html.element Js.t * (unit -> float)
+

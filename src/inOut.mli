@@ -1,6 +1,9 @@
 (** Module InOut
  * Contains functions for intputs and outputs. **)
 
+open Js_of_ocaml
+
+
 (** Fetch a file from an adress and returns its content. **)
 val get_file : string -> string Lwt.t
 

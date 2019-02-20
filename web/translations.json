@@ -11,13 +11,15 @@
     "errorDetails": "Erardetaloj:",
     "next": "Sekva etapo",
     "previous": "Antaŭa etapo",
-    "howManyPlayers": "Kiom da ludantoj (krom ludestroj) planas vi en tiu scenaro?",
+    "howManyPlayers": "Kiom da ludantoj (krom ludestroj) planas vi en tiu ĉi scenaro?",
     "experience": "Kiom spertan ĝenerale taksas vi viajn ludantojn?",
     "beginner": "Komencantoj",
     "experienced": "Spertuloj",
     "lengthOfCharacterSheets": "Ĉu vi ĝenerale pliŝatas mallongajn roldokumentojn, kun intensaj konfliktoj sed kelkfoje karikaturaj, aŭ longajn roldokumentojn, plenaj je respondecoj sed ankaŭ je rimedoj por plenumi ilin?",
     "shortSheets": "Mallongaj roldokumentoj",
-    "longSheets": "Longaj roldokumentoj"
+    "longSheets": "Longaj roldokumentoj",
+    "unselectCategories": "Bonvolu malselekti temojn kiujn vi ial ajn ŝatus eviti en tiu ĉi scenaro.",
+    "allCategories": "Ĉiuj"
   },
   { "iso639": "fr",
     "name": "Français",
@@ -37,7 +39,9 @@
     "experienced": "Avertis",
     "lengthOfCharacterSheets": "Préférez-vous en général des fiches de personnages courtes, avec des conflits intenses mais parfois caricaturaux, ou des fiches de personnages longues, avec beaucoup de responsabilité mais avec les moyens de les gérer ?",
     "shortSheets": "Fiches de personnages courtes",
-    "longSheets": "Fiches de personnages longues"
+    "longSheets": "Fiches de personnages longues",
+    "unselectCategories": "Veuillez désélectionner les thèmes que vous préférez (pour une raison ou pour une autre) éviter dans ce scénario.",
+    "allCategories": "Tous"
   },
   { "iso639": "en",
     "name": "English",
@@ -57,6 +61,8 @@
     "experienced": "Experienced",
     "lengthOfCharacterSheets": "Do you generally prefer short character sheets, with intense conflicts but sometimes slightly cartoonish, or long character sheets, filled with responsibility as well as the associated abilities?",
     "shortSheets": "Short character sheets",
-    "longSheets": "Long character sheets"
+    "longSheets": "Long character sheets",
+    "unselectCategories": "Please unselect themes that you would like to avoid (for any reason) in your scenario.",
+    "allCategories": "All"
   }
 ]

@@ -12,15 +12,18 @@ val document : Dom_html.document Js.t
 (** A simplified representation of DOM’s nodes. **)
 type block =
   | Div of block list (** A div node. **)
-  | P of block list (** A paragraph node. **)
-  | CenterP of block list (** A paragraph node whose content is centered. **)
-  (* TODO: Lists *)
+  | P of bool * block list
+      (** A paragraph node.
+       * The boolean indicates whether its content is centered. **)
+  | List of bool * block list
+      (** A list of items.
+       * The boolean indicates whether bullets should be drawn. **)
+  | Space (** Some space between text **)
   | Text of string (** A simple text. **)
   | Link of string * string (** A link and its associated address. **)
-  | LinkContinuation of string * (unit -> unit)
-      (** A link and its associated continuation. **)
-  | LinkContinuationBackward of string * (unit -> unit)
-      (** Same than [LinkContinuation], but with an arrow in the other direction. **)
+  | LinkContinuation of bool * string * (unit -> unit)
+      (** A link and its associated continuation.
+       * The boolean indicates whether the arrow is forwards. **)
   | Node of Dom_html.element Js.t (** For all cases where more control is needed,
                                    * we can directly send a node. **)
 

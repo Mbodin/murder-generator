@@ -21,23 +21,23 @@ let get_file url =
 
 type block =
   | Div of block list
-  | P of block list
-  | CenterP of block list
+  | P of bool * block list
+  | List of bool * block list
+  | Space
   | Text of string
   | Link of string * string
-  | LinkContinuation of string * (unit -> unit)
-  | LinkContinuationBackward of string * (unit -> unit)
+  | LinkContinuation of bool * string * (unit -> unit)
   | Node of Dom_html.element Js.t
 
 let rec add_spaces =
   let need_space = function
     | Div _ -> false
     | P _ -> false
-    | CenterP _ -> false
+    | List _ -> false
+    | Space
     | Text _ -> true
     | Link _ -> true
     | LinkContinuation _ -> true
-    | LinkContinuationBackward _ -> true
     | Node _ -> false in
   let rec aux = function
     | [] -> []
@@ -46,37 +46,40 @@ let rec add_spaces =
       if need_space a && need_space b then
         a :: Text " " :: aux (b :: l)
       else a :: aux (b :: l) in
-  function
-    | Div l ->
-      let l = List.map add_spaces l in
-      Div (aux l)
-    | P l ->
-      let l = List.map add_spaces l in
-      P (aux l)
-    | CenterP l ->
-      let l = List.map add_spaces l in
-      CenterP (aux l)
+  let aux l = aux (List.map add_spaces l) in function
+    | Div l -> Div (aux l)
+    | P (center, l) -> P (center, aux l)
+    | List (visible, l) -> List (visible, aux l)
     | e -> e
 
 let document = Dom_html.window##.document
 
 let rec block_node =
-  let appendChilds e =
-    List.iter (fun b -> ignore (Dom.appendChild e (block_node b))) in
+  let appendChilds f e =
+    List.iter (fun b -> ignore (Dom.appendChild e (f (block_node b)))) in
   function
   | Div l ->
     let div = Dom_html.createDiv document in
-    appendChilds div l ;
+    appendChilds Utils.id div l ;
     (div :> Dom_html.element Js.t)
-  | P l ->
+  | P (center, l) ->
     let p = Dom_html.createP document in
-    appendChilds p l ;
+    if center then
+      p##.className := Js.string "center" ;
+    appendChilds Utils.id p l ;
     (p :> Dom_html.element Js.t)
-  | CenterP l ->
-    let p = Dom_html.createP document in
-    p##.className := Js.string "center" ;
-    appendChilds p l ;
-    (p :> Dom_html.element Js.t)
+  | List (visible, l) ->
+    let ul = Dom_html.createUl document in
+    ul##.className := Js.string (if visible then "bullet" else "bulletless") ;
+    appendChilds (fun n ->
+      let li = Dom_html.createLi document in
+      ignore (Dom.appendChild li n) ;
+      li) ul l ;
+    (ul :> Dom_html.element Js.t)
+  | Space ->
+    let span = Dom_html.createSpan document in
+    ignore (span##setAttribute (Js.string "class") (Js.string "space")) ;
+    (span :> Dom_html.element Js.t)
   | Text text ->
     let span = Dom_html.createSpan document in
     Dom.appendChild span (Dom_html.document##createTextNode (Js.string text)) ;
@@ -87,14 +90,12 @@ let rec block_node =
     ignore (Dom.appendChild a text) ;
     a##.href := Js.string link ;
     (a :> Dom_html.element Js.t)
-  | LinkContinuation (text, cont) ->
+  | LinkContinuation (forwards, text, cont) ->
     let a = block_node (Link (text, "javascript:void(42)")) in
+    if not forwards then
+      ignore (a##setAttribute (Js.string "class") (Js.string "previous")) ;
     Lwt.async (fun _ ->
       Lwt_js_events.clicks a (fun _ _ -> Lwt.return (cont ()))) ;
-    a
-  | LinkContinuationBackward (text, cont) ->
-    let a = block_node (LinkContinuation (text, cont)) in
-    ignore (a##setAttribute (Js.string "class") (Js.string "previous")) ;
     a
   | Node n -> n
 

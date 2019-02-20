@@ -1,3 +1,5 @@
+/* Generic definitions */
+
 html {
   margin: 0 ;
   padding: 0 ;
@@ -11,6 +13,8 @@ body {
   padding: 0 ;
 }
 
+/* Specific classes. */
+
 #loadingSVG {
   position: absolute ;
   top: 50% ;
@@ -22,6 +26,8 @@ body {
   max-width: 1000px ;
   margin: 0 auto ;
 }
+
+/* Styling main elements */
 
 .block {
   border: 4px solid #5c3566 ;
@@ -80,7 +86,73 @@ a:hover::before {
   transition-timing-function: linear;
 }
 
+.space {
+  min-width: 3em ;
+}
+
+ul {
+  list-style-type: none ;
+}
+
+ul.bullet li::before {
+  content: "•" ;
+  color: #75507b ;
+  display: inline-block ;
+  width: 1em ;
+}
+
+/* Inputs */
+
 input {
   margin: 1px 1em ;
+}
+
+.switch {
+  position: relative ;
+  display: inline-block ;
+  width: 60px ;
+  height: 34px ;
+}
+
+.switch input {
+  opacity: 0 ;
+  width: 0 ;
+  height: 0 ;
+}
+
+.slider {
+  position: absolute ;
+  cursor: pointer ;
+  border-radius: 34px ;
+  top: 0 ;
+  left: 0 ;
+  right: 0 ;
+  bottom: 0 ;
+  background-color: #d3d7cf ;
+  transition: .4s ;
+}
+
+.slider::before {
+  position: absolute ;
+  content: "" ;
+  height: 26px ;
+  width: 26px ;
+  border-radius: 50% ;
+  left: 4px ;
+  bottom: 4px ;
+  background-color: #eeeeec ;
+  transition: .4s ;
+}
+
+input:checked + .slider {
+  background-color: #5c3566 ;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #5c3566 ;
+}
+
+input:checked + .slider::before {
+  transform: translateX(26px) ;
 }
 

@@ -86,56 +86,58 @@ let _ =
         let (res, w) = Lwt.task () in
         InOut.print_block (InOut.Div (List.map (fun lg ->
           let get = get_translation lg in
-          InOut.CenterP [ InOut.LinkContinuation (get "name", fun _ ->
+          InOut.P (true, [ InOut.LinkContinuation (true, get "name", fun _ ->
             InOut.clear_response () ;
             errorTranslations :=
               (get "error", get "report", get "there", get "errorDetails") ;
-            Lwt.wakeup_later w lg) ]) languages)) ;
+            Lwt.wakeup_later w lg) ])) languages)) ;
         stopLoading () ;%lwt
         res in
       let get_translation = get_translation language in
       ask_for_basic language get_translation
     and ask_for_basic language get_translation =
       (** Describing the project to the user. **)
-      InOut.print_block (InOut.P [
-        InOut.Text (get_translation "description") ;
-        InOut.Text (get_translation "openSource") ;
-        InOut.Link (get_translation "there",
-                    "https://github.com/Mbodin/murder-generator")
-          ]) ;
+      InOut.print_block (InOut.P (false, [
+          InOut.Text (get_translation "description") ;
+          InOut.Text (get_translation "openSource") ;
+          InOut.Link (get_translation "there",
+                      "https://github.com/Mbodin/murder-generator")
+        ])) ;
       (** Asking the first basic questions about the murder party. **)
       let (playerNumber, readPlayerNumber) = InOut.createNumberInput 13 in
-      InOut.print_block (InOut.P [
+      InOut.print_block (InOut.P (false, [
           InOut.Text (get_translation "howManyPlayers") ;
           InOut.Node playerNumber
-        ]) ;
+        ])) ;
       let (generalLevel, readGeneralLevel) =
         InOut.createPercentageInput 0.5 in
       InOut.print_block (InOut.Div [
-          InOut.P [ InOut.Text (get_translation "experience") ] ;
-          InOut.CenterP [
+          InOut.P (false, [ InOut.Text (get_translation "experience") ]) ;
+          InOut.P (true, [
             InOut.Text (get_translation "beginner") ;
             InOut.Node generalLevel ;
             InOut.Text (get_translation "experienced")
-          ]
+          ])
         ]) ;
       let (generalComplexity, readGeneralComplexity) =
         InOut.createPercentageInput 0.5 in
       InOut.print_block (InOut.Div [
-          InOut.P [ InOut.Text (get_translation "lengthOfCharacterSheets") ] ;
-          InOut.CenterP [
+          InOut.P (false, [
+            InOut.Text (get_translation "lengthOfCharacterSheets") ]) ;
+          InOut.P (true, [
             InOut.Text (get_translation "shortSheets") ;
             InOut.Node generalComplexity ;
             InOut.Text (get_translation "longSheets")
-          ]
+          ])
         ]) ;
       let%lwt cont =
         let (cont, w) = Lwt.task () in
-        InOut.print_block (InOut.CenterP [
-          InOut.LinkContinuationBackward (get_translation "previous", fun _ ->
+        InOut.print_block (InOut.P (true, [
+          InOut.LinkContinuation (false, get_translation "previous", fun _ ->
             InOut.clear_response () ;
             Lwt.wakeup_later w ask_for_languages) ;
-          InOut.LinkContinuation (get_translation "next", fun _ ->
+          InOut.Space ;
+          InOut.LinkContinuation (true, get_translation "next", fun _ ->
             InOut.clear_response () ;
             let playerNumber = readPlayerNumber () in
             let generalLevel = readGeneralLevel () in
@@ -150,7 +152,7 @@ let _ =
                                   *. (1. -. generalComplexity)) in
             Lwt.wakeup_later w (fun _ ->
               ask_for_categories language get_translation
-                (playerNumber, complexity, difficulty))) ]) ;
+                (playerNumber, complexity, difficulty))) ])) ;
         cont in
       cont ()
     and ask_for_categories language get_translation numberComplexityDifficulty =
@@ -173,35 +175,34 @@ let _ =
         List.map (fun c ->
           let (e, set, get) = InOut.createSwitch true in
           (c, e, set, get)) categories in
-      InOut.print_block (InOut.Div (List.map (fun (c, e, set, get) ->
-        InOut.P [ InOut.Node e ;
-                  InOut.Text (translate_categories c)]) categoriesButtons)) ;
-      (* TODO *)
-      let (playerNumber, complexity, difficulty) = numberComplexityDifficulty in
-      InOut.print_block (InOut.P [
-        InOut.Text ("This is just a test: " ^ string_of_int playerNumber
-                    ^ ", " ^ string_of_int complexity
-                    ^ ", " ^ string_of_int difficulty)]) ;
-      InOut.print_block (InOut.P [
-        InOut.Text ("Another test: " ^
-                    String.concat ", " (List.map translate_categories categories))]) ;
-      InOut.print_block (InOut.P [
-        InOut.Text (get_translation "underConstruction") ;
-        InOut.Text (get_translation "participate") ;
-        InOut.Link (get_translation "there",
-                    "https://github.com/Mbodin/murder-generator")
-          ]) ;
+      InOut.print_block (InOut.Div [
+          InOut.P (false, [ InOut.Text (get_translation "unselectCategories") ]) ;
+          InOut.List (false,
+            (* TODO: Add a [all] button that switches everyone to its state. *)
+            (List.map (fun (c, e, set, get) ->
+              InOut.P (false, [
+                InOut.Node e ;
+                InOut.Text (translate_categories c)])) categoriesButtons))
+        ]) ;
+      (* TODO: Deal with dependencies. *)
+      InOut.print_block (InOut.P (false, [
+          InOut.Text (get_translation "underConstruction") ;
+          InOut.Text (get_translation "participate") ;
+          InOut.Link (get_translation "there",
+                      "https://github.com/Mbodin/murder-generator")
+        ])) ;
       let%lwt cont =
         let (cont, w) = Lwt.task () in
-        InOut.print_block (InOut.CenterP [
-          InOut.LinkContinuationBackward (get_translation "previous", fun _ ->
+        InOut.print_block (InOut.P (true, [
+          InOut.LinkContinuation (false, get_translation "previous", fun _ ->
             InOut.clear_response () ;
             Lwt.wakeup_later w (fun _ ->
               ask_for_basic language get_translation)) ;
-          (*InOut.LinkContinuation (get_translation "next", fun _ ->
+          InOut.Space ;
+          (*InOut.LinkContinuation (true, get_translation "next", fun _ ->
             InOut.clear_response () ;
             Lwt.wakeup_later w (fun _ ->
-              Lwt.return ()))*) ]) ;
+              Lwt.return ()))*) ])) ;
         cont in
       cont () in
     ask_for_languages ()
@@ -211,14 +212,14 @@ let _ =
     try%lwt
       let (errorOccurred, reportIt, there, errorDetails) = !errorTranslations in
       InOut.print_block (InOut.Div [
-          InOut.P [
+          InOut.P (false, [
               InOut.Text errorOccurred ; InOut.Text reportIt ;
               InOut.Link (there, issues)
-            ] ;
-          InOut.P [
+            ]) ;
+          InOut.P (false, [
               InOut.Text errorDetails ;
               InOut.Text (Printexc.to_string e)
-            ]
+            ])
         ]) ;
       stopLoading () ;%lwt
       Lwt.return ()

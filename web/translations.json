@@ -15,9 +15,9 @@
     "experience": "Kiom spertan ĝenerale taksas vi viajn ludantojn?",
     "beginner": "Komencantoj",
     "experienced": "Spertuloj",
-    "lengthOfCharacterSheets": "Ĉu vi ĝenerale pliŝatas longajn roldokumentojn, plenaj je respondecoj sed ankaŭ rimedoj por plenumi ilin, aŭ mallongajn roldokumentojn, kun intensaj konfliktoj sed kelkfoje karikaturaj?",
-    "longSheets": "Longaj roldokumentoj",
-    "shortSheets": "Mallongaj roldokumentoj"
+    "lengthOfCharacterSheets": "Ĉu vi ĝenerale pliŝatas mallongajn roldokumentojn, kun intensaj konfliktoj sed kelkfoje karikaturaj, aŭ longajn roldokumentojn, plenaj je respondecoj sed ankaŭ je rimedoj por plenumi ilin?",
+    "shortSheets": "Mallongaj roldokumentoj",
+    "longSheets": "Longaj roldokumentoj"
   },
   { "iso639": "fr",
     "name": "Français",
@@ -35,9 +35,9 @@
     "experience": "D’une manière générale, comment estimez-vous l’expérience de vos joueurs ?",
     "beginner": "Débutants",
     "experienced": "Avertis",
-    "lengthOfCharacterSheets": "Préférez-vous en général des fiches de personnages longues, avec beaucoup de responsabilité mais avec les moyens de les gérer, ou des fiches de personnages courtes, avec des conflits intenses mais parfois caricaturaux ?",
-    "longSheets": "Fiches de personnages longues",
-    "shortSheets": "Fiches de personnages courtes"
+    "lengthOfCharacterSheets": "Préférez-vous en général des fiches de personnages courtes, avec des conflits intenses mais parfois caricaturaux, ou des fiches de personnages longues, avec beaucoup de responsabilité mais avec les moyens de les gérer ?",
+    "shortSheets": "Fiches de personnages courtes",
+    "longSheets": "Fiches de personnages longues"
   },
   { "iso639": "en",
     "name": "English",
@@ -50,13 +50,13 @@
     "report": "Please report it",
     "errorDetails": "Error details:",
     "next": "Next step",
-    "previous": "Previous précédente",
+    "previous": "Previous step",
     "howManyPlayers": "How many players (without counting game masters) do you plan for this scenario?",
     "experience": "How do you globally estimates your players’s experience?",
     "beginner": "Beginners",
     "experienced": "Experienced",
-    "lengthOfCharacterSheets": "Do you generally prefer long character sheets, filled with responsibility as well as the associated abilities, or short character sheets, with intense conflicts but sometimes slightly cartoonish?",
-    "longSheets": "Long character sheets",
-    "shortSheets": "Short character sheets"
+    "lengthOfCharacterSheets": "Do you generally prefer short character sheets, with intense conflicts but sometimes slightly cartoonish, or long character sheets, filled with responsibility as well as the associated abilities?",
+    "shortSheets": "Short character sheets",
+    "longSheets": "Long character sheets"
   }
 ]

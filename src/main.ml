@@ -14,16 +14,16 @@ let loading = ref true
 
 (** Stops the loading animation. **)
 let stopLoading _ =
-  assert%lwt !loading ;%lwt
-  ignore (Js.Unsafe.fun_call (Js.Unsafe.js_expr "stopLoading") [||]) ;
-  loading := false ;
+  if !loading then (
+    ignore (Js.Unsafe.fun_call (Js.Unsafe.js_expr "stopLoading") [||]) ;
+    loading := false) ;
   Lwt.return ()
 
 (** Starts the loading animation. **)
 let startLoading _ =
-  assert%lwt !loading ;%lwt
-  ignore (Js.Unsafe.fun_call (Js.Unsafe.js_expr "startLoading") [||]) ;
-  loading := true ;
+  if not !loading then (
+    ignore (Js.Unsafe.fun_call (Js.Unsafe.js_expr "startLoading") [||]) ;
+    loading := true) ;
   Lwt.return ()
 
 (** Getting and parsing the translations file. **)
@@ -124,15 +124,15 @@ let _ =
       InOut.print_block (InOut.Div [
           InOut.P [ InOut.Text (get_translation "lengthOfCharacterSheets") ] ;
           InOut.CenterP [
-            InOut.Text (get_translation "longSheets") ;
+            InOut.Text (get_translation "shortSheets") ;
             InOut.Node generalComplexity ;
-            InOut.Text (get_translation "shortSheets")
+            InOut.Text (get_translation "longSheets")
           ]
         ]) ;
       let%lwt cont =
         let (cont, w) = Lwt.task () in
         InOut.print_block (InOut.CenterP [
-          InOut.LinkContinuation (get_translation "previous", fun _ ->
+          InOut.LinkContinuationBackward (get_translation "previous", fun _ ->
             InOut.clear_response () ;
             Lwt.wakeup_later w ask_for_languages) ;
           InOut.LinkContinuation (get_translation "next", fun _ ->
@@ -159,9 +159,23 @@ let _ =
         startLoading ()
       else Lwt.return ()) ;%lwt
       let%lwt data = data in
-      (if !loading then stopLoading () else Lwt.return ()) ;%lwt
+      stopLoading () ;%lwt
       (** Asking about categories. **)
-      let translate_categories = Driver.translates_category data in
+      let translate_categories =
+        let translate_categories = Driver.translates_category data in fun c ->
+        match Translation.translate translate_categories c language with
+        | None ->
+          failwith ("No translation found a category in language “"
+                    ^ (Translation.iso639 language) ^ "”.")
+        | Some t -> t in
+      let categories = Driver.all_categories data in
+      let categoriesButtons =
+        List.map (fun c ->
+          let (e, set, get) = InOut.createSwitch true in
+          (c, e, set, get)) categories in
+      InOut.print_block (InOut.Div (List.map (fun (c, e, set, get) ->
+        InOut.P [ InOut.Node e ;
+                  InOut.Text (translate_categories c)]) categoriesButtons)) ;
       (* TODO *)
       let (playerNumber, complexity, difficulty) = numberComplexityDifficulty in
       InOut.print_block (InOut.P [
@@ -170,11 +184,7 @@ let _ =
                     ^ ", " ^ string_of_int difficulty)]) ;
       InOut.print_block (InOut.P [
         InOut.Text ("Another test: " ^
-                    String.concat ", " (List.map (fun c ->
-                      match Translation.translate translate_categories
-                              c language with
-                      | None -> "<none>"
-                      | Some t -> t) (Driver.all_categories data)))]) ;
+                    String.concat ", " (List.map translate_categories categories))]) ;
       InOut.print_block (InOut.P [
         InOut.Text (get_translation "underConstruction") ;
         InOut.Text (get_translation "participate") ;
@@ -184,20 +194,14 @@ let _ =
       let%lwt cont =
         let (cont, w) = Lwt.task () in
         InOut.print_block (InOut.CenterP [
-          InOut.LinkContinuation (get_translation "previous", fun _ ->
+          InOut.LinkContinuationBackward (get_translation "previous", fun _ ->
             InOut.clear_response () ;
             Lwt.wakeup_later w (fun _ ->
               ask_for_basic language get_translation)) ;
-          InOut.LinkContinuation (get_translation "next", fun _ ->
+          (*InOut.LinkContinuation (get_translation "next", fun _ ->
             InOut.clear_response () ;
             Lwt.wakeup_later w (fun _ ->
-              InOut.print_block (InOut.P [
-                InOut.Text (get_translation "underConstruction") ;
-                InOut.Text (get_translation "participate") ;
-                InOut.Link (get_translation "there",
-                            "https://github.com/Mbodin/murder-generator")
-                  ]) ;
-              Lwt.return ())) ]) ;
+              Lwt.return ()))*) ]) ;
         cont in
       cont () in
     ask_for_languages ()
@@ -216,7 +220,7 @@ let _ =
               InOut.Text (Printexc.to_string e)
             ]
         ]) ;
-      if%lwt Lwt.return !loading then stopLoading () ;%lwt
+      stopLoading () ;%lwt
       Lwt.return ()
     with e' -> (** If there have been an error when printing the error,
                 * we failback to the console. **)

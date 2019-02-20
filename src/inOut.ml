@@ -26,6 +26,7 @@ type block =
   | Text of string
   | Link of string * string
   | LinkContinuation of string * (unit -> unit)
+  | LinkContinuationBackward of string * (unit -> unit)
   | Node of Dom_html.element Js.t
 
 let rec add_spaces =
@@ -36,6 +37,7 @@ let rec add_spaces =
     | Text _ -> true
     | Link _ -> true
     | LinkContinuation _ -> true
+    | LinkContinuationBackward _ -> true
     | Node _ -> false in
   let rec aux = function
     | [] -> []
@@ -86,13 +88,14 @@ let rec block_node =
     a##.href := Js.string link ;
     (a :> Dom_html.element Js.t)
   | LinkContinuation (text, cont) ->
-    let a = Dom_html.createA document in
-    let text = Dom_html.document##createTextNode (Js.string text) in
-    ignore (Dom.appendChild a text) ;
-    a##.href := Js.string "javascript:void(42)" ;
+    let a = block_node (Link (text, "javascript:void(42)")) in
     Lwt.async (fun _ ->
       Lwt_js_events.clicks a (fun _ _ -> Lwt.return (cont ()))) ;
-    (a :> Dom_html.element Js.t)
+    a
+  | LinkContinuationBackward (text, cont) ->
+    let a = block_node (LinkContinuation (text, cont)) in
+    ignore (a##setAttribute (Js.string "class") (Js.string "previous")) ;
+    a
   | Node n -> n
 
 (** Returns the [response] div from the main webpage. **)
@@ -135,4 +138,21 @@ let createPercentageInput d =
   input##.value := Js.string (string_of_float (1000. *. d)) ;
   ((input :> Dom_html.element Js.t), fun _ ->
     (max 0. (min 1000. (float_of_string (Js.to_string input##.value)))) /. 1000.)
+
+let createSwitch b =
+  let label = Dom_html.createLabel document in
+  ignore (label##setAttribute (Js.string "class") (Js.string "switch")) ;
+  let input = Dom_html.createInput ~_type:(Js.string "checkbox") document in
+  Dom.appendChild label input ;
+  let span = Dom_html.createSpan document in
+  ignore (span##setAttribute (Js.string "class") (Js.string "slider")) ;
+  Dom.appendChild label span ;
+  let assign = function
+    | true ->
+      ignore (input##setAttribute (Js.string "checked") (Js.string "checked"))
+    | false ->
+      ignore (input##removeAttribute (Js.string "checked")) in
+  assign b ;
+  ((label :> Dom_html.element Js.t), assign, fun _ ->
+    Js.Optdef.test ((Js.Unsafe.coerce input)##.checked))
 

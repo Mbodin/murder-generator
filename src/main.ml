@@ -104,34 +104,37 @@ let _ =
                     "https://github.com/Mbodin/murder-generator")
           ]) ;
       (** Asking the first basic questions about the murder party. **)
-      let%lwt (playerNumber, complexity, difficulty) =
-        let (playerNumber, readPlayerNumber) = InOut.createNumberInput 13 in
-        InOut.print_block (InOut.P [
-            InOut.Text (get_translation "howManyPlayers") ;
-            InOut.Node playerNumber
-          ]) ;
-        let (generalLevel, readGeneralLevel) =
-          InOut.createPercentageInput 0.5 in
-        InOut.print_block (InOut.Div [
-            InOut.P [ InOut.Text (get_translation "experience") ] ;
-            InOut.CenterP [
-              InOut.Text (get_translation "beginner") ;
-              InOut.Node generalLevel ;
-              InOut.Text (get_translation "experienced")
-            ]
-          ]) ;
-        let (generalComplexity, readGeneralComplexity) =
-          InOut.createPercentageInput 0.5 in
-        InOut.print_block (InOut.Div [
-            InOut.P [ InOut.Text (get_translation "lengthOfCharacterSheets") ] ;
-            InOut.CenterP [
-              InOut.Text (get_translation "longSheets") ;
-              InOut.Node generalComplexity ;
-              InOut.Text (get_translation "shortSheets")
-            ]
-          ]) ;
-        let (res, w) = Lwt.task () in
+      let (playerNumber, readPlayerNumber) = InOut.createNumberInput 13 in
+      InOut.print_block (InOut.P [
+          InOut.Text (get_translation "howManyPlayers") ;
+          InOut.Node playerNumber
+        ]) ;
+      let (generalLevel, readGeneralLevel) =
+        InOut.createPercentageInput 0.5 in
+      InOut.print_block (InOut.Div [
+          InOut.P [ InOut.Text (get_translation "experience") ] ;
+          InOut.CenterP [
+            InOut.Text (get_translation "beginner") ;
+            InOut.Node generalLevel ;
+            InOut.Text (get_translation "experienced")
+          ]
+        ]) ;
+      let (generalComplexity, readGeneralComplexity) =
+        InOut.createPercentageInput 0.5 in
+      InOut.print_block (InOut.Div [
+          InOut.P [ InOut.Text (get_translation "lengthOfCharacterSheets") ] ;
+          InOut.CenterP [
+            InOut.Text (get_translation "longSheets") ;
+            InOut.Node generalComplexity ;
+            InOut.Text (get_translation "shortSheets")
+          ]
+        ]) ;
+      let%lwt cont =
+        let (cont, w) = Lwt.task () in
         InOut.print_block (InOut.CenterP [
+          InOut.LinkContinuation (get_translation "previous", fun _ ->
+            InOut.clear_response () ;
+            Lwt.wakeup_later w ask_for_languages) ;
           InOut.LinkContinuation (get_translation "next", fun _ ->
             InOut.clear_response () ;
             let playerNumber = readPlayerNumber () in
@@ -145,10 +148,11 @@ let _ =
             let difficulty =
               int_of_float (0.5 +. complexityDifficulty
                                   *. (1. -. generalComplexity)) in
-            Lwt.wakeup_later w (playerNumber, complexity, difficulty)) ]) ;
-        res in
-      ask_for_categories language get_translation
-        (playerNumber, complexity, difficulty)
+            Lwt.wakeup_later w (fun _ ->
+              ask_for_categories language get_translation
+                (playerNumber, complexity, difficulty))) ]) ;
+        cont in
+      cont ()
     and ask_for_categories language get_translation numberComplexityDifficulty =
       (** Forcing the data to be loaded. **)
       (if Lwt.state data = Lwt.Sleep then
@@ -177,7 +181,25 @@ let _ =
         InOut.Link (get_translation "there",
                     "https://github.com/Mbodin/murder-generator")
           ]) ;
-      Lwt.return () in
+      let%lwt cont =
+        let (cont, w) = Lwt.task () in
+        InOut.print_block (InOut.CenterP [
+          InOut.LinkContinuation (get_translation "previous", fun _ ->
+            InOut.clear_response () ;
+            Lwt.wakeup_later w (fun _ ->
+              ask_for_basic language get_translation)) ;
+          InOut.LinkContinuation (get_translation "next", fun _ ->
+            InOut.clear_response () ;
+            Lwt.wakeup_later w (fun _ ->
+              InOut.print_block (InOut.P [
+                InOut.Text (get_translation "underConstruction") ;
+                InOut.Text (get_translation "participate") ;
+                InOut.Link (get_translation "there",
+                            "https://github.com/Mbodin/murder-generator")
+                  ]) ;
+              Lwt.return ())) ]) ;
+        cont in
+      cont () in
     ask_for_languages ()
   (** Reporting errors. **)
   with e ->

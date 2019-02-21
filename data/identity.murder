@@ -138,9 +138,17 @@ begin
   (* LATER: translations *)
 end
 
-(* FIXME: This may not be the best name and translations… *)
+category OutOfThisUniverse
+begin
+  translation fr "Hors de cet univers"
+  translation en "Out of this universe"
+  translation eo "Ekster ĉi tiu universo"
+end
+
 category Fantasy
 begin
+  category OutOfThisUniverse
+
   translation fr "Merveilleux"
   translation en "Fantasy"
   translation eo "Miraĵoj"
@@ -148,6 +156,8 @@ end
 
 category ScienceFiction
 begin
+  category OutOfThisUniverse
+
   translation fr "Science-fiction"
   translation en "Science fiction"
   translation eo "Sciencfikcio"

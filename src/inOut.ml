@@ -34,7 +34,7 @@ let rec add_spaces =
     | Div _ -> false
     | P _ -> false
     | List _ -> false
-    | Space
+    | Space -> false
     | Text _ -> true
     | Link _ -> true
     | LinkContinuation _ -> true
@@ -140,10 +140,11 @@ let createPercentageInput d =
   ((input :> Dom_html.element Js.t), fun _ ->
     (max 0. (min 1000. (float_of_string (Js.to_string input##.value)))) /. 1000.)
 
-let createSwitch b =
+let createSwitch b f =
   let label = Dom_html.createLabel document in
   ignore (label##setAttribute (Js.string "class") (Js.string "switch")) ;
   let input = Dom_html.createInput ~_type:(Js.string "checkbox") document in
+  input##.onchange := Dom_html.handler (fun _ -> f () ; Js._true) ;
   Dom.appendChild label input ;
   let span = Dom_html.createSpan document in
   ignore (span##setAttribute (Js.string "class") (Js.string "slider")) ;

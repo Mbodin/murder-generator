@@ -51,6 +51,7 @@ val createNumberInput : int -> Dom_html.element Js.t * (unit -> int)
 val createPercentageInput : float -> Dom_html.element Js.t * (unit -> float)
 
 (** Create a switch button.
+ * It takes a function that will be called at each state change as argument.
  * It also returns a setter and a getter. **)
-val createSwitch : bool -> Dom_html.element Js.t * (bool -> unit) * (unit -> bool)
+val createSwitch : bool -> (unit -> unit) -> Dom_html.element Js.t * (bool -> unit) * (unit -> bool)
 

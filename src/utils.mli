@@ -25,7 +25,8 @@ type ('a, 'b) plus =
 val error_monad : ('a, 'b) plus -> ('b -> ('a, 'c) plus) -> ('a, 'c) plus
 
 
-(** Returns the tail of the list, the empty list being associated with the empty list. **)
+(** Returns the tail of the list, the empty list being associated
+ * with the empty list. **)
 val safe_tail : 'a list -> 'a list
 
 (** Creates a list from a function providing the optional next element and iterator.
@@ -80,6 +81,9 @@ val uniq : 'a list -> 'a list
 (** Shuffle a list. **)
 val shuffle : 'a list -> 'a list
 
+(** Pattern match the list in the right instead of the left. **)
+val list_match_right : 'a list -> ('a list * 'a) option
+
 (** Swaps the given pair. **)
 val swap : 'a * 'b -> 'b * 'a
 
@@ -109,7 +113,8 @@ val take : (int * 'a) list -> 'a * (int * 'a) list
 
 (** Possible exception returned by the select function. **)
 exception NegativeWeigth
-(** Note that if the list is empty, the total weight will be zero and the exception NegativeWeigth will also be sent. **)
+(** Note that if the list is empty, the total weight will be zero
+ * and the exception [NegativeWeigth] will also be sent. **)
 exception InternalError
 
 (** Sums the integers of the list. **)
@@ -121,7 +126,8 @@ val array_sum : int array -> int
 (** Indicates how many elements of the array satisfy the predicates. **)
 val array_count : ('a -> bool) -> 'a array -> int
 
-(** Similar to [Array.fold_left], but the function takes the current index as argument. **)
+(** Similar to [Array.fold_left], but the function takes the current index
+ * as argument. **)
 val array_fold_lefti : (int -> 'a -> 'b -> 'a) -> 'a -> 'b array -> 'a
 
 (** Fold through both array. They must have the same size. **)
@@ -293,6 +299,9 @@ module PSet : sig
 
     (** Folds over the set. **)
     val fold : ('a -> 'b -> 'b) -> 'b -> 'a t -> 'b
+
+    (** Iterates over the set. **)
+    val iter : ('a -> unit) -> 'a t -> unit
 
     (** Check whether all the elements of the set satisfy the given predicate. **)
     val for_all : ('a -> bool) -> 'a t -> bool

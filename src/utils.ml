@@ -93,6 +93,13 @@ let list_fold_lefti f i l =
 let shuffle l =
   List.sort (fun _ _ -> Random.int 3 - 1) l
 
+let rec list_match_right = function
+  | [] -> None
+  | e :: l ->
+    match list_match_right l with
+    | None -> Some ([], e)
+    | Some (l, r) -> Some (e :: l, r)
+
 let rec argmax compare = function
   | [] -> None
   | [a] -> Some a
@@ -365,6 +372,9 @@ module PSet = struct
 
     let fold f i s =
       PMap.foldi (fun e _ -> f e) s i
+
+    let iter f s =
+      fold (fun e _ -> f e) () s
 
     let merge s = fold add s
 

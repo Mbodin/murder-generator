@@ -2,6 +2,7 @@
   { "iso639": "eo",
     "name": "Esperanto",
     "there": "tie",
+    "and": "kaj",
     "underConstruction": "Ĉi tiu programo bedaŭrinde ne finas nun.",
     "participate": "Vi povas partopreni ties kreadon",
     "description": "Ĉi tiu programaĵo estas produktilo de scenaroj por vesperenketoj.",
@@ -19,11 +20,13 @@
     "shortSheets": "Mallongaj roldokumentoj",
     "longSheets": "Longaj roldokumentoj",
     "unselectCategories": "Bonvolu malselekti temojn kiujn vi ial ajn ŝatus eviti en tiu ĉi scenaro.",
+    "noCategories": "Neniuj",
     "allCategories": "Ĉiuj"
   },
   { "iso639": "fr",
     "name": "Français",
     "there": "ici",
+    "and": "et",
     "underConstruction": "Ce programme n’est malheureusement pas terminé.",
     "participate": "Vous pouvez prendre part à sa création",
     "description": "Ce programme est un générateur de soirées-enquêtes.",
@@ -41,11 +44,13 @@
     "shortSheets": "Fiches de personnages courtes",
     "longSheets": "Fiches de personnages longues",
     "unselectCategories": "Veuillez désélectionner les thèmes que vous préférez (pour une raison ou pour une autre) éviter dans ce scénario.",
+    "noCategories": "Aucune",
     "allCategories": "Tous"
   },
   { "iso639": "en",
     "name": "English",
     "there": "there",
+    "and": "and",
     "underConstruction": "This program is unfortunately under construction.",
     "participate": "You can participate to its creation",
     "description": "This program is a murder-party generator.",
@@ -63,6 +68,7 @@
     "shortSheets": "Short character sheets",
     "longSheets": "Long character sheets",
     "unselectCategories": "Please unselect themes that you would like to avoid (for any reason) in your scenario.",
+    "noCategories": "None",
     "allCategories": "All"
   }
 ]

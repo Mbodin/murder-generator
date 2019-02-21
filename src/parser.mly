@@ -47,18 +47,31 @@ attribute_kind:
 
 block: BEGIN; l = list (command); END { l }
 
+language:
+  | lang = LIDENT   { lang }
+  (* Any two- or three-characters identifier can be a language. *)
+  | AND             { "and" }
+  | OR              { "or" }
+  | ALL             { "all" }
+  | END             { "end" }
+  | LET             { "let" }
+  | BE              { "be" }
+  | TO              { "to" }
+  | AS              { "as" }
+  | ADD             { "add" }
+
 language_tags: tags = list (COLON; tag = LIDENT { tag }) { tags }
 
 command:
   | CATEGORY; c = UIDENT
     { OfCategory c }
-  | TRANSLATION; lang = LIDENT; tags = language_tags;
+  | TRANSLATION; lang = language; tags = language_tags;
     l = list ( str = STRING; tags = language_tags
                { TranslationString (str, tags) }
              | id = UIDENT; tags = language_tags
                { TranslationVariable (id, tags) });
     { Translation (Translation.from_iso639 lang, tags, l) }
-  | ADD; lang = LIDENT; tags = language_tags
+  | ADD; lang = language; tags = language_tags
     { Add (Translation.from_iso639 lang, tags) }
   | COMPATIBLE; WITH; v = UIDENT
     { CompatibleWith v }

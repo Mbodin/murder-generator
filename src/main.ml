@@ -45,6 +45,19 @@ let get_translations _ =
       List.mem (Translation.iso639 lg) userLangs) languages in
   Lwt.return (translation, Utils.shuffle matching @ Utils.shuffle nonmatching)
 
+(** Prints a list of strings, [andw] being the word for “and”
+ * in the current language.
+ * This function makes use of the Oxford comma. **)
+let print_list andw = function
+  | [] -> ""
+  | a :: [] -> a
+  | a :: b :: [] -> a ^ " " ^ andw ^ " " ^ b
+  | l ->
+    match Utils.list_match_right l with
+    | None -> assert false
+    | Some (l, r) ->
+      String.concat ", " l ^ ", " ^ andw ^ " " ^ r
+
 (** Get and parse each data file. **)
 let get_data _ =
   let intermediate = ref Driver.empty_intermediary in
@@ -59,7 +72,7 @@ let get_data _ =
     let categories = Driver.categories_to_be_defined !intermediate in
     let (attributes, contacts) = Driver.attributes_to_be_defined !intermediate in
     let missing str s =
-      " Missing " ^ str ^ ": " ^ String.concat ", " (Utils.PSet.to_list s) ^ "." in
+      " Missing " ^ str ^ ": " ^ print_list "and" (Utils.PSet.to_list s) ^ "." in
     Lwt.fail (Invalid_argument
       ("Non final intermediary after parsing all files."
        ^ missing "categories" categories
@@ -171,20 +184,56 @@ let _ =
                     ^ (Translation.iso639 language) ^ "”.")
         | Some t -> t in
       let categories = Driver.all_categories data in
+      let onCategoryClick = ref (fun _ -> ()) in
       let categoriesButtons =
-        List.map (fun c ->
-          let (e, set, get) = InOut.createSwitch true in
-          (c, e, set, get)) categories in
+        List.fold_left (fun m c ->
+          let (e, set, get) =
+            InOut.createSwitch true (fun _ -> !onCategoryClick c) in
+          PMap.add c (e, set, get, Utils.PSet.empty) m) PMap.empty categories in
+      let categoriesButtons =
+        List.fold_left (fun m c ->
+            let deps = Driver.get_category_dependencies data c in
+            Utils.PSet.fold (fun cd m ->
+              let (e, set, get, ideps) = PMap.find cd m in
+              PMap.add cd (e, set, get, Utils.PSet.add c ideps) m) m deps)
+          categoriesButtons categories in
+      onCategoryClick := (fun c ->
+        let (_, _, get, ideps) = PMap.find c categoriesButtons in
+        if get () then
+          let deps = Driver.get_category_dependencies data c in
+          Utils.PSet.iter (fun c ->
+            let (_, set, _, _) = PMap.find c categoriesButtons in
+            set true) deps
+        else
+          Utils.PSet.iter (fun c ->
+            let (_, set, _, _) = PMap.find c categoriesButtons in
+            set false) ideps) ;
       InOut.print_block (InOut.Div [
           InOut.P (false, [ InOut.Text (get_translation "unselectCategories") ]) ;
+          InOut.P (true, [
+              InOut.LinkContinuation (false, get_translation "noCategories",
+                fun _ ->
+                  PMap.iter (fun _ (_, set, _, _) -> set false) categoriesButtons) ;
+              InOut.Space ;
+              InOut.LinkContinuation (true, get_translation "allCategories",
+                fun _ ->
+                  PMap.iter (fun _ (_, set, _, _) -> set true) categoriesButtons) ;
+            ]) ;
           InOut.List (false,
-            (* TODO: Add a [all] button that switches everyone to its state. *)
-            (List.map (fun (c, e, set, get) ->
+            PMap.foldi (fun c (e, _, _, _) l ->
               InOut.P (false, [
-                InOut.Node e ;
-                InOut.Text (translate_categories c)])) categoriesButtons))
+                  InOut.Node e ;
+                  InOut.Text (translate_categories c)
+                ] @ (
+                let deps =
+                  List.map translate_categories (Utils.PSet.to_list
+                    (Driver.get_category_dependencies data c)) in
+                if deps = [] then []
+                else [
+                  InOut.Text ("(" ^ get_translation "categoryDepends" ^ " "
+                              ^ print_list (get_translation "and") deps ^ ")")
+                ])) :: l) categoriesButtons [])
         ]) ;
-      (* TODO: Deal with dependencies. *)
       InOut.print_block (InOut.P (false, [
           InOut.Text (get_translation "underConstruction") ;
           InOut.Text (get_translation "participate") ;

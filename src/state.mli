@@ -125,12 +125,11 @@ type strictness =
 (** Waiting for a value to be decided for a given attribute,
  * the following type is used instead. **)
 type 'value attribute_value =
-  | Fixed_value of 'value * strictness (** The value has already been fixed.
-                                        * TODO LATER: Put a list of values here.
-                                        * It can not be changed back.
-                                        * The strictness flag indicates how it
-                                        * accepts to be redefined
-                                        * (with the same value). **)
+  | Fixed_value of 'value list * strictness
+    (** The value has already been fixed to be any of these values.
+     * It can not be changed back.
+     * The strictness flag indicates how it accepts to be redefined
+     * (with the same value). **)
   | One_value_of of 'value list (** The value has not been yet fixed, but it is
                                  * known to be one of these. **)
 (** Note that a [One_value_of] associated with a singleton list is not equivalent

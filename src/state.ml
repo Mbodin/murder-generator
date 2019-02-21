@@ -142,7 +142,7 @@ let compose_strictness s1 s2 =
   | NonStrict, s | s, NonStrict -> Some s
 
 type 'value attribute_value =
-  | Fixed_value of 'value * strictness
+  | Fixed_value of 'value list * strictness
   | One_value_of of 'value list
 
 let compose_attribute_value v1 v2 =
@@ -150,8 +150,9 @@ let compose_attribute_value v1 v2 =
   | One_value_of l1, One_value_of l2 ->
     let l3 = List.filter (fun v -> List.mem v l1) l2 in
     if l3 = [] then None else Some (One_value_of l3)
-  | One_value_of l1, Fixed_value (v2, s2) | Fixed_value (v2, s2), One_value_of l1 ->
-    if List.mem v2 l1 then Some (Fixed_value (v2, s2)) else None
+  | One_value_of l1, Fixed_value (l2, s2) | Fixed_value (l2, s2), One_value_of l1 ->
+    let l = List.filter (fun v2 -> List.mem v2 l1) l2 in
+    if l <> [] then Some (Fixed_value (l, s2)) else None
   | Fixed_value (v1, s1), Fixed_value (v2, s2) ->
     if v1 = v2 then
       Utils.option_map (fun s3 -> Fixed_value (v1, s3)) (compose_strictness s1 s2)

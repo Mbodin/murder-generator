@@ -149,12 +149,8 @@ let createSwitch b f =
   let span = Dom_html.createSpan document in
   ignore (span##setAttribute (Js.string "class") (Js.string "slider")) ;
   Dom.appendChild label span ;
-  let assign = function
-    | true ->
-      ignore (input##setAttribute (Js.string "checked") (Js.string "checked"))
-    | false ->
-      ignore (input##removeAttribute (Js.string "checked")) in
+  let assign b = (Js.Unsafe.coerce input)##.checked := Js.bool b in
   assign b ;
   ((label :> Dom_html.element Js.t), assign, fun _ ->
-    Js.Optdef.test ((Js.Unsafe.coerce input)##.checked))
+    Js.to_bool (Js.Unsafe.coerce input)##.checked)
 

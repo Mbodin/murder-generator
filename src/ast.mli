@@ -33,13 +33,13 @@ type provide_attribute = {
     attribute_strictness : State.strictness ;
     attribute_name : string ;
     attribute_player : string ;
-    attribute_value : string
+    attribute_value : string list
   }
 type provide_contact = {
     contact_strictness : State.strictness ;
     contact_name : string ;
     contact_destination : target_destination ;
-    contact_value : string
+    contact_value : string list
   }
 
 type command =

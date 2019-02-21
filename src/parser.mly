@@ -85,7 +85,7 @@ command:
   | PROVIDE; s = strictness;
     ATTRIBUTE; a = UIDENT;
     TO; p = UIDENT;
-    AS; v = UIDENT
+    AS; v = separated_list (OR, UIDENT)
     { ProvideAttribute {
           attribute_strictness = s ;
           attribute_name = a ;
@@ -95,7 +95,7 @@ command:
   | PROVIDE; s = strictness;
     CONTACT; c = UIDENT;
     d = target_destination;
-    AS; v = UIDENT
+    AS; v = separated_list (OR, UIDENT)
     { ProvideContact {
           contact_strictness = s ;
           contact_name = c ;

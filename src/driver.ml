@@ -547,22 +547,30 @@ let parse_element st element_name block =
       try get_constructor_dependencies st cid
       with Not_found -> assert false in
     Utils.PSet.merge deps ndeps in
+  (** An alternative to [merge_with_constructor_dependencies] when given an list. **)
+  let merge_with_constructor_dependencies_list deps =
+    List.fold_left (fun deps cid ->
+      merge_with_constructor_dependencies deps cid) deps in
   (** We now consider attributes. **)
   let deps =
     List.fold_left (fun deps pa ->
         let aid = get_attribute_id attribute_functions pa.Ast.attribute_name in
         let cid =
-          get_constructor_id attribute_functions aid pa.Ast.attribute_value in
+          List.map (get_constructor_id attribute_functions aid)
+            pa.Ast.attribute_value in
         add_constraint (get_player pa.Ast.attribute_player)
           (Element.Attribute (aid,
             State.Fixed_value (cid, pa.Ast.attribute_strictness))) ;
-        merge_with_constructor_dependencies deps (State.PlayerConstructor cid))
+        merge_with_constructor_dependencies_list deps
+          (List.map (fun id -> State.PlayerConstructor id) cid))
       deps block.provide_attribute in
   (** We then consider contacts. **)
   let deps =
     List.fold_left (fun deps pc ->
         let aid = get_attribute_id contact_functions pc.Ast.contact_name in
-        let cid = get_constructor_id contact_functions aid pc.Ast.contact_value in
+        let cid =
+          List.map (get_constructor_id contact_functions aid)
+            pc.Ast.contact_value in
         let add p1 p2 =
           add_constraint (get_player p1)
             (Element.Contact (aid, Utils.Id.to_array (get_player p2),
@@ -571,7 +579,8 @@ let parse_element st element_name block =
           match pc.Ast.contact_destination with
           | Ast.FromTo (p1, p2) -> add p1 p2
           | Ast.Between (p1, p2) -> add p1 p2 ; add p2 p1 in
-        merge_with_constructor_dependencies deps (State.ContactConstructor cid))
+        merge_with_constructor_dependencies_list deps
+          (List.map (fun id -> State.ContactConstructor id) cid))
       deps block.provide_contact in
   (** We finally consider player constraints. **)
   let deps =

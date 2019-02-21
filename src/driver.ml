@@ -612,9 +612,12 @@ let elements s = s.elements
 let get_element_dependencies s e =
   PMap.find e s.elements_dependencies
 
-let get_all_elements s cats =
+let get_all_elements s cats maxPlayers =
   PMap.foldi (fun e deps el ->
-    if Utils.PSet.for_all (fun c -> Utils.PSet.is_in c cats) deps then
-      e :: el
+    if Utils.PSet.for_all (fun c -> Utils.PSet.is_in c cats) deps then (
+      let et = PMap.find e s.elements in
+      if Array.length et <= maxPlayers then
+        e :: el
+      else el)
     else el) s.elements_dependencies []
 

@@ -73,8 +73,9 @@ val elements : state -> (Utils.Id.t, Element.t) PMap.t
 val get_element_dependencies : state -> Utils.Id.t -> Utils.Id.t list
 
 (** Returns all defined elements in this state that are compatible with
- * the chosen set of categories (given as identifiers). **)
-val get_all_elements : state -> Utils.Id.t Utils.PSet.t -> Utils.Id.t list
+ * the chosen set of categories (given as identifiers) and at most this
+ * number of players. **)
+val get_all_elements : state -> Utils.Id.t Utils.PSet.t -> int -> Utils.Id.t list
 
 (** Once the state has been built, categories can be listed. **)
 val all_categories : state -> Utils.Id.t list

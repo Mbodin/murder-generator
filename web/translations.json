@@ -21,7 +21,8 @@
     "longSheets": "Longaj roldokumentoj",
     "unselectCategories": "Bonvolu malselekti temojn kiujn vi ial ajn ŝatus eviti en tiu ĉi scenaro.",
     "noCategories": "Neniuj",
-    "allCategories": "Ĉiuj"
+    "allCategories": "Ĉiuj",
+    "categoryDepends": "dependas de"
   },
   { "iso639": "fr",
     "name": "Français",
@@ -44,8 +45,9 @@
     "shortSheets": "Fiches de personnages courtes",
     "longSheets": "Fiches de personnages longues",
     "unselectCategories": "Veuillez désélectionner les thèmes que vous préférez (pour une raison ou pour une autre) éviter dans ce scénario.",
-    "noCategories": "Aucune",
-    "allCategories": "Tous"
+    "noCategories": "Aucuns",
+    "allCategories": "Tous",
+    "categoryDepends": "nécessite"
   },
   { "iso639": "en",
     "name": "English",
@@ -69,6 +71,7 @@
     "longSheets": "Long character sheets",
     "unselectCategories": "Please unselect themes that you would like to avoid (for any reason) in your scenario.",
     "noCategories": "None",
-    "allCategories": "All"
+    "allCategories": "All",
+    "categoryDepends": "depends on"
   }
 ]

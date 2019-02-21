@@ -234,12 +234,6 @@ let _ =
                               ^ print_list (get_translation "and") deps ^ ")")
                 ])) :: l) categoriesButtons [])
         ]) ;
-      InOut.print_block (InOut.P (false, [
-          InOut.Text (get_translation "underConstruction") ;
-          InOut.Text (get_translation "participate") ;
-          InOut.Link (get_translation "there",
-                      "https://github.com/Mbodin/murder-generator")
-        ])) ;
       let%lwt cont =
         let (cont, w) = Lwt.task () in
         InOut.print_block (InOut.P (true, [
@@ -248,10 +242,46 @@ let _ =
             Lwt.wakeup_later w (fun _ ->
               ask_for_basic language get_translation)) ;
           InOut.Space ;
+          InOut.LinkContinuation (true, get_translation "next", fun _ ->
+            InOut.clear_response () ;
+            let (playerNumber, complexity, difficulty) =
+              numberComplexityDifficulty in
+            let chosenCategories =
+              PMap.foldi (fun c (_, _, get, _) s ->
+                if get () then
+                  Utils.PSet.add c s
+                else s) categoriesButtons Utils.PSet.empty in
+            let elements =
+              Driver.get_all_elements data chosenCategories playerNumber in
+            Lwt.wakeup_later w (fun _ ->
+              ask_for_player_constraints language get_translation playerNumber
+                complexity difficulty elements)) ])) ;
+        cont in
+      cont ()
+    and ask_for_player_constraints language get_translation playerNumber
+        complexity difficulty elements =
+      InOut.print_block (InOut.P (false, [
+          InOut.Text (get_translation "underConstruction") ;
+          InOut.Text (get_translation "participate") ;
+          InOut.Link (get_translation "there",
+                      "https://github.com/Mbodin/murder-generator")
+        ])) ;
+      InOut.print_block (InOut.P (false, [
+        InOut.Text ("This is just a test: "
+                    ^ string_of_int (List.length elements)) ])) ;
+      let%lwt cont =
+        let (cont, w) = Lwt.task () in
+        InOut.print_block (InOut.P (true, [
+          InOut.LinkContinuation (false, get_translation "previous", fun _ ->
+            InOut.clear_response () ;
+            Lwt.wakeup_later w (fun _ ->
+              ask_for_categories language get_translation
+                (playerNumber, complexity, difficulty))) ;
+          InOut.Space ;
           (*InOut.LinkContinuation (true, get_translation "next", fun _ ->
             InOut.clear_response () ;
             Lwt.wakeup_later w (fun _ ->
-              Lwt.return ()))*) ])) ;
+              TODO))*) ])) ;
         cont in
       cont () in
     ask_for_languages ()

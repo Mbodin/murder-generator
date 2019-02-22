@@ -27,6 +27,7 @@ type block =
   | Text of string
   | Link of string * string
   | LinkContinuation of bool * string * (unit -> unit)
+  | Table of block list * block list list
   | Node of Dom_html.element Js.t
 
 let rec add_spaces =
@@ -38,6 +39,7 @@ let rec add_spaces =
     | Text _ -> true
     | Link _ -> true
     | LinkContinuation _ -> true
+    | Table _ -> false
     | Node _ -> false in
   let rec aux = function
     | [] -> []
@@ -49,7 +51,12 @@ let rec add_spaces =
   let aux l = aux (List.map add_spaces l) in function
     | Div l -> Div (aux l)
     | P (center, l) -> P (center, aux l)
-    | List (visible, l) -> List (visible, aux l)
+    | List (visible, l) ->
+      (** Calling directly [add_spaces] instead of [aux]
+       * to avoid adding elements to the list. **)
+      List (visible, List.map add_spaces l)
+    | Table (h, l) ->
+      Table (List.map add_spaces h, List.map (List.map add_spaces) l)
     | e -> e
 
 let document = Dom_html.window##.document
@@ -97,6 +104,22 @@ let rec block_node =
     Lwt.async (fun _ ->
       Lwt_js_events.clicks a (fun _ _ -> Lwt.return (cont ()))) ;
     a
+  | Table (headers, content) ->
+    let table = Dom_html.createTable document in
+    let header = Dom_html.createTr document in
+    ignore (Dom.appendChild table header) ;
+    appendChilds (fun n ->
+      let th = Dom_html.createTh document in
+      ignore (Dom.appendChild th n) ;
+      th) header headers ;
+    List.iter (fun l ->
+      let line = Dom_html.createTr document in
+      ignore (Dom.appendChild table line) ;
+      appendChilds (fun n ->
+        let td = Dom_html.createTd document in
+        ignore (Dom.appendChild td n) ;
+        td) line l) content ;
+    (table :> Dom_html.element Js.t)
   | Node n -> n
 
 (** Returns the [response] div from the main webpage. **)

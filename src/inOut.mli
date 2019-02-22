@@ -24,6 +24,8 @@ type block =
   | LinkContinuation of bool * string * (unit -> unit)
       (** A link and its associated continuation.
        * The boolean indicates whether the arrow is forwards. **)
+  | Table of block list * block list list
+    (** A table, with its headers and its content (given line by line). **)
   | Node of Dom_html.element Js.t (** For all cases where more control is needed,
                                    * we can directly send a node. **)
 

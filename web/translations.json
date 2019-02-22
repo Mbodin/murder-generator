@@ -28,7 +28,18 @@
     "lowComplexityLowDifficulty": "Ambaŭ simpla kaj facila: iu scivolemulo kiu preterpasis kaj kuniĝis la grupon;",
     "lowComplexityHighDifficulty": "Simpla, sed malfacila: iu kies piedosigno pro pura hazardo ekzakte similas al tiuj trovitaj ĉirkaŭ mortigado kiujn ĉiuj provas venĝi;",
     "highComplexityLowDifficulty": "Malsimpla, sed facila: iu fama por sia saĝeco al kiu oni petis solvi malsimplegan konflikton por kiu ŝajnas nenian solvon ekzisti;",
-    "highComplexityHighDifficulty": "Ambaŭ malsimpla kaj malfacila: duobla spionino kiu scias multe pri ĉiuj… inklude ke neniu fidas ŝin kaj ĉiuj provas krei falilojn por ŝi!"
+    "highComplexityHighDifficulty": "Ambaŭ malsimpla kaj malfacila: duobla spionino kiu scias multe pri ĉiuj… inklude ke neniu fidas ŝin kaj ĉiuj provas krei falilojn por ŝi!",
+    "changeThisTable": "Libere ŝanĝu la datumojn de tiu ĉi tabelo.",
+    "playerName": "Rolnomo",
+    "complexity": "Malsimpleco",
+    "difficulty": "Malfacileco",
+    "miscellaneous": "Aliaĵoj",
+    "nameStartVowels": "A E I O U",
+    "nameStartConsonant": "B C Ĉ D F G Ĝ J Ĵ K L M N P R S Ŝ T V Z",
+    "nameMiddleVowels": "a e i o u",
+    "nameMiddleConsonant": "b c ĉ d f g ĝ j ĵ k l lj m n p r s ŝ t v z",
+    "nameEndVowels": "o ino",
+    "nameEndConsonant": "ĉjo njo"
   },
   { "iso639": "fr",
     "name": "Français",
@@ -59,7 +70,18 @@
     "lowComplexityLowDifficulty": "Complexité et difficulté faibles : quelqu’un qui passait par là a rejoint l’attroupement par curiosité ;",
     "lowComplexityHighDifficulty": "Complexité faible, mais difficulté élevée : quelqu’un dont les empreintes de pas correspondent exactement (mais par pur hasard) celles trouvées près d’un assassinat dont tout le monde cherche à se venger ;",
     "highComplexityLowDifficulty": "Grande complexité, mais faible difficulté : quelqu’un très réputé pour sa sagesse à qui on a demandé de résoudre un conflit très complexe pour lequel il semble ne pas exister de solution ;",
-    "highComplexityHighDifficulty": "À la fois une grande complexité et une grande difficulté : une agent-double qui en sait beaucoup sur tout le monde… en particulier que personne ne lui fait confiance et ne fait que chercher à la prendre la main dans le sac !"
+    "highComplexityHighDifficulty": "À la fois une grande complexité et une grande difficulté : une agent-double qui en sait beaucoup sur tout le monde… en particulier que personne ne lui fait confiance et que tout le monde ne fait que chercher à la prendre la main dans le sac !",
+    "changeThisTable": "Soyez libre de changer n’importe quelle donnée dans cette table.",
+    "playerName": "Nom du personnage",
+    "complexity": "Complexité",
+    "difficulty": "Difficulté",
+    "miscellaneous": "Autres",
+    "nameStartVowels": "A É Hé Hi O U Y Ya Xa",
+    "nameStartConsonant": "B C D F G L M N P R S T V Qu",
+    "nameMiddleVowels": "a é è i o u ou an en in on ai oi",
+    "nameMiddleConsonant": "c d f gu ill j l m n r s ss t tr ch",
+    "nameEndVowels": "ine in elle el e",
+    "nameEndConsonant": "d t rd rt re le nie tier"
   },
   { "iso639": "en",
     "name": "English",
@@ -90,6 +112,17 @@
     "lowComplexityLowDifficulty": "Both low complexity and low difficulty: a passerby who join the party out of curiosity;",
     "lowComplexityHighDifficulty": "Low complexity but high difficulty: someone whose footprints match by pure chance the ones found around an assassination from which everyone else seek revange;",
     "highComplexityLowDifficulty": "High complexity but low difficulty: someone highly estimated for his wisdom being asked to settle a very complicated dispute for which no solution seems to exist;",
-    "highComplexityHighDifficulty": "Both high complexity and high difficulty: a double-agent who knows a lot about both sides… namely that they both have high suspicion about her allegiance and are just looking for ways to trap her!"
+    "highComplexityHighDifficulty": "Both high complexity and high difficulty: a double-agent who knows a lot about both sides… namely that they both have high suspicion about her allegiance and are just looking for ways to trap her!",
+    "changeThisTable": "Feel free to change any data in this table.",
+    "playerName": "Player name",
+    "complexity": "Complexity",
+    "difficulty": "Difficulty",
+    "miscellaneous": "Miscellaneous",
+    "nameStartVowels": "A E I O U",
+    "nameStartConsonant": "B C D F G H J K Kh L M N P R S Sh T Th V W Wh Z",
+    "nameMiddleVowels": "a e i o u y ee oo ya",
+    "nameMiddleConsonant": "b c ch sh d f gh rg k lli ls m nn pp ph rr s t th v",
+    "nameEndVowels": "own ay en ia any",
+    "nameEndConsonant": "rson cester ough th ms nes rne ly"
   }
 ]

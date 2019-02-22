@@ -271,12 +271,30 @@ let _ =
             InOut.Text (get_translation "lowComplexityHighDifficulty") ;
             InOut.Text (get_translation "highComplexityLowDifficulty") ;
             InOut.Text (get_translation "highComplexityHighDifficulty") ])])) ;
+      let table =
+        List.map (fun i ->
+          ("Player " ^ string_of_int (1 + i),
+           InOut.createNumberInput complexity,
+           InOut.createNumberInput difficulty,
+           InOut.Space)) (Utils.seq playerNumber) in
       InOut.print_block (InOut.P (false, [
-          InOut.Text (get_translation "underConstruction") ;
-          InOut.Text (get_translation "participate") ;
-          InOut.Link (get_translation "there",
-                      "https://github.com/Mbodin/murder-generator")
-        ])) ;
+        InOut.Text (get_translation "changeThisTable") ;
+        InOut.Table ([InOut.Text (get_translation "playerName") ;
+                      InOut.Text (get_translation "complexity") ;
+                      InOut.Text (get_translation "difficulty") ;
+                      InOut.Text (get_translation "miscellaneous") ],
+                      List.map (fun (name, (complexity, _),
+                                     (difficulty, _), misc) -> [
+                          InOut.Text name ;
+                          InOut.Node complexity ;
+                          InOut.Node difficulty ;
+                          misc
+                        ]) table) ])) ;
+      InOut.print_block (InOut.P (false, [
+        InOut.Text (get_translation "underConstruction") ;
+        InOut.Text (get_translation "participate") ;
+        InOut.Link (get_translation "there",
+                    "https://github.com/Mbodin/murder-generator") ])) ;
       let%lwt cont =
         let (cont, w) = Lwt.task () in
         InOut.print_block (InOut.P (true, [

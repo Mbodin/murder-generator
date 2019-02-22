@@ -411,5 +411,8 @@ module PSet = struct
     let exists p =
       fold (fun e b -> b || p e) false
 
+    let incl s1 s2 =
+      for_all (fun e -> is_in e s2) s1
+
   end
 

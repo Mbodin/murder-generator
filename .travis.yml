@@ -35,6 +35,7 @@ install:
 
 before_script:
   - ./build.sh murderFiles.ml
+  - ./build.sh usedTranslations.ml
 
 script:
   - ./build.sh && mv main.js web/

@@ -68,6 +68,23 @@ let test_parser =
     List.fold_left Driver.prepare_declarations Driver.empty_intermediary asts in
   if not (Driver.is_intermediary_final i) then
     failwith "Non final intermediary!" ;
-  let s = Driver.parse i in
+  let _s = Driver.parse i in
   ()
+
+let test_translations =
+  let f = "web/translations.json" in
+  print_endline ("Reading file " ^ f) ;
+  let content = Std.input_file f in
+  let (translations, languages) = Translation.from_json f content in
+  let ok = ref true in
+  List.iter (fun lg ->
+    List.iter (fun key ->
+      match Translation.translate translations key lg with
+      | Some _ -> ()
+      | None ->
+        print_endline ("Missing translation of “" ^ key ^ "” for language "
+                       ^ Translation.iso639 lg ^ ".") ;
+        ok := false) UsedTranslations.used) languages ;
+  if not !ok then
+    failwith "There were some missing translations."
 

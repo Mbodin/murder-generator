@@ -20,8 +20,8 @@
     "shortSheets": "Mallongaj roldokumentoj",
     "longSheets": "Longaj roldokumentoj",
     "unselectCategories": "Bonvolu malselekti temojn kiujn vi ial ajn ŝatus eviti en tiu ĉi scenaro.",
-    "noCategories": "Neniuj",
-    "allCategories": "Ĉiuj",
+    "noCategories": "Malselekti ĉiujn",
+    "allCategories": "Selekti ĉiujn",
     "categoryDepends": "dependas de"
   },
   { "iso639": "fr",
@@ -45,8 +45,8 @@
     "shortSheets": "Fiches de personnages courtes",
     "longSheets": "Fiches de personnages longues",
     "unselectCategories": "Veuillez désélectionner les thèmes que vous préférez (pour une raison ou pour une autre) éviter dans ce scénario.",
-    "noCategories": "Aucuns",
-    "allCategories": "Tous",
+    "noCategories": "Tout désélectionner",
+    "allCategories": "Tout sélectionner",
     "categoryDepends": "nécessite"
   },
   { "iso639": "en",
@@ -70,8 +70,8 @@
     "shortSheets": "Short character sheets",
     "longSheets": "Long character sheets",
     "unselectCategories": "Please unselect themes that you would like to avoid (for any reason) in your scenario.",
-    "noCategories": "None",
-    "allCategories": "All",
+    "noCategories": "Unselect all",
+    "allCategories": "Select all",
     "categoryDepends": "depends on"
   }
 ]

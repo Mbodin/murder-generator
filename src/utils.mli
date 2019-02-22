@@ -297,6 +297,10 @@ module PSet : sig
     (** Computes the intersection of two sets. **)
     val inter : 'a t -> 'a t -> 'a t
 
+    (** Given two sets, states whether the first one is included
+     * in the second one. **)
+    val incl : 'a t -> 'a t -> bool
+
     (** Folds over the set. **)
     val fold : ('a -> 'b -> 'b) -> 'b -> 'a t -> 'b
 

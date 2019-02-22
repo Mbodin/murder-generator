@@ -24,6 +24,19 @@ else
     exit 0
   fi
 
+  if [ $1 = "usedTranslations.ml" ]
+  then
+    echo "${COLOR}Creating usedTranslations.ml from actual content…${ROLOC}"
+
+    # Overwriting the dummy file [src/usedTranslations.ml] with the actually
+    # used translations.
+    # As this overwrites a committed file, please only do that on deployment.
+    echo "let used = [\n`grep -o 'get_translation \"[^\"]*\"' src/main.ml | sed -e 's/get_translation \\(\"[^\"]*\"\\)/    \\1 ;/'`\n  ]" > src/usedTranslations.ml
+
+    echo "${COLOR}Done.${ROLOC}"
+    exit 0
+  fi
+
   if expr match "$1" ".*\.js" > /dev/null
   then
     JS="true"

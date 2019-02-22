@@ -98,11 +98,12 @@ let _ =
       let%lwt language =
         let (res, w) = Lwt.task () in
         InOut.print_block (InOut.Div (List.map (fun lg ->
-          let get = get_translation lg in
+          let get_translation = get_translation lg in
           InOut.P (true, [ InOut.LinkContinuation (true, get "name", fun _ ->
             InOut.clear_response () ;
             errorTranslations :=
-              (get "error", get "report", get "there", get "errorDetails") ;
+              (get_translation "error", get_translation "report",
+               get_translation "there", get_translation "errorDetails") ;
             Lwt.wakeup_later w lg) ])) languages)) ;
         stopLoading () ;%lwt
         res in

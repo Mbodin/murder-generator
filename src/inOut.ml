@@ -132,6 +132,11 @@ let createNumberInput d =
   ((input :> Dom_html.element Js.t), fun _ ->
     max 0 (int_of_string (Js.to_string input##.value)))
 
+let createTextInput txt =
+  let input = Dom_html.createInput ~_type:(Js.string "text") document in
+  input##.value := Js.string txt ;
+  ((input :> Dom_html.element Js.t), fun _ -> Js.to_string input##.value)
+
 let createPercentageInput d =
   let input = Dom_html.createInput ~_type:(Js.string "range") document in
   ignore (input##setAttribute (Js.string "min") (Js.string "0")) ;

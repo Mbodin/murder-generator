@@ -22,7 +22,13 @@
     "unselectCategories": "Bonvolu malselekti temojn kiujn vi ial ajn ŝatus eviti en tiu ĉi scenaro.",
     "noCategories": "Malselekti ĉiujn",
     "allCategories": "Selekti ĉiujn",
-    "categoryDepends": "dependas de"
+    "categoryDepends": "dependas de",
+    "individualConstraints": "En tiu ĉi lasta etapo, vi povas difini specifajn petojn por apartaj ludantoj, kiel ties nomon, asociitajn malsimplecon kaj malfacilecon, aŭ aliajn pli precizajn petojn.",
+    "complexityDifficultyExplanation": "Malsimpleco kaj malfacileco estas du argordoj kiuj reprezentas la sperton kaj la intereso de ĉiuj ludantoj.  Intuicie, malsimpleco rilatas al longeco de roldokumentoj, kaj malfacileco rilatas al la probableco de iu rolo morti dum la vesperenketo.  Jen kvar ekstremaj ekzemploj.",
+    "lowComplexityLowDifficulty": "Ambaŭ simpla kaj facila: iu scivolemulo kiu preterpasis kaj kuniĝis la grupon;",
+    "lowComplexityHighDifficulty": "Simpla, sed malfacila: iu kies piedosigno pro pura hazardo ekzakte similas al tiuj trovitaj ĉirkaŭ mortigado kiujn ĉiuj provas venĝi;",
+    "highComplexityLowDifficulty": "Malsimpla, sed facila: iu fama por sia saĝeco al kiu oni petis solvi malsimplegan konflikton por kiu ŝajnas nenian solvon ekzisti;",
+    "highComplexityHighDifficulty": "Ambaŭ malsimpla kaj malfacila: duobla spionino kiu scias multe pri ĉiuj… inklude ke neniu fidas ŝin kaj ĉiuj provas krei falilojn por ŝi!"
   },
   { "iso639": "fr",
     "name": "Français",
@@ -47,7 +53,13 @@
     "unselectCategories": "Veuillez désélectionner les thèmes que vous préférez (pour une raison ou pour une autre) éviter dans ce scénario.",
     "noCategories": "Tout désélectionner",
     "allCategories": "Tout sélectionner",
-    "categoryDepends": "nécessite"
+    "categoryDepends": "nécessite",
+    "individualConstraints": "Dans cette étape finale, vous pouvez spécifier des contraintes individuelles pour chaque joueur, telles leurs noms, complexité et difficulté associées, voire d’autres contraintes plus précises.",
+    "complexityDifficultyExplanation": "La complexité et la difficulté sont deux paramètres représentant l’expérience et les goûts du joueur.  De manière très résumée, la complexité est reliée à la taille de la fiche de personnage, alors que la difficulté est reliée à la probabilité d’un personnage de mourir lors de la soirée-enquête.  Voici quatre exemples extrêmes.",
+    "lowComplexityLowDifficulty": "Complexité et difficulté faibles : quelqu’un qui passait par là a rejoint l’attroupement par curiosité ;",
+    "lowComplexityHighDifficulty": "Complexité faible, mais difficulté élevée : quelqu’un dont les empreintes de pas correspondent exactement (mais par pur hasard) celles trouvées près d’un assassinat dont tout le monde cherche à se venger ;",
+    "highComplexityLowDifficulty": "Grande complexité, mais faible difficulté : quelqu’un très réputé pour sa sagesse à qui on a demandé de résoudre un conflit très complexe pour lequel il semble ne pas exister de solution ;",
+    "highComplexityHighDifficulty": "À la fois une grande complexité et une grande difficulté : une agent-double qui en sait beaucoup sur tout le monde… en particulier que personne ne lui fait confiance et ne fait que chercher à la prendre la main dans le sac !"
   },
   { "iso639": "en",
     "name": "English",
@@ -72,6 +84,12 @@
     "unselectCategories": "Please unselect themes that you would like to avoid (for any reason) in your scenario.",
     "noCategories": "Unselect all",
     "allCategories": "Select all",
-    "categoryDepends": "depends on"
+    "categoryDepends": "depends on",
+    "individualConstraints": "In this last step, you can specify individual player constraints, such as their names, associated complexity and difficulty, or more specific constraints.",
+    "complexityDifficultyExplanation": "Complexity and difficulty are two parameters that represent the experience and taste of the player.  In a nutshell, complexity is related with the size of character sheets, whilst difficulty is related to the probability that a character will be killed during the murder-party.  Here are four extreme examples.",
+    "lowComplexityLowDifficulty": "Both low complexity and low difficulty: a passerby who join the party out of curiosity;",
+    "lowComplexityHighDifficulty": "Low complexity but high difficulty: someone whose footprints match by pure chance the ones found around an assassination from which everyone else seek revange;",
+    "highComplexityLowDifficulty": "High complexity but low difficulty: someone highly estimated for his wisdom being asked to settle a very complicated dispute for which no solution seems to exist;",
+    "highComplexityHighDifficulty": "Both high complexity and high difficulty: a double-agent who knows a lot about both sides… namely that they both have high suspicion about her allegiance and are just looking for ways to trap her!"
   }
 ]

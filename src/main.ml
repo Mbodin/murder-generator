@@ -99,12 +99,13 @@ let _ =
         let (res, w) = Lwt.task () in
         InOut.print_block (InOut.Div (List.map (fun lg ->
           let get_translation = get_translation lg in
-          InOut.P (true, [ InOut.LinkContinuation (true, get "name", fun _ ->
-            InOut.clear_response () ;
-            errorTranslations :=
-              (get_translation "error", get_translation "report",
-               get_translation "there", get_translation "errorDetails") ;
-            Lwt.wakeup_later w lg) ])) languages)) ;
+          InOut.P (true, [ InOut.LinkContinuation (true, get_translation "name",
+            fun _ ->
+              InOut.clear_response () ;
+              errorTranslations :=
+                (get_translation "error", get_translation "report",
+                 get_translation "there", get_translation "errorDetails") ;
+              Lwt.wakeup_later w lg) ])) languages)) ;
         stopLoading () ;%lwt
         res in
       let get_translation = get_translation language in
@@ -261,15 +262,21 @@ let _ =
       cont ()
     and ask_for_player_constraints language get_translation playerNumber
         complexity difficulty elements =
+      (** Asking about individual player constraints. **)
+      InOut.print_block (InOut.P (false, [
+        InOut.Text (get_translation "individualConstraints") ;
+        InOut.Text (get_translation "complexityDifficultyExplanation") ;
+        InOut.List (true, [
+            InOut.Text (get_translation "lowComplexityLowDifficulty") ;
+            InOut.Text (get_translation "lowComplexityHighDifficulty") ;
+            InOut.Text (get_translation "highComplexityLowDifficulty") ;
+            InOut.Text (get_translation "highComplexityHighDifficulty") ])])) ;
       InOut.print_block (InOut.P (false, [
           InOut.Text (get_translation "underConstruction") ;
           InOut.Text (get_translation "participate") ;
           InOut.Link (get_translation "there",
                       "https://github.com/Mbodin/murder-generator")
         ])) ;
-      InOut.print_block (InOut.P (false, [
-        InOut.Text ("This is just a test: "
-                    ^ string_of_int (List.length elements)) ])) ;
       let%lwt cont =
         let (cont, w) = Lwt.task () in
         InOut.print_block (InOut.P (true, [

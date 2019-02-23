@@ -34,12 +34,12 @@
     "complexity": "Malsimpleco",
     "difficulty": "Malfacileco",
     "miscellaneous": "Aliaĵoj",
-    "nameStartVowels": "A E I O U",
-    "nameStartConsonant": "B D F G Ĝ J Ĵ K L M N P R S T|H Ŝ C Ĉ V Z|Ĥ",
-    "nameMiddleVowels": "a e i o u|aŭ|io eŭ",
-    "nameMiddleConsonant": "b c d f g j k l m n p r s ŝ t v z|h ĉ ĝ lj ĵ|ĥ nj",
-    "nameEndVowels": "o ino",
-    "nameEndConsonant": "ĉjo njo"
+    "nameStartVowels": "A,E,I,O,U",
+    "nameStartConsonant": "B,D,F,G,Ĝ,J,Ĵ,K,L,M,N,P,R,S,T;H,Ŝ,C,Ĉ,V,Z;Ĥ",
+    "nameMiddleVowels": "a,e,i,o,u;aŭ;io,eŭ",
+    "nameMiddleConsonant": "b,c,d,f,g,j,k,l,m,n,p,r,s,ŝ,t,v,z;h,ĉ,ĝ,lj,ĵ;ĥ,nj",
+    "nameEndVowels": "o,ino",
+    "nameEndConsonant": "ĉjo,njo"
   },
   { "iso639": "fr",
     "name": "Français",
@@ -76,12 +76,12 @@
     "complexity": "Complexité",
     "difficulty": "Difficulté",
     "miscellaneous": "Autres",
-    "nameStartVowels": "A É O U|Hé Hi Y Ya Xa",
-    "nameStartConsonant": "B C D F G L M N P R S T V Qu",
-    "nameMiddleVowels": "a é è i o u ou an en in on|ai oi",
-    "nameMiddleConsonant": "c d f l m n r s ss t tr|ch gu ill j rt",
-    "nameEndVowels": "ine in elle el e|sse",
-    "nameEndConsonant": "d t rd rt re le nie tier"
+    "nameStartVowels": "A,É;An,Hé,Hi;Ya,Xa;O",
+    "nameStartConsonant": "B,C,D,F,G,L,M,N,P,R,S,T,V,Qu",
+    "nameMiddleVowels": "a,ou,an,en,in,on;é,è,ai,oi;u,i,o",
+    "nameMiddleConsonant": "l,m,n,r,ss,t,tr;s,ch,gu,ll;c,d,j,f,rt;bon",
+    "nameEndVowels": "ine,in,elle,el,e;sse",
+    "nameEndConsonant": "d,t,re,le,nie,tier;rd,rt,ge"
   },
   { "iso639": "en",
     "name": "English",
@@ -118,11 +118,11 @@
     "complexity": "Complexity",
     "difficulty": "Difficulty",
     "miscellaneous": "Miscellaneous",
-    "nameStartVowels": "A E I O U|Au",
-    "nameStartConsonant": "B C D F G H J K Kh L M N P R S Th W|Ch Sh V Wh Z Jo",
-    "nameMiddleVowels": "a e i o u y|ee oo ya",
-    "nameMiddleConsonant": "b c ch sh d f gh rg k li ls m nn pp ph rr s t th v",
-    "nameEndVowels": "own ay en ia any eth ough e",
-    "nameEndConsonant": "rson cester ms nes rne ly hn"
+    "nameStartVowels": "A,E,I,O,U;Au;Ho",
+    "nameStartConsonant": "B,C,D,F,G,H,J,K,Kh,L,M,N,P,R,S,Th,W;Ch,Sh,St,V,Wh,Z,Jo",
+    "nameMiddleVowels": "a,e,i,y,ea;ee,o,oo,u,ya,im,on,en;aw,ow,ew",
+    "nameMiddleConsonant": "br,c,d,f,gh,rg,li,ls,m,nn,pp,rr,s,t,th;b,ch,sh,ph,v,k,st;z,ht,g,fl",
+    "nameEndVowels": "own,ay,en,ia,any,eth,ough,e,ing,er",
+    "nameEndConsonant": "rson,cester,ms,nes,rne,ly,hn,rd"
   }
 ]

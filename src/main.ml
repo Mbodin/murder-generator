@@ -271,9 +271,17 @@ let _ =
             InOut.Text (get_translation "lowComplexityHighDifficulty") ;
             InOut.Text (get_translation "highComplexityLowDifficulty") ;
             InOut.Text (get_translation "highComplexityHighDifficulty") ])])) ;
+      let startV = get_translation "nameStartVowels" in
+      let startC = get_translation "nameStartConsonant" in
+      let middleV = get_translation "nameMiddleVowels" in
+      let middleC = get_translation "nameMiddleConsonant" in
+      let endV = get_translation "nameEndVowels" in
+      let endC = get_translation "nameEndConsonant" in
+      let seed =
+        Names.createVowelConsonant startV startC middleV middleC endV endC in
       let table =
-        List.map (fun i ->
-          (InOut.createTextInput ("Player " ^ string_of_int (1 + i)),
+        List.map (fun _ ->
+          (InOut.createTextInput (Names.generate seed),
            InOut.createNumberInput complexity,
            InOut.createNumberInput difficulty,
            InOut.Space)) (Utils.seq playerNumber) in

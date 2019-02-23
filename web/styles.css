@@ -41,6 +41,7 @@ body {
   margin: auto ;
   overflow-x: auto ;
   width: 100% ;
+  white-space: nowrap ;
 }
 
 a {
@@ -105,7 +106,7 @@ ul.bullet li::before {
 }
 
 table {
-  width: 100% ;
+  width: 99% ;
   border-collapse: collapse ;
   border-color: #75507b ;
   margin-top: 1.5ex ;

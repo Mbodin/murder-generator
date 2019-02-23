@@ -76,15 +76,30 @@ let test_translations =
   print_endline ("Reading file " ^ f) ;
   let content = Std.input_file f in
   let (translations, languages) = Translation.from_json f content in
+  let translate key lg =
+    match Translation.translate translations key lg with
+    | Some str -> str
+    | None ->
+      print_endline ("Missing translation of “" ^ key ^ "” for language "
+                     ^ Translation.iso639 lg ^ ".") ;
+      "" in
   let ok = ref true in
   List.iter (fun lg ->
     List.iter (fun key ->
-      match Translation.translate translations key lg with
-      | Some _ -> ()
-      | None ->
-        print_endline ("Missing translation of “" ^ key ^ "” for language "
-                       ^ Translation.iso639 lg ^ ".") ;
+        ignore (translate key lg) ;
         ok := false) UsedTranslations.used) languages ;
   if not !ok then
-    failwith "There were some missing translations."
+    failwith "There were some missing translations." ;
+  List.iter (fun lg ->
+    print_endline ("Testing name generation for languages "
+                   ^ Translation.iso639 lg ^ ".") ;
+    let startV = translate "nameStartVowels" lg in
+    let startC = translate "nameStartConsonant" lg in
+    let middleV = translate "nameMiddleVowels" lg in
+    let middleC = translate "nameMiddleConsonant" lg in
+    let endV = translate "nameEndVowels" lg in
+    let endC = translate "nameEndConsonant" lg in
+    let seed = Names.createVowelConsonant startV startC middleV middleC endV endC in
+    print_endline (String.concat ", " (List.map (fun _ ->
+      Names.generate seed) (Utils.seq 10)))) languages
 

@@ -19,9 +19,13 @@ let get_file url =
   res
 
 
+type layout =
+  | Normal
+  | Centered
+
 type block =
-  | Div of block list
-  | P of bool * block list
+  | Div of layout * block list
+  | P of block list
   | List of bool * block list
   | Space
   | Text of string
@@ -49,8 +53,8 @@ let rec add_spaces =
         a :: Text " " :: aux (b :: l)
       else a :: aux (b :: l) in
   let aux l = aux (List.map add_spaces l) in function
-    | Div l -> Div (aux l)
-    | P (center, l) -> P (center, aux l)
+    | Div (layout, l) -> Div (layout, aux l)
+    | P l -> P (aux l)
     | List (visible, l) ->
       (** Calling directly [add_spaces] instead of [aux]
        * to avoid adding elements to the list. **)
@@ -65,14 +69,14 @@ let rec block_node =
   let appendChilds f e =
     List.iter (fun b -> ignore (Dom.appendChild e (f (block_node b)))) in
   function
-  | Div l ->
+  | Div (layout, l) ->
     let div = Dom_html.createDiv document in
+    if layout = Centered then
+      div##.className := Js.string "center" ;
     appendChilds Utils.id div l ;
     (div :> Dom_html.element Js.t)
-  | P (center, l) ->
+  | P l ->
     let p = Dom_html.createP document in
-    if center then
-      p##.className := Js.string "center" ;
     appendChilds Utils.id p l ;
     (p :> Dom_html.element Js.t)
   | List (visible, l) ->

@@ -9,12 +9,17 @@ val get_file : string -> string Lwt.t
 
 val document : Dom_html.document Js.t
 
+(** Specifies the different properties of div elements. **)
+type layout =
+  | Normal (** No special layout. **)
+  | Centered (** Its content is centered. **)
+
 (** A simplified representation of DOM’s nodes. **)
 type block =
-  | Div of block list (** A div node. **)
-  | P of bool * block list
-      (** A paragraph node.
-       * The boolean indicates whether its content is centered. **)
+  | Div of layout * block list
+      (** A div node, with its layout. **)
+  | P of block list
+      (** A paragraph node. **)
   | List of bool * block list
       (** A list of items.
        * The boolean indicates whether bullets should be drawn. **)

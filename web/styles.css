@@ -39,6 +39,8 @@ body {
 .center {
   text-align: center ;
   margin: auto ;
+  overflow-x: auto ;
+  width: 100% ;
 }
 
 a {
@@ -102,10 +104,46 @@ ul.bullet li::before {
   width: 1em ;
 }
 
+table {
+  width: 100% ;
+  border-collapse: collapse ;
+  border-color: #75507b ;
+  margin-top: 1.5ex ;
+  margin-left: .3em ;
+  margin-right: .3em ;
+}
+
+tr:nth-child(even) {
+  background-color: #eeeeec ;
+}
+
+tr:nth-child(odd) {
+  background-color: #d3d7cf ;
+}
+
+tr:hover {
+  background-color: #babdb6 ;
+}
+
+th {
+  background-color: #5c3566 ;
+  color: #eeeeec ;
+  font-weight: bold ;
+}
+
+td, th {
+  border: 2px solid #75507b ;
+  padding: 5px ;
+}
+
 /* Inputs */
 
 input {
   margin: 1px 1em ;
+}
+
+input[type="number"] {
+  width: 3em ;
 }
 
 .switch {

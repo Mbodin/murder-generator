@@ -387,7 +387,7 @@ let prepare_declaration i =
       Utils.Id.map_insert_t category_names name in
     if category_exists i.current_state id then
       raise (DefinedTwice ("category", name, None)) ;
-    if Utils.PSet.is_in id deps then
+    if Utils.PSet.mem id deps then
       raise (CircularDependency name) ;
     (** We consider each elements dependent on this category. **)
     let (cat_dep, att_dep, constr_dep) =
@@ -623,7 +623,7 @@ let get_element_dependencies s e =
 
 let get_all_elements s cats maxPlayers =
   PMap.foldi (fun e deps el ->
-    if Utils.PSet.for_all (fun c -> Utils.PSet.is_in c cats) deps then (
+    if Utils.PSet.for_all (fun c -> Utils.PSet.mem c cats) deps then (
       let et = PMap.find e s.elements in
       if Array.length et <= maxPlayers then
         e :: el

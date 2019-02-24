@@ -366,7 +366,7 @@ module PSet = struct
 
     let remove = PMap.remove
 
-    let is_in e s =
+    let mem e s =
       try PMap.find e s ; true
       with Not_found -> false
 
@@ -379,7 +379,7 @@ module PSet = struct
     let merge s = fold add s
 
     let inter s1 s2 =
-      fold (fun e -> if is_in e s2 then add e else id) empty s1
+      fold (fun e -> if mem e s2 then add e else id) empty s1
 
     let map f =
       fold (fun e -> add (f e)) empty
@@ -412,7 +412,7 @@ module PSet = struct
       fold (fun e b -> b || p e) false
 
     let incl s1 s2 =
-      for_all (fun e -> is_in e s2) s1
+      for_all (fun e -> mem e s2) s1
 
   end
 

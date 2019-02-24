@@ -9,7 +9,8 @@ type 'a t
 type vowelConsonant
 
 (** Create a transition system for vowels and consonants.
- * It takes as an argument six string specifying how the language sounds.
+ * It takes as an argument six string specifying how the language sounds, as well
+ * as the expected size of the output (in term of the given vowels and consonants).
  * Each string is a list of list separated by [,] for the inner lists and [;] for
  * the outer.
  * The inner lists (separated by [,]) commutes, whilst the outer lists represent
@@ -18,7 +19,7 @@ type vowelConsonant
  * - initial vowels and consonants;
  * - middle vowels and consonants;
  * - end vowels and consonants. **)
-val createVowelConsonant : string -> string -> string -> string -> string -> string -> vowelConsonant t
+val createVowelConsonant : int -> string -> string -> string -> string -> string -> string -> vowelConsonant t
 
 (** Generates a random name. **)
 val generate : 'a t -> string

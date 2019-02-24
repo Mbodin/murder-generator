@@ -51,7 +51,7 @@ let convertAlternative spec =
 
 type vowelConsonant = int * bool option * string
 
-let createVowelConsonant initV initC middleV middleC endV endC =
+let createVowelConsonant size initV initC middleV middleC endV endC =
   let get_spec f strspec =
     let rec aux = function
       | [] -> (1, [])
@@ -63,7 +63,7 @@ let createVowelConsonant initV initC middleV middleC endV endC =
       (String.split_on_char ';' strspec))) in
   let add b e = (b, e) in
   convertAlternative {
-      alternative_size = 8 ;
+      alternative_size = size ;
       alternative_init = get_spec (add false) initV @ get_spec (add true) initC ;
       alternative_transition = 
         (let middleV = get_spec (add false) middleV in

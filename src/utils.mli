@@ -40,13 +40,13 @@ val seq : int -> int list
 (** Builds the list of nth first elements, from [0] to [n]. **)
 val seq_incl : int -> int list
 
-(** Builds the list from i to j, included. **)
+(** Builds the list from [i] to [j], included. **)
 val seq_range : int -> int -> int list
 
-(** Builds the array of nth first elements, from [0] to [n - 1]. **)
+(** Builds the array of [n]th first elements, from [0] to [n - 1]. **)
 val seq_array : int -> int array
 
-(** Builds the array of nth first elements, from [0] to [n]. **)
+(** Builds the array of [n + 1]th first elements, from [0] to [n]. **)
 val seq_incl_array : int -> int array
 
 (** Builds the array from [i] to [j], included. **)
@@ -289,7 +289,7 @@ module PSet : sig
     val remove : 'a -> 'a t -> 'a t
 
     (** Checks whether an element is present in the set. **)
-    val is_in : 'a -> 'a t -> bool
+    val mem : 'a -> 'a t -> bool
 
     (** Merges two sets. **)
     val merge : 'a t -> 'a t -> 'a t

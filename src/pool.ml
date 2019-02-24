@@ -72,7 +72,7 @@ let empty g = {
  * This function states whether an element is meant to be ignored by this mechanism. **)
 let to_be_ignored p e =
   List.exists (fun a ->
-    Utils.PSet.is_in a p.filtered_out_attributes) (get_attributes p.global e)
+    Utils.PSet.mem a p.filtered_out_attributes) (get_attributes p.global e)
 
 (** The following operation actually performs the removal of the to-be-removed
  * elements of a pool. **)
@@ -118,7 +118,7 @@ let add p e =
   let p =
     if to_be_ignored p e then normalize p
     else p in
-  if Utils.PSet.is_in e p.current_elements then p
+  if Utils.PSet.mem e p.current_elements then p
   else {
     current_elements = Utils.PSet.add e p.current_elements ;
     pool = Utils.BidirectionalList.add_right p.pool e ;

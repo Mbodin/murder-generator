@@ -5,9 +5,12 @@
 open Js_of_ocaml
 
 
+(** The default error messages. **)
+let errorTranslationsDefault =
+  ("An error occurred!", "Please report it", "there", "Error details:")
+
 (** The translations needed to print error messages. **)
-let errorTranslations =
-  ref ("An error occurred!", "Please report it", "there", "Error details:")
+let errorTranslations = ref errorTranslationsDefault
 
 (** Whether the loading animation is running. **)
 let loading = ref true
@@ -80,25 +83,44 @@ let get_data _ =
        ^ missing "contacts" contacts)))
   else Lwt.return (Driver.parse !intermediate)
 
+(** A type to store what each page of the menu provides. **)
+type parameters = {
+    language : Translation.language option ;
+    player_number : int ;
+    general_level : float ;
+    general_complexity : float ;
+    categories : Utils.Id.t Utils.PSet.t option ;
+    player_information : (string (** Character name *)
+                          * int (** Complexity **)
+                          * int (** Difficulty **)
+                          * unit (** Miscellaneous **)) list
+  }
+
 (** The main script. **)
 let _ =
   try%lwt
     InOut.clear_response () ;
     let%lwt (translation, languages) = get_translations () in
-    let get_translation lg key =
+    let get_translation_language lg key =
       match Translation.translate translation key lg with
       | Some str -> str
       | None ->
         failwith ("No key “" ^ key ^ "” found for language “"
                   ^ (Translation.iso639 lg) ^ "”.") in
+    let get_language p =
+      match p.language with
+      | Some lg -> lg
+      | None -> assert false in
+    let get_translation p = get_translation_language (get_language p) in
     (** We request the data without forcing it yet. **)
     let data = get_data () in
-    let rec ask_for_languages _ =
+    let rec ask_for_languages parameters =
+      errorTranslations := errorTranslationsDefault ;
       (** Showing to the user all available languages. **)
       let%lwt language =
         let (res, w) = Lwt.task () in
         InOut.print_block (InOut.Div (InOut.Normal, List.map (fun lg ->
-          let get_translation = get_translation lg in
+          let get_translation = get_translation_language lg in
           InOut.Div (InOut.Centered, [
             InOut.P [ InOut.LinkContinuation (true, get_translation "name",
               fun _ ->
@@ -109,9 +131,9 @@ let _ =
                 Lwt.wakeup_later w lg) ]])) languages)) ;
         stopLoading () ;%lwt
         res in
-      let get_translation = get_translation language in
-      ask_for_basic language get_translation
-    and ask_for_basic language get_translation =
+      ask_for_basic { parameters with language = Some language }
+    and ask_for_basic parameters =
+      let get_translation = get_translation parameters in
       (** Describing the project to the user. **)
       InOut.print_block (InOut.P [
           InOut.Text (get_translation "description") ;
@@ -120,13 +142,14 @@ let _ =
                       "https://github.com/Mbodin/murder-generator")
         ]) ;
       (** Asking the first basic questions about the murder party. **)
-      let (playerNumber, readPlayerNumber) = InOut.createNumberInput 13 in
+      let (playerNumber, readPlayerNumber) =
+        InOut.createNumberInput parameters.player_number in
       InOut.print_block (InOut.P [
           InOut.Text (get_translation "howManyPlayers") ;
           InOut.Node playerNumber
         ]) ;
       let (generalLevel, readGeneralLevel) =
-        InOut.createPercentageInput 0.5 in
+        InOut.createPercentageInput parameters.general_level in
       InOut.print_block (InOut.Div (InOut.Normal, [
           InOut.P [ InOut.Text (get_translation "experience") ] ;
           InOut.Div (InOut.Centered, [
@@ -136,7 +159,7 @@ let _ =
             ])
         ])) ;
       let (generalComplexity, readGeneralComplexity) =
-        InOut.createPercentageInput 0.5 in
+        InOut.createPercentageInput parameters.general_complexity in
       InOut.print_block (InOut.Div (InOut.Normal, [
           InOut.P [ InOut.Text (get_translation "lengthOfCharacterSheets") ] ;
           InOut.Div (InOut.Centered, [
@@ -150,27 +173,19 @@ let _ =
         InOut.print_block (InOut.Div (InOut.Centered, [
           InOut.LinkContinuation (false, get_translation "previous", fun _ ->
             InOut.clear_response () ;
-            Lwt.wakeup_later w ask_for_languages) ;
+            Lwt.wakeup_later w (fun _ -> ask_for_languages parameters)) ;
           InOut.Space ;
           InOut.LinkContinuation (true, get_translation "next", fun _ ->
             InOut.clear_response () ;
-            let playerNumber = readPlayerNumber () in
-            let generalLevel = readGeneralLevel () in
-            let generalComplexity = readGeneralComplexity () in
-            let generalLevel = generalLevel *. generalLevel in
-            let complexityDifficulty =
-              10. +. generalLevel *. 90. in
-            let complexity =
-              int_of_float (0.5 +. complexityDifficulty *. generalComplexity) in
-            let difficulty =
-              int_of_float (0.5 +. complexityDifficulty
-                                  *. (1. -. generalComplexity)) in
             Lwt.wakeup_later w (fun _ ->
-              ask_for_categories language get_translation
-                (playerNumber, complexity, difficulty))) ])) ;
+              ask_for_categories { parameters with
+                player_number = readPlayerNumber () ;
+                general_level = readGeneralLevel () ;
+                general_complexity = readGeneralComplexity () }))])) ;
         cont in
       cont ()
-    and ask_for_categories language get_translation numberComplexityDifficulty =
+    and ask_for_categories parameters =
+      let get_translation = get_translation parameters in
       (** Forcing the data to be loaded. **)
       (if Lwt.state data = Lwt.Sleep then
         startLoading ()
@@ -180,25 +195,31 @@ let _ =
       (** Asking about categories. **)
       let translate_categories =
         let translate_categories = Driver.translates_category data in fun c ->
-        match Translation.translate translate_categories c language with
+        match Translation.translate translate_categories c
+                (get_language parameters) with
         | None ->
           failwith ("No translation found a category in language “"
-                    ^ (Translation.iso639 language) ^ "”.")
+                    ^ (Translation.iso639 (get_language parameters)) ^ "”.")
         | Some t -> t in
-      let categories = Driver.all_categories data in
+      let all_categories = Driver.all_categories data in
+      let selected_categories =
+        match parameters.categories with
+        | None -> Utils.PSet.from_list all_categories
+        | Some s -> s in
       let onCategoryClick = ref (fun _ -> ()) in
       let categoriesButtons =
         List.fold_left (fun m c ->
           let (e, set, get) =
-            InOut.createSwitch true (fun _ -> !onCategoryClick c) in
-          PMap.add c (e, set, get, Utils.PSet.empty) m) PMap.empty categories in
+            InOut.createSwitch (Utils.PSet.mem c selected_categories)
+              (fun _ -> !onCategoryClick c) in
+          PMap.add c (e, set, get, Utils.PSet.empty) m) PMap.empty all_categories in
       let categoriesButtons =
         List.fold_left (fun m c ->
             let deps = Driver.get_category_dependencies data c in
             Utils.PSet.fold (fun cd m ->
               let (e, set, get, ideps) = PMap.find cd m in
               PMap.add cd (e, set, get, Utils.PSet.add c ideps) m) m deps)
-          categoriesButtons categories in
+          categoriesButtons all_categories in
       onCategoryClick := (fun c ->
         let (_, _, get, ideps) = PMap.find c categoriesButtons in
         if get () then
@@ -227,14 +248,14 @@ let _ =
                   InOut.Node e ;
                   InOut.Text (translate_categories c)
                 ] @ (
-                let deps =
-                  List.map translate_categories (Utils.PSet.to_list
-                    (Driver.get_category_dependencies data c)) in
-                if deps = [] then []
-                else [
-                  InOut.Text ("(" ^ get_translation "categoryDepends" ^ " "
-                              ^ print_list (get_translation "and") deps ^ ")")
-                ])) :: l) categoriesButtons [])
+                  let deps =
+                    List.map translate_categories (Utils.PSet.to_list
+                      (Driver.get_category_dependencies data c)) in
+                  if deps = [] then []
+                  else
+                    [ InOut.Text ("(" ^ get_translation "categoryDepends" ^ " "
+                                  ^ print_list (get_translation "and") deps ^ ")") ]
+                )) :: l) categoriesButtons [])
         ])) ;
       let%lwt cont =
         let (cont, w) = Lwt.task () in
@@ -242,26 +263,38 @@ let _ =
           InOut.LinkContinuation (false, get_translation "previous", fun _ ->
             InOut.clear_response () ;
             Lwt.wakeup_later w (fun _ ->
-              ask_for_basic language get_translation)) ;
+              ask_for_basic parameters)) ;
           InOut.Space ;
           InOut.LinkContinuation (true, get_translation "next", fun _ ->
             InOut.clear_response () ;
-            let (playerNumber, complexity, difficulty) =
-              numberComplexityDifficulty in
-            let chosenCategories =
+            let selected_categories =
               PMap.foldi (fun c (_, _, get, _) s ->
                 if get () then
                   Utils.PSet.add c s
                 else s) categoriesButtons Utils.PSet.empty in
-            let elements =
-              Driver.get_all_elements data chosenCategories playerNumber in
             Lwt.wakeup_later w (fun _ ->
-              ask_for_player_constraints language get_translation playerNumber
-                complexity difficulty elements)) ])) ;
+              ask_for_player_constraints { parameters with
+                categories = Some selected_categories })) ])) ;
         cont in
       cont ()
-    and ask_for_player_constraints language get_translation playerNumber
-        complexity difficulty elements =
+    and ask_for_player_constraints parameters =
+      let get_translation = get_translation parameters in
+      let%lwt data = data in
+      let player_number = parameters.player_number in
+      let categories =
+        match parameters.categories with
+        | Some s -> s
+        | None -> assert false in
+      let elements =
+        Driver.get_all_elements data categories player_number in
+      let (complexity, difficulty) =
+        let generalLevel = parameters.general_level in
+        let generalComplexity = parameters.general_complexity in
+        let generalLevel = generalLevel *. generalLevel in
+        let complexityDifficulty =
+          10. +. generalLevel *. 90. in
+        let result p = int_of_float (0.5 +. complexityDifficulty *. p) in
+        (result generalComplexity, result (1. -. generalComplexity)) in
       (** Asking about individual player constraints. **)
       InOut.print_block (InOut.Div (InOut.Normal, [
         InOut.P [ InOut.Text (get_translation "individualConstraints") ] ;
@@ -277,14 +310,32 @@ let _ =
       let middleC = get_translation "nameMiddleConsonant" in
       let endV = get_translation "nameEndVowels" in
       let endC = get_translation "nameEndConsonant" in
+      let size =
+        let raw = get_translation "nameSize" in
+        try int_of_string raw
+        with Failure _ ->
+          failwith ("The key “nameSize” for language “" ^
+                    (Translation.iso639 (get_language parameters)) ^ "” is “" ^ raw
+                    ^ "”, which is not a valid number.") in
       let seed =
-        Names.createVowelConsonant startV startC middleV middleC endV endC in
+        Names.createVowelConsonant size startV startC middleV middleC endV endC in
+      let player_information =
+        let player_information = parameters.player_information in
+        let len = List.length player_information in
+        if len >= player_number then
+          ExtList.List.take player_number player_information
+        else
+          player_information @
+            List.map (fun _ ->
+                (Names.generate seed, complexity, difficulty, ()))
+              (Utils.seq (player_number - len))
+        in
       let table =
-        List.map (fun _ ->
-          (InOut.createTextInput (Names.generate seed),
+        List.map (fun (name, complexity, difficulty, _) ->
+          (InOut.createTextInput name,
            InOut.createNumberInput complexity,
            InOut.createNumberInput difficulty,
-           InOut.Space)) (Utils.seq playerNumber) in
+           InOut.Space)) player_information in
       InOut.print_block (InOut.Div (InOut.Normal, [
         InOut.P [ InOut.Text (get_translation "changeThisTable") ] ;
         InOut.Div (InOut.Centered, [
@@ -310,8 +361,7 @@ let _ =
           InOut.LinkContinuation (false, get_translation "previous", fun _ ->
             InOut.clear_response () ;
             Lwt.wakeup_later w (fun _ ->
-              ask_for_categories language get_translation
-                (playerNumber, complexity, difficulty))) ;
+              ask_for_categories parameters)) ;
           InOut.Space ;
           (*InOut.LinkContinuation (true, get_translation "next", fun _ ->
             InOut.clear_response () ;
@@ -319,7 +369,15 @@ let _ =
               TODO))*) ])) ;
         cont in
       cont () in
-    ask_for_languages ()
+    let parameters = {
+        language = None ;
+        player_number = 13 ;
+        general_level = 0.5 ;
+        general_complexity = 0.5 ;
+        categories = None ;
+        player_information = []
+      } in
+    ask_for_languages parameters
   (** Reporting errors. **)
   with e ->
     let issues = "https://github.com/Mbodin/murder-generator/issues" in

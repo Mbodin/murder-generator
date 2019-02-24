@@ -112,6 +112,32 @@ let _ =
       | Some lg -> lg
       | None -> assert false in
     let get_translation p = get_translation_language (get_language p) in
+    (** Adds a “next” and “previous” buttons and call them when needed.
+     * This function waits for the user to either click on the previous or
+     * next button, then calls the function to get the parameters, and
+     * finally calls the appropriate function.
+     * Both functions are given as option-types: if [None] is given, the
+     * corresponding button doesn’t appear.
+     * The text (more precisely, its key) for each button can be changed. **)
+    let next_button ?previousText:(previousText="previous")
+          ?nextText:(nextText="next") p get_parameters previous next =
+      let%lwt cont =
+        let (cont, w) = Lwt.task () in
+        let jump f _ =
+          InOut.clear_response () ;
+          Lwt.wakeup_later w (fun _ -> f (get_parameters ())) in
+        let createListButton text f =
+          match f with
+          | None -> []
+          | Some f ->
+            [ InOut.LinkContinuation (true, get_translation p text, jump f) ] in
+        let previous = createListButton previousText previous in
+        let next = createListButton nextText next in
+        InOut.print_block (InOut.Div (InOut.Centered,
+          if previous = [] || next = [] then previous @ next
+          else previous @ [ InOut.Space ] @ next)) ;
+        cont in
+      cont () in
     (** We request the data without forcing it yet. **)
     let data = get_data () in
     let rec ask_for_languages parameters =
@@ -168,22 +194,12 @@ let _ =
               InOut.Text (get_translation "longSheets")
             ])
         ])) ;
-      let%lwt cont =
-        let (cont, w) = Lwt.task () in
-        InOut.print_block (InOut.Div (InOut.Centered, [
-          InOut.LinkContinuation (false, get_translation "previous", fun _ ->
-            InOut.clear_response () ;
-            Lwt.wakeup_later w (fun _ -> ask_for_languages parameters)) ;
-          InOut.Space ;
-          InOut.LinkContinuation (true, get_translation "next", fun _ ->
-            InOut.clear_response () ;
-            Lwt.wakeup_later w (fun _ ->
-              ask_for_categories { parameters with
-                player_number = readPlayerNumber () ;
-                general_level = readGeneralLevel () ;
-                general_complexity = readGeneralComplexity () }))])) ;
-        cont in
-      cont ()
+      next_button parameters (fun _ ->
+          { parameters with
+              player_number = readPlayerNumber () ;
+              general_level = readGeneralLevel () ;
+              general_complexity = readGeneralComplexity () })
+        (Some ask_for_languages) (Some ask_for_categories)
     and ask_for_categories parameters =
       let get_translation = get_translation parameters in
       (** Forcing the data to be loaded. **)
@@ -257,26 +273,14 @@ let _ =
                                   ^ print_list (get_translation "and") deps ^ ")") ]
                 )) :: l) categoriesButtons [])
         ])) ;
-      let%lwt cont =
-        let (cont, w) = Lwt.task () in
-        InOut.print_block (InOut.Div (InOut.Centered, [
-          InOut.LinkContinuation (false, get_translation "previous", fun _ ->
-            InOut.clear_response () ;
-            Lwt.wakeup_later w (fun _ ->
-              ask_for_basic parameters)) ;
-          InOut.Space ;
-          InOut.LinkContinuation (true, get_translation "next", fun _ ->
-            InOut.clear_response () ;
-            let selected_categories =
-              PMap.foldi (fun c (_, _, get, _) s ->
-                if get () then
-                  Utils.PSet.add c s
-                else s) categoriesButtons Utils.PSet.empty in
-            Lwt.wakeup_later w (fun _ ->
-              ask_for_player_constraints { parameters with
-                categories = Some selected_categories })) ])) ;
-        cont in
-      cont ()
+      next_button parameters (fun _ ->
+          let selected_categories =
+            PMap.foldi (fun c (_, _, get, _) s ->
+              if get () then
+                Utils.PSet.add c s
+              else s) categoriesButtons Utils.PSet.empty in
+          { parameters with categories = Some selected_categories })
+        (Some ask_for_basic) (Some ask_for_player_constraints)
     and ask_for_player_constraints parameters =
       let get_translation = get_translation parameters in
       let%lwt data = data in
@@ -285,8 +289,6 @@ let _ =
         match parameters.categories with
         | Some s -> s
         | None -> assert false in
-      let elements =
-        Driver.get_all_elements data categories player_number in
       let (complexity, difficulty) =
         let generalLevel = parameters.general_level in
         let generalComplexity = parameters.general_complexity in
@@ -348,27 +350,35 @@ let _ =
                             InOut.Node name ;
                             InOut.Node complexity ;
                             InOut.Node difficulty ;
-                            misc
+                            (ignore categories ; misc (* TODO *))
                           ]) table) ])])) ;
+      next_button ~nextText:"startGeneration" parameters (fun _ ->
+        { parameters with
+            player_information =
+              List.map (fun ((_, get_name), (_, get_complexity),
+                             (_, get_difficulty), misc) ->
+                let misc = ignore misc (* TODO *) in
+                (get_name (), get_complexity (), get_difficulty (), misc)) table
+        }) (Some ask_for_categories) (Some generate)
+    and generate parameters =
+      startLoading () ;%lwt
+      let%lwt data = data in
+      let categories =
+        match parameters.categories with
+        | Some s -> s
+        | None -> assert false in
+      let elements =
+        Driver.get_all_elements data categories parameters.player_number in
+      ignore elements (* TODO *) ;
+      stopLoading () ;%lwt
+      let get_translation = get_translation parameters in
       InOut.print_block (InOut.P [
         InOut.Text (get_translation "underConstruction") ;
         InOut.Text (get_translation "participate") ;
         InOut.Link (get_translation "there",
                     "https://github.com/Mbodin/murder-generator") ]) ;
-      let%lwt cont =
-        let (cont, w) = Lwt.task () in
-        InOut.print_block (InOut.Div (InOut.Centered, [
-          InOut.LinkContinuation (false, get_translation "previous", fun _ ->
-            InOut.clear_response () ;
-            Lwt.wakeup_later w (fun _ ->
-              ask_for_categories parameters)) ;
-          InOut.Space ;
-          (*InOut.LinkContinuation (true, get_translation "next", fun _ ->
-            InOut.clear_response () ;
-            Lwt.wakeup_later w (fun _ ->
-              TODO))*) ])) ;
-        cont in
-      cont () in
+      next_button parameters (fun _ -> parameters)
+        (Some ask_for_player_constraints) None in
     let parameters = {
         language = None ;
         player_number = 13 ;

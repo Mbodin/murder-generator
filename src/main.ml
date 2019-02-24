@@ -56,10 +56,8 @@ let print_list andw = function
   | a :: [] -> a
   | a :: b :: [] -> a ^ " " ^ andw ^ " " ^ b
   | l ->
-    match Utils.list_match_right l with
-    | None -> assert false
-    | Some (l, r) ->
-      String.concat ", " l ^ ", " ^ andw ^ " " ^ r
+    let (l, r) = Utils.assert_option __LOC__ (Utils.list_match_right l) in
+    String.concat ", " l ^ ", " ^ andw ^ " " ^ r
 
 (** Get and parse each data file. **)
 let get_data _ =
@@ -102,15 +100,10 @@ let _ =
     InOut.clear_response () ;
     let%lwt (translation, languages) = get_translations () in
     let get_translation_language lg key =
-      match Translation.translate translation key lg with
-      | Some str -> str
-      | None ->
-        failwith ("No key “" ^ key ^ "” found for language “"
-                  ^ (Translation.iso639 lg) ^ "”.") in
-    let get_language p =
-      match p.language with
-      | Some lg -> lg
-      | None -> assert false in
+      Utils.assert_option ("No key “" ^ key ^ "” found for language “"
+                           ^ (Translation.iso639 lg) ^ "”.")
+        (Translation.translate translation key lg) in
+    let get_language p = Utils.assert_option __LOC__ p.language in
     let get_translation p = get_translation_language (get_language p) in
     (** Adds a “next” and “previous” buttons and call them when needed.
      * This function waits for the user to either click on the previous or
@@ -126,13 +119,13 @@ let _ =
         let jump f _ =
           InOut.clear_response () ;
           Lwt.wakeup_later w (fun _ -> f (get_parameters ())) in
-        let createListButton text f =
+        let createListButton dir text f =
           match f with
           | None -> []
           | Some f ->
-            [ InOut.LinkContinuation (true, get_translation p text, jump f) ] in
-        let previous = createListButton previousText previous in
-        let next = createListButton nextText next in
+            [ InOut.LinkContinuation (dir, get_translation p text, jump f) ] in
+        let previous = createListButton false previousText previous in
+        let next = createListButton true nextText next in
         InOut.print_block (InOut.Div (InOut.Centered,
           if previous = [] || next = [] then previous @ next
           else previous @ [ InOut.Space ] @ next)) ;
@@ -211,12 +204,10 @@ let _ =
       (** Asking about categories. **)
       let translate_categories =
         let translate_categories = Driver.translates_category data in fun c ->
-        match Translation.translate translate_categories c
-                (get_language parameters) with
-        | None ->
-          failwith ("No translation found a category in language “"
-                    ^ (Translation.iso639 (get_language parameters)) ^ "”.")
-        | Some t -> t in
+        Utils.assert_option ("No translation found a category in language “" ^
+                             (Translation.iso639 (get_language parameters)) ^ "”.")
+          (Translation.translate translate_categories c
+            (get_language parameters)) in
       let all_categories = Driver.all_categories data in
       let selected_categories =
         match parameters.categories with
@@ -285,18 +276,7 @@ let _ =
       let get_translation = get_translation parameters in
       let%lwt data = data in
       let player_number = parameters.player_number in
-      let categories =
-        match parameters.categories with
-        | Some s -> s
-        | None -> assert false in
-      let (complexity, difficulty) =
-        let generalLevel = parameters.general_level in
-        let generalComplexity = parameters.general_complexity in
-        let generalLevel = generalLevel *. generalLevel in
-        let complexityDifficulty =
-          10. +. generalLevel *. 90. in
-        let result p = int_of_float (0.5 +. complexityDifficulty *. p) in
-        (result generalComplexity, result (1. -. generalComplexity)) in
+      let categories = Utils.assert_option __LOC__ parameters.categories in
       (** Asking about individual player constraints. **)
       InOut.print_block (InOut.Div (InOut.Normal, [
         InOut.P [ InOut.Text (get_translation "individualConstraints") ] ;
@@ -322,8 +302,16 @@ let _ =
       let seed =
         Names.createVowelConsonant size startV startC middleV middleC endV endC in
       let player_information =
-        let player_information = parameters.player_information in
-        let len = List.length player_information in
+        let (complexity, difficulty) =
+          let generalLevel = parameters.general_level in
+          let generalComplexity = parameters.general_complexity in
+          let generalLevel = generalLevel *. generalLevel in
+          let complexityDifficulty =
+            10. +. generalLevel *. 90. in
+          let result p = int_of_float (0.5 +. complexityDifficulty *. p) in
+          (result generalComplexity, result (1. -. generalComplexity)) in
+          let player_information = parameters.player_information in
+          let len = List.length player_information in
         if len >= player_number then
           ExtList.List.take player_number player_information
         else
@@ -361,17 +349,15 @@ let _ =
                 (get_name (), get_complexity (), get_difficulty (), misc)) table
         }) (Some ask_for_categories) (Some generate)
     and generate parameters =
+      let get_translation = get_translation parameters in
+      (** Starts the generation! **)
       startLoading () ;%lwt
       let%lwt data = data in
-      let categories =
-        match parameters.categories with
-        | Some s -> s
-        | None -> assert false in
+      let categories = Utils.assert_option __LOC__ parameters.categories in
       let elements =
         Driver.get_all_elements data categories parameters.player_number in
       ignore elements (* TODO *) ;
       stopLoading () ;%lwt
-      let get_translation = get_translation parameters in
       InOut.print_block (InOut.P [
         InOut.Text (get_translation "underConstruction") ;
         InOut.Text (get_translation "participate") ;

@@ -87,21 +87,23 @@ let test_translations =
   List.iter (fun lg ->
     List.iter (fun key ->
       ignore (translate key lg)) UsedTranslations.used) languages ;
-  List.iter (fun lg ->
-    print_endline ("Testing name generation for languages "
-                   ^ Translation.iso639 lg ^ ".") ;
-    let startV = translate "nameStartVowels" lg in
-    let startC = translate "nameStartConsonant" lg in
-    let middleV = translate "nameMiddleVowels" lg in
-    let middleC = translate "nameMiddleConsonant" lg in
-    let endV = translate "nameEndVowels" lg in
-    let endC = translate "nameEndConsonant" lg in
-    List.iter (fun i ->
-      print_endline ("Names of size " ^ string_of_int i ^ ": " ^
-        let seed =
-          Names.createVowelConsonant i startV startC middleV middleC endV endC in
-        String.concat ", " (List.map (fun _ ->
-          Names.generate seed) (Utils.seq 10)))) (Utils.seq_range 3 8)) languages ;
+  let test_name_generation _ =
+    List.iter (fun lg ->
+      print_endline ("Testing name generation for languages "
+                     ^ Translation.iso639 lg ^ ".") ;
+      let startV = translate "nameStartVowels" lg in
+      let startC = translate "nameStartConsonant" lg in
+      let middleV = translate "nameMiddleVowels" lg in
+      let middleC = translate "nameMiddleConsonant" lg in
+      let endV = translate "nameEndVowels" lg in
+      let endC = translate "nameEndConsonant" lg in
+      List.iter (fun i ->
+          print_endline ("Names of size " ^ string_of_int i ^ ": " ^
+            let seed =
+              Names.createVowelConsonant i startV startC middleV middleC endV endC in
+            String.concat ", " (List.map (fun _ ->
+                Names.generate seed) (Utils.seq 10))))
+        (Utils.seq_range 3 8)) languages in
   if not !ok then
     failwith "There were some missing translations."
 

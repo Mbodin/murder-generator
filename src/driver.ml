@@ -101,22 +101,21 @@ let empty_intermediary = {
 
 let categories_to_be_defined i =
   Utils.PSet.map (fun id ->
-    match Utils.Id.map_inverse i.current_state.category_names id with
-    | Some c -> c
-    | None -> assert false) (Utils.PSet.domain i.categories_to_be_defined)
+      Utils.assert_option __LOC__
+        (Utils.Id.map_inverse i.current_state.category_names id))
+    (Utils.PSet.domain i.categories_to_be_defined)
 
 let attributes_to_be_defined i =
   Utils.PSet.partition_map (function
-    | State.PlayerAttribute id ->
-      (match State.PlayerAttribute.attribute_name
-        i.current_state.constructor_information.State.player id with
-      | Some c -> Utils.Left c
-      | None -> assert false)
-    | State.ContactAttribute id ->
-      (match State.ContactAttribute.attribute_name
-        i.current_state.constructor_information.State.contact id with
-      | Some c -> Utils.Right c
-      | None -> assert false)) (Utils.PSet.domain i.attributes_to_be_defined)
+      | State.PlayerAttribute id ->
+        Utils.Left (Utils.assert_option __LOC__
+          (State.PlayerAttribute.attribute_name
+            i.current_state.constructor_information.State.player id))
+      | State.ContactAttribute id ->
+        Utils.Right (Utils.assert_option __LOC__
+          (State.ContactAttribute.attribute_name
+            i.current_state.constructor_information.State.contact id)))
+    (Utils.PSet.domain i.attributes_to_be_defined)
 
 let is_intermediary_final i =
   PMap.is_empty i.categories_to_be_defined
@@ -483,9 +482,7 @@ let parse_element st element_name block =
       if r <> Relation.neutral then (
         if i = j then (
           let player_name =
-            match Utils.Id.map_inverse player_names i with
-            | Some name -> name
-            | None -> assert false in
+            Utils.assert_option __LOC__ (Utils.Id.map_inverse player_names i) in
           raise (SelfRelation (player_name, element_name))) ;
         let i = Utils.Id.to_array i in
         let j = Utils.Id.to_array j in

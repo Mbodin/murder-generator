@@ -151,6 +151,7 @@ let print_block =
 
 
 let createNumberInput d =
+  let d = min 0 d in
   let input = Dom_html.createInput ~_type:(Js.string "number") document in
   ignore (input##setAttribute (Js.string "min") (Js.string "0")) ;
   ignore (input##setAttribute (Js.string "max")
@@ -165,12 +166,14 @@ let createTextInput txt =
   ((input :> Dom_html.element Js.t), fun _ -> Js.to_string input##.value)
 
 let createPercentageInput d =
+  let maxv = 1000 in
+  let maxvf = float_of_int maxv in
   let input = Dom_html.createInput ~_type:(Js.string "range") document in
   ignore (input##setAttribute (Js.string "min") (Js.string "0")) ;
-  ignore (input##setAttribute (Js.string "max") (Js.string "1000")) ;
-  input##.value := Js.string (string_of_float (1000. *. d)) ;
+  ignore (input##setAttribute (Js.string "max") (Js.string (string_of_int maxv))) ;
+  input##.value := Js.string (string_of_int (int_of_float (maxvf *. d))) ;
   ((input :> Dom_html.element Js.t), fun _ ->
-    (max 0. (min 1000. (float_of_string (Js.to_string input##.value)))) /. 1000.)
+    (max 0. (min maxvf (float_of_string (Js.to_string input##.value)))) /. maxvf)
 
 let createSwitch b f =
   let label = Dom_html.createLabel document in

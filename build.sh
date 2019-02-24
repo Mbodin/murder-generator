@@ -4,6 +4,8 @@ set -e
 COLOR="" # "\e[35m"
 ROLOC="" # "\e[0m"
 
+DEBUG="true"
+
 if [ -z $1 ]
 then
   echo "${COLOR}No argument given: compiling main.js as a default.${ROLOC}"
@@ -45,22 +47,36 @@ else
   fi
 fi
 
+if [ $DEBUG = "true" ]
+then
+  DEBUGFLAG=",debug"
+else
+  DEBUGFLAG=""
+fi
+
 # Compile to bytecode
 echo "${COLOR}Compiling to bytecode as $TARGET.byte…${ROLOC}"
 ocamlbuild -use-ocamlfind -I src \
            -pkgs extlib,yojson,lwt,lwt_ppx,js_of_ocaml,js_of_ocaml-lwt,js_of_ocaml-ppx,ppx_deriving,js_of_ocaml-ppx.deriving,js_of_ocaml.deriving \
            -use-menhir -menhir "menhir --explain" \
-           -tag "optimize(3)" \
+           -tags "optimize(3)$DEBUGFLAG" \
            $TARGET.byte
 echo "${COLOR}Done.${ROLOC}"
 
 if [ $JS = "true" ]
 then
 
+  if [ $DEBUG = "true" ]
+  then
+    DEBUGFLAG="--pretty"
+  else
+    DEBUGFLAG=""
+  fi
+
   echo "${COLOR}Compiling to JavaScript as $TARGET.js…${ROLOC}"
 
   # Translate to JavaScript
-  js_of_ocaml $TARGET.byte
+  js_of_ocaml $DEBUGFLAG $TARGET.byte
 
   # Adding license information.
   sed -i "1i/* The source code of this compiled program is available at https://github.com/Mbodin/murder-generator */" $TARGET.js

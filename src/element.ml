@@ -143,12 +143,11 @@ let apply state e inst =
               update_diff diff (State.PlayerAttribute a)
                 (if State.attribute_value_can_progress v1 then -1 else 0)
             | Some v2 ->
-              match State.compose_attribute_value v1 v2 with
-              | None -> assert false
-              | Some v3 ->
-                State.write_attribute_character cstate c a v3 ;
-                update_diff diff (State.PlayerAttribute a)
-                  (if State.attribute_value_progress v2 v3 then 1 else 0) in
+              let v3 =
+                Utils.assert_option __LOC__ (State.compose_attribute_value v1 v2) in
+              State.write_attribute_character cstate c a v3 ;
+              update_diff diff (State.PlayerAttribute a)
+                (if State.attribute_value_progress v2 v3 then 1 else 0) in
           (state, diff)
         | Contact (con, cha, v) ->
           (state, diff) (* TODO *)

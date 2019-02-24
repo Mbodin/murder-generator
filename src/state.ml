@@ -95,10 +95,7 @@ module AttributeInst () =
       Utils.Id.get_id mc (a, c)
 
     let remove_constructor m c =
-      let a =
-        match constructor_attribute m c with
-        | None -> assert false
-        | Some a -> a in
+      let a = Utils.assert_option __LOC__ (constructor_attribute m c) in
       let (mn, mc, al) = m in
       let l =
         try PMap.find a al
@@ -190,10 +187,7 @@ let write_attribute_character st c a v =
 let force_get_attribute_character cm st c a =
   try PMap.find a (fst st.(Utils.Id.to_array c))
   with Not_found ->
-    let l =
-      match PlayerAttribute.constructors cm a with
-      | Some l -> l
-      | None -> assert false in
+    let l = Utils.assert_option __LOC__ (PlayerAttribute.constructors cm a) in
     let v = One_value_of l in
     write_attribute_character st c a v ;
     v

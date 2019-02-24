@@ -21,6 +21,10 @@ let unsome_default d = function
   | None -> d
   | Some x -> x
 
+let assert_option err = function
+  | None -> failwith ("This option-type should not be [None]. " ^ err)
+  | Some v -> v
+
 type ('a, 'b) plus =
   | Left of 'a
   | Right of 'b
@@ -278,9 +282,7 @@ module UnionFind = struct
         PMap.foldi (fun i ip l -> if i = ip then i :: l else l) !p [] in
       let representants =
         List.map (Id.map_inverse m) classes in
-      List.map (function
-        | None -> assert false
-        | Some e -> e) representants
+      List.map (assert_option __LOC__) representants
 
     let fold f i mp =
       List.fold_left (fun a e -> f e a) i (to_list mp)
@@ -296,24 +298,18 @@ module UnionFind = struct
         PMap.iter (fun i ip -> r := Some ip ; raise Found) !p ;
         None
       with Found ->
-        match !r with
-        | None -> assert false
-        | Some i ->
-          match Id.map_inverse m (representant p i) with
-          | None -> assert false
-          | Some v -> Some v
+        let i = assert_option __LOC__ !r in
+        Some (assert_option __LOC__ (Id.map_inverse m (representant p i)))
 
     let one_class (m, p) =
       match get_one_class (m, p) with
       | None -> true
       | Some e ->
-        match Id.get_id m e with
-        | None -> assert false
-        | Some i ->
-          try
-            PMap.iter (fun _ ip -> if i <> representant p ip then raise Found) !p ;
-            true
-          with Found -> false
+        let i = assert_option __LOC__ (Id.get_id m e) in
+        try
+          PMap.iter (fun _ ip -> if i <> representant p ip then raise Found) !p ;
+          true
+        with Found -> false
 
   end
 

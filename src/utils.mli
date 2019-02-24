@@ -16,6 +16,11 @@ val if_option : 'a option -> ('a -> 'b option) -> 'b option
 (** Extracts the content of an option type, with a default value. **)
 val unsome_default : 'a -> 'a option -> 'a
 
+(** If one is *sure* that an option type is actually defined,
+ * this function can extract its value.
+ * The string is meant to help debug: using [__LOC__] is a good idea. **)
+val assert_option : string -> 'a option -> 'a
+
 (** The sum type of two types. **)
 type ('a, 'b) plus =
     | Left of 'a

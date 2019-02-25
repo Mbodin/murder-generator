@@ -87,7 +87,7 @@ let test_translations =
   List.iter (fun lg ->
     List.iter (fun key ->
       ignore (translate key lg)) UsedTranslations.used) languages ;
-  let test_name_generation _ =
+  let _test_name_generation _ =
     List.iter (fun lg ->
       print_endline ("Testing name generation for languages "
                      ^ Translation.iso639 lg ^ ".") ;

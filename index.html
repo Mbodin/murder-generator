@@ -19,16 +19,18 @@
             <path d = "M 50,20 A 30 30 0 0 1 80,50" fill = "none" stroke = "#ad7fa8" stroke-width = "5px" />
             <animateTransform attributeType = "xml" attributeName = "transform" type = "rotate" from = "0 50 50" to = "360 50 50" dur = "2s" additive = "sum" repeatCount = "indefinite" />
           </g>
-          <animateTransform id = "loading-animation" attributeType = "xml" attributeName = "transform" type = "scale" additive = "sum" from = "0 0" to = "1 1" begin = "0s" dur = ".3s" repeatCount = "1" />
+          <animateTransform id = "loading-animation" attributeType = "xml" attributeName = "transform" type = "scale" additive = "sum" from = "0 0" to = "0 0" begin = "0s" dur = "0.3s" repeatCount = "1" />
         </g>
       </g>
     </svg>
 
-    <script>
+    <noscript>
+      This webpage needs JavaScript to work properly.
+      If you want to, you can check the source code of the project <a href = "https://github.com/Mbodin/murder-generator">there</a>
+    </noscript>
+    <script><!--//--><![CDATA[//><!--
       /* @license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3-or-Later */
-
       (function (){
-
         var loadingAnimation = document.getElementById ("loading-animation")
         var loadingGlobalTransform = document.getElementById ("loading-global-transform")
         var loadingSVG = document.getElementById ("loadingSVG")
@@ -41,15 +43,15 @@
         function startLoading (){
           if (isLoading ()) return
 
-          var startValue = la.animVal
-          if (startValue === undefined || !isLoading ()) startValue = "0 0"
+          var startValue = loadingAnimation.animVal
+          if (startValue === undefined) startValue = "0 0"
           loadingAnimation.removeAttribute ("values")
           loadingAnimation.removeAttribute ("keyTimes")
           loadingAnimation.setAttribute ("dur", "1s")
           loadingAnimation.setAttribute ("from", startValue)
           loadingAnimation.setAttribute ("to", "1 1")
           loadingGlobalTransform.setAttribute ("transform", "scale(1, 1)")
-          la.beginElement ()
+          loadingAnimation.beginElement ()
           loadingSVG.style.zIndex = "1"
         }
 
@@ -57,13 +59,14 @@
           if (!isLoading ()) return
 
           var startValue = loadingAnimation.animVal
-          if (startValue === undefined || isLoading ()) startValue = "1 1"
+          if (startValue === undefined) startValue = "1 1"
           loadingAnimation.setAttribute ("dur", "1s")
           loadingAnimation.setAttribute ("from", startValue)
           loadingAnimation.setAttribute ("to", "0 0")
           loadingAnimation.setAttribute ("values", startValue + ";0 0;0 0")
           loadingAnimation.setAttribute ("keyTimes", "0;0.3;1")
-          setTimeout (function () { loadingGlobalTransform.setAttribute ("transform", "scale(0, 0)") }, 300)
+          setTimeout (function () {
+            loadingGlobalTransform.setAttribute ("transform", "scale(0, 0)") }, 300)
           loadingAnimation.beginElement ()
           loadingSVG.style.zIndex = "-1"
         }
@@ -88,11 +91,12 @@
 
         startLoading ()
 
-        var request = new XMLHttpRequest()
+        var request = new XMLHttpRequest ()
         request.onreadystatechange = function (){
             if (this.readyState === 4){
               if (request.status !== 200){
-                error ("Error when fetching the main script. " + request.status + ": " + request.statusText)
+                error ("Error when fetching the main script. "
+                       + request.status + ": " + request.statusText)
               } else {
                 try {
                   eval (request.responseText)
@@ -106,11 +110,8 @@
         request.send ()
       }) ()
       /* @license-end */
+      // --><!]]>
     </script>
-    <noscript>
-      This webpage needs JavaScript to work properly.
-      If you want to, you can check the source code of the project <a href = "https://github.com/Mbodin/murder-generator">there</a>.
-    </noscript>
   </body>
 </html>
 

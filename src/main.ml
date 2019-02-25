@@ -12,23 +12,6 @@ let errorTranslationsDefault =
 (** The translations needed to print error messages. **)
 let errorTranslations = ref errorTranslationsDefault
 
-(** Whether the loading animation is running. **)
-let loading = ref true
-
-(** Stops the loading animation. **)
-let stopLoading _ =
-  if !loading then (
-    ignore (Js.Unsafe.fun_call (Js.Unsafe.js_expr "stopLoading") [||]) ;
-    loading := false) ;
-  Lwt.return ()
-
-(** Starts the loading animation. **)
-let startLoading _ =
-  if not !loading then (
-    ignore (Js.Unsafe.fun_call (Js.Unsafe.js_expr "startLoading") [||]) ;
-    loading := true) ;
-  Lwt.return ()
-
 (** Getting and parsing the translations file. **)
 let get_translations _ =
   let%lwt (translation, languages) =
@@ -148,7 +131,7 @@ let _ =
                   (get_translation "error", get_translation "report",
                    get_translation "there", get_translation "errorDetails") ;
                 Lwt.wakeup_later w lg) ]])) languages)) ;
-        stopLoading () ;%lwt
+        InOut.stopLoading () ;%lwt
         res in
       ask_for_basic { parameters with language = Some language }
     and ask_for_basic parameters =
@@ -197,10 +180,10 @@ let _ =
       let get_translation = get_translation parameters in
       (** Forcing the data to be loaded. **)
       (if Lwt.state data = Lwt.Sleep then
-        startLoading ()
+        InOut.startLoading ()
       else Lwt.return ()) ;%lwt
       let%lwt data = data in
-      stopLoading () ;%lwt
+      InOut.stopLoading () ;%lwt
       (** Asking about categories. **)
       let translate_categories =
         let translate_categories = Driver.translates_category data in fun c ->
@@ -351,13 +334,13 @@ let _ =
     and generate parameters =
       let get_translation = get_translation parameters in
       (** Starts the generation! **)
-      startLoading () ;%lwt
+      InOut.startLoading () ;%lwt
       let%lwt data = data in
       let categories = Utils.assert_option __LOC__ parameters.categories in
       let elements =
         Driver.get_all_elements data categories parameters.player_number in
       ignore elements (* TODO *) ;
-      stopLoading () ;%lwt
+      InOut.stopLoading () ;%lwt
       InOut.print_block (InOut.P [
         InOut.Text (get_translation "underConstruction") ;
         InOut.Text (get_translation "participate") ;
@@ -389,7 +372,7 @@ let _ =
               InOut.Text (Printexc.to_string e)
             ]
         ])) ;
-      stopLoading () ;%lwt
+      InOut.stopLoading () ;%lwt
       Lwt.return ()
     with e' -> (** If there have been an error when printing the error,
                 * we failback to the console. **)

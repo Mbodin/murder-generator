@@ -1,6 +1,22 @@
 open Js_of_ocaml
 
 
+(** Whether the loading animation is currently running. **)
+let loading = ref true
+
+let stopLoading _ =
+  if !loading then (
+    ignore (Js.Unsafe.fun_call (Js.Unsafe.js_expr "stopLoading") [||]) ;
+    loading := false) ;
+  Lwt_js.yield ()
+
+let startLoading _ =
+  if not !loading then (
+    ignore (Js.Unsafe.fun_call (Js.Unsafe.js_expr "startLoading") [||]) ;
+    loading := true) ;
+  Lwt_js.yield ()
+
+
 let get_file url =
   let (res, w) = Lwt.task () in
   let request = XmlHttpRequest.create () in
@@ -151,7 +167,7 @@ let print_block =
 
 
 let createNumberInput d =
-  let d = min 0 d in
+  let d = max 0 d in
   let input = Dom_html.createInput ~_type:(Js.string "number") document in
   ignore (input##setAttribute (Js.string "min") (Js.string "0")) ;
   ignore (input##setAttribute (Js.string "max")
@@ -166,7 +182,8 @@ let createTextInput txt =
   ((input :> Dom_html.element Js.t), fun _ -> Js.to_string input##.value)
 
 let createPercentageInput d =
-  let maxv = 1000 in
+  let d = max 0. (min 1. d) in
+  let maxv = 1_000 in
   let maxvf = float_of_int maxv in
   let input = Dom_html.createInput ~_type:(Js.string "range") document in
   ignore (input##setAttribute (Js.string "min") (Js.string "0")) ;

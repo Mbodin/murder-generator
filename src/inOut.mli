@@ -3,6 +3,11 @@
 
 open Js_of_ocaml
 
+(** Stops the loading animation. **)
+val stopLoading : unit -> unit Lwt.t
+
+(** Starts the loading animation. **)
+val startLoading : unit -> unit Lwt.t
 
 (** Fetch a file from an adress and returns its content. **)
 val get_file : string -> string Lwt.t

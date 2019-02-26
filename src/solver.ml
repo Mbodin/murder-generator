@@ -1,9 +1,15 @@
 
 type global = {
-    element_register : Element.t Utils.Id.map (** The set of all registered elements. **) ;
-    constructor_informations : State.constructor_maps (** Informations about constructors. **) ;
+    element_register : Element.t Utils.Id.map
+      (** The set of all registered elements. **) ;
+    constructor_informations : State.constructor_maps
+      (** Informations about constructors. **) ;
     pool_informations : Pool.global (** Informations needed by the pool. **)
   }
+
+(** Reads the element from the register map. **)
+let read_element g e =
+  Utils.assert_option __LOC__ (Utils.Id.map_inverse g.element_register e)
 
 let empty_global = {
     element_register = Utils.Id.map_create () ;
@@ -13,12 +19,14 @@ let empty_global = {
 
 let register_element g e =
   let (eid, m) = Utils.Id.map_insert_t g.element_register e in
-  let attrs = Element.TODO in
+  let attrs = Element.provided_attributes e in
   { g with element_register = m ;
            pool_informations = Pool.add_element g.pool_informations eid attrs }
 
-let filter_elements f =
-    TODO
+let filter_elements g f =
+  { g with pool_informations =
+      Pool.filter_global g.pool_informations (fun e ->
+        f (read_element g e)) }
 
 type objective = {
     difficulty : int ;
@@ -26,9 +34,10 @@ type objective = {
   }
 
 (** Evaluates a character [c] in a relation state [s] compared to its objective [o].
- * COmplexity is difficult to compensate later on, whilst difficulty
+ * Complexity is difficult to compensate later on, whilst difficulty
  * is easy (it’s just applying an helping element).
- * The evaluation thus punishes more to pass difficult to compensate thresholds. **)
+ * The evaluation thus punishes more increases of complexity above its target than
+ * difficulty. **)
 let evaluate_character o s c =
   let collect f =
     Utils.sum (List.map (Utils.compose f (State.read_relation_state s c))
@@ -41,7 +50,7 @@ let evaluate o s =
   Utils.array_sum (Array.mapi (fun i o ->
     evaluate_character o s (Utils.Id.from_array i)) o)
 
-  (** Given an array of objectives [o], a state [s], and an element [e],
+(** Given an array of objectives [o], a state [s], and an element [e],
  * returns [None] if the element can’t be applied whilst increasing
  * the evaluation of the state relations.
  * If it can, it returns a triple with:
@@ -77,7 +86,8 @@ let compare_grade (progress1, dev1) (progress2, dev2) =
     test (dev1 >= 0 && progress1) (dev2 >= 0 && progress2) (fun _ ->
       compare dev1 dev2))
 
-(** This function iterates of the current state [s] and the pool [p].
+(** This function iterates on the current state [s] and the pool [p], using the
+ * global register [g] and the objective [o].
  * It is parameterised by two numbers:
  * - [optimistic]: the function first extracts this number of elements
  *   from the pool, hoping that several will apply.
@@ -85,7 +95,7 @@ let compare_grade (progress1, dev1) (progress2, dev2) =
  * - [greedy]: In the case where the optimistic approach did not work,
  *   the function extracts up to this number of new elements, halting
  *   on the first one that applies. **)
-let step o optimistic greedy s p =
+let step g o optimistic greedy s p =
   let evs = evaluate o (State.get_relation_state s) in
   let rec optimistic_pick p = function
     | 0 -> (p, [])
@@ -94,12 +104,14 @@ let step o optimistic greedy s p =
       match e with
       | None -> (p, [])
       | Some e ->
+        let e = read_element g e in
         let (p, l) = optimistic_pick p (n - 1) in
         match grade_evs o s evs e with
         | None -> (p, l)
         | Some (inst, progress, dev) -> (p, (e, inst, (progress, dev)) :: l) in
   let (p, l) = optimistic_pick optimistic p in
-  match argmax (fun (e1, inst1, g1) (e2, inst2, g2) -> compare_grade g1 g2) l with
+  match Utils.argmax (fun (e1, inst1, g1) (e2, inst2, g2) ->
+          compare_grade g1 g2) l with
   | Some (e, inst, g) -> (p, Some (Element.apply s e inst))
   | None ->
     let rec greedy_pick p = function
@@ -109,11 +121,14 @@ let step o optimistic greedy s p =
         match e with
         | None -> (p, None)
         | Some e ->
+          let e = read_element g e in
           match grade_evs o s evs e with
           | None -> greedy_pick p (n - 1)
           | Some (inst, progress, dev) -> (p, Some (Element.apply s e inst)) in
     greedy_pick p greedy
 
+let solve g s o =
+  Lwt.return s (* TODO *)
 
 (* TODO: Clean
 
@@ -155,7 +170,7 @@ let rec iterate_step s u =
     let (s, u) = solver_step s u in
     iterate_step s u
 
-let rec solver s = function
+let rec solve s = function
   | [] -> s
   | u :: ul ->
     let u = Utils.two_direction_list_from_list (List.map (fun g -> (g, true)) u) in

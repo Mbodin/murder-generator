@@ -44,13 +44,18 @@ let add_element g e l =
 
 let remove_element g e =
   let l = get_attributes g e in {
-      all_elements = PMap.remove e g.all_elements ;
-      element_attribute =
-        List.fold_left (fun element_attribute a ->
-          let l = get_elements_from_element_attribute element_attribute a in
-          let l = List.filter ((<>) e) l in
-          PMap.add a l element_attribute) g.element_attribute l
+    all_elements = PMap.remove e g.all_elements ;
+    element_attribute =
+      List.fold_left (fun element_attribute a ->
+        let l = get_elements_from_element_attribute element_attribute a in
+        let l = List.filter ((<>) e) l in
+        PMap.add a l element_attribute) g.element_attribute l
   }
+
+let filter_global g f =
+  PMap.foldi (fun e _ g ->
+    if f e then g
+    else remove_element g e) g.all_elements g
 
 type t = {
     current_elements : element Utils.PSet.t ; (** The set of the current elements in the pool. **)
@@ -145,19 +150,23 @@ let pick p =
   | None -> (r, p)
   | Some e -> (Some e, add p e)
 
-(** Only keeps in the pool the elements that satisfy [f]. **)
-let filter f p a =
+let filter p f =
   let rec aux = function
   | [] -> empty p.global
-  | e :: l ->
-    if f a (get_attributes p.global e) then add (aux l) e
-    else aux l
+  | e :: l -> if f e then add (aux l) e else aux l
   in aux (Utils.BidirectionalList.to_list p.pool)
 
-let restrict = filter (fun a l -> List.mem a l)
+(** Filters a pool [p] from a function [f] taking the attributes of each element
+ * and a global attribute.
+ * The function [f] is meant to be instantiated either with
+ * [fun a l -> List.mem a l] or [fun a l -> not (List.mem a l)]. **)
+let filter_attribute f p a =
+  filter p (fun e -> f a (get_attributes p.global e))
+
+let restrict = filter_attribute (fun a l -> List.mem a l)
 
 (** A naive implementation of [filter_out] could be
- * [filter (fun a l -> not (List.mem a l))].
+ * [filter_attribute (fun a l -> not (List.mem a l))].
  * We here chose to be lazy (assuming that the pool is large)
  * and simply rely on the [filtered_out_attributes] mechanism. **)
 let filter_out p a =

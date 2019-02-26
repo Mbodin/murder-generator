@@ -11,12 +11,16 @@ type global
 (** An empty register. **)
 val empty_global : global
 
-(** Register that an element exists, and that it may provide the following attributes. **)
+(** Register that an element exists, and that it may provide the following
+ * attributes. **)
 val add_element : global -> element -> State.attribute list -> global
 
 (** Unregister an element.
  * It won’t be considered by the pool. **)
 val remove_element : global -> element -> global
+
+(** Unregister any element not satisfying the provided predicate. **)
+val filter_global : global -> (element -> bool) -> global
 
 (** The pool type. **)
 type t
@@ -38,6 +42,9 @@ val pop : t -> element option * t
 
 (** Remove from the pool all elements that don’t provide this attribute. **)
 val restrict : t -> State.attribute -> t
+
+(** Only keeps from the pool the elements satisfying the provided predicate. **)
+val filter : t -> (element -> bool) -> t
 
 (** Remove from the pool all elements that provide this attribute. **)
 val filter_out : t -> State.attribute -> t

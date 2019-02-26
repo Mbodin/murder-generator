@@ -36,5 +36,5 @@ val solver_step : State.t -> (Generator.t * bool) Utils.BidirectionalList.t -> S
 *)
 
 (** Runs the solver until no one generator are left. **)
-val solver : global -> State.t -> objective array -> State.t
+val solve : global -> State.t -> objective array -> State.t Lwt.t
 

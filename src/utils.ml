@@ -360,6 +360,8 @@ module PSet = struct
 
     let add e = PMap.add e ()
 
+    let singleton e = add e empty
+
     let remove = PMap.remove
 
     let mem e s =

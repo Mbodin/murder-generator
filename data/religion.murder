@@ -1,0 +1,38 @@
+
+category Religion
+begin
+  translation fr "Religion"
+  translation en "Religion"
+  translation eo "Religio"
+end
+
+
+attribute Specy God
+begin
+  category Religion
+  (* LATER: translations *)
+end
+
+attribute Born AlwaysExisted
+
+element PlayerIsGod
+begin
+  let P be player
+
+  provide compatible attribute Specy to P as God
+end
+
+element GodAlwaysExisted
+begin
+  let P be player with attribute Specy as God
+
+  provide strict attribute Born to P as AlwaysExisted
+end
+
+element GodHasNoGender
+begin
+  let P be player with attribute Specy as God
+
+  provide strict attribute Gender to P as NonBinary
+end
+

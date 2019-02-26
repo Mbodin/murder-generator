@@ -14,6 +14,20 @@ type t =
    * Relation.t array
   ) array
 
+(** Returns the list of attributes provided by this cosntraint. **)
+let provided_attributes_constraint =
+  let aux a = function
+    | State.Fixed_value _ -> Utils.PSet.singleton a
+    | _ -> Utils.PSet.empty in function
+  | Attribute (a, v) -> aux (State.PlayerAttribute a) v
+  | Contact (a, _, v) -> aux (State.ContactAttribute a) v
+
+let provided_attributes e =
+  Utils.PSet.to_list (Array.fold_left (fun s (l, _, _) ->
+      List.fold_left (fun s c ->
+        Utils.PSet.merge s (provided_attributes_constraint c)) s l)
+    Utils.PSet.empty e)
+
 (** States whether [v1] and [v2] are compatible and make some progress.
  * The return value is expressed as for [compatible_and_progress]:
  * [None] means that it is not compatible, [Some true] that it is

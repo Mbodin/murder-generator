@@ -337,9 +337,22 @@ let _ =
       InOut.startLoading () ;%lwt
       let%lwt data = data in
       let categories = Utils.assert_option __LOC__ parameters.categories in
-      let elements =
-        Driver.get_all_elements data categories parameters.player_number in
-      ignore elements (* TODO *) ;
+      let global =
+        let elements_map = Driver.elements data in
+        let elements =
+          Driver.get_all_elements data categories parameters.player_number in
+        let elements =
+          List.map (fun e -> PMap.find e elements_map) elements in
+        List.fold_left Solver.register_element Solver.empty_global elements in
+      let objectives =
+        Array.of_list (List.map (fun (_, complexity, difficulty, _) -> {
+            Solver.complexity = complexity ;
+            Solver.difficulty = difficulty
+          }) parameters.player_information) in
+      let state = State.create_state parameters.player_number in
+      (* TODO: Update the state according to the miscellaneous player
+       * informations. *)
+      let%lwt state = Solver.solve global state objectives in
       InOut.stopLoading () ;%lwt
       InOut.print_block (InOut.P [
         InOut.Text (get_translation "underConstruction") ;

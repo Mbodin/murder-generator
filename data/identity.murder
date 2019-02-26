@@ -1,16 +1,14 @@
 
 declare attribute Born
-(* Only gods and abstract beings are not born, so this is kind of a
- * silly attribute, but we allow it nevertheless. *)
 
 attribute Born True
 
 element Birth
 begin
-    let P be player
+  let P be player
 
-    provide strict attribute Born to P as True
-    (* TODO: provide instance event to P with no event before *)
+  provide strict attribute Born to P as True
+  (* TODO: provide instance event to P with no event before *)
 end
 
 
@@ -47,17 +45,21 @@ begin
 end
 
 attribute Gender NonBinary
+begin
+  compatible with Male
+  compatible with Female
+end
 
 element MaleCharacter
 begin
-  let P be player
+  let P be player with attribute Born as True
 
   provide strict attribute Gender to P as Male
 end
 
 element FemaleCharacter
 begin
-  let P be player
+  let P be player with attribute Born as True
 
   provide strict attribute Gender to P as Female
 end
@@ -138,6 +140,12 @@ begin
   (* LATER: translations *)
 end
 
+attribute Specy Robot
+begin
+  category ScienceFiction
+  (* LATER: translations *)
+end
+
 category OutOfThisUniverse
 begin
   translation fr "Hors de cet univers"
@@ -166,8 +174,17 @@ end
 
 element SpecyHuman
 begin
-    let P be player with attribute Born as True
+  let P be player with attribute Born as True
 
-    provide strict attribute Specy to P as Human
+  provide strict attribute Specy to P as Human
+end
+
+attribute Born Built
+
+element RobotBuilt
+begin
+  let P be player with attribute Born as Built
+
+  provide strict attribute Specy to P as Robot
 end
 

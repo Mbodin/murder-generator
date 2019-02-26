@@ -283,6 +283,9 @@ module PSet : sig
     (** The empty set. **)
     val empty : 'a t
 
+    (** The singleton set. **)
+    val singleton : 'a -> 'a t
+
     (** Check whether a set is empty. **)
     val is_empty : 'a t -> bool
 

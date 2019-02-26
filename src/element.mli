@@ -30,6 +30,9 @@ type t =
                        * other cells). **)
   ) array
 
+(** Returns the list of attribute that an element may provide. **)
+val provided_attributes : t -> State.attribute list
+
 (** Given a state, an element, and an instantiation of the characters, states
  * whether the event can be applied.
  * If not, it returns [None].

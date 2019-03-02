@@ -72,6 +72,7 @@ rule read = parse
   | "translation"           { TRANSLATION }
   | "add"                   { ADD }
   | ':'                     { COLON }
+  | "::"                    { DOUBLECOLON }
   | '"' (strctn as str) '"' { STRING str }
 
   | (['a'-'z'] ident) as id { LIDENT id }

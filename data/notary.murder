@@ -36,6 +36,15 @@ begin
   (* TODO: provide event to P *)
 end
 
+element DwarfFocusedTheirLifeAtAccumulatingGold
+begin
+  let P be player with attribute Specy as Dwarf
+
+  provide compatible attribute Richness to P as Rich
+
+  (* TODO: provide event to P *)
+end
+
 
 declare contact FinancialDebt
 begin
@@ -196,4 +205,5 @@ begin
 
   provide compatible contact Favor from A to B as Large
 end
+
 

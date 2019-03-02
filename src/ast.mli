@@ -17,11 +17,8 @@ type language_tag = string
  * Items’s result are meant to be concatenated (separated by space) to form
  * the overall translation. **)
 type translation_item =
-  | TranslationString of string * language_tag list
-    (** The given string is the translation.
-     * Each tag states how this string should be grammatically interpreted
-     * in interaction with other translations.
-     * FIXME: Shouldn’t this information be in the type [translation] instead? **)
+  | TranslationString of string
+    (** The given string is the translation. **)
   | TranslationVariable of string * language_tag list
     (** The string is a variable name (typically representing a player).
      * The tags are modifiers provided to this variable to fetch a translation
@@ -47,8 +44,15 @@ type target_destination =
   | FromTo of string * string (** From the first player to the second player. **)
   | Between of string * string (** Between both players, in a symmetrical way. **)
 
-(** Describes a translation in a given language and required grammatical cases. **)
-type translation = language * language_tag list * translation_item list
+(** Describes a translation in a given language and required grammatical cases.
+ * The additional tags state how this translation should be grammatically
+ * interpreted in interaction with other translations.
+ * For instance in gendered languages, the generic word for a group of person
+ * could be gendered: the description of the group has to transmit this information
+ * to the translation where it is used.
+ * This is how this second list of tags is used. **)
+type translation =
+  language * language_tag list * translation_item list * language_tag list
 
 (** States that having this constructors set as attribute or contact changes
  * the grammatical cases of the player by implicitely providing the following

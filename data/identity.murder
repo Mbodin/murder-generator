@@ -73,18 +73,18 @@ begin
   translation fr:adj:fem "humaine"
   translation fr:adj:plu:mas "humains"
   translation fr:adj:plu:fem "humaines"
-  translation fr:nom "une personne":fem
-  translation fr:nom:mas "un homme":mas
-  translation fr:nom:fem "une femme":fem
-  translation fr:nom:plu "des personnes":plu:fem
-  translation fr:nom:plu:mas "des hommes":plu:mas
-  translation fr:nom:plu:fem "des femmes":plu:fem
-  translation fr:nom:def "la personne":fem
-  translation fr:nom:def:mas "l'homme":mas
-  translation fr:nom:def:fem "la femme":fem
-  translation fr:nom:def:plu "les personnes":plu:fem
-  translation fr:nom:def:plu:mas "les hommes":plu:mas
-  translation fr:nom:def:plu:fem "les femmes":plu:fem
+  translation fr:nom "une personne"::fem
+  translation fr:nom:mas "un homme"::mas
+  translation fr:nom:fem "une femme"::fem
+  translation fr:nom:plu "des personnes"::plu:fem
+  translation fr:nom:plu:mas "des hommes"::plu:mas
+  translation fr:nom:plu:fem "des femmes"::plu:fem
+  translation fr:nom:def "la personne"::fem
+  translation fr:nom:def:mas "l'homme"::mas
+  translation fr:nom:def:fem "la femme"::fem
+  translation fr:nom:def:plu "les personnes"::plu:fem
+  translation fr:nom:def:plu:mas "les hommes"::plu:mas
+  translation fr:nom:def:plu:fem "les femmes"::plu:fem
   translation en:adj "human"
   translation en:nom "a human being"
   translation en:nom:mas "a man"
@@ -119,12 +119,12 @@ begin
   translation fr:adj:fem "naine"
   translation fr:adj:plu:mas "nains"
   translation fr:adj:plu:fem "naines"
-  translation fr:nom:mas "un nain":mas
-  translation fr:nom:fem "une naine":fem
-  translation fr:nom:plu "des nains":plu:mas
-  translation fr:nom:def:mas "le nain":mas
-  translation fr:nom:def:fem "la naine":fem
-  translation fr:nom:def:plu "les nains":plu:mas
+  translation fr:nom:mas "un nain:":mas
+  translation fr:nom:fem "une naine"::fem
+  translation fr:nom:plu "des nains"::plu:mas
+  translation fr:nom:def:mas "le nain"::mas
+  translation fr:nom:def:fem "la naine"::fem
+  translation fr:nom:def:plu "les nains"::plu:mas
   (* LATER: Other translations *)
 end
 
@@ -143,7 +143,15 @@ end
 attribute Specy Robot
 begin
   category ScienceFiction
-  (* LATER: translations *)
+
+  translation fr:nom "robot"
+  translation fr:nom:plu "robots"
+  translation en:nom "robot"
+  translation en:nom:plu "robots"
+  translation eo:nom "roboto"
+  translation eo:nom:plu "robotoj"
+  translation eo:nom:acc "roboton"
+  translation eo:nom:plu:acc "robotojn"
 end
 
 category OutOfThisUniverse
@@ -186,5 +194,12 @@ begin
   let P be player with attribute Born as Built
 
   provide strict attribute Specy to P as Robot
+end
+
+element RobotNonBinary
+begin
+  let R be player with attribute Specy as Robot
+
+  provide strict attribute Gender to R as NonBinary
 end
 

@@ -1,0 +1,41 @@
+
+category AncestralWar
+begin
+  category NonKids
+
+  translation fr "Guerres ancestrales"
+  translation en "Ancestral wars"
+  translation eo "Pramilitoj"
+end
+
+
+element DwarvesAndElvesAvoidEachOther
+begin
+  let D be player with attribute Specy as Dwarf
+  let E be player with attribute Specy as Elf
+
+  provide relation between D and E as avoidance
+
+  (* TODO: Provide historical reasons. *)
+end
+
+element ElvesCanBeRacist
+begin
+  let E be player with attribute Specy as Elf
+  let P be player with attribute Specy not as Elf
+
+  provide relation from E to P as avoidance
+
+  (* TODO: Provide historical reasons. *)
+end
+
+element HumanBeingsCanBeRacist
+begin
+  let H be player with attribute Specy as Human
+  let P be player with attribute Specy not as Human
+
+  provide relation from H to P as avoidance
+
+  (* TODO: Provide historical reasons. *)
+end
+

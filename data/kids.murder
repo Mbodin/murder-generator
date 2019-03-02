@@ -1,0 +1,8 @@
+
+category NonKids
+begin
+  translation fr "Non adapté à un jeune public"
+  translation en "Unsuitable for children"
+  translation eo "Ne taŭga por junuloj"
+end
+

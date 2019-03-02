@@ -414,12 +414,14 @@ let prepare_declaration i =
       update_dependencies i.current_state.constructor_dependencies
         constr_dep deps in
     let category_translation =
-      List.fold_left (fun translation (lg, tags, items) ->
+      List.fold_left (fun translation (lg, tags, items, tags') ->
           if tags <> [] then
             raise (TranslationError ("category", name, lg, tags)) ;
+          if tags' <> [] then
+            raise (TranslationError ("category", name, lg, tags')) ;
           let str =
             String.concat "" (List.map (function
-              | Ast.TranslationString (str, []) -> str
+              | Ast.TranslationString str -> str
               | _ ->
                 raise (TranslationError ("category", name, lg, tags))) items) in
           Translation.add translation lg id str)
@@ -606,9 +608,13 @@ let parse_element st element_name block =
             let aid = get_attribute_id attribute_functions a in
             let cid = List.map (get_constructor_id attribute_functions aid) c in
             let cid =
-              if n then
-                failwith "TODO!" (* TODO: Add a function is State.Attribute. *)
-              else cid in
+              if n then (
+                let total =
+                  Utils.assert_option __LOC__
+                    (State.PlayerAttribute.constructors
+                      st.constructor_information.player aid) in
+                List.filter (fun c -> not (List.mem c cid)) total
+              ) else cid in
             add_constraint p
               (Element.Attribute (aid, State.One_value_of cid)) ;
             intersect_with_constructor_dependencies_list deps
@@ -617,9 +623,13 @@ let parse_element st element_name block =
             let aid = get_attribute_id contact_functions a in
             let cid = List.map (get_constructor_id contact_functions aid) c in
             let cid =
-              if n then
-                failwith "TODO!" (* TODO *)
-              else cid in
+              if n then (
+                let total =
+                  Utils.assert_option __LOC__
+                    (State.ContactAttribute.constructors
+                      st.constructor_information.contact aid) in
+                List.filter (fun c -> not (List.mem c cid)) total
+              ) else cid in
             add_constraint p
               (Element.Contact (aid, Utils.Id.to_array (get_player p'),
                 State.One_value_of cid)) ;

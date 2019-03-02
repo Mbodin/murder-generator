@@ -82,12 +82,10 @@ module type Attribute = sig
   end
 
 (** A module to express attributes and constructors for players. **)
-module PlayerAttribute : Attribute with type attribute = Utils.Id.t
-                                   and type constructor = Utils.Id.t
+module PlayerAttribute : Attribute
 
 (** A module to express attributes and constructors for contacts between players. **)
-module ContactAttribute : Attribute with type attribute = Utils.Id.t
-                                    and type constructor = Utils.Id.t
+module ContactAttribute : Attribute
 
 (** This data structure stores all the informations about constructors. **)
 type constructor_maps = {

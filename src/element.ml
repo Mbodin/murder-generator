@@ -34,7 +34,7 @@ let provided_attributes e =
  * compatible and progress, and [Some false] that it is compatible
  * but does not progress. **)
 let compatible_and_progress_attribute_value v1 v2 =
-  Utils.option_map (State.attribute_value_progress v1)
+  Option.map (State.attribute_value_progress v1)
     (State.compose_attribute_value v1 v2)
 
 (** Merges two results of [compatible_and_progress]. **)

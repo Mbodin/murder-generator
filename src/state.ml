@@ -68,10 +68,10 @@ module AttributeInst () =
       Utils.Id.map_inverse m a
 
     let constructor_name (_, m, _) c =
-      Utils.option_map snd (Utils.Id.map_inverse m c)
+      Option.map snd (Utils.Id.map_inverse m c)
 
     let constructor_attribute (_, m, _) c =
-      Utils.option_map fst (Utils.Id.map_inverse m c)
+      Option.map fst (Utils.Id.map_inverse m c)
 
     let constructors (_, _, m) a =
       try Some (PMap.find a m)
@@ -152,7 +152,7 @@ let compose_attribute_value v1 v2 =
     if l <> [] then Some (Fixed_value (l, s2)) else None
   | Fixed_value (v1, s1), Fixed_value (v2, s2) ->
     if v1 = v2 then
-      Utils.option_map (fun s3 -> Fixed_value (v1, s3)) (compose_strictness s1 s2)
+      Option.map (fun s3 -> Fixed_value (v1, s3)) (compose_strictness s1 s2)
     else None
 
 let attribute_value_progress v1 v2 =

@@ -51,8 +51,9 @@ let evaluate o s =
     evaluate_character o s (Utils.Id.from_array i)) o)
 
 (** Given an array of objectives [o], a state [s], and an element [e],
- * returns [None] if the element can’t be applied whilst increasing
- * the evaluation of the state relations.
+ * returns [None] if the element can’t be applied at all, and [Some None]
+ * if it can’t be applied whilst increasing the evaluation of the state
+ * relations.
  * If it can, it returns a triple with:
  * - the instantiation that makes it so,
  * - whether the element helps progressing with the attribute values,
@@ -60,7 +61,7 @@ let evaluate o s =
  * The argument [evs] must be [evaluate (State.get_relation_state s)]
  * (it is passed to avoid recomputing it each time). **)
 let grade_evs o s evs e =
-  Utils.if_option (Element.search_instantiation s e) (fun (inst, progress) ->
+  Utils.apply_option (Element.search_instantiation s e) (fun (inst, progress) ->
     let new_relations =
       Element.apply_relations (State.get_relation_state s) e inst in
     let ev = evaluate o new_relations in
@@ -88,93 +89,72 @@ let compare_grade (progress1, dev1) (progress2, dev2) =
 
 (** This function iterates on the current state [s] and the pool [p], using the
  * global register [g] and the objective [o].
+ * Elements that can’t be applied at all are progressively removed from the pool.
  * It is parameterised by two numbers:
  * - [optimistic]: the function first extracts this number of elements
  *   from the pool, hoping that several will apply.
  *   If some apply, the best element is then applied.
- * - [greedy]: In the case where the optimistic approach did not work,
+ * - [greedy]: in the case where the optimistic approach did not work,
  *   the function extracts up to this number of new elements, halting
  *   on the first one that applies. **)
 let step g o optimistic greedy s p =
   let evs = evaluate o (State.get_relation_state s) in
-  let rec optimistic_pick p = function
-    | 0 -> (p, [])
+  (** Extracts [n] elements from the pool, filtering out the ones that don’t
+   * apply, and calling [f] on the ones that does whilst increasing the
+   * evaluation.
+   * The call to [f] is made with a callback to the recursive call of [aux]
+   * if needed. **)
+  let rec aux default f p = function
+    | 0 -> (p, default)
     | n ->
-      let (e, p) = Pool.pick p in
-      match e with
-      | None -> (p, [])
-      | Some e ->
-        let e = read_element g e in
-        let (p, l) = optimistic_pick p (n - 1) in
+      let (ep, p) = Pool.pop p in
+      match ep with
+      | None -> (p, default)
+      | Some ep ->
+        let e = read_element g ep in
         match grade_evs o s evs e with
-        | None -> (p, l)
-        | Some (inst, progress, dev) -> (p, (e, inst, (progress, dev)) :: l) in
-  let (p, l) = optimistic_pick optimistic p in
+        | None -> aux default f p (n - 1)
+        | Some o ->
+          let p = Pool.add p ep in
+          match o with
+          | None -> aux default f p (n - 1)
+          | Some (inst, progress, dev) ->
+            f (fun _ -> aux default f p (n - 1)) p e inst progress dev in
+  (** We first try with the optimistic pick. **)
+  let (p, l) =
+    aux [] (fun callback _ e inst progress dev ->
+      let (p, l) = callback () in
+      (p, (e, inst, (progress, dev)) :: l)) p optimistic in
   match Utils.argmax (fun (e1, inst1, g1) (e2, inst2, g2) ->
           compare_grade g1 g2) l with
   | Some (e, inst, g) -> (p, Some (Element.apply s e inst))
   | None ->
-    let rec greedy_pick p = function
-      | 0 -> (p, None)
-      | n ->
-        let (e, p) = Pool.pick p in
-        match e with
-        | None -> (p, None)
-        | Some e ->
-          let e = read_element g e in
-          match grade_evs o s evs e with
-          | None -> greedy_pick p (n - 1)
-          | Some (inst, progress, dev) -> (p, Some (Element.apply s e inst)) in
-    greedy_pick p greedy
+    (** We then move the the greedy pick. **)
+    aux None (fun _ p e inst progress dev ->
+      (p, Some (Element.apply s e inst))) p greedy
 
 let solve g s o =
-  Lwt.return s (* TODO *)
-
-(* TODO: Clean
-
-let sort_characters_by_expectation s =
-  TODO (* Return the list of characters, the first one being the one
-    the farthest away from its expectations, and the last one the
-    closest, in the current state s. *)
-
-let solver_step s u =
-  match Utils.match_left u with
-  | None -> (s, u)
-  | Some ((g, _), u) ->
-    match sort_characters_by_expectation s with
-    | [] -> (* No character! *) (s, u)
-    | c :: cl ->
-      let (rl, hl, uf, g) = Generator.apply g s c cl in
-      let is_compatible = TODO in
-      let s =
-        if is_compatible then
-          TODO (* apply everything *)
-        else s in
-      let was_a_success =
-        (rl <> [] || hl <> []) && is_compatible in
-      let u =
-        match uf with
-        | Generator.Reuse_as_soon_as_possible ->
-          if was_a_success then
-            Utils.add_left (g, true) u
-          else Utils.add_right (g, false) u
-        | Generator.Reuse_later ->
-          Utils.add_right (g, was_a_success) u
-        | Generator.Do_not_reuse -> u in
-      (s, u)
-
-let rec iterate_step s u =
-  if Utils.for_all (fun (_, b) -> not b) u then
-    s (* All generators have been called and failed to produce anything. *)
-  else
-    let (s, u) = solver_step s u in
-    iterate_step s u
-
-let rec solve s = function
-  | [] -> s
-  | u :: ul ->
-    let u = Utils.two_direction_list_from_list (List.map (fun g -> (g, true)) u) in
-    solver (iterate_step s u) ul
-
-*)
+  let p = Pool.empty g.pool_informations in
+  (* TODO: Adds in the pool all the relevant elements given the given
+   * constraints. *)
+  let add_element p s =
+    (* TODO: Use [evaluate_character] to estimate which player should receive
+     * most attention for now, and add elements that may fit its needs. *)
+    p (* TODO *) in
+  let rec aux s p =
+    Lwt_js.yield () ;%lwt
+    let (p, so) = step g o 5 10 s p in
+    match so with
+    | None ->
+      (** No elements matched: the pool needs to be extended with random
+       * elements. **)
+      let p = add_element p s in
+      Lwt.return s (* TODO: Call one self recursively… under some guard that
+                    * prevents infinite recursion. *)
+    | Some (s, m) ->
+      (* TODO: The map [m] needs to be given recursively to [aux] to be able
+       * to create snapshots of the state when it is nice.
+       * When doing so, the pool can be safely cleared. *)
+      aux s p in
+  aux s p
 

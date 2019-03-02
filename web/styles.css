@@ -165,6 +165,7 @@ input[type="number"] {
   display: inline-block ;
   cursor: pointer ;
   margin-right: 1em ;
+  text-align: center ;
   min-height: 25px ;
   min-width: 42px ;
 }

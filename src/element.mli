@@ -42,7 +42,8 @@ val provided_attributes : t -> State.attribute list
 val compatible_and_progress : State.t -> t -> character array -> bool option
 
 (** Look for instantiations.
- * The second return value is the result of [compatible_and_progress] on this instantiation.
+ * The second return value is the result of [compatible_and_progress] on this
+ * instantiation.
  * It tries to return an instantiation that progresses. **)
 val search_instantiation : State.t -> t -> (character array * bool) option
 
@@ -57,7 +58,8 @@ val search_instantiation : State.t -> t -> (character array * bool) option
  * (that is, for which [State.attribute_value_can_progress] returned true),
  * it will associate [1] to [a]; if it adds an attribute to be defined, it will
  * associate [-1] instead.
- * Once the total number of attribute to be defined is zero, the state can be published. **)
+ * Once the total number of attribute to be defined is zero, the state can be
+ * published. **)
 val apply : State.t -> t -> character array -> State.t * (State.attribute, int) PMap.t
 
 (** Get the resulting relation array from an instantiation.

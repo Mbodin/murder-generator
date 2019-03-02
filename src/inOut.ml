@@ -202,14 +202,14 @@ let createSwitch text texton textoff b f =
   ignore (span##setAttribute (Js.string "class") (Js.string "slider")) ;
   Dom.appendChild label span ;
   Dom.appendChild label (block_node (Text text)) ;
-  Utils.option_iter (fun texton ->
-    let node = block_node (Text (" " ^ texton)) in
-    ignore (node##setAttribute (Js.string "class") (Js.string "textswitchon")) ;
-    Dom.appendChild label node) texton ;
-  Utils.option_iter (fun textoff ->
-    let node = block_node (Text (" " ^ textoff)) in
-    ignore (node##setAttribute (Js.string "class") (Js.string "textswitchoff")) ;
-    Dom.appendChild label node) textoff ;
+  let addText textClass =
+    Option.may (fun text ->
+      Dom.appendChild label (block_node (Text " ")) ;
+      let node = block_node (Text (text)) in
+      ignore (node##setAttribute (Js.string "class") (Js.string textClass)) ;
+      Dom.appendChild label node) in
+  addText "textswitchon" texton ;
+  addText "textswitchoff" textoff ;
   let assign b = (Js.Unsafe.coerce input)##.checked := Js.bool b in
   assign b ;
   ((label :> Dom_html.element Js.t), assign, fun _ ->

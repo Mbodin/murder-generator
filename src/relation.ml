@@ -118,7 +118,7 @@ let simplify r =
       | [] -> None
       | y :: l when x = y -> Some (extract y, l)
       | y :: l ->
-        Utils.option_map (fun (z, l) -> (z, y :: l)) (next_exact x l)
+        Option.map (fun (z, l) -> (z, y :: l)) (next_exact x l)
     in let next x l =
       match next_exact x l with
       | Some v -> v

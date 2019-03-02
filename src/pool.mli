@@ -49,7 +49,7 @@ val filter : t -> (element -> bool) -> t
 (** Remove from the pool all elements that provide this attribute. **)
 val filter_out : t -> State.attribute -> t
 
-(** Add an element to the pool. **)
+(** Add an element to the pool to its end. **)
 val add : t -> element -> t
 
 (** Add all elements that provide this attribute to the pool. **)

@@ -27,14 +27,6 @@ type objective = {
  * Note that most grades are negative. **)
 val evaluate : objective array -> State.relation_state -> int
 
-(*
-val solver_step : State.t -> (Generator.t * bool) Utils.BidirectionalList.t -> State.t * (Generator.t * bool) Utils.BidirectionalList.t
-(** Uses the given generator to update the state and the generator list.
- * Each generator is associated a boolean to know whether its last call was
- * successful (or that it has not yet been called): when every generator
- * is associated the value false, it is time to stop. **)
-*)
-
 (** Runs the solver until no one generator are left. **)
 val solve : global -> State.t -> objective array -> State.t Lwt.t
 

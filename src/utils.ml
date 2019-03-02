@@ -9,12 +9,8 @@ let id x = x
 
 let compose f g x = f (g x)
 
-let option_map f = function
-  | Some x -> Some (f x)
-  | None -> None
-
-let option_iter f o =
-  ignore (option_map f o)
+let apply_option o f =
+  Option.map f o
 
 let if_option = function
   | None -> fun _ -> None
@@ -90,7 +86,7 @@ let rec list_remove i = function
 let rec list_predicate_index f = function
   | [] -> None
   | a :: _ when f a -> Some 0
-  | _ :: l -> option_map ((+) 1) (list_predicate_index f l)
+  | _ :: l -> Option.map ((+) 1) (list_predicate_index f l)
 
 let list_index e = list_predicate_index ((=) e)
 
@@ -250,7 +246,7 @@ module UnionFind = struct
         pi'
 
     let find (m, p) e =
-      try option_map (representant p) (Id.get_id m e)
+      try Option.map (representant p) (Id.get_id m e)
       with Not_found -> assert false
 
     let find_insert mp e =

@@ -7,17 +7,11 @@ val id : 'a -> 'a
 (** Composes two functions. **)
 val compose : ('b -> 'c) -> ('a -> 'b) -> 'a -> 'c
 
-(** Maps the option type. **)
-val option_map : ('a -> 'b) -> 'a option -> 'b option
-
-(** Iterate over the option type. **)
-val option_iter : ('a -> unit) -> 'a option -> unit
-
 (** The monadic version of [option_map] **)
 val if_option : 'a option -> ('a -> 'b option) -> 'b option
 
-(** Extracts the content of an option type, with a default value. **)
-val unsome_default : 'a -> 'a option -> 'a
+(** Maps over the option type. **)
+val apply_option : 'a option -> ('a -> 'b) -> 'b option
 
 (** If one is *sure* that an option type is actually defined,
  * this function can extract its value.

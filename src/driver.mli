@@ -34,6 +34,10 @@ exception SelfRelation of string * string
  * The third and fourth argument indicates which translation is invalid. **)
 exception TranslationError of string * string * Ast.language * Ast.language_tag list
 
+(** The given element can’t be applied (typically because some constraints
+ * are incompatible). **)
+exception VacuumElement of string
+
 (** Treating the data sent from the parser is done in two phases.
  * The first phase is to assimilate each globally declared names
  * into identifiers.

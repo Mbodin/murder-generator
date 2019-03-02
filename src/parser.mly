@@ -18,7 +18,7 @@ open Ast
 %token          PLAYER EVENT
 %token          ALL
 %token          DECLARE PROVIDE LET BE
-%token          WITH AND OR FROM TO BETWEEN AS
+%token          WITH AND OR NOT FROM TO BETWEEN AS
 %token          STRICT COMPATIBLE
 %token          NEUTRAL HATE TRUST CHAOTIC UNDETERMINED AVOIDANCE
 %token          ASYMMETRICAL EXPLOSIVE STRONG
@@ -32,11 +32,11 @@ open Ast
 main: l = list (declaration); EOF { l }
 
 declaration:
-  | DECLARE; k = attribute_kind; id = UIDENT; b = loption (block)
+  | DECLARE; k = attribute_kind; id = UIDENT; b = block
     { DeclareInstance (k, id, b) }
-  | k = attribute_kind; attr = UIDENT; constructor = UIDENT; b = loption (block)
+  | k = attribute_kind; attr = UIDENT; constructor = UIDENT; b = block
     { DeclareConstructor (k, attr, constructor, b) }
-  | CATEGORY; name = UIDENT; c = loption (block)
+  | CATEGORY; name = UIDENT; c = block
     { DeclareCategory (name, c) }
   | ELEMENT; name = UIDENT; c = block
     { DeclareElement (name, c) }
@@ -45,13 +45,14 @@ attribute_kind:
   | ATTRIBUTE   { Attribute }
   | CONTACT     { Contact }
 
-block: BEGIN; l = list (command); END { l }
+block: l = loption (BEGIN; l = list (command); END { l })   { l }
 
 language:
   | lang = LIDENT   { lang }
   (* Any two- or three-characters identifier can be a language. *)
   | AND             { "and" }
   | OR              { "or" }
+  | NOT             { "not" }
   | ALL             { "all" }
   | END             { "end" }
   | LET             { "let" }
@@ -110,10 +111,13 @@ target_destination:
     { Between (p1, p2) }
 
 player_constraint:
-  | WITH; ATTRIBUTE; a = UIDENT; AS; v = UIDENT
-    { HasAttribute (a, v) }
-  | WITH; CONTACT; c = UIDENT; TO; p = UIDENT; AS; v = UIDENT
-    { HasContact (c, p, v) }
+  | WITH; ATTRIBUTE; a = UIDENT;
+    n = boption (NOT { }); AS; v = separated_list (OR, UIDENT)
+    { HasAttribute (a, n, v) }
+  | WITH; CONTACT; c = UIDENT;
+    TO; p = UIDENT;
+    n = boption (NOT { }); AS; v = separated_list (OR, UIDENT)
+    { HasContact (c, p, n, v) }
 
 relation: b = boption (STRONG { }); r = relation_content { (r, b) }
 

@@ -159,6 +159,8 @@ exception SelfRelation of string * string
 
 exception TranslationError of string * string * Ast.language * Ast.language_tag list
 
+exception VacuumElement of string
+
 
 (** Converts an [Ast.block] into a [block].
  * It takes a list of command types and checks that only these are present
@@ -459,6 +461,9 @@ let get_constructor_dependencies s id =
 
 (** Parses generates an element from a [state] and a [block]. **)
 let parse_element st element_name block =
+  let get_constructor_dependencies cid =
+    try get_constructor_dependencies st cid
+    with Not_found -> assert false in
   (** Before anything, we get the number and names of each declared players. **)
   let n = List.length block.let_player in
   let player_names =
@@ -540,14 +545,27 @@ let parse_element st element_name block =
    * Note that the corresponding attribute’s dependencies already have been
    * reported to the constructor: there is no need for an additional merge. **)
   let merge_with_constructor_dependencies deps cid =
-    let ndeps =
-      try get_constructor_dependencies st cid
-      with Not_found -> assert false in
-    Utils.PSet.merge deps ndeps in
-  (** An alternative to [merge_with_constructor_dependencies] when given an list. **)
+    Utils.PSet.merge deps (get_constructor_dependencies cid) in
+  (** An alternative to [merge_with_constructor_dependencies] when given a list. **)
   let merge_with_constructor_dependencies_list deps =
     List.fold_left (fun deps cid ->
       merge_with_constructor_dependencies deps cid) deps in
+  (** There are places where instead of wanting the union of all dependencies, we
+   * only want to perform their intersection (typically, if an element requires
+   * one of several conditions, this only adds the intersection of the category
+   * dependencies of each conditions to the element. **)
+  let intersect_with_constructor_dependencies deps cid =
+    Utils.PSet.inter deps (get_constructor_dependencies cid) in
+  (** An alternative to [intersect_with_constructor_dependencies] when given a
+   * list.
+   * We however still want to merge this intersection with the old dependencies. **)
+  let intersect_with_constructor_dependencies_list deps = function
+    | [] -> raise (VacuumElement element_name)
+    | cid :: cidl ->
+      Utils.PSet.merge deps
+        (List.fold_left (fun deps cid ->
+            intersect_with_constructor_dependencies deps cid)
+          (get_constructor_dependencies cid) cidl) in
   (** We now consider attributes. **)
   let deps =
     List.fold_left (fun deps pa ->
@@ -584,19 +602,29 @@ let parse_element st element_name block =
     List.fold_left (fun deps (p, pc) ->
       let p = get_player p in
       List.fold_left (fun deps -> function
-          | Ast.HasAttribute (a, c) ->
+          | Ast.HasAttribute (a, n, c) ->
             let aid = get_attribute_id attribute_functions a in
-            let cid = get_constructor_id attribute_functions aid c in
+            let cid = List.map (get_constructor_id attribute_functions aid) c in
+            let cid =
+              if n then
+                failwith "TODO!" (* TODO: Add a function is State.Attribute. *)
+              else cid in
             add_constraint p
-              (Element.Attribute (aid, State.One_value_of [cid])) ;
-            merge_with_constructor_dependencies deps (State.PlayerConstructor cid)
-          | Ast.HasContact (a, p', c) ->
+              (Element.Attribute (aid, State.One_value_of cid)) ;
+            intersect_with_constructor_dependencies_list deps
+              (List.map (fun id -> State.PlayerConstructor id) cid)
+          | Ast.HasContact (a, p', n, c) ->
             let aid = get_attribute_id contact_functions a in
-            let cid = get_constructor_id contact_functions aid c in
+            let cid = List.map (get_constructor_id contact_functions aid) c in
+            let cid =
+              if n then
+                failwith "TODO!" (* TODO *)
+              else cid in
             add_constraint p
               (Element.Contact (aid, Utils.Id.to_array (get_player p'),
-                State.One_value_of [cid])) ;
-            merge_with_constructor_dependencies deps (State.ContactConstructor cid))
+                State.One_value_of cid)) ;
+            intersect_with_constructor_dependencies_list deps
+              (List.map (fun id -> State.ContactConstructor id) cid))
         deps pc) deps block.let_player in
   (element, deps)
 

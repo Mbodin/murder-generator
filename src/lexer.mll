@@ -50,6 +50,7 @@ rule read = parse
   | "with"                  { WITH }
   | "and"                   { AND }
   | "or"                    { OR }
+  | "not"                   { NOT }
   | "from"                  { FROM }
   | "to"                    { TO }
   | "between"               { BETWEEN }

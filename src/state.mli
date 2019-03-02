@@ -29,7 +29,8 @@ val create_relation_state : int -> relation_state
 type character_state
 
 (** A signature for the various attribute/constructor structures.
- * This signature is used in particular for the player attributes and the contact attributes. **)
+ * This signature is used in particular for the player attributes and the contact
+ * attributes. **)
 module type Attribute = sig
 
     (** The type of attributes. **)

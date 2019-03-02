@@ -22,6 +22,19 @@ body {
   transform: translate(-50%, -50%) ;
 }
 
+#loadingSVGScale {
+  transition: .3s ;
+}
+
+.loadingStart {
+  transform: scale(1, 1) ;
+  cursor: progress ;
+}
+
+.loadingStop {
+  transform: scale(0, 0) ;
+}
+
 #response {
   max-width: 1000px ;
   margin: 0 auto ;
@@ -150,9 +163,10 @@ input[type="number"] {
 .switch {
   position: relative ;
   display: inline-block ;
-  width: 40px ;
-  height: 24px ;
+  cursor: pointer ;
   margin-right: 1em ;
+  min-height: 25px ;
+  min-width: 42px ;
 }
 
 .switch input {
@@ -163,7 +177,6 @@ input[type="number"] {
 
 .slider {
   position: absolute ;
-  cursor: pointer ;
   border-radius: 29px ;
   top: 0 ;
   left: 0 ;
@@ -171,6 +184,8 @@ input[type="number"] {
   bottom: 0 ;
   background-color: #babdb6 ;
   transition: .4s ;
+  width: 40px ;
+  height: 24px ;
 }
 
 .slider::before {
@@ -185,6 +200,10 @@ input[type="number"] {
   transition: .4s ;
 }
 
+.slider + span {
+  margin-left: 1em ;
+}
+
 input[type="checkbox"]:checked + .slider {
   background-color: #5c3566 ;
 }
@@ -197,19 +216,19 @@ input[type="checkbox"]:checked + .slider::before {
   transform: translateX(16px) ;
 }
 
-input[type="checkbox"] + .textswitchon {
+input[type="checkbox"] ~ .textswitchon {
   display: none ;
 }
 
-input[type="checkbox"]:checked + .textswitchon {
+input[type="checkbox"]:checked ~ .textswitchon {
   display: inline-block ;
 }
 
-input[type="checkbox"] + .textswitchoff {
+input[type="checkbox"] ~ .textswitchoff {
   display: inline-block ;
 }
 
-input[type="checkbox"]:checked + .textswitchoff {
+input[type="checkbox"]:checked ~ .textswitchoff {
   display: none ;
 }
 

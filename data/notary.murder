@@ -134,8 +134,7 @@ begin
   provide attribute Job to B as Seller
 
   provide relation between B and A as asymmetrical trust undetermined
-  provide compatible contact Known from B to A as True
-  provide compatible contact Known from A to B as True
+  provide compatible contact Known between B and A as True
 
   (* provide event to B (* TODO: Got rich after the shop got working *) *)
 end
@@ -153,8 +152,7 @@ begin
   provide attribute Job to B as Seller
 
   provide relation between B and A as asymmetrical avoidance hate
-  provide compatible contact Known from B to A as True
-  provide compatible contact Known from A to B as True
+  provide compatible contact Known between B and A as True
 
   (* provide event to B (* TODO: Got bankrupt *) *)
 end

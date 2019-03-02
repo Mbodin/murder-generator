@@ -18,8 +18,10 @@ end
 
 attribute Famousness Hidden
 begin
+  category NonKids
+
   (* The character has been actively hidden from the general public:
-    he or she wants not to be famous and actively seeks it. *)
+    he or she tries its best not to be famous. *)
 end
 
 element FamousKnown
@@ -28,6 +30,14 @@ begin
   let B be player with attribute Famousness as Famous
 
   provide compatible contact Known from B to A as True
+end
+
+element HiddenUnknown
+begin
+  let A be player
+  let B be player with attribute Famousness as Hidden
+
+  provide compatible contact Known from B to A as False
 end
 
 element FamousCanDoFavors

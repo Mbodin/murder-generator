@@ -12,14 +12,13 @@
     <div id = "response"></div>
 
     <svg version = "1.1" baseProfile = "tiny" width = "100" height = "100" xmlns="http://www.w3.org/2000/svg" id = "loadingSVG">
-      <g id = "loading-global-transform" transform = "scale(1, 1)">
-        <g transform = "translate(50, 50)">
+      <g transform = "translate(50, 50)">
+        <g id = "loadingSVGScale">
           <g transform = "translate(-50, -50)">
             <circle cx = "50" cy = "50" r = "50" fill = "#75507b" />
             <path d = "M 50,20 A 30 30 0 0 1 80,50" fill = "none" stroke = "#ad7fa8" stroke-width = "5px" />
             <animateTransform attributeType = "xml" attributeName = "transform" type = "rotate" from = "0 50 50" to = "360 50 50" dur = "2s" additive = "sum" repeatCount = "indefinite" />
           </g>
-          <animateTransform id = "loading-animation" attributeType = "xml" attributeName = "transform" type = "scale" additive = "sum" from = "0 0" to = "0 0" begin = "0s" dur = "0.3s" repeatCount = "1" />
         </g>
       </g>
     </svg>
@@ -31,43 +30,17 @@
     <script><!--//--><![CDATA[//><!--
       /* @license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3-or-Later */
       (function (){
-        var loadingAnimation = document.getElementById ("loading-animation")
-        var loadingGlobalTransform = document.getElementById ("loading-global-transform")
+        var loadingSVGScale = document.getElementById ("loadingSVGScale")
         var loadingSVG = document.getElementById ("loadingSVG")
         var responseDiv = document.getElementById ("response")
 
-        function isLoading (){
-          return (loadingAnimation.getAttribute ("to")[0] === "1")
-        }
-
         function startLoading (){
-          if (isLoading ()) return
-
-          var startValue = loadingAnimation.animVal
-          if (startValue === undefined) startValue = "0 0"
-          loadingAnimation.removeAttribute ("values")
-          loadingAnimation.removeAttribute ("keyTimes")
-          loadingAnimation.setAttribute ("dur", "1s")
-          loadingAnimation.setAttribute ("from", startValue)
-          loadingAnimation.setAttribute ("to", "1 1")
-          loadingGlobalTransform.setAttribute ("transform", "scale(1, 1)")
-          loadingAnimation.beginElement ()
+          loadingSVGScale.setAttribute ("class", "loadingStart")
           loadingSVG.style.zIndex = "1"
         }
 
         function stopLoading (){
-          if (!isLoading ()) return
-
-          var startValue = loadingAnimation.animVal
-          if (startValue === undefined) startValue = "1 1"
-          loadingAnimation.setAttribute ("dur", "1s")
-          loadingAnimation.setAttribute ("from", startValue)
-          loadingAnimation.setAttribute ("to", "0 0")
-          loadingAnimation.setAttribute ("values", startValue + ";0 0;0 0")
-          loadingAnimation.setAttribute ("keyTimes", "0;0.3;1")
-          setTimeout (function () {
-            loadingGlobalTransform.setAttribute ("transform", "scale(0, 0)") }, 300)
-          loadingAnimation.beginElement ()
+          loadingSVGScale.setAttribute ("class", "loadingStop")
           loadingSVG.style.zIndex = "-1"
         }
 

@@ -22,6 +22,7 @@ end
 element ElvesCanBeRacist
 begin
   let E be player with attribute Specy as Elf
+                  with contact Known to P as False
   let P be player with attribute Specy not as Elf
 
   provide relation from E to P as avoidance
@@ -32,6 +33,7 @@ end
 element HumanBeingsCanBeRacist
 begin
   let H be player with attribute Specy as Human
+                  with contact Known to P as False
   let P be player with attribute Specy not as Human
 
   provide relation from H to P as avoidance

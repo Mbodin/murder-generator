@@ -11,94 +11,91 @@ contact Known True
 contact Known False
 
 declare contact FamilyMember
+begin
+  category Family
+end
+
 contact FamilyMember Siblings
 contact FamilyMember Parent
 contact FamilyMember Child
 
 element SiblingsKnowEachOthers
 begin
-  category Family
-
   let A be player with contact FamilyMember to B as Siblings
   let B be player with contact FamilyMember to A as Siblings
 
-  provide contact Known from A to B as True
-  provide contact Known from B to A as True
+  provide contact Known between A and B as True
 end
 
 element ParentsChildsKnowEachOthers
 begin
-  category Family
-
   let A be player with contact FamilyMember to B as Child
   let B be player with contact FamilyMember to A as Parent
 
-  provide contact Known from A to B as True
-  provide contact Known from B to A as True
+  provide contact Known between A and B as True
 end
 
 
 element TrustedSiblings
 begin
-  category Family
-
   let A be player
   let B be player
 
   provide relation between A and B as trust
-  provide strict contact FamilyMember from A to B as Siblings
-  provide strict contact FamilyMember from B to A as Siblings
+  provide strict contact FamilyMember between A and B as Siblings
   (* TODO: provide event to A after *)
   (* TODO: provide event to B *)
 end
 
 element HatingSiblings
 begin
-  category Family
-
   let A be player
   let B be player
 
   provide relation between A and B as explosive trust hate
-  provide strict contact FamilyMember from A to B as Siblings
-  provide strict contact FamilyMember from B to A as Siblings
+  provide strict contact FamilyMember between A and B as Siblings
   (* TODO: provide event to A *)
   (* TODO: provide event to B *)
 end
 
 element AsymmetricalSiblings
 begin
-  category Family
-
   let A be player
   let B be player
 
   provide relation between A and B as asymmetrical trust hate
-  provide strict contact FamilyMember from A to B as Siblings
-  provide strict contact FamilyMember from B to A as Siblings
+  provide strict contact FamilyMember between A and B as Siblings
   (* TODO: provide event to A *)
   (* TODO: provide event to B *)
 end
 
 element LostSiblings
 begin
-  category Family
-  category DarkSecrets
-
   let A be player
   let B be player
 
   provide relation between A and B as strong neutral
-  provide strict contact FamilyMember from A to B as Siblings
-  provide strict contact FamilyMember from B to A as Siblings
-  provide compatible contact Known from A to B as False
+  provide strict contact FamilyMember between A and B as Siblings
+  provide compatible contact Known between A and B as False
+end
+
+element HiddenSiblings
+begin
+  category DarkSecrets
+
+  let A be player with attribute Famousness as Hidden
+  let B be player
+
+  provide relation from A to B as strong undetermined
+  provide strict contact FamilyMember between A and B as Siblings
+  provide compatible contact Known from A to B as True
   provide compatible contact Known from B to A as False
+
+  (* TODO: An event explaining this situation. *)
 end
 
 element Parent
 begin
-  category Family
-
   let A be player
   let B be player
 

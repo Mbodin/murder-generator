@@ -192,7 +192,7 @@ let createPercentageInput d =
   ((input :> Dom_html.element Js.t), fun _ ->
     (max 0. (min maxvf (float_of_string (Js.to_string input##.value)))) /. maxvf)
 
-let createSwitch b f =
+let createSwitch text texton textoff b f =
   let label = Dom_html.createLabel document in
   ignore (label##setAttribute (Js.string "class") (Js.string "switch")) ;
   let input = Dom_html.createInput ~_type:(Js.string "checkbox") document in
@@ -201,6 +201,15 @@ let createSwitch b f =
   let span = Dom_html.createSpan document in
   ignore (span##setAttribute (Js.string "class") (Js.string "slider")) ;
   Dom.appendChild label span ;
+  Dom.appendChild label (block_node (Text text)) ;
+  Utils.option_iter (fun texton ->
+    let node = block_node (Text (" " ^ texton)) in
+    ignore (node##setAttribute (Js.string "class") (Js.string "textswitchon")) ;
+    Dom.appendChild label node) texton ;
+  Utils.option_iter (fun textoff ->
+    let node = block_node (Text (" " ^ textoff)) in
+    ignore (node##setAttribute (Js.string "class") (Js.string "textswitchoff")) ;
+    Dom.appendChild label node) textoff ;
   let assign b = (Js.Unsafe.coerce input)##.checked := Js.bool b in
   assign b ;
   ((label :> Dom_html.element Js.t), assign, fun _ ->

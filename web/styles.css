@@ -185,15 +185,31 @@ input[type="number"] {
   transition: .4s ;
 }
 
-input:checked + .slider {
+input[type="checkbox"]:checked + .slider {
   background-color: #5c3566 ;
 }
 
-input:focus + .slider {
+input[type="checkbox"]:focus + .slider {
   box-shadow: 0 0 1px #5c3566 ;
 }
 
-input:checked + .slider::before {
+input[type="checkbox"]:checked + .slider::before {
   transform: translateX(16px) ;
+}
+
+input[type="checkbox"] + .textswitchon {
+  display: none ;
+}
+
+input[type="checkbox"]:checked + .textswitchon {
+  display: inline-block ;
+}
+
+input[type="checkbox"] + .textswitchoff {
+  display: inline-block ;
+}
+
+input[type="checkbox"]:checked + .textswitchoff {
+  display: none ;
 }
 

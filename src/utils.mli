@@ -10,6 +10,9 @@ val compose : ('b -> 'c) -> ('a -> 'b) -> 'a -> 'c
 (** Maps the option type. **)
 val option_map : ('a -> 'b) -> 'a option -> 'b option
 
+(** Iterate over the option type. **)
+val option_iter : ('a -> unit) -> 'a option -> unit
+
 (** The monadic version of [option_map] **)
 val if_option : 'a option -> ('a -> 'b option) -> 'b option
 

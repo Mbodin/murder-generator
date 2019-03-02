@@ -13,6 +13,9 @@ let option_map f = function
   | Some x -> Some (f x)
   | None -> None
 
+let option_iter f o =
+  ignore (option_map f o)
+
 let if_option = function
   | None -> fun _ -> None
   | Some x -> fun f -> f x

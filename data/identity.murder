@@ -119,7 +119,7 @@ begin
   translation fr:adj:fem "naine"
   translation fr:adj:plu:mas "nains"
   translation fr:adj:plu:fem "naines"
-  translation fr:nom:mas "un nain:":mas
+  translation fr:nom:mas "un nain"::mas
   translation fr:nom:fem "une naine"::fem
   translation fr:nom:plu "des nains"::plu:mas
   translation fr:nom:def:mas "le nain"::mas

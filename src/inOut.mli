@@ -21,10 +21,8 @@ type layout =
 
 (** A simplified representation of DOM’s nodes. **)
 type block =
-  | Div of layout * block list
-      (** A div node, with its layout. **)
-  | P of block list
-      (** A paragraph node. **)
+  | Div of layout * block list (** A div node, with its layout. **)
+  | P of block list (** A paragraph node. **)
   | List of bool * block list
       (** A list of items.
        * The boolean indicates whether bullets should be drawn. **)
@@ -68,6 +66,9 @@ val createPercentageInput : float -> Dom_html.element Js.t * (unit -> float)
 
 (** Create a switch button.
  * It takes a function that will be called at each state change as argument.
- * It also returns a setter and a getter. **)
-val createSwitch : bool -> (unit -> unit) -> Dom_html.element Js.t * (bool -> unit) * (unit -> bool)
+ * It also returns a setter and a getter.
+ * The first string is the text associated with the button, to which can be
+ * added two facultative texts: one added afterwards for when the button is
+ * on, and one when the button is off. **)
+val createSwitch : string -> string option -> string option -> bool -> (unit -> unit) -> Dom_html.element Js.t * (bool -> unit) * (unit -> bool)
 

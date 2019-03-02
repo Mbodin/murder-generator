@@ -199,8 +199,17 @@ let _ =
       let onCategoryClick = ref (fun _ -> ()) in
       let categoriesButtons =
         List.fold_left (fun m c ->
+          let dependencies =
+            let deps =
+              List.map translate_categories (Utils.PSet.to_list
+                (Driver.get_category_dependencies data c)) in
+            if deps = [] then None
+            else
+              Some ("(" ^ get_translation "categoryDepends" ^ " "
+                    ^ print_list (get_translation "and") deps ^ ")") in
           let (e, set, get) =
-            InOut.createSwitch (Utils.PSet.mem c selected_categories)
+            InOut.createSwitch (translate_categories c)
+              None dependencies (Utils.PSet.mem c selected_categories)
               (fun _ -> !onCategoryClick c) in
           PMap.add c (e, set, get, Utils.PSet.empty) m) PMap.empty all_categories in
       let categoriesButtons =
@@ -233,19 +242,8 @@ let _ =
                   PMap.iter (fun _ (_, set, _, _) -> set true) categoriesButtons) ;
             ]) ;
           InOut.List (false,
-            PMap.foldi (fun c (e, _, _, _) l ->
-              InOut.P ([
-                  InOut.Node e ;
-                  InOut.Text (translate_categories c)
-                ] @ (
-                  let deps =
-                    List.map translate_categories (Utils.PSet.to_list
-                      (Driver.get_category_dependencies data c)) in
-                  if deps = [] then []
-                  else
-                    [ InOut.Text ("(" ^ get_translation "categoryDepends" ^ " "
-                                  ^ print_list (get_translation "and") deps ^ ")") ]
-                )) :: l) categoriesButtons [])
+            PMap.fold (fun (e, _, _, _) l -> InOut.Node e :: l)
+              categoriesButtons [])
         ])) ;
       next_button parameters (fun _ ->
           let selected_categories =

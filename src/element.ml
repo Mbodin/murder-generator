@@ -48,7 +48,8 @@ let merge_progress b1 b2 =
 
 (** Checks whether the constraints [conss] are valid for the
  * character [c] in the character state [cst].
- * The contact case is given as argument as the function [f]. **)
+ * The contact case is given as argument as the function [f].
+ * Events constraints [evs] are also checked by this function. **)
 let respect_constraints_base f cst conss evs c =
   merge_progress
     (List.fold_left (fun b cons ->
@@ -89,12 +90,13 @@ let compatible_and_progress st (e, other) inst =
       (respect_constraints_inst inst cst conss evs c)) (Some false) inst
 
 let search_instantiation st (e, other) =
-  (* TODO: This function could be made faster by considering which character
-   * can be placed in the other category, and check that at each choice of
-   * player in to represent a particular player element, there are still
-   * valid instantiations of the [other]. *)
   let cst = State.get_character_state st in
   let all_players = State.all_players st in
+  (** Players that can be placed as [other]. **)
+  let possible_other =
+    Utils.PSet.from_list
+      (List.filter (fun c ->
+        respect_constraints cst other [] c <> None) all_players) in
   let possible_players_progress_no_progress =
     Array.map (fun ei ->
       let (conss, evs, rs) = ei in
@@ -107,10 +109,12 @@ let search_instantiation st (e, other) =
         List.partition (fun (_, d) -> d = Some true) compatible_list in
       (List.map fst progress, List.map fst no_progress)) e in
   let possible_players =
-    (** Possible players for each event.
+    (** Possible players for each variable.
      * Players that make the state progress are always put forwards. **)
     Array.map (fun (p, np) ->
         Utils.shuffle p @ Utils.shuffle np) possible_players_progress_no_progress in
+  (** The following array indicates which player variable should be considered
+   * first. **)
   let redirection_array =
     let redirection_array = Utils.seq_array (Array.length e) in
     Array.sort (fun i j ->
@@ -135,16 +139,31 @@ let search_instantiation st (e, other) =
        | Some progress -> Some (inst, progress))
     | i :: redirection_list ->
       let possible = possible_players.(i) in
+      let partial_instantiation_set = Utils.PSet.from_list partial_instantiation in
+      (** We remove already chosen players (a player can’t be chosen twice). **)
       let possible =
-        List.filter (fun j -> not (List.mem j partial_instantiation)) possible in
+        List.filter (fun j -> not (Utils.PSet.mem j partial_instantiation_set))
+          possible in
+      (** We filter out possibilities that would make further instantiations
+       * impossible to satisfy the constraints on [other]. **)
+      let possible =
+        let possible_future =
+          Utils.PSet.flatten (Utils.PSet.from_list (List.map (fun i ->
+            Utils.PSet.from_list (possible_players.(i))) redirection_list)) in
+        List.filter (fun j ->
+          List.for_all (fun p ->
+              p = j
+              || Utils.PSet.mem p partial_instantiation_set
+              || Utils.PSet.mem p possible_other
+              || Utils.PSet.mem p (Utils.PSet.remove j possible_future))
+            all_players) possible in
       let rec aux' = function
         | [] -> None (** No instantiation led to a compatible state. **)
         | j :: l ->
           match aux (j :: partial_instantiation) redirection_list with
           | None -> aux' l
-          | Some r -> Some r
-      in aux' possible
-    in
+          | Some r -> Some r in
+      aux' possible in
   aux [] (Array.to_list redirection_array)
 
 let apply state (e, other) inst =

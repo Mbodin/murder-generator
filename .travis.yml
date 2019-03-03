@@ -34,11 +34,11 @@ install:
   - ${HOME}/opam install ppx_deriving js_of_ocaml-ppx_deriving_json
 
 before_script:
-  - ./build.sh murderFiles.ml
-  - ./build.sh usedTranslations.ml
+  - ./build.sh check murderFiles.ml
+  - ./build.sh check usedTranslations.ml
 
 script:
-  - ./build.sh && mv main.js web/
+  - ./build.sh check main.js && mv main.js web/
   - ./build.sh tests.byte && ./tests.byte
 
 deploy:

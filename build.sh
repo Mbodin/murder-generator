@@ -6,6 +6,20 @@ ROLOC="" # "\e[0m"
 
 DEBUG="false"
 
+# The “check” command checks that the given file was not committed before use.
+if [ -z $1 ]
+then
+  CHECK="false"
+else
+  if [ $1 = "check" ]
+  then
+    CHECK="true"
+    shift
+  else
+    CHECK="false"
+  fi
+fi
+
 if [ -z $1 ]
 then
   echo "${COLOR}No argument given: compiling main.js as a default.${ROLOC}"
@@ -16,7 +30,12 @@ else
 
   if [ $1 = "murderFiles.ml" ]
   then
-    echo "${COLOR}Creating murderFiles.ml from actual content…${ROLOC}"
+    if [ $CHECK = "true" ]
+    then
+      grep '^let .* = \[\]$' src/murderFiles.ml && echo "${COLOR}File $1 was safe.${ROLOC}" || (echo "${COLOR}Unsafe file $1.${ROLOC}"; exit 1)
+    fi
+
+    echo "${COLOR}Creating $1 from actual content…${ROLOC}"
 
     # Overwriting the dummy file [src/murderFiles.ml] with the actual real content.
     # As this overwrites a committed file, please only do that on deployment.
@@ -28,7 +47,12 @@ else
 
   if [ $1 = "usedTranslations.ml" ]
   then
-    echo "${COLOR}Creating usedTranslations.ml from actual content…${ROLOC}"
+    if [ $CHECK = "true" ]
+    then
+      grep '^let .* = \[\]$' src/usedTranslations.ml && echo "${COLOR}File $1 was safe.${ROLOC}" || (echo "${COLOR}Unsafe file $1.${ROLOC}"; exit 1)
+    fi
+
+    echo "${COLOR}Creating $1 from actual content…${ROLOC}"
 
     # Overwriting the dummy file [src/usedTranslations.ml] with the actually
     # used translations.
@@ -65,6 +89,11 @@ echo "${COLOR}Done.${ROLOC}"
 
 if [ $JS = "true" ]
 then
+
+  if [ $CHECK = "true" ]
+  then
+    grep '^throw .* has not been compiled.*dummy.*$' web/main.js && echo "${COLOR}File main.js was safe.${ROLOC}" || (echo "${COLOR}Unsafe file main.js.${ROLOC}"; exit 1)
+  fi
 
   if [ $DEBUG = "true" ]
   then

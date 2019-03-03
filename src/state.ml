@@ -87,7 +87,7 @@ module AttributeInst () =
 
     let declare_attribute (mn, mc, al) a =
       let (a, mn) = Utils.Id.map_insert_t mn a in
-      (a, (mn, mc, PMap.add a [] al))
+      (a, (mn, mc, if not (PMap.mem a al) then PMap.add a [] al else al))
 
     let declare_constructor (mn, mc, al) a c =
       let (c, mc) = Utils.Id.map_insert_t mc (a, c) in

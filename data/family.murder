@@ -6,9 +6,9 @@ begin
   translation eo "Familio"
 end
 
-declare contact Known
-contact Known True
-contact Known False
+declare contact Know
+contact Know True
+contact Know False
 
 declare contact FamilyMember
 begin
@@ -24,7 +24,7 @@ begin
   let A be player with contact FamilyMember to B as Siblings
   let B be player with contact FamilyMember to A as Siblings
 
-  provide contact Known between A and B as True
+  provide contact Know between A and B as True
 end
 
 element ParentsChildsKnowEachOthers
@@ -32,7 +32,7 @@ begin
   let A be player with contact FamilyMember to B as Child
   let B be player with contact FamilyMember to A as Parent
 
-  provide contact Known between A and B as True
+  provide contact Know between A and B as True
 end
 
 
@@ -76,7 +76,7 @@ begin
 
   provide relation between A and B as strong neutral
   provide strict contact FamilyMember between A and B as Siblings
-  provide compatible contact Known between A and B as False
+  provide compatible contact Know between A and B as False
 end
 
 element HiddenSiblings
@@ -88,8 +88,8 @@ begin
 
   provide relation from A to B as strong undetermined
   provide strict contact FamilyMember between A and B as Siblings
-  provide compatible contact Known from A to B as True
-  provide compatible contact Known from B to A as False
+  provide compatible contact Know from A to B as True
+  provide compatible contact Know from B to A as False
 
   (* TODO: An event explaining this situation. *)
 end

@@ -93,6 +93,14 @@ let list_index e = list_predicate_index ((=) e)
 let list_fold_lefti f i l =
   fst (List.fold_left (fun (a, i) e -> (f i a e, 1 + i)) (i, 0) l)
 
+let rec list_map_filter f = function
+  | [] -> []
+  | e :: l ->
+    let l = list_map_filter f l in
+    match f e with
+    | None -> l
+    | Some v -> v :: l
+
 let shuffle l =
   List.sort (fun _ _ -> Random.int 3 - 1) l
 

@@ -59,8 +59,10 @@ type translation =
  * new tags at each translation. **)
 type add = language * language_tag list
 
-(** Declares a player with some constraints. **)
-type let_player = string * player_constraint list
+(** Declares a player with some constraints.
+ * If the player is [None], then these constraints apply to any
+ * other player than the ones declared in the element. **)
+type let_player = string option * player_constraint list
 
 (** Provide a relation between two players. **)
 type provide_relation = target_destination * Relation.t

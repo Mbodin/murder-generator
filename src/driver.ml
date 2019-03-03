@@ -471,11 +471,12 @@ let parse_element st element_name block =
   (** Before anything, we get the number and names of each declared players. **)
   let n = List.length block.let_player in
   let player_names =
-    List.fold_left (fun player_names (name, _) ->
+    List.fold_left (fun player_names name ->
         if Utils.Id.get_id player_names name <> None then
           raise (DefinedTwice ("player", name, Some element_name)) ;
         Utils.Id.map_insert player_names name)
-      (Utils.Id.map_create ()) block.let_player in
+      (Utils.Id.map_create ())
+      (Utils.list_map_filter fst block.let_player) in
   let get_player p =
     match Utils.Id.get_id player_names p with
     | None -> raise (Undeclared ("player", p, Some element_name))
@@ -512,7 +513,10 @@ let parse_element st element_name block =
      * Note that we could try to change player identifiers to optimize
      * space even more, but this might take additional resources needlessly. **)
     Array.map (fun (a, m) -> Array.sub a 0 m) triangle in
-  let element = Array.map (fun a -> ([], [], a)) relations in
+  (** We define our current element and constraints over other players,
+   * and we will update them by considering each declaration. **)
+  let elementBase = Array.map (fun a -> ([], [], a)) relations in
+  let otherPlayers = ref [] in
   let (_, deps) =
     try category_names_to_dep_dep true st block.of_category
     with Not_found ->
@@ -529,8 +533,10 @@ let parse_element st element_name block =
    * using this function with side effects. **)
   let add_constraint p c =
     let p = Utils.Id.to_array p in
-    let (cl, el, rs) = element.(p) in
-    element.(p) <- (c :: cl, el, rs) in
+    let (cl, el, rs) = elementBase.(p) in
+    elementBase.(p) <- (c :: cl, el, rs) in
+  let add_constraint_other c =
+    otherPlayers := c :: !otherPlayers in
   (** Retrieve the attribute identifier given by this name.
    * At this stage, it has to be defined.
    * See the declarations [attribute_functions] and [contact_functions] to
@@ -604,41 +610,44 @@ let parse_element st element_name block =
   (** We finally consider player constraints. **)
   let deps =
     List.fold_left (fun deps (p, pc) ->
-      let p = get_player p in
-      List.fold_left (fun deps -> function
-          | Ast.HasAttribute (a, n, c) ->
-            let aid = get_attribute_id attribute_functions a in
-            let cid = List.map (get_constructor_id attribute_functions aid) c in
-            let cid =
-              if n then (
-                let total =
-                  Utils.assert_option __LOC__
-                    (State.PlayerAttribute.constructors
-                      st.constructor_information.player aid) in
-                List.filter (fun c -> not (List.mem c cid)) total
-              ) else cid in
-            add_constraint p
-              (Element.Attribute (aid, State.One_value_of cid)) ;
-            intersect_with_constructor_dependencies_list deps
-              (List.map (fun id -> State.PlayerConstructor id) cid)
-          | Ast.HasContact (a, p', n, c) ->
-            let aid = get_attribute_id contact_functions a in
-            let cid = List.map (get_constructor_id contact_functions aid) c in
-            let cid =
-              if n then (
-                let total =
-                  Utils.assert_option __LOC__
-                    (State.ContactAttribute.constructors
-                      st.constructor_information.contact aid) in
-                List.filter (fun c -> not (List.mem c cid)) total
-              ) else cid in
-            add_constraint p
-              (Element.Contact (aid, Utils.Id.to_array (get_player p'),
-                State.One_value_of cid)) ;
-            intersect_with_constructor_dependencies_list deps
-              (List.map (fun id -> State.ContactConstructor id) cid))
-        deps pc) deps block.let_player in
-  (element, deps)
+        let consider_constraints add_constraint =
+          List.fold_left (fun deps -> function
+            | Ast.HasAttribute (a, n, c) ->
+              let aid = get_attribute_id attribute_functions a in
+              let cid = List.map (get_constructor_id attribute_functions aid) c in
+              let cid =
+                if n then (
+                  let total =
+                    Utils.assert_option __LOC__
+                      (State.PlayerAttribute.constructors
+                        st.constructor_information.player aid) in
+                  List.filter (fun c -> not (List.mem c cid)) total
+                ) else cid in
+              add_constraint (Element.Attribute (aid, State.One_value_of cid)) ;
+              intersect_with_constructor_dependencies_list deps
+                (List.map (fun id -> State.PlayerConstructor id) cid)
+            | Ast.HasContact (a, p', n, c) ->
+              let aid = get_attribute_id contact_functions a in
+              let cid = List.map (get_constructor_id contact_functions aid) c in
+              let cid =
+                if n then (
+                  let total =
+                    Utils.assert_option __LOC__
+                      (State.ContactAttribute.constructors
+                        st.constructor_information.contact aid) in
+                  List.filter (fun c -> not (List.mem c cid)) total
+                ) else cid in
+              add_constraint
+                (Element.Contact (aid, Utils.Id.to_array (get_player p'),
+                  State.One_value_of cid)) ;
+              intersect_with_constructor_dependencies_list deps
+                (List.map (fun id -> State.ContactConstructor id) cid)) deps pc in
+        match p with
+        | None -> consider_constraints add_constraint_other
+        | Some p ->
+          consider_constraints (add_constraint (get_player p)))
+      deps block.let_player in
+  ((elementBase, !otherPlayers), deps)
 
 let parse i =
   let (elements, elements_dependencies) =
@@ -661,7 +670,7 @@ let get_element_dependencies s e =
 let get_all_elements s cats maxPlayers =
   PMap.foldi (fun e deps el ->
     if Utils.PSet.for_all (fun c -> Utils.PSet.mem c cats) deps then (
-      let et = PMap.find e s.elements in
+      let (et, _) = PMap.find e s.elements in
       if Array.length et <= maxPlayers then
         e :: el
       else el)

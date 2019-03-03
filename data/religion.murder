@@ -22,11 +22,21 @@ begin
   provide compatible attribute Specy to P as God
 end
 
+element LonelyGod
+begin
+  let P be player
+  let any other player be with attribute Specy not as God
+
+  provide compatible attribute Specy to P as God
+end
+
 element GodAlwaysExisted
 begin
   let P be player with attribute Specy as God
 
   provide strict attribute Born to P as AlwaysExisted
+
+  (* TODO: Event *)
 end
 
 element GodHasNoGender

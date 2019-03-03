@@ -24,12 +24,12 @@ begin
     he or she tries its best not to be famous. *)
 end
 
-element FamousKnown
+element FamousIsKnown
 begin
   let A be player
   let B be player with attribute Famousness as Famous
 
-  provide compatible contact Known from B to A as True
+  provide compatible contact Know from A to B as True
 end
 
 element HiddenUnknown
@@ -37,7 +37,7 @@ begin
   let A be player
   let B be player with attribute Famousness as Hidden
 
-  provide compatible contact Known from B to A as False
+  provide compatible contact Know from A to B as False
 end
 
 element FamousCanDoFavors
@@ -63,8 +63,40 @@ begin
   (* provide event to B TODO: Spoke about B to C. *)
   (* provide event to C TODO: Hears about B. *)
 
-  provide contact Known from C to B as True
+  provide contact Know from C to B as True
   provide compatible contact Favor from B to A as Small
   provide relation between A and B as asymmetrical neutral trust
+end
+
+
+attribute Job King
+begin
+  translation fr:nom:fem "une reine"
+  translation fr:nom:mas "un roi"
+  translation fr:nom:def:fem "la reine"
+  translation fr:nom:def:mas "le roi"
+  translation fr:nom:plu:fem "des reines"
+  translation fr:nom:plu:mas "des rois"
+  translation fr:nom:plu "des rois et reines"
+  translation fr:nom:def:plu:fem "les reines"
+  translation fr:nom:def:plu:mas "les rois"
+end
+
+element TheOneKing
+begin
+  let K be player
+  let any other player be with attribute Job not as King
+                          with contact Know to K as True
+
+  provide attribute Job to K as King
+
+  (* TODO: Event *)
+end
+
+element KingFamous
+begin
+  let K be player with attribute Job as King
+
+  provide attribute Famousness to K as Famous
 end
 

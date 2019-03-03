@@ -8,9 +8,9 @@ begin
   translation fr:nom:def:fem "la commerçante"
   translation fr:nom:def:mas "le commerçant"
   translation fr:nom:plu:fem "des commerçantes"
-  translation fr:nom:plu:mas "des commerçants"
+  translation fr:nom:plu "des commerçants"::plu:mas
   translation fr:nom:def:plu:fem "les commerçantes"
-  translation fr:nom:def:plu:mas "les commerçants"
+  translation fr:nom:def:plu "les commerçants"::def:plu:mas
   translation en:nom "a seller"
   translation en:nom:plu "sellers"
   translation en:nom:def "the seller"

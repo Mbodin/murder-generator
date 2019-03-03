@@ -77,14 +77,14 @@ begin
   translation fr:nom:mas "un homme"::mas
   translation fr:nom:fem "une femme"::fem
   translation fr:nom:plu "des personnes"::plu:fem
-  translation fr:nom:plu:mas "des hommes"::plu:mas
-  translation fr:nom:plu:fem "des femmes"::plu:fem
+  translation fr:nom:plu:mas "des hommes"
+  translation fr:nom:plu:fem "des femmes"
   translation fr:nom:def "la personne"::fem
   translation fr:nom:def:mas "l'homme"::mas
   translation fr:nom:def:fem "la femme"::fem
-  translation fr:nom:def:plu "les personnes"::plu:fem
-  translation fr:nom:def:plu:mas "les hommes"::plu:mas
-  translation fr:nom:def:plu:fem "les femmes"::plu:fem
+  translation fr:nom:def:plu "les personnes"::def:plu:fem
+  translation fr:nom:def:plu:mas "les hommes"
+  translation fr:nom:def:plu:fem "les femmes"
   translation en:adj "human"
   translation en:nom "a human being"
   translation en:nom:mas "a man"
@@ -117,14 +117,14 @@ begin
   category Fantasy
   translation fr:adj:mas "nain"
   translation fr:adj:fem "naine"
-  translation fr:adj:plu:mas "nains"
+  translation fr:adj:plu "nains"
   translation fr:adj:plu:fem "naines"
   translation fr:nom:mas "un nain"::mas
   translation fr:nom:fem "une naine"::fem
   translation fr:nom:plu "des nains"::plu:mas
   translation fr:nom:def:mas "le nain"::mas
   translation fr:nom:def:fem "la naine"::fem
-  translation fr:nom:def:plu "les nains"::plu:mas
+  translation fr:nom:def:plu "les nains"::def:plu:mas
   (* LATER: Other translations *)
 end
 

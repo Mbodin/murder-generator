@@ -8,11 +8,12 @@ type character_constraint =
                * int
                * State.ContactAttribute.constructor State.attribute_value
 
-type t =
-  (character_constraint list
-   * History.event list
-   * Relation.t array
-  ) array
+type cell =
+  character_constraint list
+  * History.event list
+  * Relation.t array
+
+type t = cell array * character_constraint list
 
 (** Returns the list of attributes provided by this cosntraint. **)
 let provided_attributes_constraint =
@@ -22,11 +23,13 @@ let provided_attributes_constraint =
   | Attribute (a, v) -> aux (State.PlayerAttribute a) v
   | Contact (a, _, v) -> aux (State.ContactAttribute a) v
 
-let provided_attributes e =
+let provided_attributes (e, other) =
+  let provided_attributes_constraint_list =
+    List.fold_left (fun s c ->
+      Utils.PSet.merge s (provided_attributes_constraint c)) in
   Utils.PSet.to_list (Array.fold_left (fun s (l, _, _) ->
-      List.fold_left (fun s c ->
-        Utils.PSet.merge s (provided_attributes_constraint c)) s l)
-    Utils.PSet.empty e)
+      provided_attributes_constraint_list s l)
+    (provided_attributes_constraint_list Utils.PSet.empty other) e)
 
 (** States whether [v1] and [v2] are compatible and make some progress.
  * The return value is expressed as for [compatible_and_progress]:
@@ -77,14 +80,19 @@ let respect_constraints_inst inst cst conss evs c =
     | None -> Some false
     | Some v2 -> compatible_and_progress_attribute_value v1 v2) cst conss evs c
 
-let compatible_and_progress st e inst =
+let compatible_and_progress st (e, other) inst =
   let cst = State.get_character_state st in
   Utils.array_fold_lefti (fun i acc c ->
     let (conss, evs, rs) = e.(i) in
+    (* TODO: Pass [other] to [respect_constraints_inst] *)
     merge_progress acc
       (respect_constraints_inst inst cst conss evs c)) (Some false) inst
 
-let search_instantiation st e =
+let search_instantiation st (e, other) =
+  (* TODO: This function could be made faster by considering which character
+   * can be placed in the other category, and check that at each choice of
+   * player in to represent a particular player element, there are still
+   * valid instantiations of the [other]. *)
   let cst = State.get_character_state st in
   let all_players = State.all_players st in
   let possible_players_progress_no_progress =
@@ -100,7 +108,7 @@ let search_instantiation st e =
       (List.map fst progress, List.map fst no_progress)) e in
   let possible_players =
     (** Possible players for each event.
-     * Players that makes the state progress are always put forwards. **)
+     * Players that make the state progress are always put forwards. **)
     Array.map (fun (p, np) ->
         Utils.shuffle p @ Utils.shuffle np) possible_players_progress_no_progress in
   let redirection_array =
@@ -117,11 +125,12 @@ let search_instantiation st e =
       let inst =
         let inst = Array.make (Array.length e) (Utils.Id.from_array (-1)) in
         List.iteri (fun i j ->
-          let i = Array.length e - 1 - i in (** The list [partial_instantiation] has been build backward. **)
+          (** The list [partial_instantiation] has been build backward. **)
+          let i = Array.length e - 1 - i in
           let i = redirection_array.(i) in
           inst.(i) <- j) partial_instantiation ;
         inst in
-      (match compatible_and_progress st e inst with
+      (match compatible_and_progress st (e, other) inst with
        | None -> None
        | Some progress -> Some (inst, progress))
     | i :: redirection_list ->
@@ -138,7 +147,8 @@ let search_instantiation st e =
     in
   aux [] (Array.to_list redirection_array)
 
-let apply state e inst =
+let apply state (e, other) inst =
+  (* TODO: Deal with [other] *)
   Utils.array_fold_left2 (fun (state, diff) ei c ->
     let (conss, evs, rs) = ei in
     let update_diff diff a i =
@@ -174,7 +184,7 @@ let apply state e inst =
           State.add_relation state c c' r) rs in
     (state, diff)) (state, PMap.empty) e inst
 
-let apply_relations state e inst =
+let apply_relations state (e, _) inst =
   let result =
     State.create_relation_state (State.number_of_player_relation_state state) in
   Array.iter2 (fun ei c ->

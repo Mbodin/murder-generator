@@ -79,9 +79,9 @@ end
 element CausalDebt
 begin
   let A be player with attribute Richness as Neutral
-                  with contact Known to B as True
+                  with contact Know to B as True
   let B be player with attribute Richness as Neutral
-                  with contact Known to A as True
+                  with contact Know to A as True
 
   provide compatible contact FinancialDebt from A to B as Small
 
@@ -95,12 +95,12 @@ element SmallDebtNeutralPoor
 begin
   let A be player with attribute Richness as Poor
   let B be player with attribute Richness as Neutral
-                  with contact Known to B as True
+                  with contact Know to A as True
 
   provide compatible contact FinancialDebt from A to B as Small
 
   provide relation between A and B as asymmetrical avoidance undetermined
-  provide compatible contact Known from A to B as True
+  provide compatible contact Know from A to B as True
 
   (* TODO: provide event to A *)
   (* TODO: provide event to B *)
@@ -109,13 +109,13 @@ end
 element RichPaysItsDebt
 begin
   let A be player with attribute Richness as Rich
-                  with contact Known to B as True
+                  with contact Know to B as True
   let B be player
 
   provide contact FinancialDebt from A to B as Large
 
   provide relation between A and B as asymmetrical neutral undetermined
-  provide compatible contact Known from B to A as True
+  provide compatible contact Know from B to A as True
 
   (* TODO: provide event to A *)
   (* TODO: provide event to B *)
@@ -134,7 +134,7 @@ begin
   provide attribute Job to B as Seller
 
   provide relation between B and A as asymmetrical trust undetermined
-  provide compatible contact Known between B and A as True
+  provide compatible contact Know between B and A as True
 
   (* provide event to B (* TODO: Got rich after the shop got working *) *)
 end
@@ -152,7 +152,7 @@ begin
   provide attribute Job to B as Seller
 
   provide relation between B and A as asymmetrical avoidance hate
-  provide compatible contact Known between B and A as True
+  provide compatible contact Know between B and A as True
 
   (* provide event to B (* TODO: Got bankrupt *) *)
 end

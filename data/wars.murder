@@ -1,4 +1,16 @@
 
+(* A player wants to harm as much as possible this other player. *)
+contact Goal Harm
+begin
+  compatible with Kill
+end
+
+(* A player wants to kill this other player. *)
+contact Goal Kill
+begin
+  category NonKids
+end
+
 category AncestralWar
 begin
   category NonKids
@@ -22,7 +34,7 @@ end
 element ElvesCanBeRacist
 begin
   let E be player with attribute Specy as Elf
-                  with contact Known to P as False
+                  with contact Know to P as False
   let P be player with attribute Specy not as Elf
 
   provide relation from E to P as avoidance
@@ -33,11 +45,37 @@ end
 element HumanBeingsCanBeRacist
 begin
   let H be player with attribute Specy as Human
-                  with contact Known to P as False
+                  with contact Know to P as False
   let P be player with attribute Specy not as Human
 
   provide relation from H to P as avoidance
 
   (* TODO: Provide historical reasons. *)
+end
+
+
+element WarBetweenGod
+begin
+  let A be player with attribute Specy as God
+  let B be player with attribute Specy as God
+  let any other player be with attribute Specy not as God
+
+  provide relation between A and B as hate
+
+  provide strict contact Goal between A and B as Harm
+
+  (* TODO: An event stating that A and B always fought each others. *)
+end
+
+element EnemiesOfOurEnemiesAreOurAllies
+begin
+  let T be player
+  let A be player with contact Goal to T as Harm
+  let B be player with contact Goal to T as Harm
+
+  (* We provide a trust relation to a player to the other without
+   * the players being aware of it: they have to discover this
+   * connection themselves. *)
+  provide relation from A to B as trust
 end
 

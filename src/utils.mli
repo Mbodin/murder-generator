@@ -73,6 +73,9 @@ val list_predicate_index : ('a -> bool) -> 'a list -> int option
 (** Like [List.fold_left], but taking the current index as argument. **)
 val list_fold_lefti : (int -> 'a -> 'b -> 'a) -> 'a -> 'b list -> 'a
 
+(** Maps the list, removing any element returning [None]. **)
+val list_map_filter : ('a -> 'b option) -> 'a list -> 'b list
+
 (** Given a transitive comparison function and a list, returns the greatest
  * element of the list (or [None] if the list is empty). **)
 val argmax : ('a -> 'a -> int) -> 'a list -> 'a option

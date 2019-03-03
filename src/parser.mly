@@ -16,7 +16,7 @@ open Ast
 %token          ELEMENT
 %token          ATTRIBUTE CONTACT RELATION
 %token          PLAYER EVENT
-%token          ALL
+%token          ANY OTHER
 %token          DECLARE PROVIDE LET BE
 %token          WITH AND OR NOT FROM TO BETWEEN AS
 %token          STRICT COMPATIBLE
@@ -53,7 +53,7 @@ language:
   | AND             { "and" }
   | OR              { "or" }
   | NOT             { "not" }
-  | ALL             { "all" }
+  | ANY             { "any" }
   | END             { "end" }
   | LET             { "let" }
   | BE              { "be" }
@@ -82,7 +82,10 @@ command:
     { CompatibleWith v }
   | LET; v = UIDENT; BE; PLAYER;
     l = list (player_constraint)
-    { LetPlayer (v, l) }
+    { LetPlayer (Some v, l) }
+  | LET; ANY; OTHER; PLAYER; BE;
+    l = nonempty_list (player_constraint)
+    { LetPlayer (None, l) }
   | PROVIDE; RELATION;
     d = target_destination;
     AS; r = relation
@@ -133,7 +136,7 @@ relation_content:
   | EXPLOSIVE; r1 = relation_content; r2 = relation_content
     { Relation.Explosive (r1, r2) }
 
-%inline basic_relation:
+basic_relation:
   | NEUTRAL         { Relation.Neutral }
   | HATE            { Relation.Hate }
   | TRUST           { Relation.Trust }

@@ -1,6 +1,8 @@
 
 type language = string
 
+let generic = ""
+
 let iso639 = Utils.id
 let from_iso639 = Utils.id
 

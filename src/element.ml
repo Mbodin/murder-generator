@@ -171,8 +171,7 @@ let apply state e inst =
       Array.iteri (fun i r ->
         let c' = inst.(i) in
         if c <> c' then
-          let r' = State.read_relation state c c' in
-          State.write_relation state c c' (Relation.compose r' r)) rs in
+          State.add_relation state c c' r) rs in
     (state, diff)) (state, PMap.empty) e inst
 
 let apply_relations state e inst =
@@ -184,7 +183,6 @@ let apply_relations state e inst =
       let c' = inst.(i) in
       if c <> c' then
         let r' = State.read_relation_state state c c' in
-        State.write_relation_state result c c'
-          (Relation.compose r' r)) rs) e inst ;
+        State.add_relation_state result c c' (Relation.compose r' r)) rs) e inst ;
   result
 

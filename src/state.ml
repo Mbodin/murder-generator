@@ -6,26 +6,34 @@ type relation_state =
 
 exception SelfRelation
 
+(** Relation states have as little cells as possible: [n - 1] for the
+ * first counter, and [i + 1] for the second.
+ * To get the relation between characters [c1] and [c2], with [c1 < c2],
+ * one has to check the array at [(c2 - 1)(c1)]. **)
 let create_relation_state n =
   Array.init (n - 1) (fun i ->
-    Array.make (n - 1 - i) Relation.neutral)
+    Array.make (i + 1) Relation.neutral)
 
 let rec read_relation_state a c1 c2 =
   let c1 = Utils.Id.to_array c1 in
   let c2 = Utils.Id.to_array c2 in
   if c1 = c2 then Relation.neutral
-  else if c1 > c2 then
-    Relation.reverse a.(c2).(c1)
-  else a.(c1).(c2)
+  else if c2 > c1 then
+    a.(c2 - 1).(c1)
+  else Relation.reverse a.(c1 - 1).(c2)
 
 let write_relation_state a c1 c2 r =
   let c1 = Utils.Id.to_array c1 in
   let c2 = Utils.Id.to_array c2 in
   if c1 = c2 then
     raise SelfRelation
-  else if c1 > c2 then
-    a.(c2).(c1) <- Relation.reverse r
-  else a.(c2).(c1) <- r
+  else if c2 > c1 then
+    a.(c2 - 1).(c1) <- r
+  else a.(c1 - 1).(c2) <- Relation.reverse r
+
+let add_relation_state a c1 c2 r =
+  let r' = read_relation_state a c1 c2 in
+  write_relation_state a c1 c2 (Relation.compose r' r)
 
 module type Attribute = sig
     type attribute
@@ -209,12 +217,14 @@ let get_relation_state (_, a, _) = a
 let read_relation st = read_relation_state (get_relation_state st)
 
 let write_relation st = write_relation_state (get_relation_state st)
+let add_relation st = add_relation_state (get_relation_state st)
 
 let create_state n =
   (create_character_state n, create_relation_state n, History.create_state n)
 
 let get_character_state (st, _, _) = st
 
+(** Creates a list of characters from the total number of characters. **)
 let all_players_length l =
   List.map Utils.Id.from_array (Utils.seq l)
 

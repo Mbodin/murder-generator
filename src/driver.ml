@@ -425,7 +425,9 @@ let prepare_declaration i =
               | _ ->
                 raise (TranslationError ("category", name, lg, tags))) items) in
           Translation.add translation lg id str)
-        i.current_state.category_translation block.translation in
+        (Translation.add i.current_state.category_translation
+          Translation.generic id name)
+        block.translation in
     { i with
         categories_to_be_defined = categories_to_be_defined ;
         current_state =

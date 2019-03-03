@@ -17,6 +17,10 @@ val read_relation_state : relation_state -> character -> character -> Relation.t
 (** Non-functionally update the relation state. **)
 val write_relation_state : relation_state -> character -> character -> Relation.t -> unit
 
+(** As [write_relation_state], but composes the new relation with the already
+ * existing one. **)
+val add_relation_state : relation_state -> character -> character -> Relation.t -> unit
+
 (** The following exception is returned if one tries to write or read
  * a relation between two identical characters. **)
 exception SelfRelation
@@ -188,6 +192,10 @@ val read_relation : t -> character -> character -> Relation.t
  * (that is, there is no need to call both [write_relation s c1 c2 r]
  * and [write_relation s c2 c1 (Relation.reverse r)] at the same time. **)
 val write_relation : t -> character -> character -> Relation.t -> unit
+
+(** As [write_relation], but composes the new relation with the already
+ * existing one. **)
+val add_relation : t -> character -> character -> Relation.t -> unit
 
 (** Creates an empty state for the given number n of characters,
  * each indexed from [0] to [n - 1]. **)

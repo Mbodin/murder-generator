@@ -7,6 +7,9 @@ type 'a t
 (** The type of language. **)
 type language
 
+(** A special “language” for internal use. **)
+val generic : language
+
 (** Returns the two/three-letters code corresponding to the provided language. **)
 val iso639 : language -> string
 

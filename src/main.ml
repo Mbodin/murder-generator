@@ -187,10 +187,14 @@ let _ =
       (** Asking about categories. **)
       let translate_categories =
         let translate_categories = Driver.translates_category data in fun c ->
-        Utils.assert_option ("No translation found a category in language “" ^
-                             (Translation.iso639 (get_language parameters)) ^ "”.")
-          (Translation.translate translate_categories c
-            (get_language parameters)) in
+          let category_name =
+            Utils.assert_option __LOC__
+              (Translation.translate translate_categories c Translation.generic) in
+          Utils.assert_option ("No translation found for category “" ^
+                               category_name ^ "” in language “" ^
+                               (Translation.iso639 (get_language parameters)) ^ "”.")
+            (Translation.translate translate_categories c
+              (get_language parameters)) in
       let all_categories = Driver.all_categories data in
       let selected_categories =
         match parameters.categories with

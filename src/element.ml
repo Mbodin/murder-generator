@@ -48,20 +48,26 @@ let merge_progress b1 b2 =
 
 (** Checks whether the constraints [conss] are valid for the
  * character [c] in the character state [cst].
- * The contact case is given as argument as the function [f].
- * Events constraints [evs] are also checked by this function. **)
-let respect_constraints_base f cst conss evs c =
+ * The contact case is given as argument as the function [f]. **)
+let respect_constraints_base f cst conss c =
+  List.fold_left (fun b cons ->
+    merge_progress b
+     (match cons with
+     | Attribute (a, v1) ->
+       (match State.get_attribute_character cst c a with
+        | None -> Some false
+        | Some v2 ->
+          compatible_and_progress_attribute_value v1 v2)
+     | Contact (con, cha, v) ->
+       f con cha v)) (Some false) conss
+
+(** Checks whether the constraints [conss] are valid for the
+ * character [c] in the character state [cst].
+ * In addition to [respect_constraints_base], this
+ * function also checks events constraints [evs]. **)
+let respect_constraints_events f cst conss evs c =
   merge_progress
-    (List.fold_left (fun b cons ->
-      merge_progress b
-        (match cons with
-        | Attribute (a, v1) ->
-          (match State.get_attribute_character cst c a with
-           | None -> Some false
-           | Some v2 ->
-             compatible_and_progress_attribute_value v1 v2)
-        | Contact (con, cha, v) ->
-          f con cha v)) (Some false) conss)
+    (respect_constraints_base f cst conss c)
     (* TODO: events [evs] *) (Some false)
 
 (** Checks whether the constraints [conss] are locally valid for the
@@ -70,24 +76,37 @@ let respect_constraints_base f cst conss evs c =
  * Only local constraints are considered: no constraint depending on the
  * instantiation are checked at this point. **)
 let respect_constraints =
-  respect_constraints_base (fun _ _ _ -> Some false)
+  respect_constraints_events (fun _ _ _ -> Some false)
+
+(** A function to be given to [respect_constraints_events] to deal with the
+ * instantiation-dependent contacts. **)
+let check_contact inst cst c con cha v1 =
+  let cha = inst.(cha) in
+  match State.get_contact_character cst c con cha with
+  | None -> Some false
+  | Some v2 -> compatible_and_progress_attribute_value v1 v2
 
 (** As [respect_constraints], but takes an instanciation and thus also checks
  * global constraints. **)
 let respect_constraints_inst inst cst conss evs c =
-  respect_constraints_base (fun con cha v1 ->
-    let cha = inst.(cha) in
-    match State.get_contact_character cst c con cha with
-    | None -> Some false
-    | Some v2 -> compatible_and_progress_attribute_value v1 v2) cst conss evs c
+  respect_constraints_events (check_contact inst cst c) cst conss evs c
+
+(** Returns all the players of the state [st] that are not in the
+ * instantiation [inst]. **)
+let other_players st inst =
+  List.filter (fun i -> Array.exists ((=) i) inst) (State.all_players st)
 
 let compatible_and_progress st (e, other) inst =
   let cst = State.get_character_state st in
+  let compatible_others =
+    List.fold_left (fun acc c ->
+        merge_progress acc
+          (respect_constraints_base (check_contact inst cst c) cst other c))
+      (Some false) (other_players st inst) in
   Utils.array_fold_lefti (fun i acc c ->
     let (conss, evs, rs) = e.(i) in
-    (* TODO: Pass [other] to [respect_constraints_inst] *)
     merge_progress acc
-      (respect_constraints_inst inst cst conss evs c)) (Some false) inst
+      (respect_constraints_inst inst cst conss evs c)) compatible_others inst
 
 let search_instantiation st (e, other) =
   let cst = State.get_character_state st in
@@ -167,41 +186,45 @@ let search_instantiation st (e, other) =
   aux [] (Array.to_list redirection_array)
 
 let apply state (e, other) inst =
-  (* TODO: Deal with [other] *)
+  let diff = PMap.empty in
+  let update_diff diff a i =
+    let old_value =
+      try PMap.find a diff
+      with Not_found -> 0 in
+    PMap.add a (old_value + i) diff in
+  let apply_constraint c (state, diff) = function
+    | Attribute (a, v1) ->
+      let cstate = State.get_character_state state in
+      let diff =
+        match State.get_attribute_character cstate c a with
+        | None ->
+          State.write_attribute_character cstate c a v1 ;
+          update_diff diff (State.PlayerAttribute a)
+            (if State.attribute_value_can_progress v1 then -1 else 0)
+        | Some v2 ->
+          let v3 =
+            Utils.assert_option __LOC__ (State.compose_attribute_value v1 v2) in
+          State.write_attribute_character cstate c a v3 ;
+          update_diff diff (State.PlayerAttribute a)
+            (if State.attribute_value_progress v2 v3 then 1 else 0) in
+      (state, diff)
+    | Contact (con, cha, v) ->
+      (state, diff) (* TODO *) in
+  let apply_constraints state diff c =
+    List.fold_left (apply_constraint c) (state, diff) in
+  let (state, diff) =
+    List.fold_left (fun (state, diff) c -> apply_constraints state diff c other)
+      (state, diff) (other_players state inst) in
   Utils.array_fold_left2 (fun (state, diff) ei c ->
     let (conss, evs, rs) = ei in
-    let update_diff diff a i =
-      let old_value =
-        try PMap.find a diff
-        with Not_found -> 0 in
-      PMap.add a (old_value + i) diff in
-    let (state, diff) =
-      List.fold_left (fun (state, diff) -> function
-        | Attribute (a, v1) ->
-          let cstate = State.get_character_state state in
-          let diff =
-            match State.get_attribute_character cstate c a with
-            | None ->
-              State.write_attribute_character cstate c a v1 ;
-              update_diff diff (State.PlayerAttribute a)
-                (if State.attribute_value_can_progress v1 then -1 else 0)
-            | Some v2 ->
-              let v3 =
-                Utils.assert_option __LOC__ (State.compose_attribute_value v1 v2) in
-              State.write_attribute_character cstate c a v3 ;
-              update_diff diff (State.PlayerAttribute a)
-                (if State.attribute_value_progress v2 v3 then 1 else 0) in
-          (state, diff)
-        | Contact (con, cha, v) ->
-          (state, diff) (* TODO *)
-        ) (state, diff) conss in
+    let (state, diff) = apply_constraints state diff c conss in
     (* TODO: Event [evs] *)
     let _ =
       Array.iteri (fun i r ->
         let c' = inst.(i) in
         if c <> c' then
           State.add_relation state c c' r) rs in
-    (state, diff)) (state, PMap.empty) e inst
+    (state, diff)) (state, diff) e inst
 
 let apply_relations state (e, _) inst =
   let result =

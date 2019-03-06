@@ -167,11 +167,16 @@ val get_attribute_character : character_state -> character -> PlayerAttribute.at
  * constructors of its type). **)
 val force_get_attribute_character : PlayerAttribute.constructor_map -> character_state -> character -> PlayerAttribute.attribute -> PlayerAttribute.constructor attribute_value
 
-(** Non-functionally associates the given attribute of the character to the given value. **)
+(** Non-functionally associates the given attribute of the character to the given
+ * value. **)
 val write_attribute_character : character_state -> character -> PlayerAttribute.attribute -> PlayerAttribute.constructor attribute_value -> unit
 
 (** Get a contact from the character state, using the target character. **)
 val get_contact_character : character_state -> character -> ContactAttribute.attribute -> character -> (ContactAttribute.constructor attribute_value) option
+
+(** Non-functionally associates the given attribute of the character to the given
+ * value. **)
+val write_contact_character : character_state -> character -> ContactAttribute.attribute -> character -> ContactAttribute.constructor attribute_value -> unit
 
 (** Get all the contacts of a character from the character state. **)
 val get_all_contact_character : character_state -> character -> ContactAttribute.attribute -> (character * ContactAttribute.constructor attribute_value) list

@@ -204,6 +204,14 @@ let get_contact_character st c a ct =
   try Some (PMap.find ct (PMap.find a (snd st.(Utils.Id.to_array c))))
   with Not_found -> None
 
+let write_contact_character (st : character_state) c a ct v =
+  let c = Utils.Id.to_array c in
+  let m =
+    try PMap.find a (snd st.(c))
+    with Not_found -> PMap.empty in
+  let m = PMap.add ct v m in
+  st.(c) <- (fst st.(c), PMap.add a m (snd st.(c)))
+
 let get_all_contact_character st c a =
   try PMap.foldi (fun ct cv l -> (ct, cv) :: l)
         (PMap.find a (snd st.(Utils.Id.to_array c))) []

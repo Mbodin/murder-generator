@@ -192,9 +192,9 @@ let apply state (e, other) inst =
       try PMap.find a diff
       with Not_found -> 0 in
     PMap.add a (old_value + i) diff in
-  let apply_constraint c (state, diff) = function
+  let apply_constraint c (state, diff) =
+    let cstate = State.get_character_state state in function
     | Attribute (a, v1) ->
-      let cstate = State.get_character_state state in
       let diff =
         match State.get_attribute_character cstate c a with
         | None ->
@@ -208,8 +208,21 @@ let apply state (e, other) inst =
           update_diff diff (State.PlayerAttribute a)
             (if State.attribute_value_progress v2 v3 then 1 else 0) in
       (state, diff)
-    | Contact (con, cha, v) ->
-      (state, diff) (* TODO *) in
+    | Contact (con, cha, v1) ->
+      let cha = inst.(cha) in
+      let diff =
+        match State.get_contact_character cstate c con cha with
+        | None ->
+          State.write_contact_character cstate c con cha v1 ;
+          update_diff diff (State.ContactAttribute con)
+            (if State.attribute_value_can_progress v1 then -1 else 0)
+        | Some v2 ->
+          let v3 =
+            Utils.assert_option __LOC__ (State.compose_attribute_value v1 v2) in
+          State.write_contact_character cstate c con cha v3 ;
+          update_diff diff (State.ContactAttribute con)
+            (if State.attribute_value_progress v2 v3 then 1 else 0) in
+      (state, diff) in
   let apply_constraints state diff c =
     List.fold_left (apply_constraint c) (state, diff) in
   let (state, diff) =

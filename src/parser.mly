@@ -87,12 +87,12 @@ command:
     l = nonempty_list (player_constraint)
     { LetPlayer (None, l) }
   | PROVIDE; RELATION;
-    d = target_destination;
+    d = target_destination (UIDENT, UIDENT);
     AS; r = relation
     { ProvideRelation (d, r) }
   | PROVIDE; s = strictness;
     ATTRIBUTE; a = UIDENT;
-    TO; p = UIDENT;
+    TO; p = destination;
     AS; v = separated_list (OR, UIDENT)
     { ProvideAttribute {
           attribute_strictness = s ;
@@ -102,7 +102,7 @@ command:
         } }
   | PROVIDE; s = strictness;
     CONTACT; c = UIDENT;
-    d = target_destination;
+    d = target_destination (destination, weak_destination);
     AS; v = separated_list (OR, UIDENT)
     { ProvideContact {
           contact_strictness = s ;
@@ -111,18 +111,30 @@ command:
           contact_value = v
         } }
 
-target_destination:
-  | FROM; p1 = UIDENT; TO; p2 = UIDENT
+target_destination (from_state, to_state):
+  | FROM; p1 = from_state; TO; p2 = to_state
     { FromTo (p1, p2) }
-  | BETWEEN; p1 = UIDENT; AND; p2 = UIDENT
+  | BETWEEN; p1 = to_state; AND; p2 = to_state
     { Between (p1, p2) }
+
+destination:
+  | p = UIDENT          { DestinationPlayer p }
+  | ANY; OTHER; PLAYER  { AllOtherPlayers }
+  | ANY; PLAYER         { AllPlayers }
+
+weak_destination:
+  | p = destination
+    { match p with
+      | DestinationPlayer p -> p
+      | _ -> failwith ("Unfortunately, generic player-syntax is not yet "
+                       ^ "supported at this particular place.") }
 
 player_constraint:
   | WITH; ATTRIBUTE; a = UIDENT;
     n = boption (NOT { }); AS; v = separated_list (OR, UIDENT)
     { HasAttribute (a, n, v) }
   | WITH; CONTACT; c = UIDENT;
-    TO; p = UIDENT;
+    TO; p = weak_destination;
     n = boption (NOT { }); AS; v = separated_list (OR, UIDENT)
     { HasContact (c, p, n, v) }
 

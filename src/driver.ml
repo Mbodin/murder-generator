@@ -13,6 +13,9 @@ let parse_lexbuf fileName lexbuf =
   | Lexer.SyntaxError msg ->
     failwith ("Error: Lexer error " ^
               Lexer.current_position lexbuf ^ ": " ^ msg)
+  | e ->
+    failwith ("Error during parsing " ^ Lexer.current_position lexbuf
+              ^ ": " ^ Printexc.to_string e)
 
 
 (** Separates each components of the type [Ast.command] into a separate list. **)
@@ -583,7 +586,15 @@ let parse_element st element_name block =
         let cid =
           List.map (get_constructor_id attribute_functions aid)
             pa.Ast.attribute_value in
-        add_constraint (get_player pa.Ast.attribute_player)
+        let p =
+          (* TODO: In the cases where [pa.Ast.attribute_player] is [AllOtherPlayers],
+           * this constraint has to be added to the [other] list.
+           * If it is [AllPlayers], it has to be rewritten into a list of [Players]
+           * and [AllOtherPlayers]. *)
+          match pa.Ast.attribute_player with
+          | Ast.DestinationPlayer p -> p
+          | _ -> failwith (__LOC__ ^ ": Not yet implemented!") in
+        add_constraint (get_player p)
           (Element.Attribute (aid,
             State.Fixed_value (cid, pa.Ast.attribute_strictness))) ;
         merge_with_constructor_dependencies_list deps
@@ -601,8 +612,12 @@ let parse_element st element_name block =
             (Element.Contact (aid, Utils.Id.to_array (get_player p2),
               State.Fixed_value (cid, pc.Ast.contact_strictness))) in
         let _ =
+          (* TODO: Same than above *)
+          let tmp = function
+            | Ast.DestinationPlayer p -> p
+            | _ -> failwith (__LOC__ ^ ": Not yet implemented!") in
           match pc.Ast.contact_destination with
-          | Ast.FromTo (p1, p2) -> add p1 p2
+          | Ast.FromTo (p1, p2) -> add (tmp p1) p2
           | Ast.Between (p1, p2) -> add p1 p2 ; add p2 p1 in
         merge_with_constructor_dependencies_list deps
           (List.map (fun id -> State.ContactConstructor id) cid))

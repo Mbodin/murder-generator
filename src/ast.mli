@@ -49,11 +49,11 @@ type destination =
   | AllPlayers (** To all players (including the declared ones). **)
 
 (** Describes a direction of a relation or a contact.
- * The type ['f] is the type of starting points, and ['t] is the type of players
- * that may be targets. **)
-type ('f, 't) target_destination =
-  | FromTo of 'f * 't (** From the first player to the second player. **)
-  | Between of 't * 't (** Between both players, in a symmetrical way. **)
+ * The type for player is parameterised to enable the use of the special
+ * [destination] type instead. **)
+type 'player target_destination =
+  | FromTo of 'player * 'player (** From the first player to the second player. **)
+  | Between of 'player * 'player (** Between both players, in a symmetrical way. **)
 
 (** Describes a translation in a given language and required grammatical cases.
  * The additional tags state how this translation should be grammatically
@@ -76,7 +76,7 @@ type add = language * language_tag list
 type let_player = string option * player_constraint list
 
 (** Provide a relation between two players. **)
-type provide_relation = (string, string) target_destination * Relation.t
+type provide_relation = string target_destination * Relation.t
 
 (** Provide an attribute value to a player. **)
 type provide_attribute = {
@@ -95,7 +95,7 @@ type provide_contact = {
     contact_strictness : State.strictness
       (** How compatible this statement is with other [provide] commands. **) ;
     contact_name : string (** The name of the provided contact. **) ;
-    contact_destination : (destination, string) target_destination
+    contact_destination : destination target_destination
       (** Defines which players get to be related. **) ;
     contact_value : string list
       (** The possible constructors provided by this element to the specified player.

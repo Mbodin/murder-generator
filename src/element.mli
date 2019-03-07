@@ -13,7 +13,9 @@ type character_constraint =
       * this value, but also [State.Fixed_value], where the element actually
       * provides an explanation for it. **)
   | Contact of State.ContactAttribute.attribute
-               * int
+               * int option (** If this number is [None], this contact is meant
+                              * towards all other players than the ones declared
+                              * in the element. **)
                * State.ContactAttribute.constructor State.attribute_value
     (** The given contact (identified in the local array) is provided by the
      * element. **)

@@ -540,6 +540,18 @@ let parse_element st element_name block =
     elementBase.(p) <- (c :: cl, el, rs) in
   let add_constraint_other c =
     otherPlayers := c :: !otherPlayers in
+  let add_constraint_all c =
+    (** Exploding [Ast.AllPlayers] into a list of [Ast.DestinationPlayer] and
+     * [Ast.AllOtherPlayers] tends to make non-acceptable combinations appear.
+     * The [ok] function filters these out. **)
+    let ok p =
+      match c with
+      | Element.Contact (_, Some p', _) -> p <> p'
+      | _ -> true in
+    List.iter (fun p ->
+      if ok p then
+        add_constraint (Utils.Id.from_array p) c) (Utils.seq n) ;
+    add_constraint_other c in
   (** Retrieve the attribute identifier given by this name.
    * At this stage, it has to be defined.
    * See the declarations [attribute_functions] and [contact_functions] to
@@ -586,17 +598,14 @@ let parse_element st element_name block =
         let cid =
           List.map (get_constructor_id attribute_functions aid)
             pa.Ast.attribute_value in
-        let p =
-          (* TODO: In the cases where [pa.Ast.attribute_player] is [AllOtherPlayers],
-           * this constraint has to be added to the [other] list.
-           * If it is [AllPlayers], it has to be rewritten into a list of [Players]
-           * and [AllOtherPlayers]. *)
+        let c =
+          Element.Attribute (aid,
+            State.Fixed_value (cid, pa.Ast.attribute_strictness)) in
+        let _ =
           match pa.Ast.attribute_player with
-          | Ast.DestinationPlayer p -> p
-          | _ -> failwith (__LOC__ ^ ": Not yet implemented!") in
-        add_constraint (get_player p)
-          (Element.Attribute (aid,
-            State.Fixed_value (cid, pa.Ast.attribute_strictness))) ;
+          | Ast.DestinationPlayer p -> add_constraint (get_player p) c
+          | Ast.AllOtherPlayers -> add_constraint_other c
+          | Ast.AllPlayers -> add_constraint_all c in
         merge_with_constructor_dependencies_list deps
           (List.map (fun id -> State.PlayerConstructor id) cid))
       deps block.provide_attribute in
@@ -607,17 +616,40 @@ let parse_element st element_name block =
         let cid =
           List.map (get_constructor_id contact_functions aid)
             pc.Ast.contact_value in
-        let add p1 p2 =
-          add_constraint (get_player p1)
-            (Element.Contact (aid, Utils.Id.to_array (get_player p2),
-              State.Fixed_value (cid, pc.Ast.contact_strictness))) in
+        let c p2 =
+          Element.Contact (aid, Option.map (fun p ->
+              Utils.Id.to_array p) p2,
+            State.Fixed_value (cid, pc.Ast.contact_strictness)) in
+        (** Call the function [add] on all requested destinations,
+         * except [p1] if there.
+         * No error is thrown: the goal is only to avoid two [any player]
+         * commands used together to yield any conflict. **)
+        let add_except p1 add =
+          let add_single p2 =
+            if p1 <> Some p2 then add (Some p2) in function
+          | Ast.DestinationPlayer p2 -> add_single (get_player p2)
+          | Ast.AllOtherPlayers -> add None
+          | Ast.AllPlayers ->
+            List.iter add_single (List.map Utils.Id.from_array (Utils.seq n)) ;
+            add None in
+        let add = function
+          | Ast.DestinationPlayer p1n ->
+            let p1 = get_player p1n in
+            add_except None (fun p2 ->
+              if p2 = Some p1 then
+                raise (SelfRelation (p1n, element_name)) ;
+              add_constraint p1 (c p2))
+          | Ast.AllOtherPlayers ->
+            add_except None (fun p2 -> add_constraint_other (c p2))
+          | Ast.AllPlayers -> fun p2 ->
+            List.iter (fun p1 ->
+                let p1 = Utils.Id.from_array p1 in
+                add_except (Some p1) (fun p2 -> add_constraint p1 (c p2)) p2)
+              (Utils.seq n) ;
+            add_except None (fun p2 -> add_constraint_other (c p2)) p2 in
         let _ =
-          (* TODO: Same than above *)
-          let tmp = function
-            | Ast.DestinationPlayer p -> p
-            | _ -> failwith (__LOC__ ^ ": Not yet implemented!") in
           match pc.Ast.contact_destination with
-          | Ast.FromTo (p1, p2) -> add (tmp p1) p2
+          | Ast.FromTo (p1, p2) -> add p1 p2
           | Ast.Between (p1, p2) -> add p1 p2 ; add p2 p1 in
         merge_with_constructor_dependencies_list deps
           (List.map (fun id -> State.ContactConstructor id) cid))
@@ -653,7 +685,7 @@ let parse_element st element_name block =
                   List.filter (fun c -> not (List.mem c cid)) total
                 ) else cid in
               add_constraint
-                (Element.Contact (aid, Utils.Id.to_array (get_player p'),
+                (Element.Contact (aid, Some (Utils.Id.to_array (get_player p')),
                   State.One_value_of cid)) ;
               intersect_with_constructor_dependencies_list deps
                 (List.map (fun id -> State.ContactConstructor id) cid)) deps pc in

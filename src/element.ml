@@ -194,23 +194,44 @@ let search_instantiation st (e, other) =
       aux' possible in
   aux [] (Array.to_list redirection_array)
 
-type attribute_differences = (State.attribute, int) PMap.t
+(** This type represents the difference of attributes that have been fixed with
+ * the ones that have been created, as a number for each attribute.
+ * For instance, if an instantiation defines an attribute [a] that was to be defined
+ * (that is, for which [State.attribute_value_can_progress] returned [true]),
+ * it will associate [1] to [a]; if it adds an attribute to be defined, it will
+ * associate [-1] instead.
+ * The total sum of this map is also stored, as well as the list of elements
+ * associated with a negative number. **)
+type attribute_differences =
+  (State.attribute, int) PMap.t * int * State.attribute list
 
-let merge_attribute_differences m1 m2 =
-  PMap.foldi (fun a v2 m ->
-    let v1 =
-      try PMap.find a m
-      with Not_found -> 0 in
-    PMap.add a (v1 + v2) m) m2 m1
+let empty_difference = (PMap.empty, 0, [])
+
+let difference_weigth (_, w, _) = w
+
+let difference_attribute_in_need (_, _, l) = l
+
+let difference_for_attribute (m, _, _) a =
+  try PMap.find a m
+  with Not_found -> 0
+
+let update_difference (m, w, l) a d =
+  let d_old = difference_for_attribute (m, w, l) a in
+  (PMap.add a (d_old + d) m, w + d,
+    if d_old < 0 && d_old + d >= 0 then ExtList.List.remove l a else l)
+
+let merge_attribute_differences (m1, s1, l1) (m2, s2, l2) =
+  let (m, li, lo) =
+    PMap.foldi (fun a v2 (m, li, lo) ->
+      let v1 = difference_for_attribute (m1, s1, l1) a in
+      (PMap.add a (v1 + v2) m,
+       (if v1 >= 0 && v1 + v2 < 0 then a :: li else li),
+       (if v1 < 0 && v1 + v2 >= 0 then a :: lo else lo))) m2 (m1, [], []) in
+  (m, s1 + s2, li @ List.filter (fun a -> not (List.mem a lo)) l1)
 
 let apply state (e, other) inst =
-  let diff = PMap.empty in
+  let diff = empty_difference in
   let other_players = other_players state inst in
-  let update_diff diff a i =
-    let old_value =
-      try PMap.find a diff
-      with Not_found -> 0 in
-    PMap.add a (old_value + i) diff in
   let apply_constraint c (state, diff) =
     let cstate = State.get_character_state state in function
     | Attribute (a, v1) ->
@@ -218,13 +239,13 @@ let apply state (e, other) inst =
         match State.get_attribute_character cstate c a with
         | None ->
           State.write_attribute_character cstate c a v1 ;
-          update_diff diff (State.PlayerAttribute a)
+          update_difference diff (State.PlayerAttribute a)
             (if State.attribute_value_can_progress v1 then -1 else 0)
         | Some v2 ->
           let v3 =
             Utils.assert_option __LOC__ (State.compose_attribute_value v1 v2) in
           State.write_attribute_character cstate c a v3 ;
-          update_diff diff (State.PlayerAttribute a)
+          update_difference diff (State.PlayerAttribute a)
             (if State.attribute_value_progress v2 v3 then 1 else 0) in
       (state, diff)
     | Contact (con, cha, v1) ->
@@ -233,13 +254,13 @@ let apply state (e, other) inst =
           match State.get_contact_character cstate c con cha with
           | None ->
             State.write_contact_character cstate c con cha v1 ;
-            update_diff diff (State.ContactAttribute con)
+            update_difference diff (State.ContactAttribute con)
               (if State.attribute_value_can_progress v1 then -1 else 0)
           | Some v2 ->
             let v3 =
               Utils.assert_option __LOC__ (State.compose_attribute_value v1 v2) in
             State.write_contact_character cstate c con cha v3 ;
-            update_diff diff (State.ContactAttribute con)
+            update_difference diff (State.ContactAttribute con)
               (if State.attribute_value_progress v2 v3 then 1 else 0) in
         (state, diff) in
       match cha with

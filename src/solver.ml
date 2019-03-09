@@ -74,7 +74,7 @@ let grade_evs o s evs e =
     if dev < 0 then None
     else Some (inst, progress, dev))
 
-(** As [grade_evs], but withouth the need to provide the [evs] argument. **)
+(** As [grade_evs], but without the need to provide the [evs] argument. **)
 let grade o s =
   grade_evs o s (evaluate o (State.get_relation_state s))
 
@@ -174,26 +174,74 @@ let add_random g o optimistic s =
   match Utils.argmax (fun (e1, inst1, g1) (e2, inst2, g2) ->
           compare_grade g1 g2) l with
   | Some (e, inst, gr) -> (g, Element.apply s e inst)
-  | None -> (g, (s, PMap.empty))
+  | None -> (g, (s, Element.empty_difference))
+
+(** Calls the functions [weighted_step] and [add_random], trying
+ * to reach a step [s] whose associated attribute difference [m]
+ * has been increased by [temperature]. **)
+let wide_step g o temperature s m =
+  let initial_weigth = Element.difference_weigth m in
+  let objective_weigth = initial_weigth + temperature in
+  let step g s m parameter =
+    let l = Element.difference_attribute_in_need m in
+    if l = [] || Random.int 10 = 0 then (
+      let optimistic = 20 - 15 * parameter / 100 in
+      let (g, (s, m')) = add_random g o optimistic s in
+      (g, s, Element.merge_attribute_differences m m')
+    ) else (
+      (** We select an attribute and try to increase it.
+       * If we fail up to five times, we abort and chose another attribute. **)
+      let a = Utils.select_any (Element.difference_attribute_in_need m) in
+      let p = Pool.empty g.pool_informations in
+      let p = Pool.add_attribute p a in
+      let rec aux p m s = function
+        | 0 -> (g, s, m)
+        | n ->
+          let (p, r) = weighted_step g o (110 * parameter / 100) s p in
+          match r with
+          | None -> aux p m s (n - 1)
+          | Some (s, m') ->
+            let m = Element.merge_attribute_differences m m' in
+            aux p m s n
+      in aux p m s 5) in
+  let rec aux g s m = function
+    | 0 -> (g, s, m)
+    | n ->
+      let current_weigth = Element.difference_weigth m in
+      if current_weigth >= objective_weigth then
+        (g, s, m)
+      else
+        let parameter =
+          100 * (current_weigth - initial_weigth)
+          / (objective_weigth - initial_weigth) in
+        let (g, s, m) = step g s m parameter in
+        aux g s m (n - 1) in
+  aux g s m 20
+
+(** This function performs a simulted annealing based on [wide_step].
+ * This last function is considered costly and we thus starts using the [Lwt.t]
+ * type here. **)
+let wider_step g s o m =
+  let rec aux temperature g s m =
+    let%lwt l =
+      Lwt_list.map_p (fun _ -> Lwt.return (wide_step g o temperature s m))
+        (Utils.seq 5) in
+    let (g, s, m) =
+      match Utils.argmax (fun (_, s1, _) (_, s2, _) ->
+              let s1 = State.get_relation_state s1 in
+              let s2 = State.get_relation_state s2 in
+              compare (evaluate o s1) (evaluate o s2)) l with
+      | Some (g, s, m) -> (g, s, m)
+      | None -> (g, s, m) in
+    aux (9 * temperature / 10 - 1) g s m in
+  aux 100 g s m
 
 let solve g s o =
   let g = { g with all_elements =
     Utils.BidirectionalList.from_list (Utils.shuffle
       (Utils.BidirectionalList.to_list g.all_elements)) } in
-  let p = Pool.empty g.pool_informations in
-  (* TODO: Adds in the pool all the relevant elements given the constraints
-   * given by the user. *)
-  let m = PMap.empty in (* TODO: the associated difference of attributes. *)
-  let rec aux g s p m =
-    Lwt_js.yield () ;%lwt
-    let (p, so) = step g o 5 10 s p in
-    match so with
-    | None ->
-      let (g, (s, m)) = add_random g o 3 s in
-      Lwt.return s (* TODO: Call one self recursively… under some guard that
-                    * prevents infinite recursion. *)
-    | Some (s, m') ->
-      let m = Element.merge_attribute_differences m m' in
-      aux g s p m in
-  aux g s p m
+  let m = Element.empty_difference in
+  (* TODO: Change the value of [m] to consider all the relevant elements given by
+   * the constraints provided by the user. *)
+  wider_step g s o m
 

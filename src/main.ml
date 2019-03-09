@@ -361,6 +361,7 @@ let _ =
         InOut.Text (get_translation "participate") ;
         InOut.Link (get_translation "there",
                     "https://github.com/Mbodin/murder-generator") ]) ;
+      Js.Unsafe.global##.computed_state := state ; (* TODO: Temporarily, here is a basic way to check what has been computed. *)
       next_button parameters (fun _ -> parameters)
         (Some ask_for_player_constraints) None in
     let parameters = {

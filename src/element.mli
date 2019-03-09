@@ -54,28 +54,40 @@ val compatible_and_progress : State.t -> t -> character array -> bool option
 val search_instantiation : State.t -> t -> (character array * bool) option
 
 (** This type carries information about how the state have been changed
- * by the [apply] function (see below). **)
-type attribute_differences = (State.attribute, int) PMap.t
+ * by the [apply] function. **)
+type attribute_differences
+
+(** Compose two differences of attribute.
+ * The function is optimised for when the first argument is larger than the
+ * second. **)
+val merge_attribute_differences : attribute_differences -> attribute_differences -> attribute_differences
+
+(** Returns some value of the weight of the difference of attributes after
+ * the application of an event.
+ * A difference of zero means that as many constraints have been solved than
+ * constraints that have been added.
+ * Negative values means that more constraints have been added than solved,
+ * and positive means that more have been solved. **)
+val difference_weigth : attribute_differences -> int
+
+(** Returns the difference for a specific attribute. **)
+val difference_for_attribute : attribute_differences -> State.attribute -> int
+
+(** Returns all attributes who value associated by [difference_for_attribute]
+ * is negative, that is, the attributes with constraints to be solved. **)
+val difference_attribute_in_need : attribute_differences -> State.attribute list
+
+(** Return an empty difference, with a weight of zero. **)
+val empty_difference : attribute_differences
 
 (** Apply the given element to the state according to this instantiation.
  * This application is not functional (although the new state is returned,
  * invalidating the previous one).
  * This function should only be applied to instantiations for which
  * [compatible_and_progress] returns [Some].
- * It also provides the difference of attributes that have been fixed with the ones
- * that have been created, as a number for each attribute.
- * For instance, if an instantiation defines an attribute [a] that was to be defined
- * (that is, for which [State.attribute_value_can_progress] returned true),
- * it will associate [1] to [a]; if it adds an attribute to be defined, it will
- * associate [-1] instead.
  * Once the total number of attribute to be defined is zero, the state can be
  * published. **)
 val apply : State.t -> t -> character array -> State.t * attribute_differences
-
-(** Compose two differences of attribute.
- * The function is optimised for when the first argument is larger than the
- * second. **)
-val merge_attribute_differences : attribute_differences -> attribute_differences -> attribute_differences
 
 (** Get the resulting relation array from an instantiation.
  * The input state is not modified by this function. **)

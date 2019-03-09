@@ -167,6 +167,16 @@ begin
   (* provide event to P (* TODO *) *)
 end
 
+element DecidedToDisappearAfterLotsOfDebts
+begin
+  let A be player with contact FinancialDebt to B as Large
+  let B be player
+
+  provide attribute Famousness to A as Hidden
+
+  (* provide event to A (* TODO *) *)
+end
+
 
 declare contact Favor
 

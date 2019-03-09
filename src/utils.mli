@@ -243,6 +243,9 @@ module BidirectionalList : sig
      * to both directions. **)
     type 'a t
 
+    (** An empty bidirectional list. **)
+    val empty : 'a t
+
     (** Checks whether the list is empty. **)
     val is_empty : 'a t -> bool
 
@@ -272,6 +275,13 @@ module BidirectionalList : sig
     (** Check whether there exists at least one element in the list satisfying
      * the given predicate. **)
     val exists : ('a -> bool) -> 'a t -> bool
+
+    (** Returns the size of the bidirectional list. **)
+    val length : 'a t -> int
+
+    (** Only keeps the elements in the bidirectional satisfying the given
+     * predicate. **)
+    val filter : ('a -> bool) -> 'a t -> 'a t
 
   end
 

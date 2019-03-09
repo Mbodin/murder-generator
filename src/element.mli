@@ -53,6 +53,10 @@ val compatible_and_progress : State.t -> t -> character array -> bool option
  * It tries to return an instantiation that progresses. **)
 val search_instantiation : State.t -> t -> (character array * bool) option
 
+(** This type carries information about how the state have been changed
+ * by the [apply] function (see below). **)
+type attribute_differences = (State.attribute, int) PMap.t
+
 (** Apply the given element to the state according to this instantiation.
  * This application is not functional (although the new state is returned,
  * invalidating the previous one).
@@ -66,7 +70,12 @@ val search_instantiation : State.t -> t -> (character array * bool) option
  * associate [-1] instead.
  * Once the total number of attribute to be defined is zero, the state can be
  * published. **)
-val apply : State.t -> t -> character array -> State.t * (State.attribute, int) PMap.t
+val apply : State.t -> t -> character array -> State.t * attribute_differences
+
+(** Compose two differences of attribute.
+ * The function is optimised for when the first argument is larger than the
+ * second. **)
+val merge_attribute_differences : attribute_differences -> attribute_differences -> attribute_differences
 
 (** Get the resulting relation array from an instantiation.
  * The input state is not modified by this function. **)

@@ -194,6 +194,15 @@ let search_instantiation st (e, other) =
       aux' possible in
   aux [] (Array.to_list redirection_array)
 
+type attribute_differences = (State.attribute, int) PMap.t
+
+let merge_attribute_differences m1 m2 =
+  PMap.foldi (fun a v2 m ->
+    let v1 =
+      try PMap.find a m
+      with Not_found -> 0 in
+    PMap.add a (v1 + v2) m) m2 m1
+
 let apply state (e, other) inst =
   let diff = PMap.empty in
   let other_players = other_players state inst in

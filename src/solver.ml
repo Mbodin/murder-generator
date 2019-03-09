@@ -4,6 +4,8 @@ type global = {
       (** The set of all registered elements. **) ;
     constructor_informations : State.constructor_maps
       (** Informations about constructors. **) ;
+    all_elements : Utils.Id.t Utils.BidirectionalList.t
+      (** The list of all elements. **) ;
     pool_informations : Pool.global (** Informations needed by the pool. **)
   }
 
@@ -14,6 +16,7 @@ let read_element g e =
 let empty_global = {
     element_register = Utils.Id.map_create () ;
     constructor_informations = State.empty_constructor_maps ;
+    all_elements = Utils.BidirectionalList.empty ;
     pool_informations = Pool.empty_global
   }
 
@@ -21,12 +24,14 @@ let register_element g e =
   let (eid, m) = Utils.Id.map_insert_t g.element_register e in
   let attrs = Element.provided_attributes e in
   { g with element_register = m ;
-           pool_informations = Pool.add_element g.pool_informations eid attrs }
+           all_elements = Utils.BidirectionalList.add_left eid g.all_elements ;
+           pool_informations = Pool.register_element g.pool_informations eid attrs }
 
 let filter_elements g f =
-  { g with pool_informations =
-      Pool.filter_global g.pool_informations (fun e ->
-        f (read_element g e)) }
+  let f e = f (read_element g e) in
+  { g with all_elements = Utils.BidirectionalList.filter f g.all_elements ;
+           pool_informations =
+             Pool.filter_global g.pool_informations f }
 
 type objective = {
     difficulty : int ;
@@ -133,28 +138,62 @@ let step g o optimistic greedy s p =
     aux None (fun _ p e inst progress dev ->
       (p, Some (Element.apply s e inst))) p greedy
 
+(** Calls the function [step] with heuristical arguments [optimistic] and [greedy]
+ * depending on a single parameter [parameter] ranging from 0 to 101.
+ * This parameter is meant to indicate the need to speed-up the analysis: at low
+ * values, it means that adequate elements are being found, at high values, it
+ * means that an exhaustive search is needed. **)
+let weighted_step g o parameter s p =
+  let (optimistic, greedy) =
+    let parameter = max 0 parameter in
+    if parameter > 100 then
+      (0, Pool.quick_length p)
+    else (6 - 3 * parameter / 100, 2 + 18 * parameter / 100) in
+  step g o optimistic greedy s p
+
+(** Picks [optimistic] random elements and apply the best.
+ * It assumes that [g.all_elements] has been shuffled, so that random elements
+ * are just the first ones.
+ * Returns the new global [g] with its [all_elements] updated. **)
+let add_random g o optimistic s =
+  let evs = evaluate o (State.get_relation_state s) in
+  let (g, l) =
+    let rec aux g acc = function
+      | 0 -> (g, acc)
+      | n ->
+        match Utils.BidirectionalList.match_left g.all_elements with
+        | None -> (g, acc)
+        | Some (e, all_elements) ->
+          let g = { g with all_elements = all_elements } in
+          let e = read_element g e in
+          match grade_evs o s evs e with
+          | None | Some None -> aux g acc (n - 1)
+          | Some (Some (inst, progress, dev)) ->
+            aux g ((e, inst, (progress, dev)) :: acc) (n - 1) in
+    aux g [] optimistic in
+  match Utils.argmax (fun (e1, inst1, g1) (e2, inst2, g2) ->
+          compare_grade g1 g2) l with
+  | Some (e, inst, gr) -> (g, Element.apply s e inst)
+  | None -> (g, (s, PMap.empty))
+
 let solve g s o =
+  let g = { g with all_elements =
+    Utils.BidirectionalList.from_list (Utils.shuffle
+      (Utils.BidirectionalList.to_list g.all_elements)) } in
   let p = Pool.empty g.pool_informations in
-  (* TODO: Adds in the pool all the relevant elements given the given
-   * constraints. *)
-  let add_element p s =
-    (* TODO: Use [evaluate_character] to estimate which player should receive
-     * most attention for now, and add elements that may fit its needs. *)
-    p (* TODO *) in
-  let rec aux s p =
+  (* TODO: Adds in the pool all the relevant elements given the constraints
+   * given by the user. *)
+  let m = PMap.empty in (* TODO: the associated difference of attributes. *)
+  let rec aux g s p m =
     Lwt_js.yield () ;%lwt
     let (p, so) = step g o 5 10 s p in
     match so with
     | None ->
-      (** No elements matched: the pool needs to be extended with random
-       * elements. **)
-      let p = add_element p s in
+      let (g, (s, m)) = add_random g o 3 s in
       Lwt.return s (* TODO: Call one self recursively… under some guard that
                     * prevents infinite recursion. *)
-    | Some (s, m) ->
-      (* TODO: The map [m] needs to be given recursively to [aux] to be able
-       * to create snapshots of the state when it is nice.
-       * When doing so, the pool can be safely cleared. *)
-      aux s p in
-  aux s p
+    | Some (s, m') ->
+      let m = Element.merge_attribute_differences m m' in
+      aux g s p m in
+  aux g s p m
 

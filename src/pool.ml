@@ -7,10 +7,9 @@ type element = Utils.Id.t
   * - [element_attribute] is a map from attributes to lists of
   *   elements (the elements that provide this attribute).
   * They are not supposed to be changed once pools are created. **)
-
 type global = {
     all_elements : (element, State.attribute list) PMap.t ;
-    element_attribute : (State.attribute, element list) PMap.t ;
+    element_attribute : (State.attribute, element list) PMap.t
   }
 
 let empty_global = {
@@ -32,7 +31,7 @@ let get_elements_from_element_attribute element_attribute a =
 let get_elements g a =
   get_elements_from_element_attribute g.element_attribute a
 
-let add_element g e l =
+let register_element g e l =
   let l = Utils.shuffle l in {
       all_elements = PMap.add e l g.all_elements ;
       element_attribute =
@@ -42,7 +41,7 @@ let add_element g e l =
           PMap.add a l element_attribute) g.element_attribute l
   }
 
-let remove_element g e =
+let unregister_element g e =
   let l = get_attributes g e in {
     all_elements = PMap.remove e g.all_elements ;
     element_attribute =
@@ -55,13 +54,18 @@ let remove_element g e =
 let filter_global g f =
   PMap.foldi (fun e _ g ->
     if f e then g
-    else remove_element g e) g.all_elements g
+    else unregister_element g e) g.all_elements g
 
 type t = {
-    current_elements : element Utils.PSet.t ; (** The set of the current elements in the pool. **)
-    pool : element Utils.BidirectionalList.t ; (** The pool. Each element is present at most once in the pool. **)
-    filtered_out_attributes : State.attribute Utils.PSet.t (** Attributes meant to be removed from the pool. **) ;
+    current_elements : element Utils.PSet.t
+      (** The set of the current elements in the pool. **) ;
+    pool : element Utils.BidirectionalList.t
+      (** The pool.
+       * Each element is present at most once in the pool. **) ;
+    filtered_out_attributes : State.attribute Utils.PSet.t
+      (** Attributes meant to be removed from the pool. **) ;
     global : global
+      (** The associated global values. **)
   }
 
 let empty g = {
@@ -73,8 +77,10 @@ let empty g = {
 
 (** To avoid a costly iteration over the pool when removing elements relative
  * to a particular attribute, the removing is done lazily.
- * When removing an attribute, it is only stored in the set [filtered_out_attributes].
- * This function states whether an element is meant to be ignored by this mechanism. **)
+ * When removing an attribute, it is only stored in the set
+ * [filtered_out_attributes].
+ * This function states whether an element is meant to be ignored by this
+ * mechanism. **)
 let to_be_ignored p e =
   List.exists (fun a ->
     Utils.PSet.mem a p.filtered_out_attributes) (get_attributes p.global e)
@@ -108,9 +114,15 @@ let partial_normalize p =
   aux p.pool
 
 let is_empty p =
-  let p = partial_normalize p in (* Technically, the invariant that the first element of the list is not ignored
-                                  * should hold and this normalisation should not be not needed. *)
+  let p = partial_normalize p in
   Utils.BidirectionalList.is_empty p.pool
+
+let length p =
+  let p = normalize p in
+  Utils.BidirectionalList.length p.pool
+
+let quick_length p =
+  Utils.BidirectionalList.length p.pool
 
 (** The interesting case of [add] is when adding an element which is marked
  * as an element to be ignored: this mean that the previous note stating

@@ -13,11 +13,11 @@ val empty_global : global
 
 (** Register that an element exists, and that it may provide the following
  * attributes. **)
-val add_element : global -> element -> State.attribute list -> global
+val register_element : global -> element -> State.attribute list -> global
 
 (** Unregister an element.
  * It won’t be considered by the pool. **)
-val remove_element : global -> element -> global
+val unregister_element : global -> element -> global
 
 (** Unregister any element not satisfying the provided predicate. **)
 val filter_global : global -> (element -> bool) -> global
@@ -30,6 +30,13 @@ val empty : global -> t
 
 (** States whether the pool is empty. **)
 val is_empty : t -> bool
+
+(** Returns the number of elements in the pool.
+ * This function puts the pool into normal form and thus may be costly. **)
+val length : t -> int
+
+(** Returns an overapproximation of the length of the pool. **)
+val quick_length : t -> int
 
 (** Pick an element from the pool.
  * This element will then be put at the end of the pool.

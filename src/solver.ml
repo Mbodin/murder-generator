@@ -181,7 +181,8 @@ let add_random g o optimistic s =
  * has been increased by [temperature]. **)
 let wide_step g o temperature s m =
   let initial_weigth = Element.difference_weigth m in
-  let objective_weigth = initial_weigth + temperature in
+  let objective_weigth =
+    initial_weigth + 5 * int_of_float (log (float_of_int temperature)) + 2 in
   let step g s m parameter =
     let l = Element.difference_attribute_in_need m in
     if l = [] || Random.int 10 = 0 then (
@@ -223,18 +224,22 @@ let wide_step g o temperature s m =
  * type here. **)
 let wider_step g s o m =
   let rec aux temperature g s m =
-    let%lwt l =
-      Lwt_list.map_p (fun _ -> Lwt.return (wide_step g o temperature s m))
-        (Utils.seq 5) in
-    let (g, s, m) =
+    if temperature <= 0 then
+      Lwt.return (g, s, m)
+    else (
+      Lwt_js.yield () ;%lwt
+      let%lwt l =
+        Lwt_list.map_s (fun _ -> Lwt.return (wide_step g o temperature s m))
+          (Utils.seq 5) in
       match Utils.argmax (fun (_, s1, _) (_, s2, _) ->
               let s1 = State.get_relation_state s1 in
               let s2 = State.get_relation_state s2 in
               compare (evaluate o s1) (evaluate o s2)) l with
-      | Some (g, s, m) -> (g, s, m)
-      | None -> (g, s, m) in
-    aux (9 * temperature / 10 - 1) g s m in
-  aux 100 g s m
+      | Some (g, s, m) -> aux (temperature - 1) g s m
+      | None -> aux (9 * temperature / 10 - 1) g s m) in
+  let distance_to_objective =
+    min 0 (- evaluate o (State.get_relation_state s)) in
+  aux (distance_to_objective / 3 + 1) g s m
 
 let solve g s o =
   let g = { g with all_elements =
@@ -243,5 +248,6 @@ let solve g s o =
   let m = Element.empty_difference in
   (* TODO: Change the value of [m] to consider all the relevant elements given by
    * the constraints provided by the user. *)
-  wider_step g s o m
+  let%lwt (g, s, m) = wider_step g s o m in
+  Lwt.return s
 

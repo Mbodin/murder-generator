@@ -56,6 +56,7 @@ Similarly, these commands will change the committed file [main.js](./web/main.js
 At this stage, one can open the file `index.html` through a browser and enjoy the generator.
 Note that this requires to set up a server.
 This README does not aim at explaining how to set it up; if you are using Github, you can push these changes online and access the corresponding [github.io](https://github.io) address.
+Alternatively, Firefox seems to accept to locally execute JavaScript files: it seems that just openning the file with Firefox does the trick.
 
 Optionnally, one can perform some tests using the following commands.
 Again, these commands will change the committed file [usedTranslations.ml](./src/usedTranslations.ml): take care not to commit it.

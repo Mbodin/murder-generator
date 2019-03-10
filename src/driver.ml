@@ -61,7 +61,11 @@ type state = {
       (** Similarly, the dependencies of each element. **) ;
     elements : (Utils.Id.t, Element.t) PMap.t ;
     category_translation : Utils.Id.t Translation.t
-      (** All translations for categories. **)
+      (** All translations for categories. **) ;
+    attribute_translation : State.attribute Translation.t
+      (** All translations for attributes. **) ;
+    constructor_translation : State.constructor Translation.t
+      (** All translations for constructors. **)
     (* TODO: Translations. *)
   }
 
@@ -92,7 +96,9 @@ let empty_state = {
     constructor_dependencies = PMap.empty ;
     elements_dependencies = PMap.empty ;
     elements = PMap.empty ;
-    category_translation = Translation.empty
+    category_translation = Translation.empty ;
+    attribute_translation = Translation.empty ;
+    constructor_translation = Translation.empty
   }
 
 let empty_intermediary = {
@@ -324,7 +330,10 @@ let prepare_declaration i =
               category_names = category_names ;
               constructor_dependencies = constructor_dependencies ;
               attribute_dependencies =
-                PMap.add id deps i.current_state.attribute_dependencies } } in
+                PMap.add id deps i.current_state.attribute_dependencies ;
+              attribute_translation =
+                Translation.add i.current_state.attribute_translation
+                  Translation.generic id name } } in
   (** Declare constructor instances.
    * Similar to [declare_instance], see the declarations [attribute_functions] and
    * [contact_functions] to understand the large tuple argument. **)
@@ -371,8 +380,11 @@ let prepare_declaration i =
           { i.current_state with
               constructor_information =
                 update i.current_state.constructor_information state ;
-                constructor_dependencies =
-                  PMap.add id deps i.current_state.constructor_dependencies } } in
+              constructor_dependencies =
+                PMap.add id deps i.current_state.constructor_dependencies ;
+              constructor_translation =
+                Translation.add i.current_state.constructor_translation
+                  Translation.generic id constructor } } in
   function
   | Ast.DeclareInstance (Ast.Attribute, attribute, block) ->
     declare_instance attribute_functions attribute block
@@ -708,6 +720,10 @@ let parse i =
       elements = elements }
 
 let translates_category s = s.category_translation
+
+let translates_attribute s = s.attribute_translation
+
+let translates_constructor s = s.constructor_translation
 
 let elements s = s.elements
 

@@ -361,7 +361,37 @@ let _ =
         InOut.Text (get_translation "participate") ;
         InOut.Link (get_translation "there",
                     "https://github.com/Mbodin/murder-generator") ]) ;
-      Js.Unsafe.global##.computed_state := state ; (* TODO: Temporarily, here is a basic way to check what has been computed. *)
+      InOut.print_block (InOut.Div (InOut.Normal,
+        InOut.P [ InOut.Text "This is a test" ] (* TODO *)
+        :: List.mapi (fun c (name, _, _, _) ->
+             let cst = State.get_character_state state in
+             let c = Utils.Id.from_array c in
+             InOut.P (
+                 InOut.Text (name ^ ":")
+                 :: PMap.foldi (fun a v l ->
+                        let a = State.PlayerAttribute a in
+                        let tra =
+                          let tr = Driver.translates_attribute data in
+                          Utils.assert_option __LOC__
+                            (Translation.translate tr a Translation.generic) in
+                        let trv =
+                          let tr_strict = function
+                            | State.NonStrict -> "compatible "
+                            | State.LowStrict -> ""
+                            | State.Strict -> "strict " in
+                          let tr l =
+                            let tr = Driver.translates_constructor data in
+                            String.concat ", " (List.map (fun v ->
+                                let v = State.PlayerConstructor v in
+                                Utils.assert_option __LOC__
+                                  (Translation.translate tr v Translation.generic))
+                              l) in
+                          match v with
+                          | State.Fixed_value (l, strict) -> tr_strict strict ^ tr l
+                          | State.One_value_of l -> "? " ^ tr l in
+                        InOut.Text (tra ^ "(" ^ trv ^ "); ") :: l)
+                      (State.get_all_attributes_character cst c) []
+               )) parameters.player_information)) ;
       next_button parameters (fun _ -> parameters)
         (Some ask_for_player_constraints) None in
     let parameters = {

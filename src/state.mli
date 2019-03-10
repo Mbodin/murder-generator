@@ -161,6 +161,10 @@ val create_character_state : int -> character_state
 (** Get a character attribute from the character state. **)
 val get_attribute_character : character_state -> character -> PlayerAttribute.attribute -> PlayerAttribute.constructor attribute_value option
 
+(** Returns all the current attributes given to a player.
+ * This function is meant to be called once the state is stable. **)
+val get_all_attributes_character : character_state -> character -> (PlayerAttribute.attribute, PlayerAttribute.constructor attribute_value) PMap.t
+
 (** Get a character attribute from the character state.
  * If it is not present, the character set is non-functionally updated
  * to mark the attribute as being of need of a value (returning all the

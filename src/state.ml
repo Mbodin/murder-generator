@@ -184,8 +184,11 @@ type character_state =
 let create_character_state n =
   Array.init n (fun i -> (PMap.empty, PMap.empty))
 
+let get_all_attributes_character st c =
+  fst st.(Utils.Id.to_array c)
+
 let get_attribute_character st c a =
-  try Some (PMap.find a (fst st.(Utils.Id.to_array c)))
+  try Some (PMap.find a (get_all_attributes_character st c))
   with Not_found -> None
 
 let write_attribute_character st c a v =
@@ -193,8 +196,9 @@ let write_attribute_character st c a v =
   st.(c) <- (PMap.add a v (fst st.(c)), snd st.(c))
 
 let force_get_attribute_character cm st c a =
-  try PMap.find a (fst st.(Utils.Id.to_array c))
-  with Not_found ->
+  match get_attribute_character st c a with
+  | Some v -> v
+  | None ->
     let l = Utils.assert_option __LOC__ (PlayerAttribute.constructors cm a) in
     let v = One_value_of l in
     write_attribute_character st c a v ;

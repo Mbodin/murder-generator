@@ -103,3 +103,9 @@ val get_element_dependencies : state -> Utils.Id.t -> Utils.Id.t Utils.PSet.t
 (** Returns the translations for categories. **)
 val translates_category : state -> Utils.Id.t Translation.t
 
+(** Returns the translations for attributes. **)
+val translates_attribute : state -> State.attribute Translation.t
+
+(** Returns the translations for constructors. **)
+val translates_constructor : state -> State.constructor Translation.t
+

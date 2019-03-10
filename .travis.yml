@@ -38,8 +38,8 @@ before_script:
   - ./build.sh check usedTranslations.ml
 
 script:
-  - ./build.sh check main.js && mv main.js web/
   - ./build.sh tests.byte && ./tests.byte
+  - ./build.sh check main.js && mv main.js web/
 
 deploy:
   provider: pages

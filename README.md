@@ -1,9 +1,74 @@
-# Prelude
 
-To English-speaker: the following is in French, I will translate it when the project gets mature.
+# Description
 
+This project is a [murder party](https://en.wikipedia.org/wiki/Murder_mystery_game) generator.
+More precisely, this project aims at generating live-action-role-playing-game scenarios involving a lot of player-versus-player.
+The generated scenarios are not meant to be extraordinary in term of content, but they do aim at providing interesting interactions between players.
+
+Scenarios are made by combining scenario elements, defined in the [data](./data) folder.
+These elements range from very simple ones (for instance by just stating that a given player is female) to relatively complex ones (like stating that a player is a double agent, or that a player is responsible for a contract between several other players).
+Each of these elements yields some specific relations, and the generator tries to even them out along players according to the player’s preferences.
+
+The generator is available online at [this adress](https://mbodin.github.io/murder-generator/).
+
+# Installation
+
+You do not need to compile the program to use it, as it is already available [online](https://mbodin.github.io/murder-generator/).
+If you want to compile it yourself, you will need an OCaml environment.
+The simplest way to set it up is by using Opam.
+On Debian, this would look like that:
+```bash
+sudo apt install opam m4
+opam init
+```
+
+You may want to add the following line to your `.bashrc` file:
+```bash
+eval `opam config env`
+```
+
+To compile this project, you will need some Opam packages.
+Running the following commands should install them.
+```bash
+opam install ocamlfind extlib menhir yojson
+opam install js_of_ocaml js_of_ocaml-ppx lwt_ppx js_of_ocaml-lwt
+opam install ppx_deriving js_of_ocaml-ppx_deriving_json
+eval `opam config env`
+```
+
+Accessing the content of a folder in JavaScript under the http protocol is not easily possible.
+To circumvent this issue, the list of data files is determined during compilation.
+To generate it, use the following command.
+```bash
+./build.sh check murderFiles.ml
+```
+This will replace the committed file [murderFiles.ml](./src/murderFiles.ml).
+Please do not commit it after generation (I will reject any pull request with this file committed).
+The `check` argument of `./build.sh` checks that this file was clean before the generation; it can be removed at your own risks.
+
+To compile the project into JavaScript, type the following commands.
+```bash
+./build.sh check main.js
+mv -f main.js web/
+```
+Similarly, these commands will change the committed file [main.js](./web/main.js), which should not be committed as-is.
+
+At this stage, one can open the file `index.html` through a browser and enjoy the generator.
+Note that this requires to set up a server.
+This README does not aim at explaining how to set it up; if you are using Github, you can push these changes online and access the corresponding [github.io](https://github.io) address.
+
+Optionnally, one can perform some tests using the following commands.
+Again, these commands will change the committed file [usedTranslations.ml](./src/usedTranslations.ml): take care not to commit it.
+```bash
+./build.sh check usedTranslations.ml
+./build.sh tests.byte
+./tests.byte
+```
 
 # murder-generator
+
+What follows it some description of the project in French.
+I will translate it when the project gets mature.
 
 Ce programme est un générateur de soirées-enquêtes aléatoires (et très basiques).
 À noter que ce que j’appelle « soirée-enquête » est plus communément appellé « huit clos » par la communauté rôliste en général.
@@ -63,9 +128,9 @@ Prenons un exemple assez stéréotypé, mais qui fixe les idées.
 * Un élément de scénario va s’activer par la caractéristique « famille royale » du joueur féminin pour l’associer à un château (un « objet » avec les caractéristiques « lieu » et « château »). L’objet est associé avec le joueur par une relation d’habitation.
 Le programme continue ainsi jusqu’à ce que les demandes de complexité et de difficulté des deux joueurs soient respectées.
 
-# License
+# Licence
 
-GPL version 3
+The program, and more generally everything on the [src](./src) folder are under GPL version 3 licence.
 
-Les scénarios générés sont cependant sans licence (comme la sortie d’un compilateur) : vous pouvez utilisez les soirées-enquêtes générées comme bon vous semble.
+However, generated scenarios are licenceless: you are free to use them, adapt them, and play them as it suits you best.
 

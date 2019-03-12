@@ -47,6 +47,9 @@ val pick : t -> element option * t
  * It only fails if the pool is empty, in this case the returned pool is empty. **)
 val pop : t -> element option * t
 
+(** Reorders all elements of the pool. **)
+val shuffle : t -> t
+
 (** Remove from the pool all elements that don’t provide this attribute. **)
 val restrict : t -> State.attribute -> t
 

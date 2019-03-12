@@ -3,6 +3,8 @@
  * to run the whole program. **)
 
 open Js_of_ocaml
+open ExtList
+open ExtString
 
 
 (** The default error messages. **)
@@ -28,7 +30,8 @@ let get_translations _ =
     to_list navigator##.language @ to_list navigator##.userLanguage in
   let (matching, nonmatching) =
     List.partition (fun lg ->
-      List.mem (Translation.iso639 lg) userLangs) languages in
+      let lg = Translation.iso639 lg in
+      List.exists (fun ulg -> String.exists ulg lg) userLangs) languages in
   Lwt.return (translation, Utils.shuffle matching @ Utils.shuffle nonmatching)
 
 (** Prints a list of strings, [andw] being the word for “and”
@@ -298,7 +301,7 @@ let _ =
           let player_information = parameters.player_information in
           let len = List.length player_information in
         if len >= player_number then
-          ExtList.List.take player_number player_information
+          List.take player_number player_information
         else
           player_information @
             List.map (fun _ ->

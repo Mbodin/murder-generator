@@ -1,4 +1,7 @@
 
+open ExtList
+
+
 type character = Utils.Id.t
 
 type character_constraint =
@@ -157,10 +160,8 @@ let search_instantiation st (e, other) =
       let inst =
         let inst = Array.make (Array.length e) (Utils.Id.from_array (-1)) in
         List.iteri (fun i j ->
-          (** The list [partial_instantiation] has been build backward. **)
-          let i = Array.length e - 1 - i in
           let i = redirection_array.(i) in
-          inst.(i) <- j) partial_instantiation ;
+          inst.(i) <- j) (List.rev partial_instantiation) ;
         inst in
       (match compatible_and_progress st (e, other) inst with
        | None -> None
@@ -218,7 +219,7 @@ let difference_for_attribute (m, _, _) a =
 let update_difference (m, w, l) a d =
   let d_old = difference_for_attribute (m, w, l) a in
   (PMap.add a (d_old + d) m, w + d,
-    if d_old < 0 && d_old + d >= 0 then ExtList.List.remove l a else l)
+    if d_old < 0 && d_old + d >= 0 then List.remove l a else l)
 
 let merge_attribute_differences (m1, s1, l1) (m2, s2, l2) =
   let (m, li, lo) =
@@ -243,6 +244,7 @@ let apply state (e, other) inst =
             (if State.attribute_value_can_progress v1 then -1 else 0)
         | Some v2 ->
           let v3 =
+            (* FIXME: This asserts failed with five players and maximum experience. *)
             Utils.assert_option __LOC__ (State.compose_attribute_value v1 v2) in
           State.write_attribute_character cstate c a v3 ;
           update_difference diff (State.PlayerAttribute a)
@@ -258,6 +260,7 @@ let apply state (e, other) inst =
               (if State.attribute_value_can_progress v1 then -1 else 0)
           | Some v2 ->
             let v3 =
+              (* FIXME: This asserts failed with thirteen players and average experience. *)
               Utils.assert_option __LOC__ (State.compose_attribute_value v1 v2) in
             State.write_contact_character cstate c con cha v3 ;
             update_difference diff (State.ContactAttribute con)

@@ -21,6 +21,7 @@ let get_file url =
   let (res, w) = Lwt.task () in
   let request = XmlHttpRequest.create () in
   request##_open (Js.string "GET") (Js.string url) Js._true ;
+  request##overrideMimeType (Js.string "text/plain") ;
   request##.onreadystatechange :=
     Js.wrap_callback (fun _ ->
       if request##.readyState = XmlHttpRequest.DONE then (

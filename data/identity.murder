@@ -8,7 +8,8 @@ begin
   let P be player
 
   provide strict attribute Born to P as True
-  (* TODO: provide instance event to P with no event before *)
+
+  (* TODO: provide event BeginningOfExistence to P with no event before *)
 end
 
 

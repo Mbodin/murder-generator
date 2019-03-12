@@ -30,10 +30,24 @@ end
 element Heritage
 begin
   let P be player
+  let any other player be with contact FamilyMember to P not as Parent or Siblings
 
   provide compatible attribute Richness to P as Rich
 
-  (* TODO: provide event to P *)
+  (* TODO: provide event SuccessionFromParents to P *)
+end
+
+element SharedHeritage
+begin
+  let A be player with contact FamilyMember to B as Siblings
+  let B be player with contact FamilyMember to A as Siblings
+  let any other player be with contact FamilyMember to A not as Parent or Siblings
+                          with contact FamilyMember to B not as Parent or Siblings
+
+  provide compatible attribute Richness to A as Rich
+  provide compatible attribute Richness to B as Rich
+
+  (* TODO: provide event SharedSuccessionFromParents to A and B *)
 end
 
 element DwarfFocusedTheirLifeAtAccumulatingGold
@@ -42,7 +56,7 @@ begin
 
   provide compatible attribute Richness to P as Rich
 
-  (* TODO: provide event to P *)
+  (* TODO: provide event AccumulateMoney to P *)
 end
 
 

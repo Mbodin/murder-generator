@@ -147,7 +147,9 @@ val compose_strictness : strictness -> strictness -> strictness option
 (** Compose two attribute values, if they are compatible. **)
 val compose_attribute_value : 'a attribute_value -> 'a attribute_value -> 'a attribute_value option
 
-(** Given a transition from an attribute value to another, this function states whether the transition [One_value_of] to [Fixed_value] occured. **)
+(** Given a transition from an attribute value to another, this function states
+ * whether the transition [One_value_of] to [Fixed_value] occured,
+ * or whether the associated lists shrinked in size. **)
 val attribute_value_progress : 'a attribute_value -> 'a attribute_value -> bool
 
 (** States whether there exists another attribute value such that [attribute_value_progress] may make progress.

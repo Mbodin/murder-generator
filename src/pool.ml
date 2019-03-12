@@ -162,6 +162,11 @@ let pick p =
   | None -> (r, p)
   | Some e -> (Some e, add p e)
 
+let shuffle g =
+  { g with pool =
+      Utils.BidirectionalList.from_list (Utils.shuffle
+        (Utils.BidirectionalList.to_list g.pool)) }
+
 let filter p f =
   let rec aux = function
   | [] -> empty p.global

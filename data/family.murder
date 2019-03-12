@@ -43,6 +43,7 @@ begin
 
   provide relation between A and B as trust
   provide strict contact FamilyMember between A and B as Siblings
+
   (* TODO: provide event to A after *)
   (* TODO: provide event to B *)
 end
@@ -54,6 +55,7 @@ begin
 
   provide relation between A and B as explosive trust hate
   provide strict contact FamilyMember between A and B as Siblings
+
   (* TODO: provide event to A *)
   (* TODO: provide event to B *)
 end
@@ -65,6 +67,7 @@ begin
 
   provide relation between A and B as asymmetrical trust hate
   provide strict contact FamilyMember between A and B as Siblings
+
   (* TODO: provide event to A *)
   (* TODO: provide event to B *)
 end
@@ -103,7 +106,6 @@ begin
   provide strict contact FamilyMember from A to B as Parent
   provide strict contact FamilyMember from B to A as Child
 
-  (* TODO: provide event to A *)
-  (* TODO: provide event to B *)
+  (* TODO: provide event to A and B *)
 end
 

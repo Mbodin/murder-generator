@@ -4,9 +4,9 @@ type global = {
       (** The set of all registered elements. **) ;
     constructor_informations : State.constructor_maps
       (** Informations about constructors. **) ;
+    pool_informations : Pool.global (** Informations needed by the pool. **) ;
     all_elements : Utils.Id.t Utils.BidirectionalList.t
-      (** The list of all elements. **) ;
-    pool_informations : Pool.global (** Informations needed by the pool. **)
+      (** The list of all elements. **)
   }
 
 (** Reads the element from the register map. **)
@@ -56,9 +56,7 @@ let evaluate o s =
     evaluate_character o s (Utils.Id.from_array i)) o)
 
 (** Given an array of objectives [o], a state [s], and an element [e],
- * returns [None] if the element can’t be applied at all, and [Some None]
- * if it can’t be applied whilst increasing the evaluation of the state
- * relations.
+ * returns [None] if the element can’t be applied at all.
  * If it can, it returns a triple with:
  * - the instantiation that makes it so,
  * - whether the element helps progressing with the attribute values,
@@ -71,8 +69,7 @@ let grade_evs o s evs e =
       Element.apply_relations (State.get_relation_state s) e inst in
     let ev = evaluate o new_relations in
     let dev = ev - evs in
-    if dev < 0 then None
-    else Some (inst, progress, dev))
+    (inst, progress, dev))
 
 (** As [grade_evs], but without the need to provide the [evs] argument. **)
 let grade o s =
@@ -90,7 +87,9 @@ let compare_grade (progress1, dev1) (progress2, dev2) =
     else c () in
   test (dev1 > 0 && progress1) (dev2 > 0 && progress2) (fun _ ->
     test (dev1 >= 0 && progress1) (dev2 >= 0 && progress2) (fun _ ->
-      compare dev1 dev2))
+      if dev1 = dev2 then
+        test progress1 progress2 (fun _ -> 0)
+      else compare dev1 dev2))
 
 (** This function iterates on the current state [s] and the pool [p], using the
  * global register [g] and the objective [o].
@@ -119,11 +118,11 @@ let step g o optimistic greedy s p =
         let e = read_element g ep in
         match grade_evs o s evs e with
         | None -> aux default f p (n - 1)
-        | Some o ->
+        | Some (inst, progress, dev) ->
           let p = Pool.add p ep in
-          match o with
-          | None -> aux default f p (n - 1)
-          | Some (inst, progress, dev) ->
+          if dev < 0 then
+            aux default f p (n - 1)
+          else
             f (fun _ -> aux default f p (n - 1)) p e inst progress dev in
   (** We first try with the optimistic pick. **)
   let (p, l) =
@@ -164,11 +163,13 @@ let add_random g o optimistic s =
         match Utils.BidirectionalList.match_left g.all_elements with
         | None -> (g, acc)
         | Some (e, all_elements) ->
-          let g = { g with all_elements = all_elements } in
+          let g =
+            { g with all_elements =
+                       Utils.BidirectionalList.add_right all_elements e } in
           let e = read_element g e in
           match grade_evs o s evs e with
-          | None | Some None -> aux g acc (n - 1)
-          | Some (Some (inst, progress, dev)) ->
+          | None -> aux g acc (n - 1)
+          | Some (inst, progress, dev) ->
             aux g ((e, inst, (progress, dev)) :: acc) (n - 1) in
     aux g [] optimistic in
   match Utils.argmax (fun (e1, inst1, g1) (e2, inst2, g2) ->
@@ -235,7 +236,12 @@ let wider_step g s o m =
               let s1 = State.get_relation_state s1 in
               let s2 = State.get_relation_state s2 in
               compare (evaluate o s1) (evaluate o s2)) l with
-      | Some (g, s, m) -> aux (temperature - 1) g s m
+      | Some (g, s, m) ->
+        let temperature =
+          if temperature < 10 then
+            temperature + 1
+          else 99 * temperature / 100 - 1 in
+        aux temperature g s m
       | None -> aux (9 * temperature / 10 - 1) g s m) in
   let distance_to_objective =
     min 0 (- evaluate o (State.get_relation_state s)) in
@@ -248,6 +254,9 @@ let solve g s o =
   let m = Element.empty_difference in
   (* TODO: Change the value of [m] to consider all the relevant elements given by
    * the constraints provided by the user. *)
-  let%lwt (g, s, m) = wider_step g s o m in
+  (* TODO: This is only temporary *)
+  (*let%lwt (g, s, m) = wider_step g s o m in*)
+  let step (g, s) = let (g, (s, m)) = add_random g o 2 s in (g, s) in
+  let (g, s) = List.fold_left (fun gs _ -> step gs) (g, s) (Utils.seq 10) in
   Lwt.return s
 

@@ -166,6 +166,8 @@ let compose_attribute_value v1 v2 =
 let attribute_value_progress v1 v2 =
   match v1, v2 with
   | One_value_of _, Fixed_value _ -> true
+  | One_value_of l1, One_value_of l2 -> List.length l1 > List.length l2
+  | Fixed_value (l1, _), Fixed_value (l2, _) -> List.length l1 > List.length l2
   | _, _ -> false
 
 let attribute_value_can_progress = function

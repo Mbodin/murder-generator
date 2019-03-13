@@ -73,6 +73,7 @@ type parameters = {
     player_number : int ;
     general_level : float ;
     general_complexity : float ;
+    computation_power : float ;
     categories : Utils.Id.t Utils.PSet.t option ;
     player_information : (string (** Character name *)
                           * int (** Complexity **)
@@ -173,11 +174,22 @@ let _ =
               InOut.Text (get_translation "longSheets")
             ])
         ])) ;
+      let (fastOrSlow, readFastOrSlow) =
+        InOut.createPercentageInput parameters.computation_power in
+      InOut.print_block (InOut.Div (InOut.Normal, [
+          InOut.P [ InOut.Text (get_translation "fastOrSlowGeneration") ] ;
+          InOut.Div (InOut.Centered, [
+              InOut.Text (get_translation "fastGeneration") ;
+              InOut.Node fastOrSlow ;
+              InOut.Text (get_translation "slowGeneration")
+            ])
+        ])) ;
       next_button parameters (fun _ ->
           { parameters with
               player_number = readPlayerNumber () ;
               general_level = readGeneralLevel () ;
-              general_complexity = readGeneralComplexity () })
+              general_complexity = readGeneralComplexity () ;
+              computation_power = readFastOrSlow () })
         (Some ask_for_languages) (Some ask_for_categories)
     and ask_for_categories parameters =
       let get_translation = get_translation parameters in
@@ -348,7 +360,8 @@ let _ =
           Driver.get_all_elements data categories parameters.player_number in
         let elements =
           List.map (fun e -> PMap.find e elements_map) elements in
-        List.fold_left Solver.register_element Solver.empty_global elements in
+        List.fold_left Solver.register_element
+          (Solver.empty_global parameters.computation_power) elements in
       let objectives =
         Array.of_list (List.map (fun (_, complexity, difficulty, _) -> {
             Solver.complexity = complexity ;
@@ -402,6 +415,7 @@ let _ =
         player_number = 13 ;
         general_level = 0.5 ;
         general_complexity = 0.5 ;
+        computation_power = 0.5 ;
         categories = None ;
         player_information = []
       } in

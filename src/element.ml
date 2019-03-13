@@ -231,9 +231,8 @@ let merge_attribute_differences (m1, s1, l1) (m2, s2, l2) =
   (m, s1 + s2, li @ List.filter (fun a -> not (List.mem a lo)) l1)
 
 let apply state (e, other) inst =
-  (* FIXME: This [assert] is clostly and thus temporary: it will be removed
-   * once I’m sure it indeed always holds. *)
-  assert (compatible_and_progress state (e, other) inst <> None) ;
+  if Utils.assert_defend then
+    assert (compatible_and_progress state (e, other) inst <> None) ;
   let diff = empty_difference in
   let other_players = other_players state inst in
   let apply_constraint c (state, diff) =

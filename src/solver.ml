@@ -1,5 +1,6 @@
 
 type global = {
+    branch_exploration : float ;
     element_register : Element.t Utils.Id.map
       (** The set of all registered elements. **) ;
     constructor_informations : State.constructor_maps
@@ -13,7 +14,8 @@ type global = {
 let read_element g e =
   Utils.assert_option __LOC__ (Utils.Id.map_inverse g.element_register e)
 
-let empty_global = {
+let empty_global p = {
+    branch_exploration = p *. p ;
     element_register = Utils.Id.map_create () ;
     constructor_informations = State.empty_constructor_maps ;
     all_elements = Utils.BidirectionalList.empty ;
@@ -63,24 +65,18 @@ let evaluate_state o s =
  * If it can, it returns a triple with:
  * - the instantiation that makes it so,
  * - whether the element helps progressing with the attribute values,
- * - the change in the relation evaluation.
- * The argument [evs] must be [evaluate_state s]
- * (it is passed to avoid recomputing it each time). **)
-let grade_evs o s evs e =
+ * - the new relation evaluation. **)
+let grade o s e =
   Utils.apply_option (Element.search_instantiation s e) (fun (inst, progress) ->
     let new_relations =
       Element.apply_relations (State.get_relation_state s) e inst in
     let ev = evaluate o new_relations in
-    let dev = ev - evs in
-    (inst, progress, dev))
+    (inst, progress, ev))
 
-(** As [grade_evs], but without the need to provide the [evs] argument. **)
-let grade o s =
-  grade_evs o s (evaluate_state o s)
-
-(** Takes a “grade” made of the progress of an element and the gain
- * of evaluation due to an element. **)
-let compare_grade (progress1, dev1) (progress2, dev2) =
+(** Takes a “grade” made of the progress of an element and the evaluation
+ * due to an element.
+ * It takes the base evaluation [ev0] to be compared with as an argument. **)
+let compare_grade ev0 (progress1, ev1) (progress2, ev2) =
   (** [test] receives two booleans: if one has it and not the other,
    * then this one is definitely better.
    * Otherwise, we have to continue looking. **)
@@ -88,11 +84,28 @@ let compare_grade (progress1, dev1) (progress2, dev2) =
     if b1 && not b2 then 1
     else if b2 && not b1 then -1
     else c () in
+  let dev1 = ev1 - ev0 in
+  let dev2 = ev2 - ev0 in
   test (dev1 > 0 && progress1) (dev2 > 0 && progress2) (fun _ ->
     test (dev1 >= 0 && progress1) (dev2 >= 0 && progress2) (fun _ ->
       if dev1 = dev2 then
         test progress1 progress2 (fun _ -> 0)
       else compare dev1 dev2))
+
+(** Returns a number between [mi] and [ma] depending on the parameter
+ * [branch_exploration] of the solver. **)
+let get_branch g mi ma =
+  if mi = ma then mi
+  else mi + int_of_float (0.5 +. g.branch_exploration *. float_of_int (ma - mi))
+
+(** Sometimes, it is not worth trying some branches unless we have a large
+ * amount of power.
+ * This function returns [d] at low power, otherwise returns a number
+ * between [mi] and [ma]. **)
+let high_get_branch g d mi ma =
+  if g.branch_exploration < 0.5 then d
+  else get_branch { g with branch_exploration =
+                             2. *. (g.branch_exploration -. 0.5) } mi ma
 
 (** This function iterates on the current state [s] and the pool [p], using the
  * global register [g] and the objective [o].
@@ -104,8 +117,8 @@ let compare_grade (progress1, dev1) (progress2, dev2) =
  * - [greedy]: in the case where the optimistic approach did not work,
  *   the function extracts up to this number of new elements, halting
  *   on the first one that applies. **)
-let step g o optimistic greedy s p =
-  let evs = evaluate_state o s in
+let step g o optimistic greedy (s, evs) p =
+  if Utils.assert_defend then assert (evs = evaluate_state o s) ;
   (** Extracts [n] elements from the pool, filtering out the ones that don’t
    * apply, and calling [f] on the ones that does whilst increasing the
    * evaluation.
@@ -119,26 +132,26 @@ let step g o optimistic greedy s p =
       | None -> (p, default)
       | Some ep ->
         let e = read_element g ep in
-        match grade_evs o s evs e with
+        match grade o s e with
         | None -> aux default f p (n - 1)
-        | Some (inst, progress, dev) ->
+        | Some (inst, progress, ev) ->
           let p = Pool.add p ep in
-          if dev < 0 then
+          if ev < evs then
             aux default f p (n - 1)
           else
-            f (fun _ -> aux default f p (n - 1)) p e inst progress dev in
+            f (fun _ -> aux default f p (n - 1)) p e inst progress ev in
   (** We first try with the optimistic pick. **)
   let (p, l) =
-    aux [] (fun callback _ e inst progress dev ->
+    aux [] (fun callback _ e inst progress ev ->
       let (p, l) = callback () in
-      (p, (e, inst, (progress, dev)) :: l)) p optimistic in
+      (p, (e, inst, (progress, ev)) :: l)) p optimistic in
   match Utils.argmax (fun (e1, inst1, g1) (e2, inst2, g2) ->
-          compare_grade g1 g2) l with
-  | Some (e, inst, g) -> (p, Some (Element.apply s e inst))
+          compare_grade evs g1 g2) l with
+  | Some (e, inst, (progress, ev)) -> (p, Some (Element.apply s e inst, ev))
   | None ->
     (** We then move the the greedy pick. **)
-    aux None (fun _ p e inst progress dev ->
-      (p, Some (Element.apply s e inst))) p greedy
+    aux None (fun _ p e inst progress ev ->
+      (p, Some (Element.apply s e inst, ev))) p greedy
 
 (** Calls the function [step] with heuristical arguments [optimistic] and [greedy]
  * depending on a single parameter [parameter] ranging from 0 to 101.
@@ -150,15 +163,16 @@ let weighted_step g o parameter s p =
     let parameter = max 0 parameter in
     if parameter > 100 then
       (0, Pool.quick_length p)
-    else (6 - 6 * parameter / 100, 2 + 9 * parameter / 100) in
+    else (6 - get_branch g 6 0 * parameter / 100,
+          2 + get_branch g 9 18 * parameter / 100) in
   step g o optimistic greedy s p
 
 (** Picks [optimistic] random elements and apply the best.
  * It assumes that [g.all_elements] has been shuffled, so that random elements
  * are just the first ones.
  * Returns the new global [g] with its [all_elements] updated. **)
-let add_random g o optimistic s =
-  let evs = evaluate_state o s in
+let add_random g o optimistic (s, evs) =
+  if Utils.assert_defend then assert (evs = evaluate_state o s) ;
   let (g, l) =
     let rec aux g acc = function
       | 0 -> (g, acc)
@@ -170,91 +184,92 @@ let add_random g o optimistic s =
             { g with all_elements =
                        Utils.BidirectionalList.add_right all_elements e } in
           let e = read_element g e in
-          match grade_evs o s evs e with
+          match grade o s e with
           | None -> aux g acc (n - 1)
-          | Some (inst, progress, dev) ->
-            aux g ((e, inst, (progress, dev)) :: acc) (n - 1) in
+          | Some (inst, progress, ev) ->
+            aux g ((e, inst, (progress, ev)) :: acc) (n - 1) in
     aux g [] optimistic in
   match Utils.argmax (fun (e1, inst1, g1) (e2, inst2, g2) ->
-          compare_grade g1 g2) l with
-  | Some (e, inst, gr) -> (g, Element.apply s e inst)
-  | None -> (g, (s, Element.empty_difference))
+          compare_grade evs g1 g2) l with
+  | Some (e, inst, (progress, ev)) -> (g, Element.apply s e inst, ev)
+  | None -> (g, (s, Element.empty_difference), evs)
 
 (** Calls the functions [weighted_step] and [add_random], trying
  * to reach a step [s] whose associated attribute difference [m]
  * has been increased by [temperature]. **)
-let wide_step g o temperature s m =
+let wide_step g o temperature (s, evs) m =
   let initial_weigth = Element.difference_weigth m in
   let objective_weigth =
     initial_weigth + 5 * int_of_float (log (float_of_int temperature)) + 2 in
-  let step g s m parameter =
+  let step g (s, evs) m parameter =
     let l = Element.difference_attribute_in_need m in
     if l = [] || Random.int 20 = 0 then (
       let optimistic = 7 - 6 * parameter / 100 in
-      let (g, (s, m')) = add_random g o optimistic s in
-      Lwt.return (g, s, Element.merge_attribute_differences m m')
+      let (g, (s, m'), evs) = add_random g o optimistic (s, evs) in
+      Lwt.return (g, (s, evs), Element.merge_attribute_differences m m')
     ) else (
       (** We select an attribute and try to increase it.
-       * If we fail up or get far from the objective to three times, we abort
-       * (then choosing another attribute). **)
+       * If we fail up or get far from the objective a given number of times,
+       * we abort (then choosing another attribute). **)
       let a = Utils.select_any (Element.difference_attribute_in_need m) in
       let p = Pool.empty g.pool_informations in
       let p = Pool.add_attribute p a in
-      let rec aux p m s = function
-        | 0 -> Lwt.return (g, s, m)
+      let rec aux p m (s, evs) = function
+        | 0 -> Lwt.return (g, (s, evs), m)
         | n ->
           InOut.pause () ;%lwt
-          let (p, r) = weighted_step g o (110 * parameter / 100) s p in
+          let (p, r) = weighted_step g o (110 * parameter / 100) (s, evs) p in
           match r with
-          | None -> aux p m s (n - 1)
-          | Some (s', m') ->
+          | None -> aux p m (s, evs) (n - 1)
+          | Some ((s', m'), evs') ->
             let m = Element.merge_attribute_differences m m' in
             let n' =
               if Element.difference_weigth m' > 0
-                 || evaluate_state o s' > evaluate_state o s then n else n - 1 in
-            aux p m s' n'
-      in aux p m s 3) in
-  let rec aux g s m = function
-    | 0 -> Lwt.return (g, s, m)
+                 || evs' > evs then n else n - 1 in
+            aux p m (s', evs') n'
+      in aux p m (s, evs) (get_branch g 3 5)) in
+  let rec aux g (s, evs) m = function
+    | 0 -> Lwt.return (g, (s, evs), m)
     | n ->
       InOut.pause () ;%lwt
       let current_weigth = Element.difference_weigth m in
       if current_weigth >= objective_weigth then
-        Lwt.return (g, s, m)
+        Lwt.return (g, (s, evs), m)
       else
         let parameter =
           100 * (current_weigth - initial_weigth)
           / (objective_weigth - initial_weigth) in
-        let%lwt (g, s, m) = step g s m parameter in
-        aux g s m (n - 1) in
-  aux g s m 4
+        let%lwt (g, (s, evs), m) = step g (s, evs) m parameter in
+        aux g (s, evs) m (n - 1) in
+  aux g (s, evs) m (get_branch g 4 10)
 
 (** This function performs a simulted annealing based on [wide_step].
  * This last function is considered costly and we thus starts using the [Lwt.t]
  * type here. **)
-let wider_step g s o m =
-  let rec aux temperature g s m =
+let wider_step g (s, evs) o m =
+  let rec aux temperature g (s, evs) m =
     if temperature <= 0 then
-      Lwt.return (g, s, m)
+      Lwt.return (g, (s, evs), m)
     else (
       InOut.pause () ;%lwt
-      let evs = evaluate_state o s in
+      if Utils.assert_defend then assert (evs = evaluate_state o s) ;
       let%lwt l =
-        Lwt_list.map_s (fun _ -> wide_step g o temperature s m) (Utils.seq 3) in
-      match Utils.argmax (fun (_, s1, _) (_, s2, _) ->
-              compare (evaluate_state o s1) (evaluate_state o s2)) l with
-      | Some (g, s, m) ->
+        Lwt_list.map_s (fun _ -> wide_step g o temperature (s, evs) m)
+          (Utils.seq (get_branch g 3 6)) in
+      match Utils.argmax (fun (_, (s1, evs1), _) (_, (s2, evs2), _) ->
+              compare evs1 evs2) l with
+      | Some (g, (s', evs'), m) ->
         let temperature =
-          if Element.difference_weigth m > 0 || evaluate_state o s > evs then
+          if Element.difference_weigth m > 0 || evs' > evs then
             if temperature <= 2 then
               temperature
-            else 99 * temperature / 100 - 1
-          else 9 * temperature / 10 - 1 in
-        aux temperature g s m
-      | None -> aux (4 * temperature / 5 - 1) g s m) in
+            else get_branch g 97 99 * temperature / 100 - 1
+          else get_branch g 8 9 * temperature / 10 - 1 in
+        aux temperature g (s', evs') m
+      | None -> aux (get_branch g 6 8 * temperature / 10 - 1) g (s, evs) m) in
   let distance_to_objective =
-    max 0 (int_of_float (sqrt (float_of_int (abs (evaluate_state o s))))) in
-  aux (distance_to_objective / 3 + 1) g s m
+    max 0 (int_of_float (sqrt (float_of_int (abs evs)))) in
+  aux (distance_to_objective / 3 + 1) g (s, evs) m
 
 let solve g s o =
   let g = { g with all_elements =
@@ -263,6 +278,6 @@ let solve g s o =
   let m = Element.empty_difference in
   (* TODO: Change the value of [m] to consider all the relevant elements given by
    * the constraints provided by the user. *)
-  let%lwt (g, s, m) = wider_step g s o m in
+  let%lwt (g, (s, _), m) = wider_step g (s, evaluate_state o s) o m in
   Lwt.return s
 

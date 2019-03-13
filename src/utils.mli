@@ -1,6 +1,11 @@
 (** Module Utils
  * Contains useful type declarations and functions. **)
 
+(** Switches some asserts on.
+ * These asserts can be costly to perform. **)
+val assert_defend : bool
+
+
 (** Returns its argument. **)
 val id : 'a -> 'a
 

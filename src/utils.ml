@@ -1,7 +1,6 @@
 
 let _ = Random.self_init ()
 
-(** Switches some asserts on. These asserts can be costly to perform. **)
 let assert_defend = true
 
 

@@ -4,8 +4,10 @@
 (** A global register of existing elements and meta-informations. **)
 type global
 
-(** An empty register. **)
-val empty_global : global
+(** An empty register.
+ * It takes a parameter between [0.] and [1.] indicate how much power can be
+ * placed in solving the constraints. **)
+val empty_global : float -> global
 
 (** Register that an element exists. **)
 val register_element : global -> Element.t -> global
@@ -31,6 +33,6 @@ val evaluate : objective array -> State.relation_state -> int
  * relationnal state. **)
 val evaluate_state : objective array -> State.t -> int
 
-(** Runs the solver until no one generator are left. **)
+(** Tries to optimise the state to make it match the objectives. **)
 val solve : global -> State.t -> objective array -> State.t Lwt.t
 

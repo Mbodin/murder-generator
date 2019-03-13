@@ -1,6 +1,8 @@
 open Js_of_ocaml
 
 
+let pause _ = Lwt_js.sleep 0.01
+
 (** Whether the loading animation is currently running. **)
 let loading = ref true
 
@@ -13,8 +15,9 @@ let stopLoading _ =
 let startLoading _ =
   if not !loading then (
     ignore (Js.Unsafe.fun_call (Js.Unsafe.js_expr "startLoading") [||]) ;
-    loading := true) ;
-  Lwt_js.yield ()
+    loading := true ;
+    pause ())
+  else Lwt_js.yield ()
 
 
 let get_file url =

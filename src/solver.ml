@@ -55,13 +55,16 @@ let evaluate o s =
   Utils.array_sum (Array.mapi (fun i o ->
     evaluate_character o s (Utils.Id.from_array i)) o)
 
+let evaluate_state o s =
+  evaluate o (State.get_relation_state s)
+
 (** Given an array of objectives [o], a state [s], and an element [e],
  * returns [None] if the element can’t be applied at all.
  * If it can, it returns a triple with:
  * - the instantiation that makes it so,
  * - whether the element helps progressing with the attribute values,
  * - the change in the relation evaluation.
- * The argument [evs] must be [evaluate (State.get_relation_state s)]
+ * The argument [evs] must be [evaluate_state s]
  * (it is passed to avoid recomputing it each time). **)
 let grade_evs o s evs e =
   Utils.apply_option (Element.search_instantiation s e) (fun (inst, progress) ->
@@ -73,7 +76,7 @@ let grade_evs o s evs e =
 
 (** As [grade_evs], but without the need to provide the [evs] argument. **)
 let grade o s =
-  grade_evs o s (evaluate o (State.get_relation_state s))
+  grade_evs o s (evaluate_state o s)
 
 (** Takes a “grade” made of the progress of an element and the gain
  * of evaluation due to an element. **)
@@ -83,7 +86,7 @@ let compare_grade (progress1, dev1) (progress2, dev2) =
    * Otherwise, we have to continue looking. **)
   let test b1 b2 c =
     if b1 && not b2 then 1
-    else if b2 && not b1 then (-1)
+    else if b2 && not b1 then -1
     else c () in
   test (dev1 > 0 && progress1) (dev2 > 0 && progress2) (fun _ ->
     test (dev1 >= 0 && progress1) (dev2 >= 0 && progress2) (fun _ ->
@@ -102,7 +105,7 @@ let compare_grade (progress1, dev1) (progress2, dev2) =
  *   the function extracts up to this number of new elements, halting
  *   on the first one that applies. **)
 let step g o optimistic greedy s p =
-  let evs = evaluate o (State.get_relation_state s) in
+  let evs = evaluate_state o s in
   (** Extracts [n] elements from the pool, filtering out the ones that don’t
    * apply, and calling [f] on the ones that does whilst increasing the
    * evaluation.
@@ -147,7 +150,7 @@ let weighted_step g o parameter s p =
     let parameter = max 0 parameter in
     if parameter > 100 then
       (0, Pool.quick_length p)
-    else (6 - 3 * parameter / 100, 2 + 18 * parameter / 100) in
+    else (6 - 6 * parameter / 100, 2 + 9 * parameter / 100) in
   step g o optimistic greedy s p
 
 (** Picks [optimistic] random elements and apply the best.
@@ -155,7 +158,7 @@ let weighted_step g o parameter s p =
  * are just the first ones.
  * Returns the new global [g] with its [all_elements] updated. **)
 let add_random g o optimistic s =
-  let evs = evaluate o (State.get_relation_state s) in
+  let evs = evaluate_state o s in
   let (g, l) =
     let rec aux g acc = function
       | 0 -> (g, acc)
@@ -186,39 +189,45 @@ let wide_step g o temperature s m =
     initial_weigth + 5 * int_of_float (log (float_of_int temperature)) + 2 in
   let step g s m parameter =
     let l = Element.difference_attribute_in_need m in
-    if l = [] || Random.int 10 = 0 then (
-      let optimistic = 20 - 15 * parameter / 100 in
+    if l = [] || Random.int 20 = 0 then (
+      let optimistic = 7 - 6 * parameter / 100 in
       let (g, (s, m')) = add_random g o optimistic s in
-      (g, s, Element.merge_attribute_differences m m')
+      Lwt.return (g, s, Element.merge_attribute_differences m m')
     ) else (
       (** We select an attribute and try to increase it.
-       * If we fail up to five times, we abort and chose another attribute. **)
+       * If we fail up or get far from the objective to three times, we abort
+       * (then choosing another attribute). **)
       let a = Utils.select_any (Element.difference_attribute_in_need m) in
       let p = Pool.empty g.pool_informations in
       let p = Pool.add_attribute p a in
       let rec aux p m s = function
-        | 0 -> (g, s, m)
+        | 0 -> Lwt.return (g, s, m)
         | n ->
+          InOut.pause () ;%lwt
           let (p, r) = weighted_step g o (110 * parameter / 100) s p in
           match r with
           | None -> aux p m s (n - 1)
-          | Some (s, m') ->
+          | Some (s', m') ->
             let m = Element.merge_attribute_differences m m' in
-            aux p m s n
-      in aux p m s 5) in
+            let n' =
+              if Element.difference_weigth m' > 0
+                 || evaluate_state o s' > evaluate_state o s then n else n - 1 in
+            aux p m s' n'
+      in aux p m s 3) in
   let rec aux g s m = function
-    | 0 -> (g, s, m)
+    | 0 -> Lwt.return (g, s, m)
     | n ->
+      InOut.pause () ;%lwt
       let current_weigth = Element.difference_weigth m in
       if current_weigth >= objective_weigth then
-        (g, s, m)
+        Lwt.return (g, s, m)
       else
         let parameter =
           100 * (current_weigth - initial_weigth)
           / (objective_weigth - initial_weigth) in
-        let (g, s, m) = step g s m parameter in
+        let%lwt (g, s, m) = step g s m parameter in
         aux g s m (n - 1) in
-  aux g s m 20
+  aux g s m 4
 
 (** This function performs a simulted annealing based on [wide_step].
  * This last function is considered costly and we thus starts using the [Lwt.t]
@@ -228,23 +237,23 @@ let wider_step g s o m =
     if temperature <= 0 then
       Lwt.return (g, s, m)
     else (
-      Lwt_js.yield () ;%lwt
+      InOut.pause () ;%lwt
+      let evs = evaluate_state o s in
       let%lwt l =
-        Lwt_list.map_s (fun _ -> Lwt.return (wide_step g o temperature s m))
-          (Utils.seq 5) in
+        Lwt_list.map_s (fun _ -> wide_step g o temperature s m) (Utils.seq 3) in
       match Utils.argmax (fun (_, s1, _) (_, s2, _) ->
-              let s1 = State.get_relation_state s1 in
-              let s2 = State.get_relation_state s2 in
-              compare (evaluate o s1) (evaluate o s2)) l with
+              compare (evaluate_state o s1) (evaluate_state o s2)) l with
       | Some (g, s, m) ->
         let temperature =
-          if temperature < 10 then
-            temperature + 1
-          else 99 * temperature / 100 - 1 in
+          if Element.difference_weigth m > 0 || evaluate_state o s > evs then
+            if temperature <= 2 then
+              temperature
+            else 99 * temperature / 100 - 1
+          else 9 * temperature / 10 - 1 in
         aux temperature g s m
-      | None -> aux (9 * temperature / 10 - 1) g s m) in
+      | None -> aux (4 * temperature / 5 - 1) g s m) in
   let distance_to_objective =
-    min 0 (- evaluate o (State.get_relation_state s)) in
+    max 0 (int_of_float (sqrt (float_of_int (abs (evaluate_state o s))))) in
   aux (distance_to_objective / 3 + 1) g s m
 
 let solve g s o =
@@ -254,9 +263,6 @@ let solve g s o =
   let m = Element.empty_difference in
   (* TODO: Change the value of [m] to consider all the relevant elements given by
    * the constraints provided by the user. *)
-  (* TODO: This is only temporary *)
-  (*let%lwt (g, s, m) = wider_step g s o m in*)
-  let step (g, s) = let (g, (s, m)) = add_random g o 2 s in (g, s) in
-  let (g, s) = List.fold_left (fun gs _ -> step gs) (g, s) (Utils.seq 10) in
+  let%lwt (g, s, m) = wider_step g s o m in
   Lwt.return s
 

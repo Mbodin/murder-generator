@@ -84,7 +84,7 @@ let respect_constraints =
 (** Returns all the players of the state [st] that are not in the
  * instantiation [inst]. **)
 let other_players st inst =
-  List.filter (fun i -> Array.exists ((=) i) inst) (State.all_players st)
+  List.filter (fun i -> not (Array.exists ((=) i) inst)) (State.all_players st)
 
 (** A function to be given to [respect_constraints_events] to deal with the
  * instantiation-dependent contacts. **)
@@ -231,38 +231,39 @@ let merge_attribute_differences (m1, s1, l1) (m2, s2, l2) =
   (m, s1 + s2, li @ List.filter (fun a -> not (List.mem a lo)) l1)
 
 let apply state (e, other) inst =
+  (* FIXME: This [assert] is clostly and thus temporary: it will be removed
+   * once I’m sure it indeed always holds. *)
+  assert (compatible_and_progress state (e, other) inst <> None) ;
   let diff = empty_difference in
   let other_players = other_players state inst in
   let apply_constraint c (state, diff) =
-    let cstate = State.get_character_state state in function
+    let cst = State.get_character_state state in function
     | Attribute (a, v1) ->
       let diff =
-        match State.get_attribute_character cstate c a with
+        match State.get_attribute_character cst c a with
         | None ->
-          State.write_attribute_character cstate c a v1 ;
+          State.write_attribute_character cst c a v1 ;
           update_difference diff (State.PlayerAttribute a)
             (if State.attribute_value_can_progress v1 then -1 else 0)
         | Some v2 ->
           let v3 =
-            (* FIXME: This asserts failed with five players and maximum experience. *)
             Utils.assert_option __LOC__ (State.compose_attribute_value v1 v2) in
-          State.write_attribute_character cstate c a v3 ;
+          State.write_attribute_character cst c a v3 ;
           update_difference diff (State.PlayerAttribute a)
             (if State.attribute_value_progress v2 v3 then 1 else 0) in
       (state, diff)
     | Contact (con, cha, v1) ->
       let apply_contact (state, diff) cha =
         let diff =
-          match State.get_contact_character cstate c con cha with
+          match State.get_contact_character cst c con cha with
           | None ->
-            State.write_contact_character cstate c con cha v1 ;
+            State.write_contact_character cst c con cha v1 ;
             update_difference diff (State.ContactAttribute con)
               (if State.attribute_value_can_progress v1 then -1 else 0)
           | Some v2 ->
             let v3 =
-              (* FIXME: This asserts failed with thirteen players and average experience. *)
               Utils.assert_option __LOC__ (State.compose_attribute_value v1 v2) in
-            State.write_contact_character cstate c con cha v3 ;
+            State.write_contact_character cst c con cha v3 ;
             update_difference diff (State.ContactAttribute con)
               (if State.attribute_value_progress v2 v3 then 1 else 0) in
         (state, diff) in

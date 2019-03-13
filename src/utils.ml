@@ -102,7 +102,7 @@ let rec list_map_filter f = function
     | Some v -> v :: l
 
 let shuffle l =
-  List.sort (fun _ _ -> Random.int 3 - 1) l
+  List.sort (fun _ _ -> if Random.bool () then 1 else -1) l
 
 let rec list_match_right = function
   | [] -> None

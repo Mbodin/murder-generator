@@ -10,6 +10,8 @@ end
 attribute Specy God
 begin
   category Religion
+  category OutOfThisUniverse
+
   (* LATER: translations *)
 end
 
@@ -44,5 +46,12 @@ begin
   let P be player with attribute Specy as God
 
   provide strict attribute Gender to P as NonBinary
+end
+
+element GodIsFamous
+begin
+  let P be player with attribute Specy as God
+
+  provide strict attribute Famousness to P as Famous
 end
 

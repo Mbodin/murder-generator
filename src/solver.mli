@@ -27,6 +27,10 @@ type objective = {
  * Note that most grades are negative. **)
 val evaluate : objective array -> State.relation_state -> int
 
+(** Same as [evaluate], but takes a state as argument instead of a
+ * relationnal state. **)
+val evaluate_state : objective array -> State.t -> int
+
 (** Runs the solver until no one generator are left. **)
 val solve : global -> State.t -> objective array -> State.t Lwt.t
 

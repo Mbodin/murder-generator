@@ -3,6 +3,9 @@
 
 open Js_of_ocaml
 
+(** Pauses the program for a short amount of time. **)
+val pause : unit -> unit Lwt.t
+
 (** Stops the loading animation. **)
 val stopLoading : unit -> unit Lwt.t
 

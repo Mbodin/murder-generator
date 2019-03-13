@@ -20,8 +20,8 @@ attribute Famousness Hidden
 begin
   category NonKids
 
-  (* The character has been actively hidden from the general public:
-    he or she tries its best not to be famous. *)
+  (* The character has been actively hiding from the general public:
+    he or she tries his or her best not to be famous. *)
 end
 
 element FamousIsKnown

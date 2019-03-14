@@ -288,15 +288,15 @@ let apply state (e, other) inst =
           State.add_relation state c c' r) rs in
     (state, diff)) (state, diff) e inst
 
+let safe_apply state = apply (State.copy state)
+
 let apply_relations state (e, _) inst =
-  let result =
-    State.create_relation_state (State.number_of_player_relation_state state) in
+  let result = State.copy_relation_state state in
   Array.iter2 (fun ei c ->
     let (conss, evs, rs) = ei in
     Array.iteri (fun i r ->
       let c' = inst.(i) in
       if c <> c' then
-        let r' = State.read_relation_state state c c' in
-        State.add_relation_state result c c' (Relation.compose r' r)) rs) e inst ;
+        State.add_relation_state result c c' r) rs) e inst ;
   result
 

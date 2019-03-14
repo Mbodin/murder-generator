@@ -85,6 +85,8 @@ let compatible el e =
 
 type state = t array
 
+let copy = Array.copy
+
 let create_state n =
     Array.make n []
 

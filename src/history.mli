@@ -68,6 +68,9 @@ val compatible : t -> event -> bool
 (** The global state, describing all characters. **)
 type state = t array
 
+(** (Deeply) copies the state. **)
+val copy : state -> state
+
 (** Creates an empty history state for the given number n of characters,
  * each indexed from 0 to n - 1. **)
 val create_state : int -> state

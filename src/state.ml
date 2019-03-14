@@ -4,12 +4,14 @@ type character = Utils.Id.t
 type relation_state =
   Relation.t array array
 
+let copy_relation_state = Array.map Array.copy
+
 exception SelfRelation
 
 (** Relation states have as little cells as possible: [n - 1] for the
  * first counter, and [i + 1] for the second.
  * To get the relation between characters [c1] and [c2], with [c1 < c2],
- * one has to check the array at [(c2 - 1)(c1)]. **)
+ * one has to check the array at [.(c2 - 1).(c1)]. **)
 let create_relation_state n =
   Array.init (n - 1) (fun i ->
     Array.make (i + 1) Relation.neutral)
@@ -219,12 +221,18 @@ let write_contact_character (st : character_state) c a ct v =
   st.(c) <- (fst st.(c), PMap.add a m (snd st.(c)))
 
 let get_all_contact_character st c a =
-  try PMap.foldi (fun ct cv l -> (ct, cv) :: l)
-        (PMap.find a (snd st.(Utils.Id.to_array c))) []
-  with Not_found -> []
+  Utils.pmap_to_list (
+    try PMap.find a (snd st.(Utils.Id.to_array c))
+    with Not_found -> PMap.empty)
+
+let get_all_contacts_character st c =
+  PMap.map Utils.pmap_to_list (snd st.(Utils.Id.to_array c))
 
 type t =
   character_state * relation_state * History.state
+
+let copy (st, a, h) =
+  (Array.copy st, copy_relation_state a, History.copy h)
 
 let get_relation_state (_, a, _) = a
 

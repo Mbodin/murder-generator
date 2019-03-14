@@ -24,6 +24,14 @@ begin
     he or she tries his or her best not to be famous. *)
 end
 
+element GeneraliseUnknown
+begin
+  let A be player
+  let B be player with contact Know to A as False
+
+  provide attribute Famousness to A as UnKnown
+end
+
 element FamousIsKnown
 begin
   let A be player

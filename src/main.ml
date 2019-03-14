@@ -378,6 +378,11 @@ let _ =
         InOut.Link (get_translation "there",
                     "https://github.com/Mbodin/murder-generator") ]) ;
       InOut.print_block (InOut.Div (InOut.Normal,
+        let get_name c =
+          let c = Utils.Id.to_array c in
+          try let (name, _, _, _) = List.nth parameters.player_information c in
+              name
+          with _ -> "??" in
         InOut.P [ InOut.Text "This is a test" ] (* TODO *)
         :: List.mapi (fun c (name, _, _, _) ->
              let cst = State.get_character_state state in
@@ -407,6 +412,32 @@ let _ =
                           | State.One_value_of l -> "? " ^ tr l in
                         InOut.Text (tra ^ "(" ^ trv ^ "); ") :: l)
                       (State.get_all_attributes_character cst c) []
+                    @ PMap.foldi (fun a lv l ->
+                          List.map (fun (c', v) ->
+                            let a = State.ContactAttribute a in
+                            let tra =
+                              let tr = Driver.translates_attribute data in
+                              Utils.assert_option __LOC__
+                                (Translation.translate tr a Translation.generic) in
+                            let trv =
+                              let tr_strict = function
+                                | State.NonStrict -> "compatible "
+                                | State.LowStrict -> ""
+                                | State.Strict -> "strict " in
+                              let tr l =
+                                let tr = Driver.translates_constructor data in
+                                String.concat ", " (List.map (fun v ->
+                                    let v = State.ContactConstructor v in
+                                    Utils.assert_option __LOC__
+                                      (Translation.translate tr v
+                                        Translation.generic)) l) in
+                              match v with
+                              | State.Fixed_value (l, strict) ->
+                                tr_strict strict ^ tr l
+                              | State.One_value_of l -> "? " ^ tr l in
+                            InOut.Text (tra ^ " to " ^ get_name c'
+                              ^ "(" ^ trv ^ "); ")) lv @ l)
+                        (State.get_all_contacts_character cst c) []
                )) parameters.player_information)) ;
       next_button parameters (fun _ -> parameters)
         (Some ask_for_player_constraints) None in

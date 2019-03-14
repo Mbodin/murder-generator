@@ -6,6 +6,10 @@ type character = History.character
 (** A mapping from pairs of characters to Relation.t. **)
 type relation_state
 
+(** Some functions involve non-functional effects.
+ * This function creates a copy of the current state. **)
+val copy_relation_state : relation_state -> relation_state
+
 (** Returns the relation between two characters.
  * The relations are usually symmetrical, but note how the asymmetrical
  * relation between [c1] and [c2] is represented by [Asymmetrical (r1, r2)]
@@ -184,12 +188,22 @@ val get_contact_character : character_state -> character -> ContactAttribute.att
  * value. **)
 val write_contact_character : character_state -> character -> ContactAttribute.attribute -> character -> ContactAttribute.constructor attribute_value -> unit
 
-(** Get all the contacts of a character from the character state. **)
+(** Get all the contacts of a character from the character state for a given
+ * (contact) attribute. **)
 val get_all_contact_character : character_state -> character -> ContactAttribute.attribute -> (character * ContactAttribute.constructor attribute_value) list
+
+(** Similar to [get_all_attributes_character], returns all the current contact
+ * given to a player.
+ * This function is meant to be called once the state is stable. **)
+val get_all_contacts_character : character_state -> character -> (ContactAttribute.attribute, (character * ContactAttribute.constructor attribute_value) list) PMap.t
 
 (** A state is just a combination of each state component. **)
 type t =
   character_state * relation_state * History.state
+
+(** The state involves non-functional effects.
+ * This function creates a copy of the current state. **)
+val copy : t -> t
 
 (** Get the [relation_state] component of the state. **)
 val get_relation_state : t -> relation_state

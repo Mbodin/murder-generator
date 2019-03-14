@@ -89,6 +89,9 @@ val empty_difference : attribute_differences
  * published. **)
 val apply : State.t -> t -> character array -> State.t * attribute_differences
 
+(** Same as [apply], but create a copy of the state before the application. **)
+val safe_apply : State.t -> t -> character array -> State.t * attribute_differences
+
 (** Get the resulting relation array from an instantiation.
  * The input state is not modified by this function. **)
 val apply_relations : State.relation_state -> t -> character array -> State.relation_state

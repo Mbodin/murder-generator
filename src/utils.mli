@@ -144,6 +144,10 @@ val array_fold_lefti : (int -> 'a -> 'b -> 'a) -> 'a -> 'b array -> 'a
 val array_fold_left2 : ('a -> 'b -> 'c -> 'a) -> 'a -> 'b array -> 'c array -> 'a
 
 
+(** Flattens a map into a list. **)
+val pmap_to_list : ('a, 'b) PMap.t -> ('a * 'b) list
+
+
 module Id : sig
 
     (** A type for identifiers.

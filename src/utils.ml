@@ -170,6 +170,11 @@ let array_fold_left2 f i a1 a2 =
 let array_fold_lefti f acc a =
   snd (Array.fold_left (fun (i, acc) e -> (1 + i, f i acc e)) (0, acc) a)
 
+
+let pmap_to_list m =
+  PMap.foldi (fun k v l -> (k, v) :: l) m []
+
+
 module Id = struct
 
     type t = int

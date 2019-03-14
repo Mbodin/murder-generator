@@ -71,6 +71,9 @@ let grade o s e =
     let new_relations =
       Element.apply_relations (State.get_relation_state s) e inst in
     let ev = evaluate o new_relations in
+    if Utils.assert_defend then (
+      let (s', m) = Element.safe_apply s e inst in
+      assert (ev = evaluate_state o s')) ;
     (inst, progress, ev))
 
 (** Takes a “grade” made of the progress of an element and the evaluation
@@ -147,25 +150,26 @@ let step g o optimistic greedy (s, evs) p =
       (p, (e, inst, (progress, ev)) :: l)) p optimistic in
   match Utils.argmax (fun (e1, inst1, g1) (e2, inst2, g2) ->
           compare_grade evs g1 g2) l with
-  | Some (e, inst, (progress, ev)) -> (p, Some (Element.apply s e inst, ev))
+  | Some (e, inst, (progress, ev)) ->
+    (p, Some (Element.safe_apply s e inst, ev))
   | None ->
     (** We then move the the greedy pick. **)
     aux None (fun _ p e inst progress ev ->
-      (p, Some (Element.apply s e inst, ev))) p greedy
+      (p, Some (Element.safe_apply s e inst, ev))) p greedy
 
 (** Calls the function [step] with heuristical arguments [optimistic] and [greedy]
  * depending on a single parameter [parameter] ranging from 0 to 101.
  * This parameter is meant to indicate the need to speed-up the analysis: at low
  * values, it means that adequate elements are being found, at high values, it
  * means that an exhaustive search is needed. **)
-let weighted_step g o parameter s p =
+let weighted_step g o parameter (s, evs) p =
   let (optimistic, greedy) =
     let parameter = max 0 parameter in
     if parameter > 100 then
       (0, Pool.quick_length p)
     else (6 - get_branch g 6 0 * parameter / 100,
           2 + get_branch g 9 18 * parameter / 100) in
-  step g o optimistic greedy s p
+  step g o optimistic greedy (s, evs) p
 
 (** Picks [optimistic] random elements and apply the best.
  * It assumes that [g.all_elements] has been shuffled, so that random elements
@@ -191,7 +195,7 @@ let add_random g o optimistic (s, evs) =
     aux g [] optimistic in
   match Utils.argmax (fun (e1, inst1, g1) (e2, inst2, g2) ->
           compare_grade evs g1 g2) l with
-  | Some (e, inst, (progress, ev)) -> (g, Element.apply s e inst, ev)
+  | Some (e, inst, (progress, ev)) -> (g, Element.safe_apply s e inst, ev)
   | None -> (g, (s, Element.empty_difference), evs)
 
 (** Calls the functions [weighted_step] and [add_random], trying

@@ -35,6 +35,10 @@ type block =
   | LinkContinuation of bool * string * (unit -> unit)
       (** A link and its associated continuation.
        * The boolean indicates whether the arrow is forwards. **)
+  | LinkFile of string * string * string * string
+      (** Creates a link to a file whose content is computed.
+       * The first argument is the link text, the second the file name,
+       * the third the mime type, and the fourth its content. **)
   | Table of block list * block list list
     (** A table, with its headers and its content (given line by line). **)
   | Node of Dom_html.element Js.t (** For all cases where more control is needed,

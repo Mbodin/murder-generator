@@ -44,7 +44,9 @@
     "nameMiddleConsonant": "b,c,d,f,g,j,k,l,m,n,p,r,s,ŝ,t,v,z;h,ĉ,ĝ,lj,ĵ;ĥ,nj",
     "nameEndVowels": "o,ino",
     "nameEndConsonant": "ĉjo,njo",
-    "nameSize": "5"
+    "nameSize": "5",
+    "downloadAs": "Elŝulti kiel",
+    "graphviz": "Graphviz"
   },
   { "iso639": "fr",
     "name": "Français",
@@ -91,7 +93,9 @@
     "nameMiddleConsonant": "l,m,n,r,ss,t,tr;s,ch,gu,ll;c,d,j,f,rt;bon",
     "nameEndVowels": "ine,in,elle,el,e;sse",
     "nameEndConsonant": "d,t,re,le,nie,tier;rd,rt,ge",
-    "nameSize": "5"
+    "nameSize": "5",
+    "downloadAs": "Télécharger au format",
+    "graphviz": "Graphviz"
   },
   { "iso639": "en",
     "name": "English",
@@ -138,6 +142,8 @@
     "nameMiddleConsonant": "br,c,d,f,gh,rg,li,ls,m,nn,pp,rr,s,t,th;b,ch,sh,ph,v,k,st;z,ht,g,fl",
     "nameEndVowels": "own,ay,en,ia,any,eth,ough,e,ing,er",
     "nameEndConsonant": "rson,cester,ms,nes,rne,ly,hn,rd",
-    "nameSize": "4"
+    "nameSize": "4",
+    "downloadAs": "Download as",
+    "graphviz": "Graphviz"
   }
 ]

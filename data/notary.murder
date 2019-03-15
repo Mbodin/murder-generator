@@ -30,7 +30,7 @@ end
 element Heritage
 begin
   let P be player
-  let any other player be with contact FamilyMember to P not as Parent or Siblings
+  let any other player be with contact FamilyMember to P not as Parent or Sibling
 
   provide compatible attribute Richness to P as Rich
 
@@ -39,10 +39,10 @@ end
 
 element SharedHeritage
 begin
-  let A be player with contact FamilyMember to B as Siblings
-  let B be player with contact FamilyMember to A as Siblings
-  let any other player be with contact FamilyMember to A not as Parent or Siblings
-                          with contact FamilyMember to B not as Parent or Siblings
+  let A be player with contact FamilyMember to B as Sibling
+  let B be player with contact FamilyMember to A as Sibling
+  let any other player be with contact FamilyMember to A not as Parent or Sibling
+                          with contact FamilyMember to B not as Parent or Sibling
 
   provide compatible attribute Richness to A as Rich
   provide compatible attribute Richness to B as Rich

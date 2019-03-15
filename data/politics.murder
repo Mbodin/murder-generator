@@ -8,7 +8,7 @@ begin
   translation eo:adj "fama"
 end
 
-attribute Famousness UnKnown
+attribute Famousness Unknown
 begin
   translation fr:adj:mas "inconnu"
   translation fr:adj:fem "inconnue"
@@ -29,7 +29,7 @@ begin
   let A be player
   let B be player with contact Know to A as False
 
-  provide attribute Famousness to A as UnKnown
+  provide attribute Famousness to A as Unknown
 end
 
 element FamousIsKnown
@@ -52,7 +52,7 @@ element FamousCanDoFavors
 begin
   let A be player with attribute Famousness as Famous
                   with contact Favor to B as Small
-  let B be player with attribute Famousness as UnKnown
+  let B be player with attribute Famousness as Unknown
 
   provide relation between A and B as trust
 

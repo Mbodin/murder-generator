@@ -15,14 +15,15 @@ begin
   category Family
 end
 
-contact FamilyMember Siblings
+contact FamilyMember None
+contact FamilyMember Sibling
 contact FamilyMember Parent
 contact FamilyMember Child
 
 element SiblingsKnowEachOthers
 begin
-  let A be player with contact FamilyMember to B as Siblings
-  let B be player with contact FamilyMember to A as Siblings
+  let A be player with contact FamilyMember to B as Sibling
+  let B be player with contact FamilyMember to A as Sibling
 
   provide contact Know between A and B as True
 end
@@ -35,6 +36,23 @@ begin
   provide contact Know between A and B as True
 end
 
+element SiblingTransitive
+begin
+  let A be player
+  let B be player with contact FamilyMember to A as Sibling
+  let C be player with contact FamilyMember to B as Sibling
+
+  provide strict contact FamilyMember from A to C as Sibling
+  provide relation between A and C as trust
+end
+
+element SiblingSymmetric
+begin
+  let A be player
+  let B be player with contact FamilyMember to A as Sibling
+
+  provide strict contact FamilyMember from A to B as Sibling
+end
 
 element TrustedSiblings
 begin
@@ -42,31 +60,31 @@ begin
   let B be player
 
   provide relation between A and B as trust
-  provide strict contact FamilyMember between A and B as Siblings
+  provide strict contact FamilyMember between A and B as Sibling
 
   (* TODO: provide event to A after *)
   (* TODO: provide event to B *)
 end
 
-element HatingSiblings
+element HatedSiblings
 begin
   let A be player
   let B be player
 
   provide relation between A and B as explosive trust hate
-  provide strict contact FamilyMember between A and B as Siblings
+  provide strict contact FamilyMember between A and B as Sibling
 
   (* TODO: provide event to A *)
   (* TODO: provide event to B *)
 end
 
-element AsymmetricalSiblings
+element AsymmetricalSibling
 begin
   let A be player
   let B be player
 
   provide relation between A and B as asymmetrical trust hate
-  provide strict contact FamilyMember between A and B as Siblings
+  provide strict contact FamilyMember between A and B as Sibling
 
   (* TODO: provide event to A *)
   (* TODO: provide event to B *)
@@ -78,11 +96,11 @@ begin
   let B be player
 
   provide relation between A and B as strong neutral
-  provide strict contact FamilyMember between A and B as Siblings
+  provide strict contact FamilyMember between A and B as Sibling
   provide compatible contact Know between A and B as False
 end
 
-element HiddenSiblings
+element HiddenSibling
 begin
   category DarkSecrets
 
@@ -90,7 +108,7 @@ begin
   let B be player
 
   provide relation from A to B as strong undetermined
-  provide strict contact FamilyMember between A and B as Siblings
+  provide strict contact FamilyMember between A and B as Sibling
   provide compatible contact Know from A to B as True
   provide compatible contact Know from B to A as False
 
@@ -101,11 +119,30 @@ element Parent
 begin
   let A be player
   let B be player
+  let any other player be with contact FamilyMember to B not as Parent
 
   provide relation between A and B as trust
   provide strict contact FamilyMember from A to B as Parent
   provide strict contact FamilyMember from B to A as Child
 
   (* TODO: provide event to A and B *)
+end
+
+element SameParentSibling
+begin
+  let P be player
+  let A be player with contact FamilyMember to P as Child
+  let B be player with contact FamilyMember to P as Child
+
+  provide strict contact FamilyMember between A and B as Sibling
+  provide relation between A and B as trust
+end
+
+element NotAFamilyMember
+begin
+  let A be player
+  let B be player
+
+  provide compatible contact FamilyMember between A and B as None
 end
 

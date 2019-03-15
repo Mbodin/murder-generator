@@ -21,6 +21,7 @@ val document : Dom_html.document Js.t
 type layout =
   | Normal (** No special layout. **)
   | Centered (** Its content is centered. **)
+  | Inlined (** The block is inlined. **)
 
 (** A simplified representation of DOM’s nodes. **)
 type block =

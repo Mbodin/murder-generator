@@ -57,6 +57,10 @@ body {
   white-space: nowrap ;
 }
 
+.inlined {
+  display: inline ;
+}
+
 a {
   color: #75507b ;
   text-decoration: none ;

@@ -2,3 +2,5 @@
 (* What the player ultimately wants to do with this other player. *)
 declare contact Goal
 
+contact Goal None
+

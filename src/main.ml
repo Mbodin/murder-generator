@@ -371,12 +371,6 @@ let _ =
       (* TODO: Update the state according to the miscellaneous player
        * informations. *)
       let%lwt state = Solver.solve global state objectives in
-      InOut.stopLoading () ;%lwt
-      InOut.print_block (InOut.P [
-        InOut.Text (get_translation "underConstruction") ;
-        InOut.Text (get_translation "participate") ;
-        InOut.Link (get_translation "there",
-                    "https://github.com/Mbodin/murder-generator") ]) ;
       let estate = {
           Export.names =
             Array.of_list (List.map (fun (name, _, _, _) -> name)
@@ -384,12 +378,23 @@ let _ =
           Export.driver = data ;
           Export.state = state
         } in
-      InOut.print_block (InOut.List (true,
-        List.map (fun (name, mime, ext, f) ->
-          let fileName =
-            "murder" ^ if ext = "" then "" else ("." ^ ext) in
-          InOut.LinkFile (get_translation "downloadAs" ^ " " ^ get_translation name,
-                          fileName, mime, f estate)) Export.all_production)) ;
+      InOut.print_block (InOut.Div (InOut.Normal, [
+        InOut.P [ InOut.Text (get_translation "exportList") ] ;
+        InOut.List (true,
+        List.map (fun (name, descr, mime, ext, f) ->
+          let fileName = "murder" ^ if ext = "" then "" else ("." ^ ext) in
+          InOut.Div (InOut.Inlined, [
+              InOut.LinkFile (get_translation "downloadAs"
+                              ^ " " ^ get_translation name,
+                              fileName, mime, f estate) ;
+              InOut.Text (get_translation descr)
+            ])) Export.all_production)])) ;
+      InOut.stopLoading () ;%lwt
+      InOut.print_block (InOut.P [
+        InOut.Text (get_translation "underConstruction") ;
+        InOut.Text (get_translation "participate") ;
+        InOut.Link (get_translation "there",
+                    "https://github.com/Mbodin/murder-generator") ]) ;
       next_button parameters (fun _ -> parameters)
         (Some ask_for_player_constraints) None in
     let parameters = {

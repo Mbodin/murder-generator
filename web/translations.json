@@ -45,8 +45,12 @@
     "nameEndVowels": "o,ino",
     "nameEndConsonant": "ĉjo,njo",
     "nameSize": "5",
+    "exportList": "Nun ke la scenaro estis kreita, vi povas elŝulti ĝin en la ĉi subaj dosierformatoj.",
     "downloadAs": "Elŝulti kiel",
-    "graphviz": "Graphviz"
+    "graphviz": "Graphviz",
+    "graphvizDescription": "Ĉi tiu dosierformato grafike konceptigas la scenaron kaj povas esti utila por globale kompreni ĝin.  Uzu la programaĵon xdot aŭ ties variaĵojn por elvidi ĝin (ĉefe perla filtriloj dot aŭ circo, dependante de kion vi celas observi).",
+    "json": "JSON",
+    "jsonDescription": "Ĉi tiu universala formato permesigas elporti datumojn al aliaj programaĵoj."
   },
   { "iso639": "fr",
     "name": "Français",
@@ -94,8 +98,12 @@
     "nameEndVowels": "ine,in,elle,el,e;sse",
     "nameEndConsonant": "d,t,re,le,nie,tier;rd,rt,ge",
     "nameSize": "5",
+    "exportList": "Maintenant que le scénario a été généré, vous pouvez le télécharger aux formats suivant.",
     "downloadAs": "Télécharger au format",
-    "graphviz": "Graphviz"
+    "graphviz": "Graphviz",
+    "graphvizDescription": "Ce format donne une représentation graphique du scénario et peut être utile pour repérer les rapports de force en jeu.  Utilisez le programme xdot ou ses variantes pour le lire (principalement avec les filtres dot ou circo, en fonction de ce que vous souhaitez observer).",
+    "json": "JSON",
+    "jsonDescription": "Ce format générique vous permet d’importer les données générées dans de nombreux autres logiciels."
   },
   { "iso639": "en",
     "name": "English",
@@ -143,7 +151,11 @@
     "nameEndVowels": "own,ay,en,ia,any,eth,ough,e,ing,er",
     "nameEndConsonant": "rson,cester,ms,nes,rne,ly,hn,rd",
     "nameSize": "4",
+    "exportList": "Now that the scenario has been generated, you can download it under the following formats.",
     "downloadAs": "Download as",
-    "graphviz": "Graphviz"
+    "graphviz": "Graphviz",
+    "graphvizDescription": "This format provides a graphical representation of the scenario and can be useful to understand it globally.  Use the xdot program or its look-alikes to visualise it (mainly with the dot or circo filters, depending on what you want to observe).",
+    "json": "JSON",
+    "jsonDescription": "This generic format enables to import generated data into other softwares."
   }
 ]

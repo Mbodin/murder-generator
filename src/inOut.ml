@@ -42,6 +42,7 @@ let get_file url =
 type layout =
   | Normal
   | Centered
+  | Inlined
 
 type block =
   | Div of layout * block list
@@ -93,8 +94,13 @@ let rec block_node =
   function
   | Div (layout, l) ->
     let div = Dom_html.createDiv document in
-    if layout = Centered then
-      div##.className := Js.string "center" ;
+    let _ =
+      match layout with
+      | Normal -> ()
+      | Centered ->
+        div##.className := Js.string "center"
+      | Inlined ->
+        div##.className := Js.string "inlined" in
     appendChilds Utils.id div l ;
     (div :> Dom_html.element Js.t)
   | P l ->

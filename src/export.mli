@@ -4,9 +4,8 @@
 (** Each function in this file takes an argument of this type.
  * It contains all the information needed to generate any file. **)
 type state = {
-    names : string array (** The names of each player. **) ;
-    driver : Driver.state
-      (** The driver state, containing in particular the translation objects. **) ;
+    names : string list (** The names of each player. **) ;
+    translation : Translation.element (** The translation objects. **) ;
     state : State.t (** The actual generated state. **)
   }
 

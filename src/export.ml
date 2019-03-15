@@ -1,17 +1,17 @@
 
 type state = {
-    names : string array ;
-    driver : Driver.state ;
+    names : string list ;
+    translation : Translation.element ;
     state : State.t
   }
 
 let translate_attribute s lg a =
-  let tr = Driver.translates_attribute s.driver in
+  let tr = s.translation.Translation.attribute in
   Utils.assert_option __LOC__ (Translation.translate tr a lg)
 
 let translate_value s lg f v =
   let tr l =
-    let tr = Driver.translates_constructor s.driver in
+    let tr = s.translation.Translation.constructor in
     let v = Utils.select_any l in
     let v = f v in
     Utils.assert_option __LOC__ (Translation.translate tr v lg) in
@@ -43,12 +43,12 @@ let to_graphviz s =
                   (fun v -> State.PlayerConstructor v) v in
               ("{" ^ tra ^ "|" ^ trv ^ "}") :: l)
             (State.get_all_attributes_character cst c) [])
-        ^ "}\"]") (Array.to_list s.names)) ; "" ;
+        ^ "}\"]") s.names) ; "" ;
       (** Declaring their relations **)
       String.concat "\n" (List.concat (List.mapi (fun c _ ->
         let c = Utils.Id.from_array c in
-        PMap.foldi (fun a lv l ->
-          List.map (fun (c', v) ->
+        PMap.foldi (fun c' lv l ->
+          List.map (fun (a, v) ->
             let tra =
               translate_attribute s Translation.generic
                 (State.ContactAttribute a) in
@@ -61,7 +61,7 @@ let to_graphviz s =
             "  " ^ player_node c ^ " -> " ^ player_node c'
             ^ " [label=\"" ^ tra ^ ":" ^ trv ^ "\""
             ^ " color=\"" ^ color ^ "\"] ;") lv @ l)
-        (State.get_all_contacts_character cst c) []) (Array.to_list s.names))) ;
+        (State.get_all_contacts_character cst c) []) s.names)) ;
       "}" ; ""
     ]
 
@@ -79,9 +79,23 @@ let to_json s =
                  (fun v -> State.PlayerConstructor v) v in
              (tra, `String trv) :: l)
            (State.get_all_attributes_character cst c) [])) ;
-        ("contacts", `Null (* TODO *)) ;
-        ("relations", `Null (* TODO *)) ;
-      ]) (Array.to_list s.names)))
+        ("contacts", `List (List.mapi (fun c' _ ->
+          let c' = Utils.Id.from_array c' in
+          `Assoc (List.map (fun (a, v) ->
+              let tra =
+                translate_attribute s Translation.generic
+                  (State.ContactAttribute a) in
+              let trv =
+                translate_value s Translation.generic
+                  (fun v -> State.ContactConstructor v) v in
+              (tra, `String trv))
+            (State.get_all_contact_character cst c c'))) s.names)) ;
+        ("relations", `List (Utils.list_fold_lefti (fun c' l _ ->
+          let c' = Utils.Id.from_array c' in
+          let r = State.read_relation s.state c c' in
+          if c < c' then l
+          else `String (Relation.to_string r) :: l) [] s.names)) ;
+      ]) s.names))
 
 let all_production = [
     ("graphviz", "graphvizDescription", "text/vnd.graphviz", "dot", to_graphviz) ;

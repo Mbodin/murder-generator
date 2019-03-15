@@ -32,3 +32,13 @@ val translate : 'a t -> 'a -> language -> string option
  * languages in the file. **)
 val from_json : string -> string -> string t * language list
 
+(** A type to store each notion used in elements. **)
+type element = {
+    category : Utils.Id.t t (** The translations of categories. **) ;
+    attribute : State.attribute t (** The translations of attributes. **) ;
+    constructor : State.constructor t (** The translations of constructors. **)
+  }
+
+(** A record whose fields are all empty. **)
+val empty_element : element
+

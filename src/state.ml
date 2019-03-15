@@ -179,8 +179,8 @@ let attribute_value_can_progress = function
 type attribute_map =
   (PlayerAttribute.attribute, PlayerAttribute.constructor attribute_value) PMap.t
 type contact_map =
-  (ContactAttribute.attribute,
-    (character, ContactAttribute.constructor attribute_value) PMap.t) PMap.t
+  (character, (ContactAttribute.attribute,
+    ContactAttribute.constructor attribute_value) PMap.t) PMap.t
 
 type character_state =
   (attribute_map * contact_map) array
@@ -209,20 +209,20 @@ let force_get_attribute_character cm st c a =
     v
 
 let get_contact_character st c a ct =
-  try Some (PMap.find ct (PMap.find a (snd st.(Utils.Id.to_array c))))
+  try Some (PMap.find a (PMap.find ct (snd st.(Utils.Id.to_array c))))
   with Not_found -> None
 
-let write_contact_character (st : character_state) c a ct v =
+let write_contact_character st c a ct v =
   let c = Utils.Id.to_array c in
   let m =
-    try PMap.find a (snd st.(c))
+    try PMap.find ct (snd st.(c))
     with Not_found -> PMap.empty in
-  let m = PMap.add ct v m in
-  st.(c) <- (fst st.(c), PMap.add a m (snd st.(c)))
+  let m = PMap.add a v m in
+  st.(c) <- (fst st.(c), PMap.add ct m (snd st.(c)))
 
-let get_all_contact_character st c a =
+let get_all_contact_character st c ct =
   Utils.pmap_to_list (
-    try PMap.find a (snd st.(Utils.Id.to_array c))
+    try PMap.find ct (snd st.(Utils.Id.to_array c))
     with Not_found -> PMap.empty)
 
 let get_all_contacts_character st c =

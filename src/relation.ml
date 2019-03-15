@@ -21,24 +21,22 @@ let is_explosive = function
 let is_strong = snd
 
 let basic_to_string = function
-  | Neutral -> "Neutral relation"
-  | Hate -> "Hate"
-  | Trust -> "Trust"
-  | Chaotic -> "Chaotic"
-  | Undetermined -> "Yet-to-determine relation"
-  | Avoidance -> "Avoidance relation"
+  | Neutral -> "neutral"
+  | Hate -> "hate"
+  | Trust -> "trust"
+  | Chaotic -> "chaotic"
+  | Undetermined -> "undetermined"
+  | Avoidance -> "avoidance"
 
 let rec relation_to_string = function
   | Basic r -> basic_to_string r
   | Asymmetrical (r1, r2) ->
-    "Asymmetrical, " ^ basic_to_string r1 ^ " in one hand, " ^ basic_to_string r2 ^ " in the other"
+    "asymmetrical " ^ basic_to_string r1 ^ " " ^ basic_to_string r2
   | Explosive (r1, r2) ->
-    relation_to_string r1 ^ ", " ^ relation_to_string r2
+    "explosive " ^ relation_to_string r1 ^ " " ^ relation_to_string r2
 
 let to_string (r, s) =
-  (if s then "Strong, " else "")
-  ^ (if is_explosive (r, s) then "Explosive, " else "")
-  ^ relation_to_string r
+  (if s then "strong " else "") ^ relation_to_string r
 
 let basic_complexity = function
   | Neutral -> 0

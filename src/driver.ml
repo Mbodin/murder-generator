@@ -60,13 +60,7 @@ type state = {
       (Utils.Id.t, Utils.Id.t Utils.PSet.t) PMap.t
       (** Similarly, the dependencies of each element. **) ;
     elements : (Utils.Id.t, Element.t) PMap.t ;
-    category_translation : Utils.Id.t Translation.t
-      (** All translations for categories. **) ;
-    attribute_translation : State.attribute Translation.t
-      (** All translations for attributes. **) ;
-    constructor_translation : State.constructor Translation.t
-      (** All translations for constructors. **)
-    (* TODO: Translations. *)
+    translations : Translation.element
   }
 
 type intermediary = {
@@ -96,9 +90,7 @@ let empty_state = {
     constructor_dependencies = PMap.empty ;
     elements_dependencies = PMap.empty ;
     elements = PMap.empty ;
-    category_translation = Translation.empty ;
-    attribute_translation = Translation.empty ;
-    constructor_translation = Translation.empty
+    translations = Translation.empty_element
   }
 
 let empty_intermediary = {
@@ -331,9 +323,11 @@ let prepare_declaration i =
               constructor_dependencies = constructor_dependencies ;
               attribute_dependencies =
                 PMap.add id deps i.current_state.attribute_dependencies ;
-              attribute_translation =
-                Translation.add i.current_state.attribute_translation
-                  Translation.generic id name } } in
+              translations =
+                { i.current_state.translations with Translation.attribute =
+                    Translation.add
+                      i.current_state.translations.Translation.attribute
+                      Translation.generic id name } } } in
   (** Declare constructor instances.
    * Similar to [declare_instance], see the declarations [attribute_functions] and
    * [contact_functions] to understand the large tuple argument. **)
@@ -382,9 +376,11 @@ let prepare_declaration i =
                 update i.current_state.constructor_information state ;
               constructor_dependencies =
                 PMap.add id deps i.current_state.constructor_dependencies ;
-              constructor_translation =
-                Translation.add i.current_state.constructor_translation
-                  Translation.generic id constructor } } in
+              translations =
+                { i.current_state.translations with Translation.constructor =
+                    Translation.add
+                      i.current_state.translations.Translation.constructor
+                      Translation.generic id constructor } } } in
   function
   | Ast.DeclareInstance (Ast.Attribute, attribute, block) ->
     declare_instance attribute_functions attribute block
@@ -440,7 +436,7 @@ let prepare_declaration i =
               | _ ->
                 raise (TranslationError ("category", name, lg, tags))) items) in
           Translation.add translation lg id str)
-        (Translation.add i.current_state.category_translation
+        (Translation.add i.current_state.translations.Translation.category
           Translation.generic id name)
         block.translation in
     { i with
@@ -451,7 +447,9 @@ let prepare_declaration i =
               category_dependencies = category_dependencies ;
               attribute_dependencies = attribute_dependencies ;
               constructor_dependencies = constructor_dependencies ;
-              category_translation = category_translation } }
+              translations =
+                { i.current_state.translations with Translation.category =
+                    category_translation } } }
   | Ast.DeclareElement (name, block) ->
     (match Utils.Id.get_id i.current_state.elements_names name with
      | None -> ()
@@ -719,11 +717,7 @@ let parse i =
       elements_dependencies = elements_dependencies ;
       elements = elements }
 
-let translates_category s = s.category_translation
-
-let translates_attribute s = s.attribute_translation
-
-let translates_constructor s = s.constructor_translation
+let get_translations s = s.translations
 
 let elements s = s.elements
 

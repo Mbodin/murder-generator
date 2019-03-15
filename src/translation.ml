@@ -8,7 +8,21 @@ let from_iso639 = Utils.id
 
 type 'a t = ('a * language, string) PMap.t
 
+type element = {
+    category : Utils.Id.t t ;
+    attribute : State.attribute t ;
+    constructor : State.constructor t
+  }
+
+
 let empty = PMap.empty
+
+let empty_element = {
+    category = empty ;
+    attribute = empty ;
+    constructor = empty
+  }
+
 
 let add m l o str = PMap.add (o, l) str m
 

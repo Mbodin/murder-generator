@@ -201,7 +201,8 @@ let _ =
       InOut.stopLoading () ;%lwt
       (** Asking about categories. **)
       let translate_categories =
-        let translate_categories = Driver.translates_category data in fun c ->
+        let translate_categories =
+            (Driver.get_translations data).Translation.category in fun c ->
           let category_name =
             Utils.assert_option __LOC__
               (Translation.translate translate_categories c Translation.generic) in
@@ -373,9 +374,8 @@ let _ =
       let%lwt state = Solver.solve global state objectives in
       let estate = {
           Export.names =
-            Array.of_list (List.map (fun (name, _, _, _) -> name)
-                             parameters.player_information) ;
-          Export.driver = data ;
+            List.map (fun (name, _, _, _) -> name) parameters.player_information ;
+          Export.translation = Driver.get_translations data ;
           Export.state = state
         } in
       InOut.print_block (InOut.Div (InOut.Normal, [

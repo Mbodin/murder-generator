@@ -12,10 +12,17 @@ begin
   category Religion
   category OutOfThisUniverse
 
-  (* LATER: translations *)
+  translation fr "divinité"
+  translation en "god"
+  translation eo "dio"
 end
 
 attribute Born AlwaysExisted
+begin
+  translation fr "A toujours existé"
+  translation en "always existé"
+  translation eo "ĉiam ekzistis"
+end
 
 element PlayerIsGod
 begin

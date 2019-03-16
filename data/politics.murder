@@ -1,8 +1,18 @@
 
 declare attribute Famousness
+begin
+  translation fr "Célébrité"
+  translation en "Famousness"
+  translation eo "Fameco"
+end
+
 
 attribute Famousness Famous
 begin
+  translation fr "célèbre"
+  translation en "famous"
+  translation eo "fama"
+
   translation fr:adj "célèbre"
   translation en:adj "famous"
   translation eo:adj "fama"
@@ -10,18 +20,25 @@ end
 
 attribute Famousness Unknown
 begin
+  translation fr "inconnu(e)"
+  translation en "unknown"
+  translation eo "malfama"
+
   translation fr:adj:mas "inconnu"
   translation fr:adj:fem "inconnue"
   translation en:adj "unKnown"
   translation eo:adj "malfama"
 end
 
-attribute Famousness Hidden
+attribute Famousness Hiding
 begin
-  category NonKids
-
   (* The character has been actively hiding from the general public:
     he or she tries his or her best not to be famous. *)
+  category NonKids
+
+  translation fr "caché(e)"
+  translation en "hidding"
+  translation eo "kaŝanta"
 end
 
 element GeneraliseUnknown
@@ -43,7 +60,7 @@ end
 element HiddenUnknown
 begin
   let A be player
-  let B be player with attribute Famousness as Hidden
+  let B be player with attribute Famousness as Hiding
 
   provide compatible contact Know from A to B as False
 end
@@ -79,6 +96,10 @@ end
 
 attribute Job King
 begin
+  translation fr "monarque"
+  translation en "monarch"
+  translation eo "reĝ(in)o"
+
   translation fr:nom:fem "une reine"
   translation fr:nom:mas "un roi"
   translation fr:nom:def:fem "la reine"

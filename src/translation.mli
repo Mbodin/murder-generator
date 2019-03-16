@@ -26,6 +26,9 @@ val add : 'a t -> language -> 'a -> string -> 'a t
  * Returns [None] if the object has not been translated to this language. **)
 val translate : 'a t -> 'a -> language -> string option
 
+(** Calls [translate], and finds a way to translate it anyway. **)
+val force_translate : 'a t -> 'a -> language -> string
+
 (** [from_json fileName fileContent] reads the [fileContent] string as a
  * JSON object representing translations in different languages.
  * It then returns a translation object as well as the list of the found

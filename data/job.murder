@@ -1,8 +1,17 @@
 
 declare attribute Job
+begin
+  translation fr "Métier"
+  translation en "Job"
+  translation eo "Profesio"
+end
 
 attribute Job Seller
 begin
+  translation fr "commerçant(e)"
+  translation en "seller"
+  translation eo "vendisto"
+
   translation fr:nom:fem "une commerçante"
   translation fr:nom:mas "un commerçant"
   translation fr:nom:def:fem "la commerçante"

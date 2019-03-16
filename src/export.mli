@@ -5,6 +5,11 @@
  * It contains all the information needed to generate any file. **)
 type state = {
     names : string list (** The names of each player. **) ;
+    language : Translation.language
+      (** The current language.
+       * It will be ignored in outputs that are meant to return a reusable
+       * file (like a JSON file), but not for the one targetted to the final
+       * user (character sheets or tools for the game master). **) ;
     translation : Translation.element (** The translation objects. **) ;
     state : State.t (** The actual generated state. **)
   }

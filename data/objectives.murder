@@ -1,6 +1,16 @@
 
 (* What the player ultimately wants to do with this other player. *)
 declare contact Goal
+begin
+  translation fr "But"
+  translation en "Goal"
+  translation eo "Celo"
+end
 
 contact Goal None
+begin
+  translation fr "aucun"
+  translation en "none"
+  translation eo "nenia"
+end
 

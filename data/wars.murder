@@ -2,6 +2,10 @@
 (* A player wants to harm as much as possible this other player. *)
 contact Goal Harm
 begin
+  translation fr "faire du mal"
+  translation en "harm"
+  translation eo "vundi"
+
   compatible with Kill
 end
 
@@ -9,6 +13,10 @@ end
 contact Goal Kill
 begin
   category NonKids
+
+  translation fr "tuer"
+  translation en "kill"
+  translation eo "mortigi"
 end
 
 category AncestralWar

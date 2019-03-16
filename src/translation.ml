@@ -30,6 +30,13 @@ let translate m o l =
   try Some (PMap.find (o, l) m)
   with Not_found -> None
 
+let force_translate m o l =
+  match translate m o l with
+  | Some r -> r
+  | None ->
+    match translate m o generic with
+    | Some r -> "<" ^ r ^ ">"
+    | None -> "<Missing translation>"
 
 let from_json fileName fileContent =
   match Yojson.Safe.from_string ~fname:fileName fileContent with

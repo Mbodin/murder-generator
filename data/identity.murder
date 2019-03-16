@@ -1,7 +1,17 @@
 
 declare attribute Born
+begin
+  translation fr "Né(e)"
+  translation en "Born"
+  translation eo "Naskiĝita"
+end
 
 attribute Born True
+begin
+  translation fr "oui"
+  translation en "yes"
+  translation eo "jes"
+end
 
 element Birth
 begin
@@ -14,9 +24,18 @@ end
 
 
 declare attribute Gender
+begin
+  translation fr "Genre"
+  translation en "Gender"
+  translation eo "Genro"
+end
 
 attribute Gender Male
 begin
+  translation fr "masculin"
+  translation en "male"
+  translation eo "iĉa"
+
   translation en:adj "male"
   translation eo:adj "iĉa"
   translation eo:adj:plu "iĉaj"
@@ -34,6 +53,10 @@ end
 
 attribute Gender Female
 begin
+  translation fr "féminin"
+  translation en "female"
+  translation eo "ina"
+
   translation en:adj "female"
   translation eo:adj "ina"
   translation eo:adj:plu "inaj"
@@ -50,6 +73,11 @@ begin
 end
 
 attribute Gender NonBinary
+begin
+  translation fr "non binaire"
+  translation en "genderqueer"
+  translation eo "neduuma"
+end
 
 element MaleCharacter
 begin
@@ -67,9 +95,18 @@ end
 
 
 declare attribute Specy
+begin
+  translation fr "Espèce"
+  translation en "Specy"
+  translation eo "Speco"
+end
 
 attribute Specy Human
 begin
+  translation fr "humaine"
+  translation en "human"
+  translation eo "homa"
+
   translation fr:adj:mas "humain"
   translation fr:adj:fem "humaine"
   translation fr:adj:plu:mas "humains"
@@ -116,6 +153,11 @@ end
 attribute Specy Dwarf
 begin
   category Fantasy
+
+  translation fr "naine"
+  translation en "dwarf"
+  translation eo "gnoma"
+
   translation fr:adj:mas "nain"
   translation fr:adj:fem "naine"
   translation fr:adj:plu "nains"
@@ -132,18 +174,32 @@ end
 attribute Specy Elf
 begin
   category Fantasy
+
+  translation fr "elfe"
+  translation en "elf"
+  translation eo "elfa"
+
   (* LATER: translations *)
 end
 
 attribute Specy Alien
 begin
   category ScienceFiction
+
+  translation fr "extra-terrestre"
+  translation en "alien"
+  translation eo "eksterTerano"
+
   (* LATER: translations *)
 end
 
 attribute Specy Robot
 begin
   category ScienceFiction
+
+  translation fr "robot"
+  translation en "robot"
+  translation eo "roboto"
 
   translation fr:nom "robot"
   translation fr:nom:plu "robots"
@@ -189,6 +245,11 @@ begin
 end
 
 attribute Born Built
+begin
+  translation fr "construit"
+  translation en "built"
+  translation eo "konstruita"
+end
 
 element RobotBuilt
 begin

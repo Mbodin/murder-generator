@@ -373,6 +373,7 @@ let _ =
        * informations. *)
       let%lwt state = Solver.solve global state objectives in
       let estate = {
+          Export.language = get_language parameters ;
           Export.names =
             List.map (fun (name, _, _, _) -> name) parameters.player_information ;
           Export.translation = Driver.get_translations data ;

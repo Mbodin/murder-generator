@@ -7,18 +7,63 @@ begin
 end
 
 declare contact Know
+begin
+  translation fr "Connaît"
+  translation en "Knows"
+  translation eo "Konas"
+end
+
 contact Know True
+begin
+  translation fr "oui"
+  translation en "yes"
+  translation eo "jes"
+end
+
 contact Know False
+begin
+  translation fr "non"
+  translation en "no"
+  translation eo "ne"
+end
 
 declare contact FamilyMember
 begin
   category Family
+
+  translation fr "Relation familiale"
+  translation en "Family link"
+  translation eo "Familia ligo"
 end
 
 contact FamilyMember None
+begin
+  translation fr "aucune"
+  translation en "none"
+  translation eo "nenia"
+end
+
 contact FamilyMember Sibling
+begin
+  translation fr "frère ou sœur"
+  translation en "sibling"
+  translation eo "frat(in)o"
+end
+
 contact FamilyMember Parent
+begin
+  translation fr "parent de"
+  translation en "parent of"
+  translation eo "patr(in)o de"
+end
+
 contact FamilyMember Child
+begin
+  translation fr "enfant de"
+  translation en "child of"
+  translation eo "fil(in)o de"
+end
+
 
 element SiblingsKnowEachOthers
 begin
@@ -104,7 +149,7 @@ element HiddenSibling
 begin
   category DarkSecrets
 
-  let A be player with attribute Famousness as Hidden
+  let A be player with attribute Famousness as Hiding
   let B be player
 
   provide relation from A to B as strong undetermined

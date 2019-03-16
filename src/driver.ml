@@ -291,7 +291,7 @@ let prepare_declaration i =
    * to understand the large tuple argument. **)
   let declare_instance (declare, _, _, _, extract, update, constructor, _, en)
       name block =
-    let block = convert_block name [OfCategory] block in
+    let block = convert_block name [OfCategory; Translation] block in
     let (id, state) =
       declare (extract i.current_state.constructor_information) name in
     let id = constructor id in
@@ -312,6 +312,21 @@ let prepare_declaration i =
     let constructor_dependencies =
       update_dependencies i.current_state.constructor_dependencies
         constr_deps deps in
+    let translations =
+      let translations =
+        Translation.add i.current_state.translations.Translation.attribute
+          Translation.generic id name in
+      List.fold_left (fun translations (lg, tags, items, tags') ->
+        if tags <> [] then
+          raise (TranslationError (en, name, lg, tags)) ;
+        if tags' <> [] then
+          raise (TranslationError (en, name, lg, tags')) ;
+        let str =
+          String.concat "" (List.map (function
+            | Ast.TranslationString str -> str
+            | _ ->
+              raise (TranslationError (en, name, lg, tags))) items) in
+        Translation.add translations lg id str) translations block.translation in
     { i with
         categories_to_be_defined = categories_to_be_defined ;
         attributes_to_be_defined = PMap.remove id i.attributes_to_be_defined ;
@@ -325,9 +340,7 @@ let prepare_declaration i =
                 PMap.add id deps i.current_state.attribute_dependencies ;
               translations =
                 { i.current_state.translations with Translation.attribute =
-                    Translation.add
-                      i.current_state.translations.Translation.attribute
-                      Translation.generic id name } } } in
+                    translations } } } in
   (** Declare constructor instances.
    * Similar to [declare_instance], see the declarations [attribute_functions] and
    * [contact_functions] to understand the large tuple argument. **)
@@ -366,7 +379,22 @@ let prepare_declaration i =
     let categories_to_be_defined =
       update_categories_to_be_defined deps (fun (cats, attrs, constrs) ->
         (cats, attrs, Utils.PSet.add id constrs)) in
-    (* TODO: Deal with [Translation], [Add], and [CompatibleWith]. *)
+    (* TODO: Deal with [Add], and [CompatibleWith]. *)
+    let translations =
+      let translations =
+        Translation.add i.current_state.translations.Translation.constructor
+          Translation.generic id constructor in
+      List.fold_left (fun translations (lg, tags, items, tags') ->
+        if tags <> [] then
+          translations (* TODO *)
+        else if tags' <> [] then
+          translations (* TODO *)
+        else
+          let str =
+            String.concat "" (List.map (function
+              | Ast.TranslationString str -> str
+              | _ -> "??" (* TODO *)) items) in
+        Translation.add translations lg id str) translations block.translation in
     { i with
         categories_to_be_defined = categories_to_be_defined ;
         attributes_to_be_defined = attributes_to_be_defined ;
@@ -378,9 +406,7 @@ let prepare_declaration i =
                 PMap.add id deps i.current_state.constructor_dependencies ;
               translations =
                 { i.current_state.translations with Translation.constructor =
-                    Translation.add
-                      i.current_state.translations.Translation.constructor
-                      Translation.generic id constructor } } } in
+                    translations } } } in
   function
   | Ast.DeclareInstance (Ast.Attribute, attribute, block) ->
     declare_instance attribute_functions attribute block

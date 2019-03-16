@@ -9,19 +9,36 @@ end
 declare attribute Richness
 begin
   category Money
+
+  translation fr "Richesse"
+  translation en "Wealth"
+  translation eo "Riĉeco"
 end
 
 attribute Richness Rich
 begin
+  translation fr "riche"
+  translation en "wealthy"
+  translation eo "riĉa"
+
   translation fr:adj "riche"
-  translation en:adj "rich"
+  translation en:adj "wealthy"
   translation eo:adj "riĉa"
 end
 
 attribute Richness Neutral
+begin
+  translation fr "neutre"
+  translation en "neutral"
+  translation eo "neŭtrala"
+end
 
 attribute Richness Poor
 begin
+  translation fr "pauvre"
+  translation en "poor"
+  translation eo "malriĉa"
+
   translation fr:adj "pauvre"
   translation en:adj "poor"
   translation eo:adj "malriĉa"
@@ -63,29 +80,49 @@ end
 declare contact FinancialDebt
 begin
   category Money
+
+  translation fr "Dette"
+  translation en "Debt"
+  translation eo "Ŝuldo"
 end
 
 contact FinancialDebt None
+begin
+  translation fr "aucune"
+  translation en "none"
+  translation eo "nenia"
+end
 
 contact FinancialDebt Small
 begin
-  translation fr:adj:fem "petite"
-  translation fr:adj:mas "petit"
+  translation fr "faible"
+  translation en "small"
+  translation eo "malalta"
+
+  translation fr:adj "faible"
   translation en:adj "small"
-  translation eo:adj "malgranda"
+  translation eo:adj "malalta"
 end
 
 contact FinancialDebt Large
 begin
-  translation fr:adj:fem "grande"
-  translation fr:adj:mas "grand"
+  translation fr "importante"
+  translation en "large"
+  translation eo "alta"
+
+  translation fr:adj:fem "importante"
+  translation fr:adj:mas "important"
   translation en:adj "large"
-  translation eo:adj "granda"
+  translation eo:adj "alta"
 end
 
 contact FinancialDebt Old
 begin
   (* Large but from the old times: it would be awkward to require it now. *)
+  translation fr "ancienne"
+  translation en "old"
+  translation eo "malnova"
+
   translation fr:adj:fem "vielle"
   translation fr:adj:mas "vieux"
   translation en:adj "old"
@@ -188,16 +225,25 @@ begin
   let A be player with contact FinancialDebt to B as Large
   let B be player
 
-  provide attribute Famousness to A as Hidden
+  provide attribute Famousness to A as Hiding
 
   (* provide event to A (* TODO *) *)
 end
 
 
 declare contact Favor
+begin
+  translation fr "Faveur"
+  translation en "Favor"
+  translation eo "Helpŝuldo"
+end
 
 contact Favor Large
 begin
+  translation fr "grande"
+  translation en "large"
+  translation eo "granda"
+
   translation fr:adj:fem "grande"
   translation fr:adj:mas "grand"
   translation en:adj "large"
@@ -206,6 +252,10 @@ end
 
 contact Favor Small
 begin
+  translation fr "petite"
+  translation en "small"
+  translation eo "malgranda"
+
   translation fr:adj:fem "petite"
   translation fr:adj:mas "petit"
   translation en:adj "small"

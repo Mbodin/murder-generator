@@ -122,9 +122,8 @@ val select : (int * 'a) list -> 'a
 val take : (int * 'a) list -> 'a * (int * 'a) list
 
 (** Possible exception returned by the select function. **)
+exception EmptyList
 exception NegativeWeigth
-(** Note that if the list is empty, the total weight will be zero
- * and the exception [NegativeWeigth] will also be sent. **)
 exception InternalError
 
 (** Sums the integers of the list. **)

@@ -158,7 +158,7 @@ exception CircularDependency of string
 
 exception SelfRelation of string * string
 
-exception TranslationError of string * string * Ast.language * Ast.language_tag list
+exception TranslationError of string * string * Translation.language * Translation.tag list
 
 exception VacuumElement of string
 
@@ -382,19 +382,16 @@ let prepare_declaration i =
     (* TODO: Deal with [Add], and [CompatibleWith]. *)
     let translations =
       let translations =
-        Translation.add i.current_state.translations.Translation.constructor
-          Translation.generic id constructor in
+        Translation.gadd i.current_state.translations.Translation.constructor
+          Translation.generic [] id constructor [] in
       List.fold_left (fun translations (lg, tags, items, tags') ->
-        if tags <> [] then
-          translations (* TODO *)
-        else if tags' <> [] then
-          translations (* TODO *)
-        else
           let str =
             String.concat "" (List.map (function
               | Ast.TranslationString str -> str
-              | _ -> "??" (* TODO *)) items) in
-        Translation.add translations lg id str) translations block.translation in
+              | _ ->
+                raise (TranslationError (en, constructor, lg, tags))) items) in
+          Translation.gadd translations lg tags id str tags')
+        translations block.translation in
     { i with
         categories_to_be_defined = categories_to_be_defined ;
         attributes_to_be_defined = attributes_to_be_defined ;

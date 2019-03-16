@@ -10,16 +10,13 @@ type attribute_kind =
   | Attribute
   | Contact
 
-type language = Translation.language
-type language_tag = string
-
 (** A translation is a sequence of translation items.
  * Items’s result are meant to be concatenated (separated by space) to form
  * the overall translation. **)
 type translation_item =
   | TranslationString of string
     (** The given string is the translation. **)
-  | TranslationVariable of string * language_tag list
+  | TranslationVariable of string * Translation.tag list
     (** The string is a variable name (typically representing a player).
      * The tags are modifiers provided to this variable to fetch a translation
      * (typically, these tags indicate the grammatical case of the translation
@@ -63,12 +60,15 @@ type 'player target_destination =
  * to the translation where it is used.
  * This is how this second list of tags is used. **)
 type translation =
-  language * language_tag list * translation_item list * language_tag list
+  Translation.language
+  * Translation.tag list
+  * translation_item list
+  * Translation.tag list
 
 (** States that having this constructors set as attribute or contact changes
  * the grammatical cases of the player by implicitely providing the following
  * new tags at each translation. **)
-type add = language * language_tag list
+type add = Translation.language * Translation.tag list
 
 (** Declares a player with some constraints.
  * If the player is [None], then these constraints apply to any

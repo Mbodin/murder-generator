@@ -129,33 +129,44 @@ let positive_mod a b =
 
 let square x = x * x
 
+exception EmptyList
 exception NegativeWeigth
 exception InternalError
 
-let take l =
-  let s = List.fold_left (+) 0 (List.map fst l) in
-  if s <= 0 then raise NegativeWeigth
-  else
-    let rec search t = function
-      | [] -> raise InternalError
-      | (p, v) :: l ->
-        if p >= t then (v, l)
-        else
-          let (r, l) = search (t - p) l in
-          (r, (p, v) :: l)
-    in search (Random.int s) l
+let take = function
+  | [] -> raise EmptyList
+  | (w, e) :: [] ->
+    if w <= 0 then raise NegativeWeigth
+    else (e, [])
+  | l ->
+    let s = List.fold_left (+) 0 (List.map fst l) in
+    if s <= 0 then raise NegativeWeigth
+    else
+      let rec search t = function
+        | [] -> raise InternalError
+        | (p, v) :: l ->
+          if p >= t then (v, l)
+          else
+            let (r, l) = search (t - p) l in
+            (r, (p, v) :: l)
+      in search (Random.int s) l
 
 let select l = fst (take l)
 
 let rand min max =
   min + Random.int (max - min + 1)
 
-let select_any l =
-  List.nth l (Random.int (List.length l))
+let select_any = function
+  | [] -> raise EmptyList
+  | e :: [] -> e
+  | l -> List.nth l (Random.int (List.length l))
 
-let take_any l =
-  let i = Random.int (List.length l) in
-  (List.nth l i, list_remove i l)
+let take_any = function
+  | [] -> raise EmptyList
+  | e :: [] -> (e, [])
+  | l ->
+    let i = Random.int (List.length l) in
+    (List.nth l i, list_remove i l)
 
 let sum = List.fold_left (+) 0
 let array_sum = Array.fold_left (+) 0

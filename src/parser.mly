@@ -61,7 +61,8 @@ language:
   | AS              { "as" }
   | ADD             { "add" }
 
-language_tags: tags = list (COLON; tag = LIDENT { tag })   { tags }
+language_tags:
+    tags = list (COLON; tag = LIDENT { Translation.get_tag tag })   { tags }
 
 command:
   | CATEGORY; c = UIDENT
@@ -74,7 +75,7 @@ command:
     added_tags = loption (DOUBLECOLON;
                           tag = LIDENT;
                           tags = language_tags
-                          { tag :: tags })
+                          { Translation.get_tag tag :: tags })
     { Translation (Translation.from_iso639 lang, tags, l, added_tags) }
   | ADD; lang = language; tags = language_tags
     { Add (Translation.from_iso639 lang, tags) }

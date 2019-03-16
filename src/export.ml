@@ -15,7 +15,7 @@ let translate_value s f v =
     let tr = s.translation.Translation.constructor in
     let v = Utils.select_any l in
     let v = f v in
-    Translation.force_translate tr v s.language in
+    fst (Translation.gforce_translate tr v s.language Utils.PSet.empty) in
   match v with
   | State.Fixed_value (l, strict) -> tr l
   | State.One_value_of l -> tr l

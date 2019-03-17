@@ -24,6 +24,15 @@ type 'a tree =
 
 type 'a gt = ('a * language, (string * tag Utils.PSet.t) tree) PMap.t
 
+type 'b sitem =
+  | Direct of string
+  | Variable of 'b * tag Utils.PSet.t
+
+type ('a, 'b) st = ('a * language, ('b sitem list * tag Utils.PSet.t) tree) PMap.t
+
+type translation_function = tag Utils.PSet.t -> (string * tag Utils.PSet.t) option
+type complete_translation_function = tag Utils.PSet.t -> string * tag Utils.PSet.t
+
 type element = {
     category : Utils.Id.t t ;
     attribute : State.attribute t ;
@@ -33,6 +42,7 @@ type element = {
 
 let empty = PMap.empty
 let gempty = PMap.empty
+let sempty = PMap.empty
 
 let empty_element = {
     category = empty ;
@@ -43,17 +53,27 @@ let empty_element = {
 
 let add m lg o str = PMap.add (o, lg) str m
 
-let translate m o lg =
+let translate m lg o =
   try Some (PMap.find (o, lg) m)
   with Not_found -> None
 
-let force_translate m o lg =
-  match translate m o lg with
+(** Produces a [force_] alternative to a translation function by trying
+ * the [generic] language if the given one failed.
+ * It also takes as an argument a return with an empty string and a way
+ * to map each strings in a result. **)
+let fallback_to_generic lg f d change =
+  match f lg with
   | Some r -> r
   | None ->
-    match translate m o generic with
-    | Some r -> "<" ^ r ^ ">"
-    | None -> "<Missing translation>"
+    match f generic with
+    | Some r -> change (fun str -> "<" ^ str ^ ">") r
+    | None ->
+        change (fun str ->
+          let str = if str = "" then "" else (" (" ^ str ^ ")") in
+          "<Missing translation" ^ str ^ ">") d
+
+let force_translate m lg o =
+  fallback_to_generic lg (fun lg -> translate m lg o) "" Utils.id
 
 
 (** Given a set of tags and a tree, explores the tree following the path
@@ -65,6 +85,21 @@ let rec search_tree tags = function
     if Utils.PSet.mem t tags then
       search_tree tags t1
     else search_tree tags t2
+
+(** Most of the time, we really want a result.
+ * It is safe to return a result associated with less tags than provided.
+ * This alternative function thus explores more of the set by looking at
+ * negative branches when the positive did not return any interesting
+ * result.
+ * The opposite is however not safe in general. **)
+let rec search_backtrack_tree tags = function
+  | Leaf l -> l
+  | Node (t, t1, t2) ->
+    if Utils.PSet.mem t tags then
+      let l = search_backtrack_tree tags t1 in
+      if l = [] then search_backtrack_tree tags t2
+      else l
+    else search_backtrack_tree tags t2
 
 (** Given a set of tags and a function, finds the corresponding list
  * and apply the function to this list.
@@ -98,18 +133,44 @@ let gadd m lg tags o str tags' =
         else Node (tag, aux [] tags, Leaf l) in
     aux l tags) t) m
 
-let gtranslate m o lg tags =
+let sadd = gadd
+
+let gtranslate m lg o tags =
   try
     let t = PMap.find (o, lg) m in
-    let l = search_tree tags t in
+    let l = search_backtrack_tree tags t in
     try Some (Utils.select_any l)
     with Utils.EmptyList -> None
   with Not_found -> None
 
-let gforce_translate m o lg tags =
-  match gtranslate m o lg tags with
-  | None -> ("??", Utils.PSet.empty) (* TODO *)
-  | Some r -> r
+let gforce_translate m lg o tags =
+  fallback_to_generic
+    lg (fun lg -> gtranslate m lg o tags)
+    (String.concat ", " (Utils.PSet.to_list tags), Utils.PSet.empty)
+    (fun f (str, s) -> (f str, s))
+
+let stranslate m lg trv o tags =
+  try
+    let t = PMap.find (o, lg) m in
+    let l = search_backtrack_tree tags t in
+    try
+      let (l, tags) = Utils.select_any l in
+      Option.map (fun l -> (String.concat " " l, tags))
+        (Utils.list_map_option (function
+          | Direct str -> Some str
+          | Variable (x, tags) ->
+            Option.map fst (trv x tags)
+            (* FIXME: We are ignoring the returned tags here.
+             * This is wrong. *)) l)
+    with Utils.EmptyList -> None
+  with Not_found -> None
+
+let sforce_translate m lg trv o tags =
+  fallback_to_generic
+    lg (fun lg -> stranslate m lg (fun o tags -> Some (trv o tags)) o tags)
+    (String.concat ", " (Utils.PSet.to_list tags), Utils.PSet.empty)
+    (fun f (str, s) -> (f str, s))
+
 
 let from_json fileName fileContent =
   match Yojson.Safe.from_string ~fname:fileName fileContent with

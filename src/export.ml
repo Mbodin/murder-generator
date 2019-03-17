@@ -6,19 +6,31 @@ type state = {
     state : State.t
   }
 
+let generic s = { s with language = Translation.generic }
+
 let translate_attribute s a =
   let tr = s.translation.Translation.attribute in
-  Translation.force_translate tr a s.language
+  Translation.force_translate tr s.language a
 
 let translate_value s f v =
   let tr l =
     let tr = s.translation.Translation.constructor in
     let v = Utils.select_any l in
     let v = f v in
-    fst (Translation.gforce_translate tr v s.language Utils.PSet.empty) in
+    fst (Translation.gforce_translate tr s.language v Utils.PSet.empty) in
   match v with
   | State.Fixed_value (l, strict) -> tr l
   | State.One_value_of l -> tr l
+
+(** Some special constructors provides negative information
+ * (that is, that something is absent instead of present).
+ * This function uses heuristics to determine whether a constructor
+ * represents negative information.
+ * Some exportation functions will display these differently, but it
+ * should never profundly change the behaviour of the exportation. **)
+let negative s v =
+  let trv = translate_value (generic s) (fun v -> State.ContactConstructor v) v in
+  List.mem trv ["False"; "None"; "Absent"; "Undefined"]
 
 let to_graphviz s =
   let player_node c = "player" ^ string_of_int (Utils.Id.to_array c) in
@@ -48,9 +60,7 @@ let to_graphviz s =
           List.map (fun (a, v) ->
             let tra = translate_attribute s (State.ContactAttribute a) in
             let trv = translate_value s (fun v -> State.ContactConstructor v) v in
-            let color =
-              if List.mem trv ["False"; "None"] then "transparent"
-              else get_color tra in
+            let color = if negative s v then "transparent" else get_color tra in
             "  " ^ player_node c ^ " -> " ^ player_node c'
             ^ " [label=\"" ^ tra ^ ":" ^ trv ^ "\""
             ^ " color=\"" ^ color ^ "\"] ;") lv @ l)
@@ -59,7 +69,7 @@ let to_graphviz s =
     ]
 
 let to_json s =
-  let s = { s with language = Translation.generic } in
+  let s = generic s in
   let cst = State.get_character_state s.state in
   Yojson.Safe.to_string ~std:true (`List (List.mapi (fun c name ->
     let c = Utils.Id.from_array c in `Assoc [
@@ -85,6 +95,6 @@ let to_json s =
 
 let all_production = [
     ("graphviz", "graphvizDescription", "text/vnd.graphviz", "dot", to_graphviz) ;
-    ("json", "jsonDescription", "application/json", "json", to_json) ;
+    ("json", "jsonDescription", "application/json", "json", to_json)
   ]
 

@@ -10,18 +10,6 @@ type attribute_kind =
   | Attribute
   | Contact
 
-(** A translation is a sequence of translation items.
- * Items’s result are meant to be concatenated (separated by space) to form
- * the overall translation. **)
-type translation_item =
-  | TranslationString of string
-    (** The given string is the translation. **)
-  | TranslationVariable of string * Translation.tag list
-    (** The string is a variable name (typically representing a player).
-     * The tags are modifiers provided to this variable to fetch a translation
-     * (typically, these tags indicate the grammatical case of the translation
-     * to be given for the variable). **)
-
 (** Constraints over players (in a let-be declaration). **)
 type player_constraint =
   | HasAttribute of string * bool * string list
@@ -62,7 +50,7 @@ type 'player target_destination =
 type translation =
   Translation.language
   * Translation.tag list
-  * translation_item list
+  * string Translation.sitem list
   * Translation.tag list
 
 (** States that having this constructors set as attribute or contact changes
@@ -140,5 +128,4 @@ type declaration =
     (** Declares an element.
      * Accepts the following commands: [LetPlayer], [OfCategory],
      * [ProvideRelation], [ProvideAttribute], and [ProvideContact]. **)
-  (* TODO: [DeclareEvent] *)
 

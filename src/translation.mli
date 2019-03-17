@@ -8,23 +8,8 @@ type language
  * It typically stores the developping name of each object. **)
 val generic : language
 
-(** A type to store informations about translations for a given type.
- * It is a simple representation: for each language, we can get a
- * translation of the stored objects. **)
-type 'a t
-
-(** This type is for more advanced translations where grammar has to
- * be involved. **)
-type 'a gt
-
-(** Returns the two/three-letters code corresponding to the provided language. **)
-val iso639 : language -> string
-
-(** Converts the two/three-letters code to the corresponding language. **)
-val from_iso639 : string -> language
-
 (** The type of grammatical tags.
- * A tag can be used to represent any language case (accusative, genetive,
+ * A tag can be used to represent any language case (accusative, genitive,
  * locative, etc., but also less frequent ones like aversive or abessive)
  * as well as more fundamental language notions (gender of words, specific
  * inflexions, noun classes, etc.). **)
@@ -34,9 +19,42 @@ type tag
  * Tags are expressed as any lowercase string and depends on the language. **)
 val get_tag : string -> tag
 
+(** A type to store informations about translations for a given type.
+ * It is a simple representation: for each language, we can get a
+ * translation of the stored objects. **)
+type 'a t
+
+(** This type is for more advanced translations where grammar has to
+ * be involved. **)
+type 'a gt
+
+(** This type is for even more advanced translations involving sentences
+ * with a lot of grammar.
+ * Sentences involve partial translations, with symbolic variables.
+ * The type ['b] represents these variables. **)
+type ('a, 'b) st
+
+(** This type lists the possible elements in a partial sentence.
+ * Items’s result are concatenated (separated by space) to form
+ * the overall translation. **)
+type 'b sitem =
+  | Direct of string (** A direct translation given as a string **)
+  | Variable of 'b * tag Utils.PSet.t
+    (** A variable, which is supposed associated with its own translations.
+     * The tags are modifiers provided to this variable to fetch a translation
+     * (typically, these tags indicate the grammatical case of the translation
+     * to be given for the variable). **)
+
+(** Returns the two/three-letters code corresponding to the provided language. **)
+val iso639 : language -> string
+
+(** Converts the two/three-letters code to the corresponding language. **)
+val from_iso639 : string -> language
+
 (** Empty maps. **)
 val empty : 'a t
 val gempty : 'a gt
+val sempty : ('a, 'b) st
 
 (** Add a translation to an object. **)
 val add : 'a t -> language -> 'a -> string -> 'a t
@@ -48,12 +66,23 @@ val add : 'a t -> language -> 'a -> string -> 'a t
  * With the translation, we also have to provide a list of tags. **)
 val gadd : 'a gt -> language -> tag list -> 'a -> string -> tag list -> 'a gt
 
+(** Similar to [gadd] but for sentences. **)
+val sadd : ('a, 'b) st -> language -> tag list -> 'a -> 'b sitem list -> tag list -> ('a, 'b) st
+
 (** Translates an object to a given language.
  * Returns [None] if the object has not been translated to this language. **)
-val translate : 'a t -> 'a -> language -> string option
+val translate : 'a t -> language -> 'a -> string option
 
 (** Calls [translate], and finds a way to translate it anyway. **)
-val force_translate : 'a t -> 'a -> language -> string
+val force_translate : 'a t -> language -> 'a -> string
+
+(** Translation functions involving grammar have the following type.
+ * See [gtranslate] for more details. **)
+type translation_function = tag Utils.PSet.t -> (string * tag Utils.PSet.t) option
+
+(** An alternative to [translation_function] where the function uses heuristics
+ * to always return a result. **)
+type complete_translation_function = tag Utils.PSet.t -> string * tag Utils.PSet.t
 
 (** Translates an object to a given language.
  * Each tag associated with the return value is assured to be given as argument.
@@ -68,11 +97,18 @@ val force_translate : 'a t -> 'a -> language -> string
  * Typically, if a generic translation is gendered, this gender has to be propagated
  * to the rest of the sentence even though the original notion was not directly
  * gendered. **)
-val gtranslate : 'a gt -> 'a -> language -> tag Utils.PSet.t -> (string * tag Utils.PSet.t) option
+val gtranslate : 'a gt -> language -> 'a -> translation_function
 
 (** Similar to [gtranslate], but will try to find a translation following
  * some heuristics (but no guarantee is provided about them). **)
-val gforce_translate : 'a gt -> 'a -> language -> tag Utils.PSet.t -> string * tag Utils.PSet.t
+val gforce_translate : 'a gt -> language -> 'a -> complete_translation_function
+
+(** Like [gtranslate] but for sentences.
+ * It is supposed to be given a translation function for the variables. **)
+val stranslate : ('a, 'b) st -> language -> ('b -> translation_function) -> 'a -> translation_function
+
+(** Similar to [stranslate], but never fails. **)
+val sforce_translate : ('a, 'b) st -> language -> ('b -> complete_translation_function) -> 'a -> complete_translation_function
 
 (** [from_json fileName fileContent] reads the [fileContent] string as a
  * JSON object representing translations in different languages.

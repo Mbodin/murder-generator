@@ -89,7 +89,7 @@ let _ =
     let get_translation_language lg key =
       Utils.assert_option ("No key “" ^ key ^ "” found for language “"
                            ^ (Translation.iso639 lg) ^ "”.")
-        (Translation.translate translation key lg) in
+        (Translation.translate translation lg key) in
     let get_language p = Utils.assert_option __LOC__ p.language in
     let get_translation p = get_translation_language (get_language p) in
     (** Adds a “next” and “previous” buttons and call them when needed.
@@ -202,15 +202,8 @@ let _ =
       (** Asking about categories. **)
       let translate_categories =
         let translate_categories =
-            (Driver.get_translations data).Translation.category in fun c ->
-          let category_name =
-            Utils.assert_option __LOC__
-              (Translation.translate translate_categories c Translation.generic) in
-          Utils.assert_option ("No translation found for category “" ^
-                               category_name ^ "” in language “" ^
-                               (Translation.iso639 (get_language parameters)) ^ "”.")
-            (Translation.translate translate_categories c
-              (get_language parameters)) in
+          (Driver.get_translations data).Translation.category in
+        Translation.force_translate translate_categories (get_language parameters) in
       let all_categories = Driver.all_categories data in
       let selected_categories =
         match parameters.categories with

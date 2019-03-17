@@ -100,6 +100,10 @@ let rec list_map_filter f = function
     | None -> l
     | Some v -> v :: l
 
+let list_map_option f =
+  List.fold_left (fun r e ->
+    if_option r (fun l -> if_option (f e) (fun v -> Some (v :: l)))) (Some [])
+
 let shuffle l =
   List.sort (fun _ _ -> if Random.bool () then 1 else -1) l
 

@@ -69,9 +69,9 @@ command:
     { OfCategory c }
   | TRANSLATION; lang = language; tags = language_tags;
     l = list ( str = STRING
-               { TranslationString str }
+               { Translation.Direct str }
              | id = UIDENT; tags = language_tags
-               { TranslationVariable (id, tags) });
+               { Translation.Variable (id, Utils.PSet.from_list tags) });
     added_tags = loption (DOUBLECOLON;
                           tag = LIDENT;
                           tags = language_tags

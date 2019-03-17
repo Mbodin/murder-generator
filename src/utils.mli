@@ -81,6 +81,11 @@ val list_fold_lefti : (int -> 'a -> 'b -> 'a) -> 'a -> 'b list -> 'a
 (** Maps the list, removing any element returning [None]. **)
 val list_map_filter : ('a -> 'b option) -> 'a list -> 'b list
 
+(** Maps the list.
+ * If any of the element of the list maps to [None], then the whole list
+ * will be mapped to [None]. **)
+val list_map_option : ('a -> 'b option) -> 'a list -> 'b list option
+
 (** Given a transitive comparison function and a list, returns the greatest
  * element of the list (or [None] if the list is empty). **)
 val argmax : ('a -> 'a -> int) -> 'a list -> 'a option

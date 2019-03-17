@@ -323,7 +323,7 @@ let prepare_declaration i =
           raise (TranslationError (en, name, lg, tags')) ;
         let str =
           String.concat "" (List.map (function
-            | Ast.TranslationString str -> str
+            | Translation.Direct str -> str
             | _ ->
               raise (TranslationError (en, name, lg, tags))) items) in
         Translation.add translations lg id str) translations block.translation in
@@ -387,7 +387,7 @@ let prepare_declaration i =
       List.fold_left (fun translations (lg, tags, items, tags') ->
           let str =
             String.concat "" (List.map (function
-              | Ast.TranslationString str -> str
+              | Translation.Direct str -> str
               | _ ->
                 raise (TranslationError (en, constructor, lg, tags))) items) in
           Translation.gadd translations lg tags id str tags')
@@ -455,7 +455,7 @@ let prepare_declaration i =
             raise (TranslationError ("category", name, lg, tags')) ;
           let str =
             String.concat "" (List.map (function
-              | Ast.TranslationString str -> str
+              | Translation.Direct str -> str
               | _ ->
                 raise (TranslationError ("category", name, lg, tags))) items) in
           Translation.add translation lg id str)

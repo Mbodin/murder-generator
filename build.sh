@@ -6,17 +6,26 @@ ROLOC="" # "\e[0m"
 
 DEBUG="false"
 
-# The “check” command checks that the given file was not committed before use.
 if [ -z $1 ]
 then
   CHECK="false"
 else
+  # The “check” command checks that the given file was not committed before use.
   if [ $1 = "check" ]
   then
     CHECK="true"
     shift
   else
-    CHECK="false"
+    # The “checkout” command reverts back to normal any file that this script may
+    # have changed, then exists.
+    # It is generally a good thing to do it before committing.
+    if [ $1 = "checkout" ]
+    then
+      git checkout src/murderFiles.ml src/usedTranslations.ml web/main.js
+      exit 0
+    else
+      CHECK="false"
+    fi
   fi
 fi
 

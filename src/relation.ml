@@ -38,6 +38,7 @@ let rec relation_to_string = function
 let to_string (r, s) =
   (if s then "strong " else "") ^ relation_to_string r
 
+
 let basic_complexity = function
   | Neutral -> 0
   | Hate -> 1

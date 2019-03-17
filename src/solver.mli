@@ -23,6 +23,12 @@ type objective = {
     complexity : int
   }
 
+(** Returns the current complexity of a character in a given state. **)
+val character_complexity : State.relation_state -> State.character -> int
+
+(** Returns the current difficulty of a character in a given state. **)
+val character_difficulty : State.relation_state -> State.character -> int
+
 (** Evaluates the provided relation state with respect to the target
  * difficulty and simplicity (an objective for each player of the state).
  * The higher, the better the grade.

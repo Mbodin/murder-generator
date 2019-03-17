@@ -26,6 +26,7 @@ open Ast
 %token          TRANSLATION ADD COLON DOUBLECOLON
 
 %start<Ast.declaration list> main
+%start<Relation.t> relation
 
 %%
 

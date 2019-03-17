@@ -89,9 +89,109 @@ let to_json s =
         ("relations", `List (Utils.list_fold_lefti (fun c' l _ ->
           let c' = Utils.Id.from_array c' in
           let r = State.read_relation s.state c c' in
-          if c < c' then l
+          if c <= c' then l
           else `String (Relation.to_string r) :: l) [] s.names)) ;
       ]) s.names))
+
+let from_json m fileName fileContent =
+  match Yojson.Safe.from_string ~fname:fileName fileContent with
+  | `List l ->
+    let state = State.create_state (List.length l) in
+    let (names, state) =
+      Utils.list_fold_lefti (fun c (names, state) ->
+        let c = Utils.Id.from_array c in function
+        | `Assoc l ->
+          let name =
+            try
+              match List.assoc "name" l with
+              | `String name -> name
+              | _ -> failwith ("A field “name” in file “" ^ fileName
+                               ^ "” is not a string.")
+            with Not_found ->
+              failwith ("Missing field “name” in file “" ^ fileName ^ "”.") in
+          let get_field_list fld =
+            try
+              match List.assoc fld l with
+              | `List l -> l
+              | _ -> failwith ("A field “" ^ fld ^ "” in file “" ^ fileName
+                               ^ "” is not a list")
+            with
+            | Not_found -> [] in
+          let get_field_assoc fld =
+            try
+              match List.assoc fld l with
+              | `Assoc l -> l
+              | _ -> failwith ("A field “" ^ fld ^ "” in file “" ^ fileName
+                               ^ "” is not an object")
+            with
+            | Not_found -> [] in
+          let get_attribute en get m attribute =
+            match get m attribute with
+            | Some attribute -> attribute
+            | None ->
+              failwith ("Unknown " ^ en ^ " “" ^ attribute ^ "” in file “"
+                        ^ fileName ^ "”.") in
+          let get_constructor en get m attribute v =
+            match get m attribute v with
+            | Some v -> v
+            | None ->
+              failwith ("Unknown " ^ en ^ " constructor “" ^ v ^ "” in file “"
+                        ^ fileName ^ "”.") in
+          let state =
+            let attributes = get_field_assoc "attributes" in
+            List.fold_left (fun state -> function
+              | (attribute, `String v) ->
+                let attribute =
+                  get_attribute "attribute" State.PlayerAttribute.get_attribute
+                    m.State.player attribute in
+                let v =
+                  get_constructor "attribute" State.PlayerAttribute.get_constructor
+                    m.State.player attribute v in
+                State.write_attribute_character (State.get_character_state state) c
+                  attribute (Fixed_value ([v], Strict)) ;
+                state
+              | (field, _) ->
+                failwith ("Field “" ^ field ^ "” is file “" ^ fileName
+                          ^ "” is supposed to be an attribute and thus associated"
+                          ^ " to a string, which it is not.")) state attributes in
+          let state =
+            let contacts = get_field_list "contacts" in
+            Utils.list_fold_lefti (fun c' state ->
+              let c' = Utils.Id.from_array c' in function
+              | `Assoc l ->
+                List.fold_left (fun state -> function
+                  | (attribute, `String v) ->
+                    let attribute =
+                      get_attribute "contact" State.ContactAttribute.get_attribute
+                        m.State.contact attribute in
+                    let v =
+                      get_constructor "contact"
+                        State.ContactAttribute.get_constructor
+                        m.State.contact attribute v in
+                    State.write_contact_character (State.get_character_state state)
+                      c attribute c' (Fixed_value ([v], Strict)) ;
+                    state
+                  | (field, _) ->
+                    failwith ("Field “" ^ field ^ "” is file “" ^ fileName
+                              ^ "” is supposed to be a contact and thus associated"
+                              ^ " to a string, which it is not.")) state l
+              | _ -> failwith ("A contact in file “" ^ fileName
+                               ^ "” is not associated an object.")) state contacts in
+          let state =
+            let relations = get_field_list "relations" in
+            Utils.list_fold_lefti (fun c' state ->
+              let c' = Utils.Id.from_array c' in function
+              | `String r ->
+                let r = Driver.parse_relation r in
+                if c <> c' then State.write_relation state c c' r ;
+                state
+              | _ -> failwith ("Ill-formed “relations” field in file “"
+                               ^ fileName ^ "”.")) state relations in
+          (name :: names, state)
+        | _ -> failwith ("A character in file “" ^ fileName
+                 ^ "” is not a associated an object.")) ([], state) l in
+    (List.rev names, state)
+  | _ -> failwith ("The file “" ^ fileName ^ "” is not a list.")
 
 let all_production = [
     ("graphviz", "graphvizDescription", "text/vnd.graphviz", "dot", to_graphviz) ;

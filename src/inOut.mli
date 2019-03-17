@@ -80,3 +80,11 @@ val createPercentageInput : float -> Dom_html.element Js.t * (unit -> float)
  * on, and one when the button is off. **)
 val createSwitch : string -> string option -> string option -> bool -> (unit -> unit) -> Dom_html.element Js.t * (bool -> unit) * (unit -> bool)
 
+(** Create a button to import a file.
+ * It takes as argument the list of extension it accepts.
+ * It also takes as argument a function called before loading the file into memory.
+ * As of the other reading functions, it returns the created element and
+ * a reading function.
+ * This reading function returns both the file name and its content. **)
+val createFileImport : string list -> (unit -> unit Lwt.t) -> Dom_html.element Js.t * (unit -> (string * string) Lwt.t)
+

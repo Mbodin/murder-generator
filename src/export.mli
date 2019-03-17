@@ -20,8 +20,14 @@ val to_graphviz : state -> string
 (** Produces a JSON representation of the state. **)
 val to_json : state -> string
 
+(** Reverts [to_json] back to a list of names and a state.
+ * The first argument is the file name (to report errors), and the second one
+ * its actual content. **)
+val from_json : State.constructor_maps -> string -> string -> string list * State.t
+
 (** All the functions of this file are resumed in the following list.
  * Each function is associated two identifiers in [web/translations.json]
- * (one for the name and one for the description), a mime type, and an extension. **)
+ * (one for the name and one for the description), a mime type, and an
+ * extension. **)
 val all_production : (string * string * string * string * (state -> string)) list
 

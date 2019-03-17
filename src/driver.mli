@@ -5,6 +5,9 @@
 (** From the file name and the lexing buffer, calls the parser. **)
 val parse_lexbuf : string -> Lexing.lexbuf -> Ast.declaration list
 
+(** Parses a relation obtained through [Relation.to_string]. **)
+val parse_relation : string -> Relation.t
+
 (** A type to store intermediate informations about parsing. **)
 type intermediary
 
@@ -102,4 +105,7 @@ val get_element_dependencies : state -> Utils.Id.t -> Utils.Id.t Utils.PSet.t
 
 (** Returns the translations for elements. **)
 val get_translations : state -> Translation.element
+
+(** Return the constructor maps generated while loading the files. **)
+val get_constructor_maps : state -> State.constructor_maps
 

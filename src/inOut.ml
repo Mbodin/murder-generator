@@ -235,3 +235,35 @@ let createSwitch text texton textoff b f =
   ((label :> Dom_html.element Js.t), assign, fun _ ->
     Js.to_bool (Js.Unsafe.coerce input)##.checked)
 
+let createFileImport extensions prepare =
+  let input = Dom_html.createInput ~_type:(Js.string "file") document in
+  if extensions <> [] then
+    ignore (input##setAttribute (Js.string "accept")
+      (Js.string (String.concat ", " (List.map (fun e -> "." ^ e) extensions)))) ;
+  ((input :> Dom_html.element Js.t), fun _ ->
+    prepare () ;%lwt
+    match Js.Optdef.to_option input##.files with
+    | None -> Lwt.return ("", "")
+    | Some files ->
+      let rec aux l n =
+        if n = files##.length then
+          Lwt.return (List.rev l)
+        else
+          match Js.Opt.to_option (files##item n) with
+          | None -> aux l (n + 1)
+          | Some f ->
+            let reader = new%js Js_of_ocaml.File.fileReader in
+            let (cont, w) = Lwt.task () in
+            reader##.onload := Dom.handler (fun _ ->
+              let str =
+                Js.to_string (Utils.assert_option __LOC__
+                  (Js.Opt.to_option (File.CoerceTo.string (reader##.result)))) in
+              Lwt.wakeup_later w (fun _ ->
+                aux ((Js.to_string f##.name, str) :: l) (n + 1)) ;
+              Js._true) ;
+            reader##readAsText f ;
+            let%lwt cont = cont in cont () in
+      let%lwt l = aux [] 0 in
+      Lwt.return (String.concat "," (List.map fst l),
+                  String.concat "" (List.map snd l)))
+

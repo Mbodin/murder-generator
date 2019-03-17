@@ -194,6 +194,5 @@ let from_json fileName fileContent =
             | (key, _) -> errorKey key) t l, lg :: lgs)
         | _ ->
           failwith (current ^ " is not an object.")) (empty, []) l
-  | _ ->
-    failwith ("The file “" ^ fileName ^ "” is not a list.")
+  | _ -> failwith ("The file “" ^ fileName ^ "” is not a list.")
 

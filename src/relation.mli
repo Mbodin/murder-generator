@@ -56,7 +56,7 @@ val compose : t -> t -> t
 (** A neutral element for the composition. **)
 val neutral : t
 
-(** Converts a relation to a string, for debugging purposes. **)
+(** Converts a relation to a string. **)
 val to_string : t -> string
 
 (** Reverse the point of view of the given relation: every

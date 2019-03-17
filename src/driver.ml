@@ -8,14 +8,29 @@ let parse_lexbuf fileName lexbuf =
     } ;
   try Parser.main Lexer.read lexbuf with
   | Parser.Error ->
-    failwith ("Error: Parser error " ^
-              Lexer.current_position lexbuf ^ ".")
+    failwith ("Error: Parser error " ^ Lexer.current_position lexbuf ^ ".")
   | Lexer.SyntaxError msg ->
-    failwith ("Error: Lexer error " ^
-              Lexer.current_position lexbuf ^ ": " ^ msg)
+    failwith ("Error: Lexer error " ^ Lexer.current_position lexbuf ^ ": " ^ msg)
   | e ->
-    failwith ("Error during parsing " ^ Lexer.current_position lexbuf
-              ^ ": " ^ Printexc.to_string e)
+    failwith ("Error during parsing " ^ Lexer.current_position lexbuf ^ ": "
+              ^ Printexc.to_string e)
+
+let parse_relation str =
+  let lexbuf = Lexing.from_string str in
+  lexbuf.Lexing.lex_curr_p <- {
+      Lexing.pos_fname = "“" ^ str ^ "”" ;
+      Lexing.pos_lnum = 1 ;
+      Lexing.pos_bol = 0 ;
+      Lexing.pos_cnum = 0
+    } ;
+  try Parser.relation Lexer.read lexbuf with
+  | Parser.Error ->
+    failwith ("Error: Parser error " ^ Lexer.current_position lexbuf ^ ".")
+  | Lexer.SyntaxError msg ->
+    failwith ("Error: Lexer error " ^ Lexer.current_position lexbuf ^ ": " ^ msg)
+  | e ->
+    failwith ("Error during parsing " ^ Lexer.current_position lexbuf ^ ": "
+              ^ Printexc.to_string e)
 
 
 (** Separates each components of the type [Ast.command] into a separate list. **)
@@ -741,6 +756,8 @@ let parse i =
       elements = elements }
 
 let get_translations s = s.translations
+
+let get_constructor_maps s = s.constructor_information
 
 let elements s = s.elements
 

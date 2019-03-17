@@ -100,24 +100,20 @@ let _ =
      * corresponding button doesn’t appear.
      * The text (more precisely, its key) for each button can be changed. **)
     let next_button ?previousText:(previousText="previous")
-          ?nextText:(nextText="next") p get_parameters previous next =
-      let%lwt cont =
-        let (cont, w) = Lwt.task () in
-        let jump f _ =
-          InOut.clear_response () ;
-          Lwt.wakeup_later w (fun _ -> f (get_parameters ())) in
-        let createListButton dir text f =
-          match f with
-          | None -> []
-          | Some f ->
-            [ InOut.LinkContinuation (dir, get_translation p text, jump f) ] in
-        let previous = createListButton false previousText previous in
-        let next = createListButton true nextText next in
-        InOut.print_block (InOut.Div (InOut.Centered,
-          if previous = [] || next = [] then previous @ next
-          else previous @ [ InOut.Space ] @ next)) ;
-        cont in
-      cont () in
+          ?nextText:(nextText="next") w p get_parameters previous next =
+      let jump f _ =
+        InOut.clear_response () ;
+        Lwt.wakeup_later w (fun _ -> f (get_parameters ())) in
+      let createListButton dir text f =
+        match f with
+        | None -> []
+        | Some f ->
+          [ InOut.LinkContinuation (dir, get_translation p text, jump f) ] in
+      let previous = createListButton false previousText previous in
+      let next = createListButton true nextText next in
+      InOut.print_block (InOut.Div (InOut.Centered,
+        if previous = [] || next = [] then previous @ next
+        else previous @ [ InOut.Space ] @ next)) in
     (** We request the data without forcing it yet. **)
     let data = get_data () in
     let rec ask_for_languages parameters =
@@ -140,6 +136,7 @@ let _ =
       ask_for_basic { parameters with language = Some language }
     and ask_for_basic parameters =
       let get_translation = get_translation parameters in
+      let (cont, w) = Lwt.task () in
       (** Describing the project to the user. **)
       InOut.print_block (InOut.P [
           InOut.Text (get_translation "description") ;
@@ -147,6 +144,44 @@ let _ =
           InOut.Link (get_translation "there",
                       "https://github.com/Mbodin/murder-generator")
         ]) ;
+      (** Suggest to shortcut the generation by importing a file. **)
+      let (shortcut, readShortcut) =
+        InOut.createFileImport ["json"] (fun _ ->
+          InOut.clear_response () ;
+          InOut.startLoading ()) in
+      InOut.print_block (InOut.Div (InOut.Normal, [
+          InOut.P [ InOut.Text (get_translation "importFileShortcut") ] ;
+          InOut.Div (InOut.Centered, [
+              InOut.Node shortcut ;
+              InOut.LinkContinuation (true, get_translation "shortcutGeneration",
+                fun _ ->
+                  Lwt.wakeup_later w (fun _ ->
+                    let%lwt (fileName, str) = readShortcut () in
+                    if fileName = "" && str = "" then (
+                      InOut.print_block (InOut.P [
+                        InOut.Text (get_translation "noFileSelected") ]) ;
+                        InOut.stopLoading () ;%lwt
+                        ask_for_basic parameters
+                    ) else (
+                      let%lwt data = data in
+                      let m = Driver.get_constructor_maps data in
+                      let (names, state) = Export.from_json m fileName str in
+                      let informations =
+                        List.mapi (fun c name ->
+                          let c = Utils.Id.from_array c in
+                          let st = State.get_relation_state state in
+                          (name, Solver.character_complexity st c,
+                           Solver.character_difficulty st c, ())) names in
+                      let parameters =
+                        { parameters with
+                            player_information = informations ;
+                            categories =
+                              Some (Utils.PSet.from_list
+                                      (Driver.all_categories data)) } in
+                      display parameters state
+                    )))
+            ])
+        ])) ;
       (** Asking the first basic questions about the murder party. **)
       let (playerNumber, readPlayerNumber) =
         InOut.createNumberInput parameters.player_number in
@@ -184,15 +219,17 @@ let _ =
               InOut.Text (get_translation "slowGeneration")
             ])
         ])) ;
-      next_button parameters (fun _ ->
+      next_button w parameters (fun _ ->
           { parameters with
               player_number = readPlayerNumber () ;
               general_level = readGeneralLevel () ;
               general_complexity = readGeneralComplexity () ;
               computation_power = readFastOrSlow () })
-        (Some ask_for_languages) (Some ask_for_categories)
+        (Some ask_for_languages) (Some ask_for_categories) ;
+      let%lwt cont = cont in cont ()
     and ask_for_categories parameters =
       let get_translation = get_translation parameters in
+      let (cont, w) = Lwt.task () in
       (** Forcing the data to be loaded. **)
       (if Lwt.state data = Lwt.Sleep then
         InOut.startLoading ()
@@ -258,17 +295,19 @@ let _ =
             PMap.fold (fun (e, _, _, _) l -> InOut.Node e :: l)
               categoriesButtons [])
         ])) ;
-      next_button parameters (fun _ ->
+      next_button w parameters (fun _ ->
           let selected_categories =
             PMap.foldi (fun c (_, _, get, _) s ->
               if get () then
                 Utils.PSet.add c s
               else s) categoriesButtons Utils.PSet.empty in
           { parameters with categories = Some selected_categories })
-        (Some ask_for_basic) (Some ask_for_player_constraints)
+        (Some ask_for_basic) (Some ask_for_player_constraints) ;
+      let%lwt cont = cont in cont ()
     and ask_for_player_constraints parameters =
       let get_translation = get_translation parameters in
       let%lwt data = data in
+      let (cont, w) = Lwt.task () in
       let player_number = parameters.player_number in
       let categories = Utils.assert_option __LOC__ parameters.categories in
       (** Asking about individual player constraints. **)
@@ -334,16 +373,16 @@ let _ =
                             InOut.Node difficulty ;
                             (ignore categories ; misc (* TODO *))
                           ]) table) ])])) ;
-      next_button ~nextText:"startGeneration" parameters (fun _ ->
+      next_button ~nextText:"startGeneration" w parameters (fun _ ->
         { parameters with
             player_information =
               List.map (fun ((_, get_name), (_, get_complexity),
                              (_, get_difficulty), misc) ->
                 let misc = ignore misc (* TODO *) in
                 (get_name (), get_complexity (), get_difficulty (), misc)) table
-        }) (Some ask_for_categories) (Some generate)
+        }) (Some ask_for_categories) (Some generate) ;
+      let%lwt cont = cont in cont ()
     and generate parameters =
-      let get_translation = get_translation parameters in
       (** Starts the generation! **)
       InOut.startLoading () ;%lwt
       let%lwt data = data in
@@ -365,6 +404,12 @@ let _ =
       (* TODO: Update the state according to the miscellaneous player
        * informations. *)
       let%lwt state = Solver.solve global state objectives in
+      display parameters state
+    and display parameters state =
+      let get_translation = get_translation parameters in
+      let (cont, w) = Lwt.task () in
+      let%lwt data = data in
+      (** Exports the generated state to various formats. **)
       let estate = {
           Export.language = get_language parameters ;
           Export.names =
@@ -389,8 +434,9 @@ let _ =
         InOut.Text (get_translation "participate") ;
         InOut.Link (get_translation "there",
                     "https://github.com/Mbodin/murder-generator") ]) ;
-      next_button parameters (fun _ -> parameters)
-        (Some ask_for_player_constraints) None in
+      next_button w parameters (fun _ -> parameters)
+        (Some ask_for_player_constraints) None ;
+      let%lwt cont = cont in cont () in
     let parameters = {
         language = None ;
         player_number = 13 ;

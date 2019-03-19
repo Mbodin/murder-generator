@@ -23,7 +23,7 @@ open Ast
 %token          NEUTRAL HATE TRUST CHAOTIC UNDETERMINED AVOIDANCE
 %token          ASYMMETRICAL EXPLOSIVE STRONG
 %token<string>  LIDENT UIDENT STRING
-%token          TRANSLATION ADD COLON DOUBLECOLON
+%token          TRANSLATION ADD COLON PLUS MINUS
 
 %start<Ast.declaration list> main
 %start<Relation.t> relation
@@ -62,8 +62,13 @@ language:
   | AS              { "as" }
   | ADD             { "add" }
 
+tag_modifier:
+    modifier = option ( PLUS   { true }
+                      | MINUS  { false })  { modifier }
+
 language_tags:
-    tags = list (COLON; tag = LIDENT { Translation.get_tag tag })   { tags }
+    tags = list (COLON; modifier = tag_modifier; tag = LIDENT
+                 { (modifier, Translation.get_tag tag) })   { tags }
 
 command:
   | CATEGORY; c = UIDENT
@@ -72,14 +77,10 @@ command:
     l = list ( str = STRING
                { Translation.Direct str }
              | id = UIDENT; tags = language_tags
-               { Translation.Variable (id, Utils.PSet.from_list tags) });
-    added_tags = loption (DOUBLECOLON;
-                          tag = LIDENT;
-                          tags = language_tags
-                          { Translation.get_tag tag :: tags })
-    { Translation (Translation.from_iso639 lang, tags, l, added_tags) }
-  | ADD; lang = language; tags = language_tags
-    { Add (Translation.from_iso639 lang, tags) }
+               { Translation.variable id tags })
+    { Translation (Translation.from_iso639 lang, tags, l) }
+  | ADD; lang = language; COLON; tag = LIDENT
+    { Add (Translation.from_iso639 lang, Translation.get_tag tag) }
   | COMPATIBLE; WITH; v = UIDENT
     { CompatibleWith v }
   | LET; v = UIDENT; BE; PLAYER;

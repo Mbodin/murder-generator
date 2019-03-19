@@ -104,6 +104,15 @@ let list_map_option f =
   List.fold_left (fun r e ->
     if_option r (fun l -> if_option (f e) (fun v -> Some (v :: l)))) (Some [])
 
+let rec list_partition_map f = function
+  | [] -> ([], [])
+  | a :: l ->
+    let (l, r) = list_partition_map f l in
+    match f a with
+    | Left b -> (b :: l, r)
+    | Right c -> (l, c :: r)
+
+
 let shuffle l =
   List.sort (fun _ _ -> if Random.bool () then 1 else -1) l
 
@@ -407,6 +416,8 @@ module PSet = struct
       fold (fun e _ -> f e) () s
 
     let merge s = fold add s
+
+    let diff s = fold remove s
 
     let inter s1 s2 =
       fold (fun e -> if mem e s2 then add e else id) empty s1

@@ -3,6 +3,8 @@ type language = string
 
 type tag = string
 
+type command = bool option * tag
+
 let generic = ""
 
 let iso639 = Utils.id
@@ -22,13 +24,37 @@ type 'a tree =
      * in two subsets: the one where the tag is present (first subset)
      * and the one where is it not present (second subset). **)
 
-type 'a gt = ('a * language, (string * tag Utils.PSet.t) tree) PMap.t
+(** Each translation item is associated its actual translation,
+ * as well as a set of tag that has been added and a set of tag that
+ * has been removed. **)
+type 'a gt =
+  ('a * language, (string * tag Utils.PSet.t * tag Utils.PSet.t) tree) PMap.t
 
 type 'b sitem =
   | Direct of string
-  | Variable of 'b * tag Utils.PSet.t
+  | Variable of 'b * tag Utils.PSet.t * tag Utils.PSet.t * tag Utils.PSet.t
 
-type ('a, 'b) st = ('a * language, ('b sitem list * tag Utils.PSet.t) tree) PMap.t
+(** Splits the commands into a list of constraints (conserving the ordering),
+ * a set of added tags, and a set of removed tags. **)
+let splits_commands commands =
+  let (tags, diff) =
+    Utils.list_partition_map (fun (c, tag) ->
+      match c with
+      | None -> Utils.Left tag
+      | Some b -> Utils.Right (b, tag)) commands in
+  let (added, removed) =
+    Utils.PSet.partition_map (fun (b, tag) ->
+      if b then Utils.Left tag else Utils.Right tag) (Utils.PSet.from_list diff) in
+  (tags, added, removed)
+
+let variable x commands =
+  let (tags, added, removed) = splits_commands commands in
+  Variable (x, Utils.PSet.from_list tags, added, removed)
+
+(** Similar to type [gt], the first set is the set of added tags and the second
+ * of removed tags. **)
+type ('a, 'b) st =
+  ('a * language, ('b sitem list * tag Utils.PSet.t * tag Utils.PSet.t) tree) PMap.t
 
 type translation_function = tag Utils.PSet.t -> (string * tag Utils.PSet.t) option
 type complete_translation_function = tag Utils.PSet.t -> string * tag Utils.PSet.t
@@ -68,9 +94,9 @@ let fallback_to_generic lg f d change =
     match f generic with
     | Some r -> change (fun str -> "<" ^ str ^ ">") r
     | None ->
-        change (fun str ->
-          let str = if str = "" then "" else (" (" ^ str ^ ")") in
-          "<Missing translation" ^ str ^ ">") d
+      change (fun str ->
+        let str = if str = "" then "" else (" (" ^ str ^ ")") in
+        "<Missing translation" ^ str ^ ">") d
 
 let force_translate m lg o =
   fallback_to_generic lg (fun lg -> translate m lg o) "" Utils.id
@@ -79,27 +105,27 @@ let force_translate m lg o =
 (** Given a set of tags and a tree, explores the tree following the path
  * indicated by the set.
  * It then returns the found list. **)
-let rec search_tree tags = function
+let rec naive_search_tree tags = function
   | Leaf l -> l
   | Node (t, t1, t2) ->
     if Utils.PSet.mem t tags then
-      search_tree tags t1
-    else search_tree tags t2
+      naive_search_tree tags t1
+    else naive_search_tree tags t2
 
-(** Most of the time, we really want a result.
+(** Most of the time, we absolutely want a result and we need to backtrack.
  * It is safe to return a result associated with less tags than provided.
  * This alternative function thus explores more of the set by looking at
- * negative branches when the positive did not return any interesting
- * result.
- * The opposite is however not safe in general. **)
-let rec search_backtrack_tree tags = function
-  | Leaf l -> l
-  | Node (t, t1, t2) ->
-    if Utils.PSet.mem t tags then
-      let l = search_backtrack_tree tags t1 in
-      if l = [] then search_backtrack_tree tags t2
-      else l
-    else search_backtrack_tree tags t2
+ * negative branches (the opposite is however not safe in general).
+ * More precisely, it returns two things: a list of results, and a list of
+ * subtrees to look for it the first list is not satisfactory. **)
+let search_tree tags =
+  let rec aux ts = function
+    | Leaf l -> (l, ts)
+    | Node (t, t1, t2) ->
+      if Utils.PSet.mem t tags then
+        aux (t2 :: ts) t1
+      else aux ts t2 in
+  aux []
 
 (** Given a set of tags and a function, finds the corresponding list
  * and apply the function to this list.
@@ -116,18 +142,20 @@ let apply_tree tags f =
     Node (t, t1, t2) in
   aux []
 
-(** Just adds a value to the list naturally given by [search_tree]. **)
+(** Just adds a value to the list naturally given by [naive_search_tree]. **)
 let add_tree tags v =
   apply_tree tags (fun _ l -> Leaf (v :: l))
 
-let gadd m lg tags o str tags' =
-  let tags' = Utils.PSet.from_list tags' in
+exception ConflictingCommands of command * command
+
+let gadd m lg commands o str =
+  let (tags, added, removed) = splits_commands commands in
   let t =
     try PMap.find (o, lg) m
     with Not_found -> Leaf [] in
   PMap.add (o, lg) (apply_tree (Utils.PSet.from_list tags) (fun seen l ->
     let rec aux l = function
-      | [] -> Leaf ((str, tags') :: l)
+      | [] -> Leaf ((str, added, removed) :: l)
       | tag :: tags ->
         if List.mem tag seen then aux l tags
         else Node (tag, aux [] tags, Leaf l) in
@@ -135,39 +163,56 @@ let gadd m lg tags o str tags' =
 
 let sadd = gadd
 
+(** Removes and adds the requested tags. **)
+let apply_patch tags added removed =
+  Utils.PSet.merge added (Utils.PSet.diff tags removed)
+
 let gtranslate m lg o tags =
-  try
-    let t = PMap.find (o, lg) m in
-    let l = search_backtrack_tree tags t in
-    try Some (Utils.select_any l)
-    with Utils.EmptyList -> None
+  let rec aux = function
+    | [] -> None
+    | t :: ts ->
+      let (l, ts') = search_tree tags t in
+      try
+        let (str, added, removed) = Utils.select_any l in
+        Some (str, apply_patch tags added removed)
+      with Utils.EmptyList -> aux (ts' @ ts) in
+  try let t = PMap.find (o, lg) m in aux [t]
   with Not_found -> None
 
 let gforce_translate m lg o tags =
-  fallback_to_generic
-    lg (fun lg -> gtranslate m lg o tags)
+  fallback_to_generic lg
+    (fun lg -> gtranslate m lg o tags)
     (String.concat ", " (Utils.PSet.to_list tags), Utils.PSet.empty)
     (fun f (str, s) -> (f str, s))
 
-let stranslate m lg trv o tags =
-  try
-    let t = PMap.find (o, lg) m in
-    let l = search_backtrack_tree tags t in
-    try
-      let (l, tags) = Utils.select_any l in
-      Option.map (fun l -> (String.concat " " l, tags))
-        (Utils.list_map_option (function
-          | Direct str -> Some str
-          | Variable (x, tags) ->
-            Option.map fst (trv x tags)
-            (* FIXME: We are ignoring the returned tags here.
-             * This is wrong. *)) l)
-    with Utils.EmptyList -> None
+let stranslate m lg tgv trv o tags =
+  let rec aux = function
+    | [] -> None
+    | t :: ts ->
+      let (l, ts') = search_tree tags t in
+      try
+        let (l, added, removed) = Utils.select_any l in
+        match Utils.list_map_option (function
+               | Direct str -> Some str
+               | Variable (x, constrs, added, removed) ->
+                 let tags = tgv x in
+                 if Utils.PSet.incl constrs tags then (
+                   let tags = apply_patch tags added removed in
+                   Utils.if_option (trv x tags) (fun (tr, tags) ->
+                     if Utils.PSet.incl constrs tags then
+                       Some tr
+                     else None)
+                 ) else None) l with
+        | Some l ->
+          Some (String.concat " " l, apply_patch tags added removed)
+        | None -> aux (ts' @ ts)
+      with Utils.EmptyList -> aux (ts' @ ts) in
+  try let t = PMap.find (o, lg) m in aux [t]
   with Not_found -> None
 
-let sforce_translate m lg trv o tags =
-  fallback_to_generic
-    lg (fun lg -> stranslate m lg (fun o tags -> Some (trv o tags)) o tags)
+let sforce_translate m lg tgv trv o tags =
+  fallback_to_generic lg
+    (fun lg -> stranslate m lg tgv (fun x tags -> Some (trv x tags)) o tags)
     (String.concat ", " (Utils.PSet.to_list tags), Utils.PSet.empty)
     (fun f (str, s) -> (f str, s))
 

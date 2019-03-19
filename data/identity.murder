@@ -36,14 +36,14 @@ begin
   translation en "male"
   translation eo "iĉa"
 
-  translation en:adj "male"
-  translation eo:adj "iĉa"
+  translation en:adj:sin "male"
+  translation eo:adj:sin "iĉa"
   translation eo:adj:plu "iĉaj"
-  translation eo:adj:acc "iĉan"
+  translation eo:adj:sin:acc "iĉan"
   translation eo:adj:plu:acc "iĉajn"
-  translation eo:nom "viro"
+  translation eo:nom:sin "viro"
   translation eo:nom:plu "viroj"
-  translation eo:nom:acc "viron"
+  translation eo:nom:sin:acc "viron"
   translation eo:nom:plu:acc "virojn"
 
   compatible with NonBinary
@@ -57,14 +57,14 @@ begin
   translation en "female"
   translation eo "ina"
 
-  translation en:adj "female"
-  translation eo:adj "ina"
+  translation en:adj:sin "female"
+  translation eo:adj:sin "ina"
   translation eo:adj:plu "inaj"
-  translation eo:adj:acc "inan"
+  translation eo:adj:sin:acc "inan"
   translation eo:adj:plu:acc "inajn"
-  translation eo:nom "virino"
+  translation eo:nom:sin "virino"
   translation eo:nom:plu "virinoj"
-  translation eo:nom:acc "virinon"
+  translation eo:nom:sin:acc "virinon"
   translation eo:nom:plu:acc "virinojn"
 
   compatible with NonBinary
@@ -107,46 +107,46 @@ begin
   translation en "human"
   translation eo "homa"
 
-  translation fr:adj:mas "humain"
-  translation fr:adj:fem "humaine"
+  translation fr:adj:sin:mas "humain"
+  translation fr:adj:sin:fem "humaine"
   translation fr:adj:plu:mas "humains"
   translation fr:adj:plu:fem "humaines"
-  translation fr:nom "une personne"::fem
-  translation fr:nom:mas "un homme"::mas
-  translation fr:nom:fem "une femme"::fem
-  translation fr:nom:plu "des personnes"::plu:fem
+  translation fr:nom:sin:-mas:+fem "une personne"
+  translation fr:nom:sin:mas "un homme"
+  translation fr:nom:sin:fem "une femme"
+  translation fr:nom:plu:-mas:+fem "des personnes"
   translation fr:nom:plu:mas "des hommes"
   translation fr:nom:plu:fem "des femmes"
-  translation fr:nom:def "la personne"::fem
-  translation fr:nom:def:mas "l'homme"::mas
-  translation fr:nom:def:fem "la femme"::fem
-  translation fr:nom:def:plu "les personnes"::def:plu:fem
+  translation fr:nom:def:sin:-mas:+fem "la personne"
+  translation fr:nom:def:sin:mas "l'homme"
+  translation fr:nom:def:sin:fem "la femme"
+  translation fr:nom:def:plu:-mas:+fem "les personnes"
   translation fr:nom:def:plu:mas "les hommes"
   translation fr:nom:def:plu:fem "les femmes"
-  translation en:adj "human"
-  translation en:nom "a human being"
-  translation en:nom:mas "a man"
-  translation en:nom:fem "a woman"
+  translation en:adj:sin "human"
+  translation en:nom:sin "a human being"
+  translation en:nom:sin:mas "a man"
+  translation en:nom:sin:fem "a woman"
   translation en:nom:plu "human beings"
   translation en:nom:plu:mas "men"
   translation en:nom:plu:fem "women"
-  translation en:nom:def "the human being"
-  translation en:nom:def:mas "the man"
-  translation en:nom:def:fem "the woman"
+  translation en:nom:def:sin "the human being"
+  translation en:nom:def:sin:mas "the man"
+  translation en:nom:def:sin:fem "the woman"
   translation en:nom:def:plu "the human beings"
   translation en:nom:def:plu:mas "the men"
   translation en:nom:def:plu:fem "the women"
-  translation eo:adj "homa"
+  translation eo:adj:sin "homa"
   translation eo:adj:plu "homaj"
-  translation eo:adj:acc "homan"
+  translation eo:adj:acc:sin "homan"
   translation eo:adj:acc:plu "homajn"
-  translation eo:nom "homo"
+  translation eo:nom:sin "homo"
   translation eo:nom:plu "homoj"
-  translation eo:nom:acc "homon"
+  translation eo:nom:acc:sin "homon"
   translation eo:nom:acc:plu "homojn"
-  translation eo:nom:def "la homo"
+  translation eo:nom:def:sin "la homo"
   translation eo:nom:def:plu "la homoj"
-  translation eo:nom:def:acc "la homon"
+  translation eo:nom:def:acc:sin "la homon"
   translation eo:nom:def:acc:plu "la homojn"
 end
 
@@ -158,16 +158,18 @@ begin
   translation en "dwarf"
   translation eo "gnoma"
 
-  translation fr:adj:mas "nain"
-  translation fr:adj:fem "naine"
+  translation fr:adj:sin:mas "nain"
+  translation fr:adj:sin:fem "naine"
   translation fr:adj:plu "nains"
   translation fr:adj:plu:fem "naines"
-  translation fr:nom:mas "un nain"::mas
-  translation fr:nom:fem "une naine"::fem
-  translation fr:nom:plu "des nains"::plu:mas
-  translation fr:nom:def:mas "le nain"::mas
-  translation fr:nom:def:fem "la naine"::fem
-  translation fr:nom:def:plu "les nains"::def:plu:mas
+  translation fr:nom:sin:mas "un nain"
+  translation fr:nom:sin:fem "une naine"
+  translation fr:nom:plu:-fem:+mas "des nains"
+  translation fr:nom:plu:fem "des naines"
+  translation fr:nom:def:sin:mas "le nain"
+  translation fr:nom:def:sin:fem "la naine"
+  translation fr:nom:def:plu:-fem:+mas "les nains"
+  translation fr:nom:def:plu:fem "les naines"
   (* LATER: Other translations *)
 end
 
@@ -201,13 +203,13 @@ begin
   translation en "robot"
   translation eo "roboto"
 
-  translation fr:nom "robot"
-  translation fr:nom:plu "robots"
-  translation en:nom "robot"
+  translation fr:nom:sin:+mas "robot"
+  translation fr:nom:plu:+mas "robots"
+  translation en:nom:sin "robot"
   translation en:nom:plu "robots"
-  translation eo:nom "roboto"
+  translation eo:nom:sin "roboto"
   translation eo:nom:plu "robotoj"
-  translation eo:nom:acc "roboton"
+  translation eo:nom:sin:acc "roboton"
   translation eo:nom:plu:acc "robotojn"
 end
 

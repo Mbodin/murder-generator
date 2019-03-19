@@ -40,23 +40,17 @@ type 'player target_destination =
   | FromTo of 'player * 'player (** From the first player to the second player. **)
   | Between of 'player * 'player (** Between both players, in a symmetrical way. **)
 
-(** Describes a translation in a given language and required grammatical cases.
- * The additional tags state how this translation should be grammatically
- * interpreted in interaction with other translations.
- * For instance in gendered languages, the generic word for a group of person
- * could be gendered: the description of the group has to transmit this information
- * to the translation where it is used.
- * This is how this second list of tags is used. **)
+(** Describes a translation in a given language and required or given grammatical
+ * cases. **)
 type translation =
   Translation.language
-  * Translation.tag list
+  * Translation.command list
   * string Translation.sitem list
-  * Translation.tag list
 
 (** States that having this constructors set as attribute or contact changes
  * the grammatical cases of the player by implicitely providing the following
- * new tags at each translation. **)
-type add = Translation.language * Translation.tag list
+ * new tag at each translation. **)
+type add = Translation.language * Translation.tag
 
 (** Declares a player with some constraints.
  * If the player is [None], then these constraints apply to any

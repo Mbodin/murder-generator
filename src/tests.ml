@@ -78,7 +78,7 @@ let test_translations =
   let (translations, languages) = Translation.from_json f content in
   let ok = ref true in
   let translate key lg =
-    match Translation.translate translations key lg with
+    match Translation.translate translations lg key with
     | Some str -> str
     | None ->
       print_endline ("Missing translation of “" ^ key ^ "” for language "

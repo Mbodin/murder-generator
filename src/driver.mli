@@ -33,9 +33,8 @@ exception CircularDependency of string
 exception SelfRelation of string * string
 
 (** An unexpected translation item has been given in an element of the kind
- * described by the first argument, whose name is the second argument.
- * The third and fourth argument indicates which translation is invalid. **)
-exception TranslationError of string * string * Translation.language * Translation.tag list
+ * described by the first argument, whose name is the second argument. **)
+exception TranslationError of string * string * Ast.translation
 
 (** The given element can’t be applied (typically because some constraints
  * are incompatible). **)

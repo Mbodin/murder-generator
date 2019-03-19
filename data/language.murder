@@ -1,0 +1,19 @@
+
+(* This file is meant to be for internal use and not to actually declare scenario
+  elements.
+  Instead, this file declares grammatical constructs for each languages. *)
+
+declare attribute Singular
+
+attribute Singular True
+begin
+  add fr :sin
+  add en :sin
+  add eo :sin
+end
+
+element AllPlayersAreSingular
+begin
+  provide strict attribute Singular to any other player as True
+end
+

@@ -158,10 +158,10 @@ let _ =
                   Lwt.wakeup_later w (fun _ ->
                     let%lwt (fileName, str) = readShortcut () in
                     if fileName = "" && str = "" then (
-                      InOut.print_block (InOut.P [
+                      InOut.print_block ~error:true (InOut.P [
                         InOut.Text (get_translation "noFileSelected") ]) ;
-                        InOut.stopLoading () ;%lwt
-                        ask_for_basic parameters
+                      InOut.stopLoading () ;%lwt
+                      ask_for_basic parameters
                     ) else (
                       let%lwt data = data in
                       let m = Driver.get_constructor_maps data in
@@ -184,7 +184,7 @@ let _ =
         ])) ;
       (** Asking the first basic questions about the murder party. **)
       let (playerNumber, readPlayerNumber) =
-        InOut.createNumberInput parameters.player_number in
+        InOut.createNumberInput ~min:1 parameters.player_number in
       InOut.print_block (InOut.P [
           InOut.Text (get_translation "howManyPlayers") ;
           InOut.Node playerNumber
@@ -452,7 +452,7 @@ let _ =
     let issues = "https://github.com/Mbodin/murder-generator/issues" in
     try%lwt
       let (errorOccurred, reportIt, there, errorDetails) = !errorTranslations in
-      InOut.print_block (InOut.Div (InOut.Normal, [
+      InOut.print_block ~error:true (InOut.Div (InOut.Normal, [
           InOut.P [
               InOut.Text errorOccurred ; InOut.Text reportIt ;
               InOut.Link (there, issues)

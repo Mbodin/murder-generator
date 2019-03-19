@@ -51,18 +51,19 @@ val add_spaces : block -> block
 (** Converts the block to a node. **)
 val block_node : block -> Dom_html.element Js.t
 
-(** Adds the node to the [response] div in the main webpage. **)
-val print_node : Dom.node Js.t -> unit
+(** Adds the node to the [response] div in the main webpage.
+ * If [error] is [true], the node is highlighted as an error. **)
+val print_node : ?error:bool -> Dom.node Js.t -> unit
 
 (** A composition of [add_spaces], [block_node], and [print_node]. **)
-val print_block : block -> unit
+val print_block : ?error:bool -> block -> unit
 
 (** Clears the [response] div in the main webpage. **)
 val clear_response : unit -> unit
 
 (** Create a (positive) number input with default value given as argument.
  * It also returns a function reading it. **)
-val createNumberInput : int -> Dom_html.element Js.t * (unit -> int)
+val createNumberInput : ?min:int -> ?max:int -> int -> Dom_html.element Js.t * (unit -> int)
 
 (** Create a text input with default value given as argument.
  * It also returns a function reading it. **)

@@ -15,6 +15,15 @@ val generic : language
  * inflexions, noun classes, etc.). **)
 type tag
 
+(** A tag command.
+ * It can be either associated to [None]: it is then a constraint.
+ * It can also be associated to a boolean: and it then becomes a command.
+ * If the boolean is [true], this tag is added when evaluated the variable,
+ * if [false], the command is removed.
+ * This is for instance handy for gendered languages where the name of a group
+ * might not be of the same gender than each of its components. **)
+type command = bool option * tag
+
 (** Imports tags.
  * Tags are expressed as any lowercase string and depends on the language. **)
 val get_tag : string -> tag
@@ -39,11 +48,18 @@ type ('a, 'b) st
  * the overall translation. **)
 type 'b sitem =
   | Direct of string (** A direct translation given as a string **)
-  | Variable of 'b * tag Utils.PSet.t
+  | Variable of 'b * tag Utils.PSet.t * tag Utils.PSet.t * tag Utils.PSet.t
     (** A variable, which is supposed associated with its own translations.
-     * The tags are modifiers provided to this variable to fetch a translation
-     * (typically, these tags indicate the grammatical case of the translation
-     * to be given for the variable). **)
+     * The variable is associates three sets:
+     * - the first one is the constraints over the variable,
+     * - the second one is the added tags when fetching the translation of this
+     *   variable,
+     * - the third is the removed tags when fetching the translation of the
+     *   variable. **)
+
+(** A smart constructor for [Variable] taking a list of commands instead
+ * of three sets. **)
+val variable : 'b -> command list -> 'b sitem
 
 (** Returns the two/three-letters code corresponding to the provided language. **)
 val iso639 : language -> string
@@ -59,15 +75,18 @@ val sempty : ('a, 'b) st
 (** Add a translation to an object. **)
 val add : 'a t -> language -> 'a -> string -> 'a t
 
+(** Returned by [gadd] and [sadd] when given commands that conflicts with
+ * each others (typically when the same tag is bath added and removed). **)
+exception ConflictingCommands of command * command
+
 (** Add a translation to an object with a specification on the tags where
  * this translation applies.
  * Tags should be ordered consistently across translations, with the most
- * important at the beginning of the list.
- * With the translation, we also have to provide a list of tags. **)
-val gadd : 'a gt -> language -> tag list -> 'a -> string -> tag list -> 'a gt
+ * important at the beginning of the list. **)
+val gadd : 'a gt -> language -> command list -> 'a -> string -> 'a gt
 
 (** Similar to [gadd] but for sentences. **)
-val sadd : ('a, 'b) st -> language -> tag list -> 'a -> 'b sitem list -> tag list -> ('a, 'b) st
+val sadd : ('a, 'b) st -> language -> command list -> 'a -> 'b sitem list -> ('a, 'b) st
 
 (** Translates an object to a given language.
  * Returns [None] if the object has not been translated to this language. **)
@@ -104,11 +123,12 @@ val gtranslate : 'a gt -> language -> 'a -> translation_function
 val gforce_translate : 'a gt -> language -> 'a -> complete_translation_function
 
 (** Like [gtranslate] but for sentences.
- * It is supposed to be given a translation function for the variables. **)
-val stranslate : ('a, 'b) st -> language -> ('b -> translation_function) -> 'a -> translation_function
+ * It is supposed to be given a translation function for the variables, as well
+ * as a function providing for each variable its natural tags. **)
+val stranslate : ('a, 'b) st -> language -> ('b -> tag Utils.PSet.t) -> ('b -> translation_function) -> 'a -> translation_function
 
 (** Similar to [stranslate], but never fails. **)
-val sforce_translate : ('a, 'b) st -> language -> ('b -> complete_translation_function) -> 'a -> complete_translation_function
+val sforce_translate : ('a, 'b) st -> language -> ('b -> tag Utils.PSet.t) -> ('b -> complete_translation_function) -> 'a -> complete_translation_function
 
 (** [from_json fileName fileContent] reads the [fileContent] string as a
  * JSON object representing translations in different languages.

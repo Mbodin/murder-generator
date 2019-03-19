@@ -86,6 +86,10 @@ val list_map_filter : ('a -> 'b option) -> 'a list -> 'b list
  * will be mapped to [None]. **)
 val list_map_option : ('a -> 'b option) -> 'a list -> 'b list option
 
+(** Same as [List.partition], but the predicate maps each value to
+ * a different type whether they satisfy the predicate. **)
+val list_partition_map : ('a -> ('b, 'c) plus) -> 'a list -> 'b list * 'c list
+
 (** Given a transitive comparison function and a list, returns the greatest
  * element of the list (or [None] if the list is empty). **)
 val argmax : ('a -> 'a -> int) -> 'a list -> 'a option
@@ -327,6 +331,9 @@ module PSet : sig
 
     (** Computes the intersection of two sets. **)
     val inter : 'a t -> 'a t -> 'a t
+
+    (** Computes the difference of two sets. **)
+    val diff : 'a t -> 'a t -> 'a t
 
     (** Given two sets, states whether the first one is included
      * in the second one. **)

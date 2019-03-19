@@ -49,6 +49,13 @@ body {
   margin: 5px ;
 }
 
+.error {
+  border: 4px solid #a40000 ;
+  border-radius: 10px ;
+  padding: 5px 15px ;
+  margin: 5px ;
+}
+
 .center {
   text-align: center ;
   margin: auto ;

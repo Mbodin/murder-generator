@@ -173,7 +173,7 @@ exception CircularDependency of string
 
 exception SelfRelation of string * string
 
-exception TranslationError of string * string * Translation.language * Translation.tag list
+exception TranslationError of string * string * Ast.translation
 
 exception VacuumElement of string
 
@@ -331,16 +331,15 @@ let prepare_declaration i =
       let translations =
         Translation.add i.current_state.translations.Translation.attribute
           Translation.generic id name in
-      List.fold_left (fun translations (lg, tags, items, tags') ->
+      List.fold_left (fun translations tr ->
+        let (lg, tags, items) = tr in
         if tags <> [] then
-          raise (TranslationError (en, name, lg, tags)) ;
-        if tags' <> [] then
-          raise (TranslationError (en, name, lg, tags')) ;
+          raise (TranslationError (en, name, tr)) ;
         let str =
           String.concat "" (List.map (function
             | Translation.Direct str -> str
             | _ ->
-              raise (TranslationError (en, name, lg, tags))) items) in
+              raise (TranslationError (en, name, tr))) items) in
         Translation.add translations lg id str) translations block.translation in
     { i with
         categories_to_be_defined = categories_to_be_defined ;
@@ -398,14 +397,17 @@ let prepare_declaration i =
     let translations =
       let translations =
         Translation.gadd i.current_state.translations.Translation.constructor
-          Translation.generic [] id constructor [] in
-      List.fold_left (fun translations (lg, tags, items, tags') ->
+          Translation.generic [] id constructor in
+      List.fold_left (fun translations tr ->
+          let (lg, tags, items) = tr in
           let str =
             String.concat "" (List.map (function
               | Translation.Direct str -> str
               | _ ->
-                raise (TranslationError (en, constructor, lg, tags))) items) in
-          Translation.gadd translations lg tags id str tags')
+                raise (TranslationError (en, constructor, tr))) items) in
+          try Translation.gadd translations lg tags id str
+          with Translation.ConflictingCommands _ ->
+            raise (TranslationError (en, constructor, tr)))
         translations block.translation in
     { i with
         categories_to_be_defined = categories_to_be_defined ;
@@ -463,16 +465,15 @@ let prepare_declaration i =
       update_dependencies i.current_state.constructor_dependencies
         constr_dep deps in
     let category_translation =
-      List.fold_left (fun translation (lg, tags, items, tags') ->
+      List.fold_left (fun translation tr ->
+          let (lg, tags, items) = tr in
           if tags <> [] then
-            raise (TranslationError ("category", name, lg, tags)) ;
-          if tags' <> [] then
-            raise (TranslationError ("category", name, lg, tags')) ;
+            raise (TranslationError ("category", name, tr)) ;
           let str =
             String.concat "" (List.map (function
               | Translation.Direct str -> str
               | _ ->
-                raise (TranslationError ("category", name, lg, tags))) items) in
+                raise (TranslationError ("category", name, tr))) items) in
           Translation.add translation lg id str)
         (Translation.add i.current_state.translations.Translation.category
           Translation.generic id name)

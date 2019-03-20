@@ -191,3 +191,11 @@ begin
   provide compatible contact FamilyMember between A and B as None
 end
 
+element ChildOfHumansAreHumans
+begin
+  let P be player with contact FamilyMember to C as Parent
+		          with attribute Specy as Human
+  let C be player with contact FamilyMember to P as Child
+		          with attribute Specy as Human
+end
+

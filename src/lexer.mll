@@ -52,6 +52,7 @@ rule read = parse
   | "and"                   { AND }
   | "or"                    { OR }
   | "not"                   { NOT }
+  | "no "                   { NO }
   | "from"                  { FROM }
   | "to"                    { TO }
   | "between"               { BETWEEN }
@@ -76,6 +77,16 @@ rule read = parse
   | "+"                     { PLUS }
   | "-"                     { MINUS }
   | '"' (strctn as str) '"' { STRING str }
+
+  | "before"                { BEFORE }
+  | "after"                 { AFTER }
+
+  | "immediate"             { IMMEDIATE }
+  | "very"                  { VERY }
+  | "short"                 { SHORT }
+  | "medium"                { MEDIUM }
+  | "long"                  { LONG }
+  | "life"                  { LIFE }
 
   | (['a'-'z'] ident) as id { LIDENT id }
   | (['A'-'Z'] ident) as id { UIDENT id }

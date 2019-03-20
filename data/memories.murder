@@ -1,0 +1,13 @@
+
+declare event CloseDeath
+begin
+  (* Someone closed to the player died. *)
+  category NonKids
+  event Personal
+end
+
+declare event ParentDeath
+begin
+  event CloseDeath
+end
+

@@ -42,7 +42,10 @@ type block = {
     let_player : Ast.let_player list ;
     provide_relation : Ast.provide_relation list ;
     provide_attribute : Ast.provide_attribute list ;
-    provide_contact : Ast.provide_contact list
+    provide_contact : Ast.provide_contact list ;
+    event_kind : string list ;
+    provide_event : Ast.provide_event list ;
+    event_constraint : Ast.event_constraint list
   }
 
 let empty_block = {
@@ -53,7 +56,10 @@ let empty_block = {
     let_player = [] ;
     provide_relation = [] ;
     provide_attribute = [] ;
-    provide_contact = []
+    provide_contact = [] ;
+    event_kind = [] ;
+    provide_event = [] ;
+    event_constraint = []
   }
 
 type state = {
@@ -151,6 +157,9 @@ type command_type =
   | ProvideRelation
   | ProvideAttribute
   | ProvideContact
+  | EventKind
+  | ProvideEvent
+  | EventConstraint
 
 (** Converts command types to string, for easier-to-understand error messages. **)
 let command_type_to_string = function
@@ -162,6 +171,9 @@ let command_type_to_string = function
   | ProvideRelation -> "relation provision"
   | ProvideAttribute -> "attribute provision"
   | ProvideContact -> "contact provision"
+  | EventKind -> "event kind declaration"
+  | ProvideEvent -> "event provision"
+  | EventConstraint -> "event constraint"
 
 exception UnexpectedCommandInBlock of string * string
 
@@ -215,7 +227,16 @@ let convert_block block_name expected =
         { acc with provide_attribute = p :: acc.provide_attribute }
       | Ast.ProvideContact p ->
         check ProvideContact ;
-        { acc with provide_contact = p :: acc.provide_contact }) l
+        { acc with provide_contact = p :: acc.provide_contact }
+      | Ast.EventKind kind ->
+        check EventKind ;
+        { acc with event_kind = kind :: acc.event_kind }
+      | Ast.ProvideEvent p ->
+        check ProvideEvent ;
+        { acc with provide_event = p :: acc.provide_event }
+      | Ast.EventConstraint p ->
+        check EventConstraint ;
+        { acc with event_constraint = p :: acc.event_constraint }) l
   in aux empty_block
 
 (** Takes a list of category names and returns a set of category identifiers,
@@ -497,11 +518,15 @@ let prepare_declaration i =
       Utils.Id.map_insert_t i.current_state.elements_names name in
     let block =
       convert_block name [OfCategory; LetPlayer; ProvideRelation;
-                          ProvideAttribute; ProvideContact] block in
+                          ProvideAttribute; ProvideContact; ProvideEvent] block in
     { i with
         waiting_elements = (id, name, block) :: i.waiting_elements ;
         current_state =
           { i.current_state with elements_names = elements } }
+  | Ast.DeclareCase (lang, tag) ->
+    i (* TODO *)
+  | Ast.DeclareEventKind (kind, block) ->
+    i (* TODO *)
 
 let prepare_declarations i l =
   List.fold_left prepare_declaration i l
@@ -743,6 +768,7 @@ let parse_element st element_name block =
         | Some p ->
           consider_constraints (add_constraint (get_player p)))
       deps block.let_player in
+  (* TODO: events *)
   ((elementBase, !otherPlayers), deps)
 
 let parse i =

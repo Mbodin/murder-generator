@@ -195,16 +195,13 @@ let stranslate m lg tgv trv o tags =
         match Utils.list_map_option (function
                | Direct str -> Some str
                | Variable (x, constrs, added, removed) ->
-                 let tags = tgv x in
-                 if Utils.PSet.incl constrs tags then (
-                   let tags = apply_patch tags added removed in
-                   Utils.if_option (trv x tags) (fun (tr, tags) ->
-                     if Utils.PSet.incl constrs tags then
-                       Some tr
-                     else None)
-                 ) else None) l with
+                 let tags = apply_patch (tgv x) added removed in
+                 Utils.if_option (trv x tags) (fun (tr, tags) ->
+                   if Utils.PSet.incl constrs tags then
+                     Some tr
+                   else None)) l with
         | Some l ->
-          Some (String.concat " " l, apply_patch tags added removed)
+          Some (String.concat "" l, apply_patch tags added removed)
         | None -> aux (ts' @ ts)
       with Utils.EmptyList -> aux (ts' @ ts) in
   try let t = PMap.find (o, lg) m in aux [t]

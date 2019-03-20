@@ -52,7 +52,7 @@ type translation =
  * new tag at each translation. **)
 type add = Translation.language * Translation.tag
 
-(** Declares a player with some constraints.
+(** Declare a player with some constraints.
  * If the player is [None], then these constraints apply to any
  * other player than the ones declared in the element. **)
 type let_player = string option * player_constraint list
@@ -84,6 +84,19 @@ type provide_contact = {
        * Each constructor in this list are valid possibilities. **)
   }
 
+(** Declare some constraints over events. **)
+type event_constraint = {
+    event_kind : string (** The constraint is about this event kind. **) ;
+    event_players : string list
+      (** The constraint only applies for these players **) ;
+    event_after : bool
+      (** If [true], the constraint is about events following this event,
+       * if [false] about prior events. **) ;
+    event_any : bool
+      (** If [true], there should be at least one event of this kind in the
+       * considered period.  If [false], there should be none. **)
+  }
+
 (** The possible commands present in a block. **)
 type command =
   | OfCategory of string
@@ -98,28 +111,38 @@ type command =
   | ProvideRelation of provide_relation
   | ProvideAttribute of provide_attribute
   | ProvideContact of provide_contact
-  (* TODO: [ProvideEvent] *)
+  | EventKind of string (** The event is of this particular kind. **)
+  | ProvideEvent of provide_event
+  | EventConstraint of event_constraint
+
+(** Provide an event of this kind to these players. **)
+and provide_event =
+  History.event_type * string list * block
 
 (** A block that provides commands to a declaration.
  * Note that not all blocks can accept any kinds of commands: a post-parsing
  * treatment is needed.
  * See the Driver module (and its [convert_block] function in particular) for
  * more details. **)
-type block = command list
+and block = command list
 
 type declaration =
   | DeclareInstance of attribute_kind * string * block
-    (** Declares a attribute.
+    (** Declare a attribute.
      * Only expects commands of the form [OfCategory] in its block. **)
   | DeclareConstructor of attribute_kind * string * string * block
-    (** Declares a attribute’s constructor.
+    (** Declare a attribute’s constructor.
      * Accepts the following commands: [OfCategory], [Translation],
      * [Add], and [CompatibleWith]. *)
   | DeclareCategory of string * block
-    (** Declares a category.
+    (** Declare a category.
      * Only expects commands of the form [OfCategory] and [Translation]. **)
   | DeclareElement of string * block
-    (** Declares an element.
+    (** Declare an element.
      * Accepts the following commands: [LetPlayer], [OfCategory],
      * [ProvideRelation], [ProvideAttribute], and [ProvideContact]. **)
+  | DeclareCase of Translation.language * Translation.tag
+    (** Declare a grammatical case for a language. **)
+  | DeclareEventKind of string * block
+    (** Declare an event kind. **)
 

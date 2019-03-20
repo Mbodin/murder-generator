@@ -66,8 +66,13 @@ let test_parser =
   let asts = List.map read_file MurderFiles.files in
   let i =
     List.fold_left Driver.prepare_declarations Driver.empty_intermediary asts in
-  if not (Driver.is_intermediary_final i) then
-    failwith "Non final intermediary!" ;
+  if not (Driver.is_intermediary_final i) then (
+    Utils.PSet.iter (fun c -> print_endline ("Missing category: " ^ c))
+      (Driver.categories_to_be_defined i) ;
+    let (attributes, contacts) = Driver.attributes_to_be_defined i in
+    Utils.PSet.iter (fun a -> print_endline ("Missing attribute: " ^ a)) attributes ;
+    Utils.PSet.iter (fun c -> print_endline ("Missing contact: " ^ c)) contacts ;
+    failwith "Non final intermediary!" ) ;
   let _s = Driver.parse i in
   ()
 

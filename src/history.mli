@@ -38,7 +38,7 @@ type event_type =
   | Medium_term_event (** Several week **)
   | Short_term_event (** Several days **)
   | Very_short_term_event (** Several minutes **)
-  | Instance_event (** Less than a minute **)
+  | Immediate_event (** Less than a minute **)
 
 (** An important event in the player life. **)
 type event =

@@ -6,6 +6,16 @@ begin
   translation eo "Monaĵoj"
 end
 
+declare event MoneyExchange
+begin
+  event Personal
+end
+
+declare event GotRich
+begin
+  event Personal
+end
+
 declare attribute Richness
 begin
   category Money
@@ -51,7 +61,14 @@ begin
 
   provide compatible attribute Richness to P as Rich
 
-  (* TODO: provide event SuccessionFromParents to P *)
+  provide short event to P
+  begin
+    event ParentDeath
+    no event ParentDeath to P before
+    translation fr "Mort des parents de " P ".  Ils " P:+pro:+cli " laissent une importante fortune."
+    translation en "Death of " P "’s parents.  They leave " P:+pro:+cli " with an important wealth."
+    translation eo "Morto de la gepatroj de " P ".  Ili lasas " P:+pro:+acc " kun granda heredaĵo."
+  end
 end
 
 element SharedHeritage
@@ -64,7 +81,14 @@ begin
   provide compatible attribute Richness to A as Rich
   provide compatible attribute Richness to B as Rich
 
-  (* TODO: provide event SharedSuccessionFromParents to A and B *)
+  provide short event to A and B
+  begin
+    event ParentDeath
+    no event ParentDeath to A or B before
+    translation fr "Mort des parents de " A " et " B ".  Ils leur laissent une importante fortune."
+    translation en "Death of " A " and " B "’s parents.  They leave them with an important wealth."
+    translation eo "Morto de la gepatroj de " A " kaj " B ".  Ili lasas ilin kun granda heredaĵo."
+  end
 end
 
 element DwarfFocusedTheirLifeAtAccumulatingGold
@@ -73,7 +97,13 @@ begin
 
   provide compatible attribute Richness to P as Rich
 
-  (* TODO: provide event AccumulateMoney to P *)
+  provide long event to P
+  begin
+    event Work
+    translation fr P:+sbeg " a petit à petit accumulé de grandes richesses."
+    translation en P:+sbeg " accumulated a large wealth step after step."
+    translation eo P:+sbeg " iom post iom amasiĝis grandan kvanton da mono."
+  end
 end
 
 
@@ -140,8 +170,13 @@ begin
 
   provide relation between A and B as asymmetrical trust neutral
 
-  (* TODO: provide event to A *)
-  (* TODO: provide event to B *)
+  provide very short event to A and B
+  begin
+    event MoneyExchange
+    translation fr A:+sbeg " a demandé de l’argent à " B ".  " B:+sbeg:+pro " " A:+pro:+cli " en a donné."
+    translation en A:+sbeg " asked money to " B ".  " B:+sbeg:+pro " gave some to " A:+pro:+cli "."
+    translation eo A:+sbeg " petis monon al " B ".  " B:+sbeg:+pro " al " A:+pro " donis."
+  end
 end
 
 element SmallDebtNeutralPoor
@@ -155,8 +190,13 @@ begin
   provide relation between A and B as asymmetrical avoidance undetermined
   provide compatible contact Know from A to B as True
 
-  (* TODO: provide event to A *)
-  (* TODO: provide event to B *)
+  provide very short event to A and B
+  begin
+    event MoneyExchange
+    translation fr A:+sbeg " a demandé de l’argent à " B ".  Vu le besoin, " B:+pro " " A:+pro:+cli " en a donné."
+    translation en A:+sbeg " asked money to " B ".  Given the circumstances, " B:+pro " gave some to " A:+pro:+cli "."
+    translation eo A:+sbeg " petis monon al " B ".  Komprenante la bezonon, " B:+pro " al " A:+pro " donis."
+  end
 end
 
 element RichPaysItsDebt
@@ -170,8 +210,7 @@ begin
   provide relation between A and B as asymmetrical neutral undetermined
   provide compatible contact Know from B to A as True
 
-  (* TODO: provide event to A *)
-  (* TODO: provide event to B *)
+  (* TODO: provide event to A and B *)
 end
 
 element TookMoneyToBuildAShopAndIsNowRich
@@ -179,8 +218,14 @@ begin
   let A be player with attribute Richness as Neutral
   let B be player
 
-  (* provide event to A (* TODO: Money exchange *) *)
-  (* provide event to B (* TODO: Money exchange *) *)
+  provide very short event to A and B
+  begin
+    event MoneyExchange
+    event GotRich to B after
+    translation fr A:+sbeg " a demandé de l’argent à " B " pour monter son entreprise.  " B:+sbeg:+pro " " A:+pro:+cli " en a donné."
+    translation en A:+sbeg " asked money to " B " to set up a shop.  " B:+sbeg:+pro " gave some to " A:+pro:+cli "."
+    translation eo A:+sbeg " petis monon al " B " por komenci ties komercon.  " B:+sbeg:+pro " al " A:+pro " donis."
+  end
 
   provide contact FinancialDebt from B to A as Old
   provide attribute Richness to B as Rich
@@ -189,7 +234,14 @@ begin
   provide relation between B and A as asymmetrical trust undetermined
   provide compatible contact Know between B and A as True
 
-  (* provide event to B (* TODO: Got rich after the shop got working *) *)
+  provide long event to B
+  begin
+    event Personal
+    event MoneyExchange to B before
+    translation fr "Le succès du commerce de " B " l’a rendu riche."
+    translation en B:+sbeg "’s shop was quite successful and made " B:+pro:+cli " wealthy."
+    translation eo "La komerco de " B " sukcesis kaj riĉigis " B:+pro:+acc "."
+  end
 end
 
 element TookMoneyToBuildAShopButGotBankrupt
@@ -197,8 +249,13 @@ begin
   let A be player with attribute Richness as Neutral
   let B be player
 
-  (* provide event to A TODO: Money exchange *)
-  (* provide event to B TODO: Money exchange *)
+  provide very short event to A and B
+  begin
+    event MoneyExchange
+    translation fr A:+sbeg " a demandé de l’argent à " B " pour monter son entreprise.  " B:+sbeg:+pro " " A:+pro:+cli " en a donné."
+    translation en A:+sbeg " asked money to " B " to set up a shop.  " B:+sbeg:+pro " gave some to " A:+pro:+cli "."
+    translation eo A:+sbeg " petis monon al " B " por komenci ties komercon.  " B:+sbeg:+pro " al " A:+pro " donis."
+  end
 
   provide contact FinancialDebt from B to A as Large
   provide attribute Richness to B as Poor
@@ -207,7 +264,14 @@ begin
   provide relation between B and A as asymmetrical avoidance hate
   provide compatible contact Know between B and A as True
 
-  (* provide event to B (* TODO: Got bankrupt *) *)
+  provide long event to B
+  begin
+    event Personal
+    event MoneyExchange to B before
+    translation fr "Le commerce de " B " n’a pas tenu très longtemps et est maintenant en faillite, entrainant avec lui toutes les économies de " B "."
+    translation en B:+sbeg "’s shop went brankrupt, disappearing with all trace of wealth."
+    translation eo "La komerco de " B " fiaskis, puŝante " B:+pro:+acc " malriĉecen."
+  end
 end
 
 element ImportantSeller
@@ -217,7 +281,14 @@ begin
   provide compatible attribute Richness to P as Rich
   provide compatible attribute Job to P as Seller
 
-  (* provide event to P (* TODO *) *)
+  provide long event to P
+  begin
+    event Work
+    translation fr P:+sbeg:mas " a longuement travaillé pour devenir un marchand réputé et fortuné."
+    translation fr P:+sbeg:mas " a longuement travaillé pour devenir une marchande réputée et fortunée."
+    translation en P:+sbeg " worked quite a long time to reach this level of wealth and reputation."
+    translation eo P:+sbeg " longe laboris por atingi tiun nivelon de riĉeco kaj bonreputacio."
+  end
 end
 
 element DecidedToDisappearAfterLotsOfDebts
@@ -227,7 +298,14 @@ begin
 
   provide attribute Famousness to A as Hiding
 
-  (* provide event to A (* TODO *) *)
+  provide short event to P
+  begin
+    event Work
+    event MoneyExchange to P before
+    translation fr "Vu l’importance des ses dettes, " P " decidait de disparaître définitivement."
+    translation en "Given the reach of debts, " P " decided to definitively disappear from the sight of others."
+    translation eo "Pro ties grandegaj ŝuldoj, " P " decidis por ĉiam malaperi."
+  end
 end
 
 

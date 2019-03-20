@@ -62,3 +62,8 @@ begin
   provide strict attribute Famousness to P as Famous
 end
 
+element NoGod
+begin
+  let any other player be with attribute Specy not as God
+end
+

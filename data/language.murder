@@ -3,17 +3,130 @@
   elements.
   Instead, this file declares grammatical constructs for each languages. *)
 
-declare attribute Singular
+(* * Declaration of grammatical cases *)
 
-attribute Singular True
+(* ** French *)
+
+declare translation fr:sbeg (* At the beginning of a sentence. *)
+
+declare translation fr:nom (* Nouns *)
+declare translation fr:pro (* Pronouns *)
+declare translation fr:adj (* Adjectives *)
+declare translation fr:adv (* Adverbs *)
+
+declare translation fr:def (* Definite *)
+declare translation fr:cli (* Clitics *)
+
+declare translation fr:sin (* Singular *)
+declare translation fr:plu (* Plural *)
+
+declare translation fr:mas (* Masculine *)
+declare translation fr:fem (* Feminine *)
+
+(* ** English *)
+
+declare translation en:sbeg (* At the beginning of a sentence. *)
+
+declare translation en:nom (* Nouns *)
+declare translation en:pro (* Pronouns *)
+declare translation en:adj (* Adjectives *)
+declare translation en:adv (* Adverbs *)
+
+declare translation en:def (* Definite *)
+declare translation en:cli (* Clitics *)
+
+declare translation en:sin (* Singular *)
+declare translation en:plu (* Plural *)
+
+declare translation en:mas (* Masculine *)
+declare translation en:fem (* Feminine *)
+
+(* ** Esperanto *)
+
+declare translation eo:sbeg (* At the beginning of a sentence. *)
+
+declare translation eo:nom (* Nouns *)
+declare translation eo:pro (* Pronouns *)
+declare translation eo:adj (* Adjectives *)
+declare translation eo:adv (* Adverbs *)
+
+declare translation eo:def (* Definite *)
+declare translation eo:acc (* Accusative *)
+
+declare translation eo:sin (* Singular *)
+declare translation eo:plu (* Plural *)
+
+declare translation eo:mas (* Masculine *)
+declare translation eo:fem (* Feminine *)
+
+(* * General grammatical rules *)
+
+declare attribute Grammar
 begin
-  add fr :sin
-  add en :sin
-  add eo :sin
+  translation fr "Grammaire"
+  translation en "Grammar"
+  translation eo "Gramatiko"
 end
 
-element AllPlayersAreSingular
+attribute Grammar Normal
 begin
-  provide strict attribute Singular to any other player as True
+  translation fr "normale"
+  translation en "normal"
+  translation eo "normala"
+
+  add fr:sin
+  add en:sin
+  add eo:sin
+  add fr:def
+  add en:def
+  add eo:def
+
+  translation fr:pro:sin:mas "il"
+  translation fr:pro:sin:fem "elle"
+  translation fr:pro:plu:-fem:+mas "ils"
+  translation fr:pro:plu:fem "elles"
+  translation fr:pro:sin:cli "lui"
+  translation fr:pro:plu:cli "leur"
+  translation fr:sbeg:pro:sin:mas "Il"
+  translation fr:sbeg:pro:sin:fem "Elle"
+  translation fr:sbeg:pro:plu:-fem:+mas "Ils"
+  translation fr:sbeg:pro:plu:fem "Elles"
+  translation fr:sbeg:pro:sin:cli "Lui"
+  translation fr:sbeg:pro:plu:cli "Leur"
+  translation en:pro:sin "it"
+  translation en:pro:sin:mas "he"
+  translation en:pro:sin:fem "she"
+  translation en:pro:plu "they"
+  translation en:pro:sin:mas:cli "him"
+  translation en:pro:sin:fem:cli "her"
+  translation en:pro:plu:cli "them"
+  translation en:sbeg:pro:sin "It"
+  translation en:sbeg:pro:sin:mas "He"
+  translation en:sbeg:pro:sin:fem "She"
+  translation en:sbeg:pro:plu "They"
+  translation en:sbeg:pro:sin:mas:cli "Him"
+  translation en:sbeg:pro:sin:fem:cli "Her"
+  translation en:sbeg:pro:plu:cli "Them"
+  translation eo:pro:sin "ĝi"
+  translation eo:pro:sin:mas "li"
+  translation eo:pro:sin:fem "ŝi"
+  translation eo:pro:plu "ili"
+  translation eo:pro:sin:acc "ĝin"
+  translation eo:pro:sin:mas:acc "lin"
+  translation eo:pro:sin:fem:acc "ŝin"
+  translation eo:pro:plu:acc "ilin"
+  translation eo:sben:pro:sin "Ĝi"
+  translation eo:sben:pro:sin:mas "Li"
+  translation eo:sben:pro:sin:fem "Ŝi"
+  translation eo:sben:pro:plu "Ili"
+  translation eo:sben:pro:sin:acc "Ĝin"
+  translation eo:sben:pro:sin:mas:acc "Lin"
+  translation eo:sben:pro:sin:fem:acc "Ŝin"
+  translation eo:sben:pro:plu:acc "Ilin"
+end
+
+element NormalGrammar
+begin
+  provide strict attribute Grammar to any other player as Normal
 end
 

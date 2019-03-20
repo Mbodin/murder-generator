@@ -6,6 +6,8 @@ begin
   translation eo "Profesio"
 end
 
+declare event Work
+
 attribute Job Seller
 begin
   translation fr "commerçant(e)"
@@ -34,5 +36,25 @@ begin
   translation eo:nom:acc:plu "komercistojn"
   translation eo:nom:def:plu "la komercistoj"
   translation eo:nom:def:acc:plu "la komercistojn"
+end
+
+element SellerIsEasilyKnown
+begin
+  let S be player with attribute Job as Seller
+  let P be player
+
+  provide compatible contact Know from P to S as True
+
+  (* TODO: provide event (P visits S) *)
+end
+
+element SellerRememberTheirClients
+begin
+  let S be player with attribute Job as Seller
+  let P be player with contact Know to S as True
+
+  provide compatible contact Know from S to P as True
+
+  (* TODO: provide event (P visits S) *)
 end
 

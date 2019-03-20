@@ -46,7 +46,7 @@ type event_type =
     | Medium_term_event
     | Short_term_event
     | Very_short_term_event
-    | Instance_event
+    | Immediate_event
 
 type event =
   date
@@ -65,7 +65,7 @@ let generate_event beg dur res chars =
     | Medium_term_event -> add_days beg (Utils.rand 14 100)
     | Short_term_event -> add_days beg (Utils.rand 2 10)
     | Very_short_term_event -> add_minutes beg (Utils.rand 2 300)
-    | Instance_event -> beg
+    | Immediate_event -> beg
   in (beg, en, res, dur, chars)
 
 let order_event (y1, d1, m1) (y2, d2, m2) =

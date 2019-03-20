@@ -12,18 +12,18 @@ open Ast
 
 %token          EOF
 %token          BEGIN END
-%token          CATEGORY
-%token          ELEMENT
+%token          CATEGORY ELEMENT EVENT
 %token          ATTRIBUTE CONTACT RELATION
-%token          PLAYER EVENT
-%token          ANY OTHER
+%token          PLAYER
 %token          DECLARE PROVIDE LET BE
-%token          WITH AND OR NOT FROM TO BETWEEN AS
+%token          WITH AND OR NOT NO FROM TO BETWEEN AS ANY OTHER
 %token          STRICT COMPATIBLE
 %token          NEUTRAL HATE TRUST CHAOTIC UNDETERMINED AVOIDANCE
 %token          ASYMMETRICAL EXPLOSIVE STRONG
 %token<string>  LIDENT UIDENT STRING
 %token          TRANSLATION ADD COLON PLUS MINUS
+%token          BEFORE AFTER
+%token          IMMEDIATE VERY SHORT MEDIUM LONG LIFE
 
 %start<Ast.declaration list> main
 %start<Relation.t> relation
@@ -41,6 +41,10 @@ declaration:
     { DeclareCategory (name, c) }
   | ELEMENT; name = UIDENT; c = block
     { DeclareElement (name, c) }
+  | DECLARE; TRANSLATION; lang = language; COLON; tag = LIDENT
+    { DeclareCase (Translation.from_iso639 lang, Translation.get_tag tag) }
+  | DECLARE; EVENT; event = UIDENT; b = block
+    { DeclareEventKind (event, b) }
 
 attribute_kind:
   | ATTRIBUTE   { Attribute }
@@ -54,6 +58,7 @@ language:
   | AND             { "and" }
   | OR              { "or" }
   | NOT             { "not" }
+  | NO              { "no" }
   | ANY             { "any" }
   | END             { "end" }
   | LET             { "let" }
@@ -113,6 +118,30 @@ command:
           contact_destination = d ;
           contact_value = v
         } }
+  | EVENT; event = UIDENT
+    { EventKind event }
+  | PROVIDE; t = time; EVENT;
+    TO; targets = separated_list (AND, UIDENT);
+    b = block
+    { ProvideEvent (t, targets, b) }
+  | EVENT; event = UIDENT;
+    TO; players = separated_list (AND, UIDENT);
+    d = direction
+    { EventConstraint {
+        event_kind = event ;
+        event_players = players ;
+        event_after = d ;
+        event_any = true
+      } }
+  | NO; EVENT; event = UIDENT;
+    TO; players = separated_list (OR, UIDENT);
+    d = direction
+    { EventConstraint {
+        event_kind = event ;
+        event_players = players ;
+        event_after = d ;
+        event_any = false
+      } }
 
 target_destination (player):
   | FROM; p1 = player; TO; p2 = player
@@ -156,6 +185,18 @@ basic_relation:
   | COMPATIBLE  { State.NonStrict }
   | empty       { State.LowStrict }
   | STRICT      { State.Strict }
+
+time:
+  | LIFE        { History.For_life_event }
+  | LONG        { History.Long_term_event }
+  | MEDIUM      { History.Medium_term_event }
+  | SHORT       { History.Short_term_event }
+  | VERY; SHORT { History.Very_short_term_event }
+  | IMMEDIATE   { History.Immediate_event }
+
+direction:
+  | AFTER   { true }
+  | BEFORE  { false }
 
 %inline empty: { () }
 

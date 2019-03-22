@@ -105,38 +105,38 @@ let from_json m fileName fileContent =
             try
               match List.assoc "name" l with
               | `String name -> name
-              | _ -> failwith ("A field “name” in file “" ^ fileName
-                               ^ "” is not a string.")
+              | _ -> failwith ("A field `name' in file `" ^ fileName
+                               ^ "' is not a string.")
             with Not_found ->
-              failwith ("Missing field “name” in file “" ^ fileName ^ "”.") in
+              failwith ("Missing field `name' in file `" ^ fileName ^ "'.") in
           let get_field_list fld =
             try
               match List.assoc fld l with
               | `List l -> l
-              | _ -> failwith ("A field “" ^ fld ^ "” in file “" ^ fileName
-                               ^ "” is not a list")
+              | _ -> failwith ("A field `" ^ fld ^ "' in file `" ^ fileName
+                               ^ "' is not a list")
             with
             | Not_found -> [] in
           let get_field_assoc fld =
             try
               match List.assoc fld l with
               | `Assoc l -> l
-              | _ -> failwith ("A field “" ^ fld ^ "” in file “" ^ fileName
-                               ^ "” is not an object")
+              | _ -> failwith ("A field `" ^ fld ^ "' in file `" ^ fileName
+                               ^ "' is not an object")
             with
             | Not_found -> [] in
           let get_attribute en get m attribute =
             match get m attribute with
             | Some attribute -> attribute
             | None ->
-              failwith ("Unknown " ^ en ^ " “" ^ attribute ^ "” in file “"
-                        ^ fileName ^ "”.") in
+              failwith ("Unknown " ^ en ^ " `" ^ attribute ^ "' in file `"
+                        ^ fileName ^ "'.") in
           let get_constructor en get m attribute v =
             match get m attribute v with
             | Some v -> v
             | None ->
-              failwith ("Unknown " ^ en ^ " constructor “" ^ v ^ "” in file “"
-                        ^ fileName ^ "”.") in
+              failwith ("Unknown " ^ en ^ " constructor `" ^ v ^ "' in file `"
+                        ^ fileName ^ "'.") in
           let state =
             let attributes = get_field_assoc "attributes" in
             List.fold_left (fun state -> function
@@ -151,8 +151,8 @@ let from_json m fileName fileContent =
                   attribute (Fixed_value ([v], Strict)) ;
                 state
               | (field, _) ->
-                failwith ("Field “" ^ field ^ "” is file “" ^ fileName
-                          ^ "” is supposed to be an attribute and thus associated"
+                failwith ("Field `" ^ field ^ "' is file `" ^ fileName
+                          ^ "' is supposed to be an attribute and thus associated"
                           ^ " to a string, which it is not.")) state attributes in
           let state =
             let contacts = get_field_list "contacts" in
@@ -172,11 +172,11 @@ let from_json m fileName fileContent =
                       c attribute c' (Fixed_value ([v], Strict)) ;
                     state
                   | (field, _) ->
-                    failwith ("Field “" ^ field ^ "” is file “" ^ fileName
-                              ^ "” is supposed to be a contact and thus associated"
+                    failwith ("Field `" ^ field ^ "' is file `" ^ fileName
+                              ^ "' is supposed to be a contact and thus associated"
                               ^ " to a string, which it is not.")) state l
-              | _ -> failwith ("A contact in file “" ^ fileName
-                               ^ "” is not associated an object.")) state contacts in
+              | _ -> failwith ("A contact in file `" ^ fileName
+                               ^ "' is not associated an object.")) state contacts in
           let state =
             let relations = get_field_list "relations" in
             Utils.list_fold_lefti (fun c' state ->
@@ -185,13 +185,13 @@ let from_json m fileName fileContent =
                 let r = Driver.parse_relation r in
                 if c <> c' then State.write_relation state c c' r ;
                 state
-              | _ -> failwith ("Ill-formed “relations” field in file “"
-                               ^ fileName ^ "”.")) state relations in
+              | _ -> failwith ("Ill-formed `relations' field in file `"
+                               ^ fileName ^ "'.")) state relations in
           (name :: names, state)
-        | _ -> failwith ("A character in file “" ^ fileName
-                 ^ "” is not a associated an object.")) ([], state) l in
+        | _ -> failwith ("A character in file `" ^ fileName
+                 ^ "' is not a associated an object.")) ([], state) l in
     (List.rev names, state)
-  | _ -> failwith ("The file “" ^ fileName ^ "” is not a list.")
+  | _ -> failwith ("The file `" ^ fileName ^ "' is not a list.")
 
 let all_production = [
     ("graphviz", "graphvizDescription", "text/vnd.graphviz", "dot", to_graphviz) ;

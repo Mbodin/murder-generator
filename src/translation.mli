@@ -140,7 +140,9 @@ val from_json : string -> string -> string t * language list
 type element = {
     category : Utils.Id.t t (** The translations of categories. **) ;
     attribute : State.attribute t (** The translations of attributes. **) ;
-    constructor : State.constructor gt (** The translations of constructors. **)
+    constructor : State.constructor gt (** The translations of constructors. **) ;
+    add : (State.constructor * language, tag Utils.PSet.t) PMap.t
+      (** For each constructor and language, provides a set of added tags. **)
   }
 
 (** A record whose fields are all empty. **)

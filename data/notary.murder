@@ -64,7 +64,7 @@ begin
   provide short event to P
   begin
     event ParentDeath
-    no event ParentDeath to P before
+    assume no event ParentDeath to P before
     translation fr "Mort des parents de " P ".  Ils " P:+pro:+cli " laissent une importante fortune."
     translation en "Death of " P "’s parents.  They leave " P:+pro:+cli " with an important wealth."
     translation eo "Morto de la gepatroj de " P ".  Ili lasas " P:+pro:+acc " kun granda heredaĵo."
@@ -84,7 +84,7 @@ begin
   provide short event to A and B
   begin
     event ParentDeath
-    no event ParentDeath to A or B before
+    assume no event ParentDeath to A or B before
     translation fr "Mort des parents de " A " et " B ".  Ils leur laissent une importante fortune."
     translation en "Death of " A " and " B "’s parents.  They leave them with an important wealth."
     translation eo "Morto de la gepatroj de " A " kaj " B ".  Ili lasas ilin kun granda heredaĵo."
@@ -221,7 +221,7 @@ begin
   provide very short event to A and B
   begin
     event MoneyExchange
-    event GotRich to B after
+    assume event GotRich to B after
     translation fr A:+sbeg " a demandé de l’argent à " B " pour monter son entreprise.  " B:+sbeg:+pro " " A:+pro:+cli " en a donné."
     translation en A:+sbeg " asked money to " B " to set up a shop.  " B:+sbeg:+pro " gave some to " A:+pro:+cli "."
     translation eo A:+sbeg " petis monon al " B " por komenci ties komercon.  " B:+sbeg:+pro " al " A:+pro " donis."
@@ -237,7 +237,7 @@ begin
   provide long event to B
   begin
     event Personal
-    event MoneyExchange to B before
+    assume event MoneyExchange to B before
     translation fr "Le succès du commerce de " B " l’a rendu riche."
     translation en B:+sbeg "’s shop was quite successful and made " B:+pro:+cli " wealthy."
     translation eo "La komerco de " B " sukcesis kaj riĉigis " B:+pro:+acc "."
@@ -267,7 +267,7 @@ begin
   provide long event to B
   begin
     event Personal
-    event MoneyExchange to B before
+    assume event MoneyExchange to B before
     translation fr "Le commerce de " B " n’a pas tenu très longtemps et est maintenant en faillite, entrainant avec lui toutes les économies de " B "."
     translation en B:+sbeg "’s shop went brankrupt, disappearing with all trace of wealth."
     translation eo "La komerco de " B " fiaskis, puŝante " B:+pro:+acc " malriĉecen."
@@ -301,7 +301,7 @@ begin
   provide short event to P
   begin
     event Work
-    event MoneyExchange to P before
+    assume event MoneyExchange to P before
     translation fr "Vu l’importance des ses dettes, " P " decidait de disparaître définitivement."
     translation en "Given the reach of debts, " P " decided to definitively disappear from the sight of others."
     translation eo "Pro ties grandegaj ŝuldoj, " P " decidis por ĉiam malaperi."

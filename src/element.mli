@@ -45,13 +45,13 @@ val provided_attributes : t -> State.attribute list
  * If the element can be applied, it states whether the element is making
  * progress, that is whether there exists at least one attribute value that
  * has been changed to something recognised by [State.attribute_value_progress]. **)
-val compatible_and_progress : State.t -> t -> character array -> bool option
+val compatible_and_progress : State.constructor_maps -> State.t -> t -> character array -> bool option
 
 (** Look for instantiations.
  * The second return value is the result of [compatible_and_progress] on this
  * instantiation.
  * It tries to return an instantiation that progresses. **)
-val search_instantiation : State.t -> t -> (character array * bool) option
+val search_instantiation : State.constructor_maps -> State.t -> t -> (character array * bool) option
 
 (** This type carries information about how the state have been changed
  * by the [apply] function. **)
@@ -87,10 +87,10 @@ val empty_difference : attribute_differences
  * [compatible_and_progress] returns [Some].
  * Once the total number of attribute to be defined is zero, the state can be
  * published. **)
-val apply : State.t -> t -> character array -> State.t * attribute_differences
+val apply : State.constructor_maps -> State.t -> t -> character array -> State.t * attribute_differences
 
 (** Same as [apply], but create a copy of the state before the application. **)
-val safe_apply : State.t -> t -> character array -> State.t * attribute_differences
+val safe_apply : State.constructor_maps -> State.t -> t -> character array -> State.t * attribute_differences
 
 (** Get the resulting relation array from an instantiation.
  * The input state is not modified by this function. **)

@@ -47,6 +47,7 @@ rule read = parse
   | "provide"               { PROVIDE }
   | "let"                   { LET }
   | "be"                    { BE }
+  | "assume"                { ASSUME }
 
   | "with"                  { WITH }
   | "and"                   { AND }

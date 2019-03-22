@@ -15,7 +15,7 @@ open Ast
 %token          CATEGORY ELEMENT EVENT
 %token          ATTRIBUTE CONTACT RELATION
 %token          PLAYER
-%token          DECLARE PROVIDE LET BE
+%token          DECLARE PROVIDE LET BE ASSUME
 %token          WITH AND OR NOT NO FROM TO BETWEEN AS ANY OTHER
 %token          STRICT COMPATIBLE
 %token          NEUTRAL HATE TRUST CHAOTIC UNDETERMINED AVOIDANCE
@@ -124,24 +124,10 @@ command:
     TO; targets = separated_list (AND, UIDENT);
     b = block
     { ProvideEvent (t, targets, b) }
-  | EVENT; event = UIDENT;
-    TO; players = separated_list (AND, UIDENT);
-    d = direction
-    { EventConstraint {
-        event_kind = event ;
-        event_players = players ;
-        event_after = d ;
-        event_any = true
-      } }
-  | NO; EVENT; event = UIDENT;
-    TO; players = separated_list (OR, UIDENT);
-    d = direction
-    { EventConstraint {
-        event_kind = event ;
-        event_players = players ;
-        event_after = d ;
-        event_any = false
-      } }
+  | e = event_constraint (empty, AND)
+    { e true }
+  | e = event_constraint (NO, OR)
+    { e false }
 
 target_destination (player):
   | FROM; p1 = player; TO; p2 = player
@@ -181,10 +167,22 @@ basic_relation:
   | UNDETERMINED    { Relation.Undetermined }
   | AVOIDANCE       { Relation.Avoidance }
 
-%inline strictness:
+strictness:
   | COMPATIBLE  { State.NonStrict }
   | empty       { State.LowStrict }
   | STRICT      { State.Strict }
+
+event_constraint (N, O):
+    ASSUME; N; EVENT; event = UIDENT;
+    TO; players = separated_list (O, UIDENT);
+    d = direction
+    { fun any ->
+        EventConstraint {
+          event_kind = event ;
+          event_players = players ;
+          event_after = d ;
+          event_any = any
+        } }
 
 time:
   | LIFE        { History.For_life_event }

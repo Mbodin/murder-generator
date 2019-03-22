@@ -87,8 +87,8 @@ let _ =
     InOut.clear_response () ;
     let%lwt (translation, languages) = get_translations () in
     let get_translation_language lg key =
-      Utils.assert_option ("No key “" ^ key ^ "” found for language “"
-                           ^ (Translation.iso639 lg) ^ "”.")
+      Utils.assert_option ("No key `" ^ key ^ "' found for language `"
+                           ^ (Translation.iso639 lg) ^ "'.")
         (Translation.translate translation lg key) in
     let get_language p = Utils.assert_option __LOC__ p.language in
     let get_translation p = get_translation_language (get_language p) in
@@ -329,9 +329,9 @@ let _ =
         let raw = get_translation "nameSize" in
         try int_of_string raw
         with Failure _ ->
-          failwith ("The key “nameSize” for language “" ^
-                    (Translation.iso639 (get_language parameters)) ^ "” is “" ^ raw
-                    ^ "”, which is not a valid number.") in
+          failwith ("The key `nameSize' for language `" ^
+                    (Translation.iso639 (get_language parameters)) ^ "' is `" ^ raw
+                    ^ "', which is not a valid number.") in
       let seed =
         Names.createVowelConsonant size startV startC middleV middleC endV endC in
       let player_information =

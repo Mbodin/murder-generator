@@ -73,15 +73,16 @@ let evaluate_state o s =
  * - the instantiation that makes it so,
  * - whether the element helps progressing with the attribute values,
  * - the new relation evaluation. **)
-let grade o s e =
-  Utils.apply_option (Element.search_instantiation s e) (fun (inst, progress) ->
-    let new_relations =
-      Element.apply_relations (State.get_relation_state s) e inst in
-    let ev = evaluate o new_relations in
-    if Utils.assert_defend then (
-      let (s', m) = Element.safe_apply s e inst in
-      assert (ev = evaluate_state o s')) ;
-    (inst, progress, ev))
+let grade g o s e =
+  Utils.apply_option (Element.search_instantiation g.constructor_informations s e)
+    (fun (inst, progress) ->
+      let new_relations =
+        Element.apply_relations (State.get_relation_state s) e inst in
+      let ev = evaluate o new_relations in
+      if Utils.assert_defend then (
+        let (s', m) = Element.safe_apply g.constructor_informations s e inst in
+        assert (ev = evaluate_state o s')) ;
+      (inst, progress, ev))
 
 (** Takes a “grade” made of the progress of an element and the evaluation
  * due to an element.
@@ -142,7 +143,7 @@ let step g o optimistic greedy (s, evs) p =
       | None -> (p, default)
       | Some ep ->
         let e = read_element g ep in
-        match grade o s e with
+        match grade g o s e with
         | None -> aux default f p (n - 1)
         | Some (inst, progress, ev) ->
           let p = Pool.add p ep in
@@ -158,11 +159,12 @@ let step g o optimistic greedy (s, evs) p =
   match Utils.argmax (fun (e1, inst1, g1) (e2, inst2, g2) ->
           compare_grade evs g1 g2) l with
   | Some (e, inst, (progress, ev)) ->
-    (p, Some (Element.safe_apply s e inst, ev))
+    (p, Some (Element.safe_apply g.constructor_informations s e inst, ev))
   | None ->
     (** We then move the the greedy pick. **)
     aux None (fun _ p e inst progress ev ->
-      (p, Some (Element.safe_apply s e inst, ev))) p greedy
+        (p, Some (Element.safe_apply g.constructor_informations s e inst, ev)))
+      p greedy
 
 (** Calls the function [step] with heuristical arguments [optimistic] and [greedy]
  * depending on a single parameter [parameter] ranging from 0 to 101.
@@ -195,14 +197,15 @@ let add_random g o optimistic (s, evs) =
             { g with all_elements =
                        Utils.BidirectionalList.add_right all_elements e } in
           let e = read_element g e in
-          match grade o s e with
+          match grade g o s e with
           | None -> aux g acc (n - 1)
           | Some (inst, progress, ev) ->
             aux g ((e, inst, (progress, ev)) :: acc) (n - 1) in
     aux g [] optimistic in
   match Utils.argmax (fun (e1, inst1, g1) (e2, inst2, g2) ->
           compare_grade evs g1 g2) l with
-  | Some (e, inst, (progress, ev)) -> (g, Element.safe_apply s e inst, ev)
+  | Some (e, inst, (progress, ev)) ->
+    (g, Element.safe_apply g.constructor_informations s e inst, ev)
   | None -> (g, (s, Element.empty_difference), evs)
 
 (** Calls the functions [weighted_step] and [add_random], trying
@@ -254,13 +257,42 @@ let wide_step g o temperature (s, evs) m =
         aux g (s, evs) m (n - 1) in
   aux g (s, evs) m (get_branch g 4 10)
 
+(** A last step, where every element is tried to be applied.
+ * Only the ones making both progress and moving towards the objective are kept,
+ * but steps that don’t change the apparent progress are accepted.
+ * To prevent termination, this process eventually ends, though. **)
+let final g (s, evs) o m =
+  let rec aux g (s, evs) m acc = function
+    | [] -> (g, (s, evs), m, acc)
+    | e :: l ->
+      match grade g o s e with
+      | None -> aux g (s, evs) m acc l
+      | Some (inst, progress, evs') ->
+        if evs' < evs then
+          aux g (s, evs) m acc l
+        else (
+          let (s', m') = Element.safe_apply g.constructor_informations s e inst in
+          if Element.difference_weigth m' < 0 then
+            aux g (s, evs) m acc l
+          else
+            aux g (s', evs') m (e :: acc) l
+        ) in
+  let rec repeat g (s, evs) m l = function
+    | 0 -> (g, (s, evs), m)
+    | n ->
+      let (g, (s, evs), m, l) = aux g (s, evs) m [] l in
+      repeat g (s, evs) m l (n - 1) in
+  let l =
+    List.map (read_element g) (Utils.BidirectionalList.to_list g.all_elements) in
+  repeat g (s, evs) m l (get_branch g 1 20)
+
 (** This function performs a simulted annealing based on [wide_step].
  * This last function is considered costly and we thus starts using the [Lwt.t]
  * type here. **)
 let wider_step g (s, evs) o m =
   let rec aux temperature g (s, evs) m =
     if temperature <= 0 then
-      Lwt.return (g, (s, evs), m)
+      Lwt.return (final g (s, evs) o m)
     else (
       InOut.pause () ;%lwt
       if Utils.assert_defend then assert (evs = evaluate_state o s) ;

@@ -18,7 +18,7 @@ let parse_lexbuf fileName lexbuf =
 let parse_relation str =
   let lexbuf = Lexing.from_string str in
   lexbuf.Lexing.lex_curr_p <- {
-      Lexing.pos_fname = "“" ^ str ^ "”" ;
+      Lexing.pos_fname = "`" ^ str ^ "'" ;
       Lexing.pos_lnum = 1 ;
       Lexing.pos_bol = 0 ;
       Lexing.pos_cnum = 0
@@ -66,6 +66,7 @@ type state = {
     category_names : string Utils.Id.map (** All declared category names. **) ;
     elements_names : string Utils.Id.map (** All declared element names. **) ;
     constructor_information : State.constructor_maps (** The constructor maps. **) ;
+    (* LATER: There may be a way to factorise these dependency structures *)
     category_dependencies :
       (Utils.Id.t, Utils.Id.t Utils.PSet.t) PMap.t
       (** For each category, associates its set of category dependencies.
@@ -273,6 +274,7 @@ let attribute_functions =
    State.PlayerAttribute.declare_constructor,
    State.PlayerAttribute.get_attribute,
    State.PlayerAttribute.get_constructor,
+   State.PlayerAttribute.declare_compatibility,
    (fun m -> m.State.player),
    (fun i state -> { i with State.player = state }),
    (fun id -> State.PlayerAttribute id),
@@ -283,6 +285,7 @@ let contact_functions =
    State.ContactAttribute.declare_constructor,
    State.ContactAttribute.get_attribute,
    State.ContactAttribute.get_constructor,
+   State.ContactAttribute.declare_compatibility,
    (fun m -> m.State.contact),
    (fun i state -> { i with State.contact = state }),
    (fun id -> State.ContactAttribute id),
@@ -325,7 +328,7 @@ let prepare_declaration i =
   (** Declare attribute and contact instances.
    * See the declarations [attribute_functions] and [contact_functions]
    * to understand the large tuple argument. **)
-  let declare_instance (declare, _, _, _, extract, update, constructor, _, en)
+  let declare_instance (declare, _, _, _, _, extract, update, constructor, _, en)
       name block =
     let block = convert_block name [OfCategory; Translation] block in
     let (id, state) =
@@ -379,7 +382,8 @@ let prepare_declaration i =
   (** Declare constructor instances.
    * Similar to [declare_instance], see the declarations [attribute_functions] and
    * [contact_functions] to understand the large tuple argument. **)
-  let declare_constructor (declare, declare_constructor, _, _, extract, update,
+  let declare_constructor (declare, declare_constructor, _, _,
+        declare_compatibility, extract, update,
         attribute_constructor, constructor_constructor, en)
       attribute_name constructor block =
     let block =
@@ -389,6 +393,11 @@ let prepare_declaration i =
       declare (extract i.current_state.constructor_information) attribute_name in
     let (id, state) =
       declare_constructor state attribute constructor in
+    let state =
+      List.fold_left (fun state constructor' ->
+        let (id', state) = declare_constructor state attribute constructor' in
+        (* TODO: Enforce that [constructor'] is or will be defined. *)
+        declare_compatibility state attribute id id') state block.compatible_with in
     let id = constructor_constructor id in
     let attribute = attribute_constructor attribute in
     if PMap.mem id i.current_state.constructor_dependencies then
@@ -400,8 +409,8 @@ let prepare_declaration i =
      * defined. **)
     let (deps, attributes_to_be_defined) =
     try
-      (Utils.PSet.merge deps (PMap.find attribute
-                                i.current_state.attribute_dependencies),
+      (Utils.PSet.merge deps
+         (PMap.find attribute i.current_state.attribute_dependencies),
        i.attributes_to_be_defined)
     with Not_found ->
       let constrs =
@@ -414,7 +423,6 @@ let prepare_declaration i =
     let categories_to_be_defined =
       update_categories_to_be_defined deps (fun (cats, attrs, constrs) ->
         (cats, attrs, Utils.PSet.add id constrs)) in
-    (* TODO: Deal with [Add], and [CompatibleWith]. *)
     let translations =
       let translations =
         Translation.gadd i.current_state.translations.Translation.constructor
@@ -430,6 +438,13 @@ let prepare_declaration i =
           with Translation.ConflictingCommands _ ->
             raise (TranslationError (en, constructor, tr)))
         translations block.translation in
+    let add =
+      List.fold_left (fun add (lg, tag) ->
+          let s =
+            try PMap.find (id, lg) add
+            with Not_found -> Utils.PSet.empty in
+          PMap.add (id, lg) (Utils.PSet.add tag s) add)
+        i.current_state.translations.Translation.add block.add in
     { i with
         categories_to_be_defined = categories_to_be_defined ;
         attributes_to_be_defined = attributes_to_be_defined ;
@@ -440,8 +455,9 @@ let prepare_declaration i =
               constructor_dependencies =
                 PMap.add id deps i.current_state.constructor_dependencies ;
               translations =
-                { i.current_state.translations with Translation.constructor =
-                    translations } } } in
+                { i.current_state.translations with
+                    Translation.constructor = translations ;
+                    Translation.add = add } } } in
   function
   | Ast.DeclareInstance (Ast.Attribute, attribute, block) ->
     declare_instance attribute_functions attribute block
@@ -630,12 +646,12 @@ let parse_element st element_name block =
    * At this stage, it has to be defined.
    * See the declarations [attribute_functions] and [contact_functions] to
    * understand the large tuple argument.**)
-  let get_attribute_id (_, _, get_attribute, _, get_state, _, _ , _, en) name =
+  let get_attribute_id (_, _, get_attribute, _, _, get_state, _, _ , _, en) name =
     match get_attribute (get_state st.constructor_information) name with
     | None -> raise (Undeclared (en, name, Some element_name))
     | Some id -> id in
   (** Similar to [get_attribute_id], but for constructors. **)
-  let get_constructor_id (_, _, get_attribute, get_constructor, get_state,
+  let get_constructor_id (_, _, get_attribute, get_constructor, _, get_state,
         _, _ , _, en) aid name =
     match get_constructor (get_state st.constructor_information) aid name with
     | None -> raise (Undeclared (en ^ " constructor", name, Some element_name))

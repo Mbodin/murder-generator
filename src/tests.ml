@@ -86,7 +86,7 @@ let test_translations =
     match Translation.translate translations lg key with
     | Some str -> str
     | None ->
-      print_endline ("Missing translation of “" ^ key ^ "” for language "
+      print_endline ("Missing translation of `" ^ key ^ "' for language "
                      ^ Translation.iso639 lg ^ ".") ;
       ok := false ; "" in
   List.iter (fun lg ->

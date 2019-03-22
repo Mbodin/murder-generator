@@ -62,7 +62,8 @@ type complete_translation_function = tag Utils.PSet.t -> string * tag Utils.PSet
 type element = {
     category : Utils.Id.t t ;
     attribute : State.attribute t ;
-    constructor : State.constructor gt
+    constructor : State.constructor gt ;
+    add : (State.constructor * language, tag Utils.PSet.t) PMap.t
   }
 
 
@@ -73,7 +74,8 @@ let sempty = PMap.empty
 let empty_element = {
     category = empty ;
     attribute = empty ;
-    constructor = gempty
+    constructor = gempty ;
+    add = PMap.empty
   }
 
 
@@ -190,9 +192,9 @@ let stranslate m lg tgv trv o tags =
     | [] -> None
     | t :: ts ->
       let (l, ts') = search_tree tags t in
-      try
-        let (l, added, removed) = Utils.select_any l in
-        match Utils.list_map_option (function
+      let rec loop = function
+      | (l, added, removed) :: l' ->
+        (match Utils.list_map_option (function
                | Direct str -> Some str
                | Variable (x, constrs, added, removed) ->
                  let tags = apply_patch (tgv x) added removed in
@@ -202,8 +204,9 @@ let stranslate m lg tgv trv o tags =
                    else None)) l with
         | Some l ->
           Some (String.concat "" l, apply_patch tags added removed)
-        | None -> aux (ts' @ ts)
-      with Utils.EmptyList -> aux (ts' @ ts) in
+        | None -> loop l')
+      | [] -> aux (ts' @ ts) in
+      loop (Utils.shuffle l) in
   try let t = PMap.find (o, lg) m in aux [t]
   with Not_found -> None
 
@@ -220,21 +223,21 @@ let from_json fileName fileContent =
     Utils.list_fold_lefti (fun i (t, lgs) ->
         let current =
           "The " ^ string_of_int (1 + i) ^ "th element"
-          ^ " of the file “" ^ fileName ^ "”" in function
+          ^ " of the file `" ^ fileName ^ "'" in function
         | `Assoc l ->
           let errorKey key =
-            failwith (current ^ " associates the field “" ^ key
-                      ^ "” to something else than a string.") in
+            failwith (current ^ " associates the field `" ^ key
+                      ^ "' to something else than a string.") in
           let lg =
             try match List.assoc "iso639" l with
                 | `String lg -> lg
                 | _ -> errorKey "iso639"
             with Not_found ->
-              failwith (current ^ " has no key “iso639”.") in
+              failwith (current ^ " has no key `iso639'.") in
           (List.fold_left (fun t -> function
             | key, `String str -> add t lg key str
             | (key, _) -> errorKey key) t l, lg :: lgs)
         | _ ->
           failwith (current ^ " is not an object.")) (empty, []) l
-  | _ -> failwith ("The file “" ^ fileName ^ "” is not a list.")
+  | _ -> failwith ("The file `" ^ fileName ^ "' is not a list.")
 

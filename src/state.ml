@@ -52,6 +52,8 @@ module type Attribute = sig
     val get_attribute : constructor_map -> string -> attribute option
     val get_constructor : constructor_map -> attribute -> string -> constructor option
     val remove_constructor : constructor_map -> constructor -> constructor_map
+    val declare_compatibility : constructor_map -> attribute -> constructor -> constructor -> constructor_map
+    val is_compatible : constructor_map -> attribute -> constructor -> constructor -> bool
   end
 
 module AttributeInst () =
@@ -62,56 +64,88 @@ module AttributeInst () =
 
     type constructor_map =
       string Utils.Id.map (** Attribute names **)
-      * (attribute * string) Utils.Id.map (** The map storing each constructor.
-                                           * The attribute is part of the
-                                           * constructor, with the constructor
-                                           * name. **)
-      * (attribute, constructor list) PMap.t (** Which constructors is associated
-                                              * to which attribute. **)
+      * (attribute * string) Utils.Id.map
+          (** The map storing each constructor.
+           * The attribute is part of the constructor,
+           * with the constructor name. **)
+      * (attribute, constructor list) PMap.t
+          (** Which constructors is associated to which attribute. **)
+      * (attribute, (constructor, constructor list) PMap.t) PMap.t
+          (** For each constructor, what are its compatibility list. **)
 
     let empty_constructor_map =
       (Utils.Id.map_create (),
        Utils.Id.map_create (),
+       PMap.empty,
        PMap.empty)
 
-    let attribute_name (m, _, _) a =
+    let attribute_name (m, _, _, _) a =
       Utils.Id.map_inverse m a
 
-    let constructor_name (_, m, _) c =
+    let constructor_name (_, m, _, _) c =
       Option.map snd (Utils.Id.map_inverse m c)
 
-    let constructor_attribute (_, m, _) c =
+    let constructor_attribute (_, m, _, _) c =
       Option.map fst (Utils.Id.map_inverse m c)
 
-    let constructors (_, _, m) a =
+    let constructors (_, _, m, _) a =
       try Some (PMap.find a m)
       with Not_found -> None
 
-    let declare_attribute (mn, mc, al) a =
+    let declare_attribute (mn, mc, al, comp) a =
       let (a, mn) = Utils.Id.map_insert_t mn a in
-      (a, (mn, mc, if not (PMap.mem a al) then PMap.add a [] al else al))
+      (a, (mn, mc, (if PMap.mem a al then al else PMap.add a [] al), comp))
 
-    let declare_constructor (mn, mc, al) a c =
+    let declare_constructor (mn, mc, al, comp) a c =
       let (c, mc) = Utils.Id.map_insert_t mc (a, c) in
       let l =
         try PMap.find a al
         with Not_found -> assert false in
-      (c, (mn, mc, PMap.add a (c :: l) al))
+      (c, (mn, mc, PMap.add a (c :: l) al, comp))
 
-    let get_attribute (mn, _, _) a =
+    let get_attribute (mn, _, _, _) a =
       Utils.Id.get_id mn a
 
-    let get_constructor (_, mc, _) a c =
+    let get_constructor (_, mc, _, _) a c =
       Utils.Id.get_id mc (a, c)
 
     let remove_constructor m c =
       let a = Utils.assert_option __LOC__ (constructor_attribute m c) in
-      let (mn, mc, al) = m in
+      let (mn, mc, al, comp) = m in
+      let filter = List.filter ((<>) c) in
       let l =
         try PMap.find a al
         with Not_found -> assert false in
-      let l = List.filter ((<>) c) l in
-      (mn, mc, PMap.add a l al)
+      let comp =
+        let m =
+          try PMap.find a comp
+          with Not_found -> PMap.empty in
+        let m =
+          List.fold_left (fun m c ->
+            let l =
+              try PMap.find c m
+              with Not_found -> [] in
+            PMap.add c (filter l) m) m l in
+        PMap.add a (PMap.remove c m) comp in
+      (mn, mc, PMap.add a (filter l) al, comp)
+
+    let declare_compatibility (mn, mc, al, comp) a c c' =
+      let m =
+        try PMap.find a comp
+        with Not_found -> PMap.empty in
+      let l =
+        try PMap.find c m
+        with Not_found -> [] in
+      (mn, mc, al, PMap.add a (PMap.add c (c' :: l) m) comp)
+
+    let is_compatible (_, _, _, comp) a c c' =
+      let m =
+        try PMap.find a comp
+        with Not_found -> PMap.empty in
+      let l =
+        try PMap.find c m
+        with Not_found -> [] in
+      List.mem c' l
 
   end
 
@@ -152,7 +186,8 @@ type 'value attribute_value =
   | Fixed_value of 'value list * strictness
   | One_value_of of 'value list
 
-let compose_attribute_value v1 v2 =
+let compose_attribute_value compatible v1 v2 =
+  let compatible v1 v2 = v1 = v2 || compatible v1 v2 in
   match v1, v2 with
   | One_value_of l1, One_value_of l2 ->
     let l3 = List.filter (fun v -> List.mem v l1) l2 in
@@ -160,10 +195,26 @@ let compose_attribute_value v1 v2 =
   | One_value_of l1, Fixed_value (l2, s2) | Fixed_value (l2, s2), One_value_of l1 ->
     let l = List.filter (fun v2 -> List.mem v2 l1) l2 in
     if l <> [] then Some (Fixed_value (l, s2)) else None
-  | Fixed_value (v1, s1), Fixed_value (v2, s2) ->
-    if v1 = v2 then
-      Option.map (fun s3 -> Fixed_value (v1, s3)) (compose_strictness s1 s2)
-    else None
+  | Fixed_value (l1, s1), Fixed_value (l2, s2) ->
+    Utils.if_option (compose_strictness s1 s2) (fun s3 ->
+      let l3 =
+        let aux low non =
+          List.filter (fun v ->
+            List.exists (fun v' -> compatible v' v) non) low in
+        match s1, s2 with
+        | LowStrict, NonStrict -> aux l1 l2
+        | NonStrict, LowStrict -> aux l2 l1
+        | NonStrict, NonStrict ->
+          Utils.list_map_filter (fun v ->
+            try Some (ExtList.List.find_map (fun v' ->
+                        if compatible v' v then Some v
+                        else if compatible v v' then Some v'
+                        else None) l2)
+            with Not_found -> None) l1
+        | _ -> assert false in
+      if l3 <> [] then
+        Some (Fixed_value (l3, s3))
+      else None)
 
 let attribute_value_progress v1 v2 =
   match v1, v2 with

@@ -38,10 +38,12 @@ let provided_attributes (e, other) =
  * The return value is expressed as for [compatible_and_progress]:
  * [None] means that it is not compatible, [Some true] that it is
  * compatible and progress, and [Some false] that it is compatible
- * but does not progress. **)
-let compatible_and_progress_attribute_value v1 v2 =
+ * but does not progress.
+ * As for [State.compose_attribute_value], is takes as an argument a
+ * function stating whether two base value are compatible. **)
+let compatible_and_progress_attribute_value compatible v1 v2 =
   Option.map (State.attribute_value_progress v1)
-    (State.compose_attribute_value v1 v2)
+    (State.compose_attribute_value compatible v1 v2)
 
 (** Merges two results of [compatible_and_progress]. **)
 let merge_progress b1 b2 =
@@ -51,8 +53,10 @@ let merge_progress b1 b2 =
 
 (** Checks whether the constraints [conss] are valid for the
  * character [c] in the character state [cst].
- * The contact case is given as argument as the function [f]. **)
-let respect_constraints_base f cst conss c =
+ * The contact case is given as argument as the function [f].
+ * The argument [m] is of type [State.constructor_maps] and
+ * is an argument of most functions in this file. **)
+let respect_constraints_base f m cst conss c =
   List.fold_left (fun b cons ->
     merge_progress b
      (match cons with
@@ -60,7 +64,8 @@ let respect_constraints_base f cst conss c =
        (match State.get_attribute_character cst c a with
         | None -> Some false
         | Some v2 ->
-          compatible_and_progress_attribute_value v1 v2)
+          let compatible = State.PlayerAttribute.is_compatible m.State.player a in
+          compatible_and_progress_attribute_value compatible v1 v2)
      | Contact (con, cha, v) ->
        f con cha v)) (Some false) conss
 
@@ -68,9 +73,9 @@ let respect_constraints_base f cst conss c =
  * character [c] in the character state [cst].
  * In addition to [respect_constraints_base], this
  * function also checks events constraints [evs]. **)
-let respect_constraints_events f cst conss evs c =
+let respect_constraints_events f m cst conss evs c =
   merge_progress
-    (respect_constraints_base f cst conss c)
+    (respect_constraints_base f m cst conss c)
     (* TODO: events [evs] *) (Some false)
 
 (** Checks whether the constraints [conss] are locally valid for the
@@ -88,13 +93,15 @@ let other_players st inst =
 
 (** A function to be given to [respect_constraints_events] to deal with the
  * instantiation-dependent contacts. **)
-let check_contact inst st c con cha v1 =
+let check_contact m inst st c con cha v1 =
   let cst = State.get_character_state st in
   let check cha =
     let cha = inst.(cha) in
     match State.get_contact_character cst c con cha with
     | None -> Some false
-    | Some v2 -> compatible_and_progress_attribute_value v1 v2 in
+    | Some v2 ->
+      let compatible = State.ContactAttribute.is_compatible m.State.contact con in
+      compatible_and_progress_attribute_value compatible v1 v2 in
   match cha with
   | Some cha -> check cha
   | None ->
@@ -104,36 +111,36 @@ let check_contact inst st c con cha v1 =
 
 (** As [respect_constraints], but takes an instanciation and thus also checks
  * global constraints. **)
-let respect_constraints_inst inst st conss evs c =
+let respect_constraints_inst m inst st conss evs c =
   let cst = State.get_character_state st in
-  respect_constraints_events (check_contact inst st c) cst conss evs c
+  respect_constraints_events (check_contact m inst st c) m cst conss evs c
 
-let compatible_and_progress st (e, other) inst =
+let compatible_and_progress m st (e, other) inst =
   let cst = State.get_character_state st in
   let compatible_others =
     List.fold_left (fun acc c ->
         merge_progress acc
-          (respect_constraints_base (check_contact inst st c) cst other c))
+          (respect_constraints_base (check_contact m inst st c) m cst other c))
       (Some false) (other_players st inst) in
   Utils.array_fold_lefti (fun i acc c ->
     let (conss, evs, rs) = e.(i) in
     merge_progress acc
-      (respect_constraints_inst inst st conss evs c)) compatible_others inst
+      (respect_constraints_inst m inst st conss evs c)) compatible_others inst
 
-let search_instantiation st (e, other) =
+let search_instantiation m st (e, other) =
   let cst = State.get_character_state st in
   let all_players = State.all_players st in
   (** Players that can be placed as [other]. **)
   let possible_other =
     Utils.PSet.from_list
       (List.filter (fun c ->
-        respect_constraints cst other [] c <> None) all_players) in
+        respect_constraints m cst other [] c <> None) all_players) in
   let possible_players_progress_no_progress =
     Array.map (fun ei ->
       let (conss, evs, rs) = ei in
       let result_list =
         List.map (fun c ->
-          (c, respect_constraints cst conss evs c)) all_players in
+          (c, respect_constraints m cst conss evs c)) all_players in
       let compatible_list =
         List.filter (fun (_, d) -> d <> None) result_list in
       let progress, no_progress =
@@ -163,7 +170,7 @@ let search_instantiation st (e, other) =
           let i = redirection_array.(i) in
           inst.(i) <- j) (List.rev partial_instantiation) ;
         inst in
-      (match compatible_and_progress st (e, other) inst with
+      (match compatible_and_progress m st (e, other) inst with
        | None -> None
        | Some progress -> Some (inst, progress))
     | i :: redirection_list ->
@@ -230,14 +237,15 @@ let merge_attribute_differences (m1, s1, l1) (m2, s2, l2) =
        (if v1 < 0 && v1 + v2 >= 0 then a :: lo else lo))) m2 (m1, [], []) in
   (m, s1 + s2, li @ List.filter (fun a -> not (List.mem a lo)) l1)
 
-let apply state (e, other) inst =
+let apply m state (e, other) inst =
   if Utils.assert_defend then
-    assert (compatible_and_progress state (e, other) inst <> None) ;
+    assert (compatible_and_progress m state (e, other) inst <> None) ;
   let diff = empty_difference in
   let other_players = other_players state inst in
   let apply_constraint c (state, diff) =
     let cst = State.get_character_state state in function
     | Attribute (a, v1) ->
+      let compatible = State.PlayerAttribute.is_compatible m.State.player a in
       let diff =
         match State.get_attribute_character cst c a with
         | None ->
@@ -246,12 +254,14 @@ let apply state (e, other) inst =
             (if State.attribute_value_can_progress v1 then -1 else 0)
         | Some v2 ->
           let v3 =
-            Utils.assert_option __LOC__ (State.compose_attribute_value v1 v2) in
+            Utils.assert_option __LOC__
+              (State.compose_attribute_value compatible v1 v2) in
           State.write_attribute_character cst c a v3 ;
           update_difference diff (State.PlayerAttribute a)
             (if State.attribute_value_progress v2 v3 then 1 else 0) in
       (state, diff)
     | Contact (con, cha, v1) ->
+      let compatible = State.ContactAttribute.is_compatible m.State.contact con in
       let apply_contact (state, diff) cha =
         let diff =
           match State.get_contact_character cst c con cha with
@@ -261,7 +271,8 @@ let apply state (e, other) inst =
               (if State.attribute_value_can_progress v1 then -1 else 0)
           | Some v2 ->
             let v3 =
-              Utils.assert_option __LOC__ (State.compose_attribute_value v1 v2) in
+              Utils.assert_option __LOC__
+                (State.compose_attribute_value compatible v1 v2) in
             State.write_contact_character cst c con cha v3 ;
             update_difference diff (State.ContactAttribute con)
               (if State.attribute_value_progress v2 v3 then 1 else 0) in
@@ -288,7 +299,7 @@ let apply state (e, other) inst =
           State.add_relation state c c' r) rs in
     (state, diff)) (state, diff) e inst
 
-let safe_apply state = apply (State.copy state)
+let safe_apply m state = apply m (State.copy state)
 
 let apply_relations state (e, _) inst =
   let result = State.copy_relation_state state in

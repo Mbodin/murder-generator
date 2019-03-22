@@ -87,6 +87,12 @@ module type Attribute = sig
      * to an unwanted category. **)
     val remove_constructor : constructor_map -> constructor -> constructor_map
 
+    (** States that the first constructor is compatible with the second. **)
+    val declare_compatibility : constructor_map -> attribute -> constructor -> constructor -> constructor_map
+
+    (** States whether the first constructor is compatible with the second. **)
+    val is_compatible : constructor_map -> attribute -> constructor -> constructor -> bool
+
   end
 
 (** A module to express attributes and constructors for players. **)
@@ -148,8 +154,10 @@ type 'value attribute_value =
 (** Compose the strictness flag, returning [None] when they are incompatible. **)
 val compose_strictness : strictness -> strictness -> strictness option
 
-(** Compose two attribute values, if they are compatible. **)
-val compose_attribute_value : 'a attribute_value -> 'a attribute_value -> 'a attribute_value option
+(** Compose two attribute values, if they are compatible.
+ * This function takes as argument an equivalent of [Attribute.is_compatible]
+ * for the type ['a].  This function is extended to be reflexive. **)
+val compose_attribute_value : ('a -> 'a -> bool) -> 'a attribute_value -> 'a attribute_value -> 'a attribute_value option
 
 (** Given a transition from an attribute value to another, this function states
  * whether the transition [One_value_of] to [Fixed_value] occured,

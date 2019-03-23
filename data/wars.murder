@@ -1,7 +1,7 @@
 
-(* A player wants to harm as much as possible this other player. *)
 contact Goal Harm
 begin
+  (* A player wants to harm as much as possible this other player. *)
   translation fr "faire du mal"
   translation en "harm"
   translation eo "vundi"
@@ -9,9 +9,9 @@ begin
   compatible with Kill
 end
 
-(* A player wants to kill this other player. *)
 contact Goal Kill
 begin
+  (* A player wants to kill this other player. *)
   category NonKids
 
   translation fr "tuer"
@@ -36,7 +36,30 @@ begin
 
   provide relation between D and E as avoidance
 
-  (* TODO: Provide historical reasons. *)
+  provide immediate event to D and E
+  begin
+    event History
+    translation fr "Les nains et les elfes ne se sont jamais mélangés."
+                   "  Chacun connait bien sûr l’existence des autres, mais les circonstances n’ont jamais été propices pour des échanges pacifiques."
+    translation en "Dwarves and elves never mixed each others."
+                   "  Each recognizes the existence of the other, naturally, but the circumstances were never satified for peaceful exchanges to happen."
+    translation eo "Gnomoj kaj elfoj neniam miksis unu la alian."
+                   "  Ĉiuj scias ke la alia ekzistas, kompreneble, sed neniam okazis kuntekston por ke pacaj interŝanĝoj okazu."
+  end
+
+  provide immediate event to D
+  begin
+    translation fr "On ne peut pas faire confiance à un elfe."
+    translation en "One can’t trust an elf."
+    translation eo "Oni ne povas fidi elfojn."
+  end
+
+  provide immediate event to E
+  begin
+    translation fr "Les nains ne sont pas dignes de confiance."
+    translation en "Dwarves are not trustworthy."
+    translation eo "Gnomoj ne fideblas."
+  end
 end
 
 element ElvesCanBeRacist
@@ -59,20 +82,6 @@ begin
   provide relation from H to P as avoidance
 
   (* TODO: Provide historical reasons. *)
-end
-
-
-element WarBetweenGod
-begin
-  let A be player with attribute Specy as God
-  let B be player with attribute Specy as God
-  let any other player be with attribute Specy not as God
-
-  provide relation between A and B as hate
-
-  provide strict contact Goal between A and B as Harm
-
-  (* TODO: An event stating that A and B always fought each others. *)
 end
 
 element EnemiesOfOurEnemiesAreOurAllies

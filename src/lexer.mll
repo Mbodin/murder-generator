@@ -12,7 +12,7 @@
 
   let current_position lexbuf =
     let pos = lexbuf.lex_curr_p in
-    (if pos.pos_fname <> "" then "file “" ^ pos.pos_fname ^ "”, " else "")
+    (if pos.pos_fname <> "" then "file `" ^ pos.pos_fname ^ "', " else "")
     ^ "line " ^ string_of_int pos.pos_lnum ^ ", "
     ^ "character " ^ string_of_int (pos.pos_cnum - pos.pos_bol + 1)
 }
@@ -97,8 +97,8 @@ rule read = parse
 
   | newline                 { next_line lexbuf ; read lexbuf }
   | eof                     { EOF }
-  | _                       { raise (SyntaxError ("Unexpected char: “" ^
-                                      lexeme lexbuf ^ "”.")) }
+  | _                       { raise (SyntaxError ("Unexpected char: `" ^
+                                      lexeme lexbuf ^ "'.")) }
 
 and comment = parse         
 

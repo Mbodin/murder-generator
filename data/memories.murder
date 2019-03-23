@@ -11,3 +11,5 @@ begin
   event CloseDeath
 end
 
+declare event History
+

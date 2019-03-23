@@ -65,9 +65,12 @@ begin
   begin
     event ParentDeath
     assume no event ParentDeath to P before
-    translation fr "Mort des parents de " P ".  Ils " P:+pro:+cli " laissent une importante fortune."
-    translation en "Death of " P "’s parents.  They leave " P:+pro:+cli " with an important wealth."
-    translation eo "Morto de la gepatroj de " P ".  Ili lasas " P:+pro:+acc " kun granda heredaĵo."
+    translation fr "Mort des parents de " P "."
+                   "  Ils " P:+pro:+cli " laissent une importante fortune."
+    translation en "Death of " P "’s parents."
+                   "  They leave " P:+pro:+cli " with an important wealth."
+    translation eo "Morto de la gepatroj de " P "."
+                   "  Ili forlasas " P:+pro:+acc " kun granda heredaĵo."
   end
 end
 
@@ -85,9 +88,12 @@ begin
   begin
     event ParentDeath
     assume no event ParentDeath to A or B before
-    translation fr "Mort des parents de " A " et " B ".  Ils leur laissent une importante fortune."
-    translation en "Death of " A " and " B "’s parents.  They leave them with an important wealth."
-    translation eo "Morto de la gepatroj de " A " kaj " B ".  Ili lasas ilin kun granda heredaĵo."
+    translation fr "Mort des parents de " A " et " B "."
+                   "  Ils leur laissent une importante fortune."
+    translation en "Death of " A " and " B "’s parents."
+                   "  They leave them with an important wealth."
+    translation eo "Morto de la gepatroj de " A " kaj " B "."
+                   "  Ili forlasas ilin kun granda heredaĵo."
   end
 end
 
@@ -173,9 +179,12 @@ begin
   provide very short event to A and B
   begin
     event MoneyExchange
-    translation fr A:+sbeg " a demandé de l’argent à " B ".  " B:+sbeg:+pro " " A:+pro:+cli " en a donné."
-    translation en A:+sbeg " asked money to " B ".  " B:+sbeg:+pro " gave some to " A:+pro:+cli "."
-    translation eo A:+sbeg " petis monon al " B ".  " B:+sbeg:+pro " al " A:+pro " donis."
+    translation fr A:+sbeg " a demandé de l’argent à " B "."
+                   "  " B:+sbeg:+pro " " A:+pro:+cli " en a donné."
+    translation en A:+sbeg " asked money to " B "."
+                   "  " B:+sbeg:+pro " gave some to " A:+pro:+cli "."
+    translation eo A:+sbeg " petis monon al " B "."
+                   "  " B:+sbeg:+pro " al " A:+pro " donis."
   end
 end
 
@@ -193,9 +202,12 @@ begin
   provide very short event to A and B
   begin
     event MoneyExchange
-    translation fr A:+sbeg " a demandé de l’argent à " B ".  Vu le besoin, " B:+pro " " A:+pro:+cli " en a donné."
-    translation en A:+sbeg " asked money to " B ".  Given the circumstances, " B:+pro " gave some to " A:+pro:+cli "."
-    translation eo A:+sbeg " petis monon al " B ".  Komprenante la bezonon, " B:+pro " al " A:+pro " donis."
+    translation fr A:+sbeg " a demandé de l’argent à " B "."
+                   "  Vu le besoin, " B:+pro " " A:+pro:+cli " en a donné."
+    translation en A:+sbeg " asked money to " B "."
+                   "  Given the circumstances, " B:+pro " gave some to " A:+pro:+cli "."
+    translation eo A:+sbeg " petis monon al " B "."
+                   "  Komprenante la bezonon, " B:+pro " al " A:+pro " donis."
   end
 end
 
@@ -222,9 +234,12 @@ begin
   begin
     event MoneyExchange
     assume event GotRich to B after
-    translation fr A:+sbeg " a demandé de l’argent à " B " pour monter son entreprise.  " B:+sbeg:+pro " " A:+pro:+cli " en a donné."
-    translation en A:+sbeg " asked money to " B " to set up a shop.  " B:+sbeg:+pro " gave some to " A:+pro:+cli "."
-    translation eo A:+sbeg " petis monon al " B " por komenci ties komercon.  " B:+sbeg:+pro " al " A:+pro " donis."
+    translation fr A:+sbeg " a demandé de l’argent à " B " pour monter son entreprise."
+                   "  " B:+sbeg:+pro " " A:+pro:+cli " en a donné."
+    translation en A:+sbeg " asked money to " B " to set up a shop."
+                   "  " B:+sbeg:+pro " gave some to " A:+pro:+cli "."
+    translation eo A:+sbeg " petis monon al " B " por komenci ties komercon."
+                   "  " B:+sbeg:+pro " al " A:+pro " donis."
   end
 
   provide contact FinancialDebt from B to A as Old
@@ -252,9 +267,12 @@ begin
   provide very short event to A and B
   begin
     event MoneyExchange
-    translation fr A:+sbeg " a demandé de l’argent à " B " pour monter son entreprise.  " B:+sbeg:+pro " " A:+pro:+cli " en a donné."
-    translation en A:+sbeg " asked money to " B " to set up a shop.  " B:+sbeg:+pro " gave some to " A:+pro:+cli "."
-    translation eo A:+sbeg " petis monon al " B " por komenci ties komercon.  " B:+sbeg:+pro " al " A:+pro " donis."
+    translation fr A:+sbeg " a demandé de l’argent à " B " pour monter son entreprise."
+                   "  " B:+sbeg:+pro " " A:+pro:+cli " en a donné."
+    translation en A:+sbeg " asked money to " B " to set up a shop."
+                   "  " B:+sbeg:+pro " gave some to " A:+pro:+cli "."
+    translation eo A:+sbeg " petis monon al " B " por komenci ties komercon."
+                   "  " B:+sbeg:+pro " al " A:+pro " donis."
   end
 
   provide contact FinancialDebt from B to A as Large

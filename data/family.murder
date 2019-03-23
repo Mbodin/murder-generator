@@ -18,6 +18,15 @@ begin
   translation fr "oui"
   translation en "yes"
   translation eo "jes"
+
+  compatible with Intimate
+end
+
+contact Know Intimate
+begin
+  translation fr "intimement"
+  translation en "intimately"
+  translation eo "intime"
 end
 
 contact Know False
@@ -70,7 +79,7 @@ begin
   let A be player with contact FamilyMember to B as Sibling
   let B be player with contact FamilyMember to A as Sibling
 
-  provide contact Know between A and B as True
+  provide contact Know between A and B as Intimate
 end
 
 element ParentsChildsKnowEachOthers
@@ -78,7 +87,7 @@ begin
   let A be player with contact FamilyMember to B as Child
   let B be player with contact FamilyMember to A as Parent
 
-  provide contact Know between A and B as True
+  provide contact Know between A and B as Intimate
 end
 
 element SiblingTransitive
@@ -191,11 +200,12 @@ begin
   provide compatible contact FamilyMember between A and B as None
 end
 
-element ChildOfHumansAreHumans
+element HumanFamily
 begin
-  let P be player with contact FamilyMember to C as Parent
-		          with attribute Specy as Human
-  let C be player with contact FamilyMember to P as Child
-		          with attribute Specy as Human
+  let A be player
+  let B be player with contact FamilyMember to A as Parent or Child or Sibling
+                  with attribute Specy as Human
+
+  provide attribute Specy to A as Human
 end
 

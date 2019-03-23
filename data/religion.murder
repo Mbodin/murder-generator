@@ -7,6 +7,8 @@ begin
 end
 
 
+(* * Generalities for religions *)
+
 attribute Specy God
 begin
   category Religion
@@ -45,7 +47,19 @@ begin
 
   provide strict attribute Born to P as AlwaysExisted
 
-  (* TODO: Event *)
+  provide immediate event to P
+  begin
+    event Description
+    assume no event Personnal to P before
+    translation fr P:+sbeg " a existé aussi loin que remontent les mémoires."
+                   "  " P:+sbeg:+pro " était, " P:+pro " est, " P:+pro " sera."
+                   "  À tout jamais."
+    translation en P:+sbeg " existed for as long as memory can remember."
+                   "  " P:+sbeg:+pro " was, " P:+pro " is, " P:+pro " will be."
+                   "  Always."
+    translation eo P:+sbeg " ĉiam ekzistis laŭ ies ajn memoro."
+                   "  " P:+sbeg:+pro " estis, " P:+pro " estas, kaj " P:+pro " por ĉiam estos."
+  end
 end
 
 element GodHasNoGender
@@ -53,6 +67,21 @@ begin
   let P be player with attribute Specy as God
 
   provide strict attribute Gender to P as NonBinary
+
+  provide immediate event to P
+  begin
+    event Description
+    assume no event Personnal to P before
+    translation fr "Les notions de genre ne s’appliquent pas à " P "."
+                   "  " P:+sbeg:+pro " n’est ni masculin, ni féminin."
+                   "  " P:+sbeg:+pro " est."
+    translation en "Gender does not apply to " P "."
+                   "  " P:+sbeg:+pro " is neither male nor female."
+                   "  " P:+sbeg:+pro " is."
+    translation eo "Gendro ne aplikiĝas al " P "."
+                   "  " P:+sbeg:+pro " nek iĉas, nek inas."
+                   "  " P:+sbeg:+pro " estas."
+  end
 end
 
 element GodIsFamous
@@ -65,5 +94,226 @@ end
 element NoGod
 begin
   let any other player be with attribute Specy not as God
+end
+
+attribute Job Priest
+begin
+  translation fr "Prêtre"
+  translation en "Priest"
+  translation eo "Pastro"
+
+  translation fr:nom:sin:fem "une prêtre"
+  translation fr:nom:sin:mas "un prêtre"
+  translation fr:nom:def:sin:fem "la prêtre"
+  translation fr:nom:def:sin:mas "le prêtre"
+  translation fr:nom:plu:-fem:+mas "des prêtres"
+  translation fr:nom:def:plu:-fem:+mas "les prêtres"
+  translation en:nom:sin "priest"
+  translation en:nom:plu "priests"
+  translation en:nom:def:sin "the priest"
+  translation en:nom:def:plu "the priests"
+  translation eo:nom:sin "pastro"
+  translation eo:nom:plu "pastroj"
+  translation eo:nom:def:sin "la pastro"
+  translation eo:nom:def:plu "la pastroj"
+  translation eo:nom:acc:sin "pastron"
+  translation eo:nom:acc:plu "pastrojn"
+  translation eo:nom:def:acc:sin "la pastron"
+  translation eo:nom:def:acc:plu "la pastrojn"
+end
+
+element PriestSinceEarly
+begin
+  let P be player
+
+  provide attribute Job to P as Priest
+
+  provide immediate event to P
+  begin
+    (* TODO *)
+  end
+end
+
+
+(* * God definitions *)
+
+declare attribute DivineAllegiance (* On whose side the character is. *)
+begin
+  category Religion
+  translation fr "Allégance divine"
+  translation en "Divine allegiance"
+  translation eo "Dia flanko"
+end
+
+attribute DivineAllegiance InternalPeace
+begin
+  translation fr "Paix intérieure"
+  translation en "Internal peace"
+  translation eo "Ena paco"
+end
+
+element InternalPeaceDescription
+begin
+  let G be player with attribute Specy as God
+                  with attribute DivineAllegiance as InternalPeace
+  provide immediate event to G
+  begin
+    event Description
+    assume no event Personnal to P before
+    translation fr G:+sbeg " est la divinité de la paix, de l’absence de souffrance, et de l’ataraxie."
+                   "  " G:+sbeg:+pro " est aussi souvent associé à la mort."
+                   "  Il est vrai qu’" G:+pro " apprécie la mort par sa vertue libératrice, mais cette description est assez réductrice."
+                   "  " G:+pro " attache une importance capitale à la méditation."
+  end
+end
+
+attribute DivineAllegiance Dialogue
+begin
+  translation fr "Dialogue"
+  translation en "Dialogue"
+  translation eo "Babilado"
+end
+
+element DialogueDescription
+begin
+  let G be player with attribute Specy as God
+                  with attribute DivineAllegiance as Dialogue
+  provide immediate event to G
+  begin
+    event Description
+    assume no event Personnal to P before
+    translation fr G:+sbeg " est la divinité du dialogue et des compromis."
+                   "  " G:+sbeg:+pro " apprécie que les gens s’écoutent, changent d’avis, et argumentent."
+                   "  " G:+sbeg:+pro " considère que la réalité est fondamentallement relative et changeante qu’il est important de constamment changer ses croyances."
+                   "  En conséquence, " G:+pro " pourra même adapter la réalité aux croyances de ceux qui écoutent et dialoguent."
+  end
+end
+
+attribute DivineAllegiance Inquisitiveness
+begin
+  translation fr "Curiosité"
+  translation en "Inquisitiveness"
+  translation eo "Scivolemeco"
+end
+
+element InquisitivenessDescription
+begin
+  let G be player with attribute Specy as God
+                  with attribute DivineAllegiance as Inquisitiveness
+  provide immediate event to G
+  begin
+    event Description
+    assume no event Personnal to P before
+    translation fr G:+sbeg " est la divinité de la curiosité et de la recherche active de la vérité."
+                   "  " G:+sbeg:+pro " considère que le monde est un immense terrain de jeu à expérimenter."
+                   "  " G:+sbeg:+pro " sera toujours là pour la conception d’expériences en tous genres."
+                   "  A contrario, " G:+pro " a tendance à fortement punir toute personne ignorant des données connues parce qu’elle ne correspondent pas à leurs croyances."
+  end
+end
+
+attribute DivineAllegiance Chaos
+begin
+  translation fr "Chaos"
+  translation en "Chaos"
+  translation eo "Ĥaoso"
+end
+
+element ChaosDescription
+begin
+  let G be player with attribute Specy as God
+                  with attribute DivineAllegiance as Chaos
+  provide immediate event to G
+  begin
+    event Description
+    assume no event Personnal to P before
+    translation fr G:+sbeg " est la divinité du chaos."
+                   "  " G:+sbeg:+pro " cherche à toujours s’amuser, à ajouter sa pincée de sel dans le monde."
+                   "  " G:+sbeg:+pro " est une divinité colorée qui pousse les gens à agir sans se soucier des conséquences."
+                   "  Dans tous les cas, cela sera de toutes façons intéressant."
+  end
+end
+
+attribute DivineAllegiance Harmony
+begin
+  translation fr "Harmonie"
+  translation en "Harmony"
+  translation eo "Akordo"
+end
+
+element HarmonyDescription
+begin
+  let G be player with attribute Specy as God
+                  with attribute DivineAllegiance as Harmony
+  provide immediate event to G
+  begin
+    event Description
+    assume no event Personnal to P before
+    translation fr G:+sbeg " est la divinité de la musique et de l’harmonie."
+                   "  " G:+sbeg:+pro " est capable d’écouter la mélodie de l’Univers tout entier."
+                   "  Malheureusement, il faut le dire, cette dernière est actuellement une cacophonie."
+                   "  " G:+sbeg:+pro " cherche donc à recomposer l’Univers pour lui donner de l’ordre."
+  end
+end
+
+attribute DivineAllegiance Mazes
+begin
+  translation fr "Labyrinthes"
+  translation en "Mazes"
+  translation eo "Labirintoj"
+end
+
+element MazesDescription
+begin
+  let G be player with attribute Specy as God
+                  with attribute DivineAllegiance as Mazes
+  provide immediate event to G
+  begin
+    event Description
+    assume no event Personnal to P before
+    translation fr G:+sbeg " est la divinité des labyrinthes et des âmes perdues."
+                   "  " G:+sbeg:+pro " vient en aide à tous ceux en face de choix qui les mènent vers l’inconnu, afin de les guider."
+                   "  En parallèle, " G:+pro " invite tout le monde à se mettre dans une telle situation."
+                   "  Le savoir est une malédiction car il gâche la surprise finale."
+  end
+end
+
+attribute DivineAllegiance TheTrueOne
+begin
+  translation fr "L’Unique"
+  translation en "The True One"
+  translation eo "La Nurnura"
+end
+
+element TheTrueOneDescription
+begin
+  let G be player with attribute Specy as God
+                  with attribute DivineAllegiance as TheTrueOne
+  provide immediate event to G
+  begin
+    event Description
+    assume no event Personnal to P before
+    translation fr G:+sbeg " est l’Unique Vraie Divinité de cet Univers."
+                   "  C’est l’Univers tout entier."
+                   "  " G:+sbeg:+pro " est présent partout."
+                   "  " G:+sbeg:+pro " observe."
+                   "  " G:+sbeg:+pro " sait."
+                   "  " G:+sbeg:+pro " guide."
+  end
+end
+
+
+(* * Interactions between gods *)
+
+element WarBetweenGod
+begin
+  let A be player with attribute Specy as God
+  let B be player with attribute Specy as God
+  let any other player be with attribute Specy not as God
+
+  provide relation between A and B as hate
+
+  provide strict contact Goal between A and B as Harm
+
+  (* TODO: An event stating that A and B always fought each others. *)
 end
 

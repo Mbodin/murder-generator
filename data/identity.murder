@@ -13,7 +13,9 @@ begin
   translation eo "jes"
 end
 
-declare event Personal
+declare event Personal (* An event personnally involving a character. *)
+
+declare event Description (* Simple description of a character. *)
 
 declare event Birth
 begin

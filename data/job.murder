@@ -16,7 +16,7 @@ begin
 
   translation fr:nom:sin:fem "une commerçante"
   translation fr:nom:sin:mas "un commerçant"
-  translation fr:nom:sin:def:fem "la commerçante"
+  translation fr:nom:def:sin:fem "la commerçante"
   translation fr:nom:def:sin:mas "le commerçant"
   translation fr:nom:plu:fem "des commerçantes"
   translation fr:nom:plu:-fem:+mas "des commerçants"

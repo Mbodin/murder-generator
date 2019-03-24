@@ -64,23 +64,26 @@ let empty_block = {
 
 type state = {
     category_names : string Utils.Id.map (** All declared category names. **) ;
+    event_names : string Utils.Id.map (** All declared event names. **) ;
     elements_names : string Utils.Id.map (** All declared element names. **) ;
     constructor_information : State.constructor_maps (** The constructor maps. **) ;
     (* LATER: There may be a way to factorise these dependency structures *)
-    category_dependencies :
-      (Utils.Id.t, Utils.Id.t Utils.PSet.t) PMap.t
+    category_dependencies : (Utils.Id.t, Utils.Id.t Utils.PSet.t) PMap.t
       (** For each category, associates its set of category dependencies.
        * Note that this list is global: it also comprises the dependencies
        * of each dependencies, and so on. **) ;
-    attribute_dependencies :
-      (State.attribute, Utils.Id.t Utils.PSet.t) PMap.t
+    attribute_dependencies : (State.attribute, Utils.Id.t Utils.PSet.t) PMap.t
       (** Similarly, the dependencies of each attribute. **) ;
-    constructor_dependencies :
-      (State.constructor, Utils.Id.t Utils.PSet.t) PMap.t
+    constructor_dependencies : (State.constructor, Utils.Id.t Utils.PSet.t) PMap.t
       (** Similarly, the dependencies of each constructor. **) ;
-    elements_dependencies :
-      (Utils.Id.t, Utils.Id.t Utils.PSet.t) PMap.t
+    elements_dependencies : (Utils.Id.t, Utils.Id.t Utils.PSet.t) PMap.t
       (** Similarly, the dependencies of each element. **) ;
+    event_dependencies : (Utils.Id.t, Utils.Id.t Utils.PSet.t) PMap.t
+      (** Similarly, the (category) dependencies of each events. **) ;
+    event_event_dependencies : (Utils.Id.t, Utils.Id.t Utils.PSet.t) PMap.t
+      (** Events introduce a second level of graphs, as events also
+       * depend on other events.
+       * This is what this map stores. **) ;
     elements : (Utils.Id.t, Element.t) PMap.t ;
     translations : Translation.element
   }
@@ -89,28 +92,43 @@ type intermediary = {
     current_state : state ; (** The current state. **)
     categories_to_be_defined :
       (Utils.Id.t, Utils.Id.t Utils.PSet.t
+                   * Utils.Id.t Utils.PSet.t
                    * State.attribute Utils.PSet.t
                    * State.constructor Utils.PSet.t) PMap.t
       (** The set of categories expected to be declared.
        * For each of these, we also put thee sets to which the category dependencies
        * should be attached: they are respectively the set of category identifiers,
-       * of attributes, and of constructors. **) ;
+       * of events, of attributes, and of constructors. **) ;
+    events_to_be_defined : (Utils.Id.t, Utils.Id.t Utils.PSet.t) PMap.t
+      (** Similarly, the set of events to be declared.
+       * For each event, we also associate the other events depending on it. **) ;
     attributes_to_be_defined :
       (State.attribute, State.constructor Utils.PSet.t) PMap.t
       (** Similarly, the set of attributes expected to be declared and their
        * dependent constructors. **) ;
+    constructors_to_be_defined : State.constructor Utils.PSet.t
+      (** A set of constructors expected to be defined. **) ;
+    tags_to_be_defined : (Translation.language * Translation.tag) Utils.PSet.t
+      (** Similarly, a set of tags expected to be defined. **) ;
+    declared_tags : (Translation.language * Translation.tag) Utils.PSet.t
+      (** In contrary to categories, attributes, and constructors,
+       * tags are not associated any information.
+       * We thus need to explicitely track which were defined. **) ;
     waiting_elements : (Utils.Id.t * string * block) list
       (** An element, waiting to be treated. **)
   }
 
 let empty_state = {
     category_names = Utils.Id.map_create () ;
+    event_names = Utils.Id.map_create () ;
     elements_names = Utils.Id.map_create () ;
     constructor_information = State.empty_constructor_maps ;
     category_dependencies = PMap.empty ;
     attribute_dependencies = PMap.empty ;
     constructor_dependencies = PMap.empty ;
     elements_dependencies = PMap.empty ;
+    event_dependencies = PMap.empty ;
+    event_event_dependencies = PMap.empty ;
     elements = PMap.empty ;
     translations = Translation.empty_element
   }
@@ -118,7 +136,11 @@ let empty_state = {
 let empty_intermediary = {
     current_state = empty_state ;
     categories_to_be_defined = PMap.empty ;
+    events_to_be_defined = PMap.empty ;
     attributes_to_be_defined = PMap.empty ;
+    constructors_to_be_defined = Utils.PSet.empty ;
+    tags_to_be_defined = Utils.PSet.empty ;
+    declared_tags = Utils.PSet.empty ;
     waiting_elements = []
   }
 
@@ -127,6 +149,12 @@ let categories_to_be_defined i =
       Utils.assert_option __LOC__
         (Utils.Id.map_inverse i.current_state.category_names id))
     (Utils.PSet.domain i.categories_to_be_defined)
+
+let events_to_be_defined i =
+  Utils.PSet.map (fun id ->
+      Utils.assert_option __LOC__
+        (Utils.Id.map_inverse i.current_state.event_names id))
+    (Utils.PSet.domain i.events_to_be_defined)
 
 let attributes_to_be_defined i =
   Utils.PSet.partition_map (function
@@ -140,9 +168,43 @@ let attributes_to_be_defined i =
             i.current_state.constructor_information.State.contact id)))
     (Utils.PSet.domain i.attributes_to_be_defined)
 
+let constructors_to_be_defined i =
+  Utils.PSet.partition_map (function
+      | State.PlayerConstructor c ->
+        let i = i.current_state.constructor_information.State.player in
+        let a =
+          Utils.assert_option __LOC__
+            (State.PlayerAttribute.constructor_attribute i c) in
+        let a =
+          Utils.assert_option __LOC__
+            (State.PlayerAttribute.attribute_name i a) in
+        let c =
+          Utils.assert_option __LOC__
+            (State.PlayerAttribute.constructor_name i c) in
+        Utils.Left (a, c)
+      | State.ContactConstructor c ->
+        let i = i.current_state.constructor_information.State.contact in
+        let a =
+          Utils.assert_option __LOC__
+            (State.ContactAttribute.constructor_attribute i c) in
+        let a =
+          Utils.assert_option __LOC__
+            (State.ContactAttribute.attribute_name i a) in
+        let c =
+          Utils.assert_option __LOC__
+            (State.ContactAttribute.constructor_name i c) in
+        Utils.Right (a, c)) i.constructors_to_be_defined
+
+let tags_to_be_defined i =
+  Utils.PSet.map (fun (lg, tag) ->
+    (Translation.iso639 lg, Translation.print_tag tag)) i.tags_to_be_defined
+
 let is_intermediary_final i =
   PMap.is_empty i.categories_to_be_defined
+  && PMap.is_empty i.events_to_be_defined
   && PMap.is_empty i.attributes_to_be_defined
+  && Utils.PSet.is_empty i.constructors_to_be_defined
+  && Utils.PSet.is_empty i.tags_to_be_defined
 
 let all_categories i =
   Utils.Id.map_fold (fun _ id l -> id :: l) [] i.category_names
@@ -182,7 +244,7 @@ exception DefinedTwice of string * string * string option
 
 exception Undeclared of string * string * string option
 
-exception CircularDependency of string
+exception CircularDependency of string * string
 
 exception SelfRelation of string * string
 
@@ -266,6 +328,24 @@ let category_names_to_dep_dep throw state l =
   let (category_names, s) = category_names_to_id_set state l in
   (category_names, dependencies_of_dependencies throw state s)
 
+(** The corresponding three functions, but for the event graph. **)
+
+let event_names_to_id_set state l =
+  List.fold_left (fun (event_names, s) name ->
+      let (id, event_names) = Utils.Id.map_insert_t event_names name in
+      (event_names, Utils.PSet.add id s))
+    (state.event_names, Utils.PSet.empty) l
+
+let event_dependencies_of_dependencies state s =
+  Utils.PSet.merge s
+   (Utils.PSet.flatten (Utils.PSet.map (fun id ->
+     try PMap.find id state.event_event_dependencies
+     with Not_found -> Utils.PSet.empty) s))
+
+let event_names_to_dep_dep state l =
+  let (event_names, s) = event_names_to_id_set state l in
+  (event_names, event_dependencies_of_dependencies state s)
+
  (** Some subfunctions of [prepare_declaration] and [parse_element] use similar
  * functions, only depending on whether called on attributes or contacts.
  * The following tuples store each instantiations of the needed functions. **)
@@ -296,6 +376,10 @@ let contact_functions =
 let category_exists state id =
   PMap.mem id state.category_dependencies
 
+(** States whether an event has been defined. **)
+let event_exists state id =
+  PMap.mem id state.event_dependencies
+
 (** States whether an attribute has been defined. **)
 let attribute_exists state id =
   PMap.mem id state.attribute_dependencies
@@ -303,7 +387,10 @@ let attribute_exists state id =
 (** This function parses basically everything but elements in a declaration. **)
 let prepare_declaration i =
   (** Updates the given dependencies [dependencies] by adding the set of
-   * categories [deps] to the set [ldeps] of objects. **)
+   * categories [deps] to the set [ldeps] of items.
+   * Each [ldeps] have thus already been declared when calling this function,
+   * just that due to missing dependencies, their dependencies need to be extended
+   * by [deps]. **)
   let update_dependencies dependencies ldeps deps =
     Utils.PSet.fold (fun o dependencies ->
         let s =
@@ -322,9 +409,21 @@ let prepare_declaration i =
         let sets =
           try PMap.find c categories_to_be_defined
           with Not_found ->
-            (Utils.PSet.empty, Utils.PSet.empty, Utils.PSet.empty) in
+            (Utils.PSet.empty, Utils.PSet.empty,
+             Utils.PSet.empty, Utils.PSet.empty) in
         PMap.add c (update sets) categories_to_be_defined)
       i.categories_to_be_defined deps in
+  (** Similar to [update_categories_to_be_defined], but for the event-dependency
+   * gtaph. **)
+  let update_events_to_be_defined deps update =
+    Utils.PSet.fold (fun ev events_to_be_defined ->
+      if event_exists i.current_state ev then events_to_be_defined
+      else
+        let sets =
+          try PMap.find ev events_to_be_defined
+          with Not_found -> Utils.PSet.empty in
+        PMap.add ev (update sets) events_to_be_defined)
+      i.events_to_be_defined deps in
   (** Declare attribute and contact instances.
    * See the declarations [attribute_functions] and [contact_functions]
    * to understand the large tuple argument. **)
@@ -345,9 +444,10 @@ let prepare_declaration i =
     (** We inform each undefined category that this attribute and its dependencies
      * depends on it. **)
     let categories_to_be_defined =
-      update_categories_to_be_defined deps (fun (cats, attrs, constrs) ->
-        (cats, Utils.PSet.add id attrs, Utils.PSet.merge constrs constr_deps)) in
-    (** We also update each dependent constructors **)
+      update_categories_to_be_defined deps (fun (cats, events, attrs, constrs) ->
+        (cats, events,
+         Utils.PSet.add id attrs, Utils.PSet.merge constrs constr_deps)) in
+    (** We also update each constructors depending on this instance. **)
     let constructor_dependencies =
       update_dependencies i.current_state.constructor_dependencies
         constr_deps deps in
@@ -393,11 +493,19 @@ let prepare_declaration i =
       declare (extract i.current_state.constructor_information) attribute_name in
     let (id, state) =
       declare_constructor state attribute constructor in
-    let state =
-      List.fold_left (fun state constructor' ->
-        let (id', state) = declare_constructor state attribute constructor' in
-        (* TODO: Enforce that [constructor'] is or will be defined. *)
-        declare_compatibility state attribute id id') state block.compatible_with in
+    let constructors_to_be_defined =
+      let id = constructor_constructor id in
+      Utils.PSet.remove id i.constructors_to_be_defined in
+    let (state, constructors_to_be_defined) =
+      List.fold_left (fun (state, constructors_to_be_defined) constructor' ->
+          let (id', state) = declare_constructor state attribute constructor' in
+          let constructors_to_be_defined =
+            let id' = constructor_constructor id' in
+            if PMap.mem id' i.current_state.constructor_dependencies then
+              constructors_to_be_defined
+            else Utils.PSet.add id' constructors_to_be_defined in
+          (declare_compatibility state attribute id id', constructors_to_be_defined))
+        (state, constructors_to_be_defined) block.compatible_with in
     let id = constructor_constructor id in
     let attribute = attribute_constructor attribute in
     if PMap.mem id i.current_state.constructor_dependencies then
@@ -421,23 +529,28 @@ let prepare_declaration i =
     (** We inform each undefined category that this attribute and its dependencies
      * depends on it. **)
     let categories_to_be_defined =
-      update_categories_to_be_defined deps (fun (cats, attrs, constrs) ->
-        (cats, attrs, Utils.PSet.add id constrs)) in
-    let translations =
+      update_categories_to_be_defined deps (fun (cats, events, attrs, constrs) ->
+        (cats, events, attrs, Utils.PSet.add id constrs)) in
+    let (translations, tags_to_be_defined) =
       let translations =
         Translation.gadd i.current_state.translations.Translation.constructor
           Translation.generic [] id constructor in
-      List.fold_left (fun translations tr ->
+      List.fold_left (fun (translations, tags_to_be_defined) tr ->
           let (lg, tags, items) = tr in
           let str =
             String.concat "" (List.map (function
               | Translation.Direct str -> str
               | _ ->
                 raise (TranslationError (en, constructor, tr))) items) in
-          try Translation.gadd translations lg tags id str
+          try (Translation.gadd translations lg tags id str,
+               List.fold_left (fun tags_to_be_defined (_, tag) ->
+                   if Utils.PSet.mem (lg, tag) i.declared_tags then
+                     tags_to_be_defined
+                   else Utils.PSet.add (lg, tag) tags_to_be_defined)
+                 tags_to_be_defined tags)
           with Translation.ConflictingCommands _ ->
             raise (TranslationError (en, constructor, tr)))
-        translations block.translation in
+        (translations, i.tags_to_be_defined) block.translation in
     let add =
       List.fold_left (fun add (lg, tag) ->
           let s =
@@ -448,6 +561,8 @@ let prepare_declaration i =
     { i with
         categories_to_be_defined = categories_to_be_defined ;
         attributes_to_be_defined = attributes_to_be_defined ;
+        constructors_to_be_defined = constructors_to_be_defined ;
+        tags_to_be_defined = tags_to_be_defined ;
         current_state =
           { i.current_state with
               constructor_information =
@@ -477,25 +592,29 @@ let prepare_declaration i =
     if category_exists i.current_state id then
       raise (DefinedTwice ("category", name, None)) ;
     if Utils.PSet.mem id deps then
-      raise (CircularDependency name) ;
+      raise (CircularDependency ("category", name)) ;
     (** We consider each elements dependent on this category. **)
-    let (cat_dep, att_dep, constr_dep) =
+    let (cat_dep, event_dep, att_dep, constr_dep) =
       try PMap.find id i.categories_to_be_defined
-      with Not_found -> (Utils.PSet.empty, Utils.PSet.empty, Utils.PSet.empty) in
+      with Not_found ->
+        (Utils.PSet.empty, Utils.PSet.empty, Utils.PSet.empty, Utils.PSet.empty) in
     (** We inform each undefined category that this category and its dependencies
      * depends on it. **)
     let categories_to_be_defined =
-      update_categories_to_be_defined deps (fun (cats, attrs, constrs) ->
+      update_categories_to_be_defined deps (fun (cats, events, attrs, constrs) ->
         (Utils.PSet.add id (Utils.PSet.merge cats cat_dep),
+         Utils.PSet.merge events event_dep,
          Utils.PSet.merge attrs att_dep,
          Utils.PSet.merge constrs constr_dep)) in
     let categories_to_be_defined =
       PMap.remove id categories_to_be_defined in
-    (** We propagate the local dependencies to all elements that waited to know
+    (** We propagate the local dependencies to all items that waited to know
      * about them. **)
     let category_dependencies =
       update_dependencies (PMap.add id deps i.current_state.category_dependencies)
         cat_dep deps in
+    let event_dependencies =
+      update_dependencies i.current_state.event_dependencies event_dep deps in
     let attribute_dependencies =
       update_dependencies i.current_state.attribute_dependencies att_dep deps in
     let constructor_dependencies =
@@ -521,6 +640,7 @@ let prepare_declaration i =
           { i.current_state with
               category_names = category_names ;
               category_dependencies = category_dependencies ;
+              event_dependencies = event_dependencies ;
               attribute_dependencies = attribute_dependencies ;
               constructor_dependencies = constructor_dependencies ;
               translations =
@@ -540,9 +660,56 @@ let prepare_declaration i =
         current_state =
           { i.current_state with elements_names = elements } }
   | Ast.DeclareCase (lang, tag) ->
-    i (* TODO *)
+    if Utils.PSet.mem (lang, tag) i.declared_tags then
+      raise (DefinedTwice ("tag", Translation.print_tag tag,
+                           Some (Translation.iso639 lang))) ;
+    { i with
+        declared_tags = Utils.PSet.add (lang, tag) i.declared_tags ;
+        tags_to_be_defined = Utils.PSet.remove (lang, tag) i.tags_to_be_defined }
   | Ast.DeclareEventKind (kind, block) ->
-    i (* TODO *)
+    let block =
+      convert_block kind [OfCategory; EventKind] block in
+    let (category_names, deps) =
+      category_names_to_dep_dep false i.current_state block.of_category in
+    let (event_names, event_deps) =
+      event_names_to_dep_dep i.current_state block.event_kind in
+    let (id, event_names) =
+      Utils.Id.map_insert_t event_names kind in
+    if event_exists i.current_state id then
+      raise (DefinedTwice ("event", kind, None)) ;
+    if Utils.PSet.mem id event_deps then
+      raise (CircularDependency ("event", kind)) ;
+    let event_dep =
+      try PMap.find id i.events_to_be_defined
+      with Not_found -> Utils.PSet.empty in
+    (** We inform each relevant undefined category and event that this event
+     * and its dependencies depends on them. **)
+    let categories_to_be_defined =
+      update_categories_to_be_defined deps (fun (cats, events, attrs, constrs) ->
+        (cats, Utils.PSet.add id events, attrs, constrs)) in
+    let events_to_be_defined =
+      update_events_to_be_defined event_deps (fun events ->
+        Utils.PSet.add id (Utils.PSet.merge events event_dep)) in
+    let events_to_be_defined =
+      PMap.remove id events_to_be_defined in
+    (** We propagate the local dependencies (in both graphs) to all events that
+     * waited to know about them. **)
+    let event_dependencies =
+      update_dependencies
+        (PMap.add id deps i.current_state.event_dependencies) event_dep deps in
+    let event_event_dependencies =
+      update_dependencies
+        (PMap.add id event_deps i.current_state.event_event_dependencies)
+        event_dep event_deps in
+    { i with
+        categories_to_be_defined = categories_to_be_defined ;
+        events_to_be_defined = events_to_be_defined ;
+        current_state =
+          { i.current_state with
+              category_names = category_names ;
+              event_names = event_names ;
+              event_dependencies = event_dependencies ;
+              event_event_dependencies = event_event_dependencies } }
 
 let prepare_declarations i l =
   List.fold_left prepare_declaration i l

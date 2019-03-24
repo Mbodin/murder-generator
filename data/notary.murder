@@ -9,11 +9,13 @@ end
 declare event MoneyExchange
 begin
   event Personal
+  category Money
 end
 
 declare event GotRich
 begin
   event Personal
+  category Money
 end
 
 declare attribute Richness

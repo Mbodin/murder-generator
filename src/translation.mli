@@ -28,6 +28,9 @@ type command = bool option * tag
  * Tags are expressed as any lowercase string and depends on the language. **)
 val get_tag : string -> tag
 
+(** Export back a tag. **)
+val print_tag : tag -> string
+
 (** A type to store informations about translations for a given type.
  * It is a simple representation: for each language, we can get a
  * translation of the stored objects. **)

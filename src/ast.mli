@@ -118,6 +118,9 @@ type command =
 (** Provide an event of this kind to these players. **)
 and provide_event =
   History.event_type * string list * block
+  (** Provides an event to a list of player.
+   * Accepts the following commands: [Translation], [EventKind],
+   * and [EventConstraint]. **)
 
 (** A block that provides commands to a declaration.
  * Note that not all blocks can accept any kinds of commands: a post-parsing
@@ -133,16 +136,18 @@ type declaration =
   | DeclareConstructor of attribute_kind * string * string * block
     (** Declare a attribute’s constructor.
      * Accepts the following commands: [OfCategory], [Translation],
-     * [Add], and [CompatibleWith]. *)
+     * [Add], and [CompatibleWith]. **)
   | DeclareCategory of string * block
     (** Declare a category.
      * Only expects commands of the form [OfCategory] and [Translation]. **)
   | DeclareElement of string * block
     (** Declare an element.
      * Accepts the following commands: [LetPlayer], [OfCategory],
-     * [ProvideRelation], [ProvideAttribute], and [ProvideContact]. **)
+     * [ProvideRelation], [ProvideAttribute], [ProvideContact], and
+     * [ProvideEvent]. **)
   | DeclareCase of Translation.language * Translation.tag
     (** Declare a grammatical case for a language. **)
   | DeclareEventKind of string * block
-    (** Declare an event kind. **)
+    (** Declare an event kind.
+     * Accepts the following commands: [OfCategory] and [EventKind]. **)
 

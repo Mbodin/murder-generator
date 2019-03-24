@@ -11,6 +11,7 @@ let iso639 = Utils.id
 let from_iso639 = Utils.id
 
 let get_tag = Utils.id
+let print_tag = Utils.id
 
 type 'a t = ('a * language, string) PMap.t
 

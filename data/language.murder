@@ -115,14 +115,14 @@ begin
   translation eo:pro:sin:mas:acc "lin"
   translation eo:pro:sin:fem:acc "ŝin"
   translation eo:pro:plu:acc "ilin"
-  translation eo:sben:pro:sin "Ĝi"
-  translation eo:sben:pro:sin:mas "Li"
-  translation eo:sben:pro:sin:fem "Ŝi"
-  translation eo:sben:pro:plu "Ili"
-  translation eo:sben:pro:sin:acc "Ĝin"
-  translation eo:sben:pro:sin:mas:acc "Lin"
-  translation eo:sben:pro:sin:fem:acc "Ŝin"
-  translation eo:sben:pro:plu:acc "Ilin"
+  translation eo:sbeg:pro:sin "Ĝi"
+  translation eo:sbeg:pro:sin:mas "Li"
+  translation eo:sbeg:pro:sin:fem "Ŝi"
+  translation eo:sbeg:pro:plu "Ili"
+  translation eo:sbeg:pro:sin:acc "Ĝin"
+  translation eo:sbeg:pro:sin:mas:acc "Lin"
+  translation eo:sbeg:pro:sin:fem:acc "Ŝin"
+  translation eo:sbeg:pro:plu:acc "Ilin"
 end
 
 element NormalGrammar

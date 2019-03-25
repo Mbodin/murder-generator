@@ -51,7 +51,7 @@ type ('a, 'b) st
  * the overall translation. **)
 type 'b sitem =
   | Direct of string (** A direct translation given as a string **)
-  | Variable of 'b * tag Utils.PSet.t * tag Utils.PSet.t * tag Utils.PSet.t
+  | Variable of 'b * tag PSet.t * tag PSet.t * tag PSet.t
     (** A variable, which is supposed associated with its own translations.
      * The variable is associates three sets:
      * - the first one is the constraints over the variable,
@@ -100,11 +100,11 @@ val force_translate : 'a t -> language -> 'a -> string
 
 (** Translation functions involving grammar have the following type.
  * See [gtranslate] for more details. **)
-type translation_function = tag Utils.PSet.t -> (string * tag Utils.PSet.t) option
+type translation_function = tag PSet.t -> (string * tag PSet.t) option
 
 (** An alternative to [translation_function] where the function uses heuristics
  * to always return a result. **)
-type complete_translation_function = tag Utils.PSet.t -> string * tag Utils.PSet.t
+type complete_translation_function = tag PSet.t -> string * tag PSet.t
 
 (** Translates an object to a given language.
  * Each tag associated with the return value is assured to be given as argument.
@@ -128,10 +128,10 @@ val gforce_translate : 'a gt -> language -> 'a -> complete_translation_function
 (** Like [gtranslate] but for sentences.
  * It is supposed to be given a translation function for the variables, as well
  * as a function providing for each variable its natural tags. **)
-val stranslate : ('a, 'b) st -> language -> ('b -> tag Utils.PSet.t) -> ('b -> translation_function) -> 'a -> translation_function
+val stranslate : ('a, 'b) st -> language -> ('b -> tag PSet.t) -> ('b -> translation_function) -> 'a -> translation_function
 
 (** Similar to [stranslate], but never fails. **)
-val sforce_translate : ('a, 'b) st -> language -> ('b -> tag Utils.PSet.t) -> ('b -> complete_translation_function) -> 'a -> complete_translation_function
+val sforce_translate : ('a, 'b) st -> language -> ('b -> tag PSet.t) -> ('b -> complete_translation_function) -> 'a -> complete_translation_function
 
 (** [from_json fileName fileContent] reads the [fileContent] string as a
  * JSON object representing translations in different languages.
@@ -141,10 +141,10 @@ val from_json : string -> string -> string t * language list
 
 (** A type to store each notion used in elements. **)
 type element = {
-    category : Utils.Id.t t (** The translations of categories. **) ;
+    category : Id.t t (** The translations of categories. **) ;
     attribute : State.attribute t (** The translations of attributes. **) ;
     constructor : State.constructor gt (** The translations of constructors. **) ;
-    add : (State.constructor * language, tag Utils.PSet.t) PMap.t
+    add : (State.constructor * language, tag PSet.t) PMap.t
       (** For each constructor and language, provides a set of added tags. **)
   }
 

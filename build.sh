@@ -21,7 +21,7 @@ else
     # It is generally a good thing to do it before committing.
     if [ $1 = "checkout" ]
     then
-      git checkout src/murderFiles.ml src/usedTranslations.ml web/main.js
+      git checkout dummy/murderFiles.ml dummy/usedTranslations.ml web/main.js
       exit 0
     else
       CHECK="false"
@@ -41,14 +41,14 @@ else
   then
     if [ $CHECK = "true" ]
     then
-      grep '^let .* = \[\]$' src/murderFiles.ml && echo "${COLOR}File $1 was safe.${ROLOC}" || (echo "${COLOR}Unsafe file $1.${ROLOC}"; exit 1)
+      grep '^let .* = \[\]$' dummy/murderFiles.ml && echo "${COLOR}File $1 was safe.${ROLOC}" || (echo "${COLOR}Unsafe file $1.${ROLOC}"; exit 1)
     fi
 
     echo "${COLOR}Creating $1 from actual content…${ROLOC}"
 
-    # Overwriting the dummy file [src/murderFiles.ml] with the actual real content.
+    # Overwriting the dummy file [dummy/murderFiles.ml] with the actual real content.
     # As this overwrites a committed file, please only do that on deployment.
-    echo "let files = [\n`ls data/*.murder | sed -e 's/\\(.*\\)/    \"\\1\" ;/'`\n  ]" > src/murderFiles.ml
+    echo "let files = [\n`ls data/*.murder | sed -e 's/\\(.*\\)/    \"\\1\" ;/'`\n  ]" > dummy/murderFiles.ml
 
     echo "${COLOR}Done.${ROLOC}"
     exit 0
@@ -58,15 +58,15 @@ else
   then
     if [ $CHECK = "true" ]
     then
-      grep '^let .* = \[\]$' src/usedTranslations.ml && echo "${COLOR}File $1 was safe.${ROLOC}" || (echo "${COLOR}Unsafe file $1.${ROLOC}"; exit 1)
+      grep '^let .* = \[\]$' dummy/usedTranslations.ml && echo "${COLOR}File $1 was safe.${ROLOC}" || (echo "${COLOR}Unsafe file $1.${ROLOC}"; exit 1)
     fi
 
     echo "${COLOR}Creating $1 from actual content…${ROLOC}"
 
-    # Overwriting the dummy file [src/usedTranslations.ml] with the actually
+    # Overwriting the dummy file [dummy/usedTranslations.ml] with the actually
     # used translations.
     # As this overwrites a committed file, please only do that on deployment.
-    echo "let used = [\n`grep -o 'get_translation \"[^\"]*\"' src/main.ml | sed -e 's/get_translation \\(\"[^\"]*\"\\)/    \\1 ;/'`\n  ]" > src/usedTranslations.ml
+    echo "let used = [\n`grep -o 'get_translation \"[^\"]*\"' src/main.ml | sed -e 's/get_translation \\(\"[^\"]*\"\\)/    \\1 ;/'`\n  ]" > dummy/usedTranslations.ml
 
     echo "${COLOR}Done.${ROLOC}"
     exit 0
@@ -89,7 +89,7 @@ fi
 
 # Compile to bytecode
 echo "${COLOR}Compiling to bytecode as $TARGET.byte…${ROLOC}"
-ocamlbuild -use-ocamlfind -I src \
+ocamlbuild -use-ocamlfind -Is src,lib,dummy \
            -pkgs extlib,yojson,lwt,lwt_ppx,js_of_ocaml,js_of_ocaml-lwt,js_of_ocaml-ppx,ppx_deriving,js_of_ocaml-ppx.deriving,js_of_ocaml.deriving \
            -use-menhir -menhir "menhir --explain" \
            -tags "optimize(3)$DEBUGFLAG" \

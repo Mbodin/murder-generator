@@ -1,7 +1,7 @@
 (** Module History
  * Stores the history of a character. **)
 
-type character = Utils.Id.t
+type character = Id.t
 
 (** The result of an event. **)
 type result =

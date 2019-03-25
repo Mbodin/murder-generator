@@ -17,7 +17,7 @@ let translate_value s f v =
     let tr = s.translation.Translation.constructor in
     let v = Utils.select_any l in
     let v = f v in
-    fst (Translation.gforce_translate tr s.language v Utils.PSet.empty) in
+    fst (Translation.gforce_translate tr s.language v PSet.empty) in
   match v with
   | State.Fixed_value (l, strict) -> tr l
   | State.One_value_of l -> tr l
@@ -33,7 +33,7 @@ let negative s v =
   List.mem trv ["False"; "None"; "Absent"; "Undefined"]
 
 let to_graphviz s =
-  let player_node c = "player" ^ string_of_int (Utils.Id.to_array c) in
+  let player_node c = "player" ^ string_of_int (Id.to_array c) in
   let cst = State.get_character_state s.state in
   let get_color s =
     let n = float_of_int (Hashtbl.hash s mod 1000) /. 1000. in
@@ -44,7 +44,7 @@ let to_graphviz s =
       "  node [shape=record]" ; "" ;
       (** Declaring each player **)
       String.concat "\n" (List.mapi (fun c name ->
-        let c = Utils.Id.from_array c in
+        let c = Id.from_array c in
         "  " ^ player_node c ^ " [label=\"{"
         ^ name ^ "|"
         ^ String.concat "|" (PMap.foldi (fun a v l ->
@@ -55,7 +55,7 @@ let to_graphviz s =
         ^ "}\"]") s.names) ; "" ;
       (** Declaring their relations **)
       String.concat "\n" (List.concat (List.mapi (fun c _ ->
-        let c = Utils.Id.from_array c in
+        let c = Id.from_array c in
         PMap.foldi (fun c' lv l ->
           List.map (fun (a, v) ->
             let tra = translate_attribute s (State.ContactAttribute a) in
@@ -73,7 +73,7 @@ let to_json s =
   let cst = State.get_character_state s.state in
   let rst = State.get_relation_state s.state in
   Yojson.Safe.to_string ~std:true (`List (List.mapi (fun c name ->
-    let c = Utils.Id.from_array c in `Assoc [
+    let c = Id.from_array c in `Assoc [
         ("name", `String name) ;
         ("attributes", `Assoc (PMap.foldi (fun a v l ->
              let tra = translate_attribute s (State.PlayerAttribute a) in
@@ -81,14 +81,14 @@ let to_json s =
              (tra, `String trv) :: l)
            (State.get_all_attributes_character cst c) [])) ;
         ("contacts", `List (List.mapi (fun c' _ ->
-          let c' = Utils.Id.from_array c' in
+          let c' = Id.from_array c' in
           `Assoc (List.map (fun (a, v) ->
               let tra = translate_attribute s (State.ContactAttribute a) in
               let trv = translate_value s (fun v -> State.ContactConstructor v) v in
               (tra, `String trv))
             (State.get_all_contact_character cst c c'))) s.names)) ;
         ("relations", `List (Utils.list_fold_lefti (fun c' l _ ->
-          let c' = Utils.Id.from_array c' in
+          let c' = Id.from_array c' in
           let r = State.read_relation s.state c c' in
           if c <= c' then l
           else `String (Relation.to_string r) :: l) [] s.names)) ;
@@ -103,7 +103,7 @@ let from_json m fileName fileContent =
     let state = State.create_state (List.length l) in
     let (names, state) =
       Utils.list_fold_lefti (fun c (names, state) ->
-        let c = Utils.Id.from_array c in function
+        let c = Id.from_array c in function
         | `Assoc l ->
           let name =
             try
@@ -161,7 +161,7 @@ let from_json m fileName fileContent =
           let state =
             let contacts = get_field_list "contacts" in
             Utils.list_fold_lefti (fun c' state ->
-              let c' = Utils.Id.from_array c' in function
+              let c' = Id.from_array c' in function
               | `Assoc l ->
                 List.fold_left (fun state -> function
                   | (attribute, `String v) ->
@@ -184,7 +184,7 @@ let from_json m fileName fileContent =
           let state =
             let relations = get_field_list "relations" in
             Utils.list_fold_lefti (fun c' state ->
-              let c' = Utils.Id.from_array c' in function
+              let c' = Id.from_array c' in function
               | `String r ->
                 let r = Driver.parse_relation r in
                 if c <> c' then State.write_relation state c c' r ;

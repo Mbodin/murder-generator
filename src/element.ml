@@ -2,7 +2,7 @@
 open ExtList
 
 
-type character = Utils.Id.t
+type character = Id.t
 
 type character_constraint =
   | Attribute of State.PlayerAttribute.attribute
@@ -23,18 +23,18 @@ type t = cell array * character_constraint list
 (** Returns the list of attributes provided by this cosntraint. **)
 let provided_attributes_constraint =
   let aux a = function
-    | State.Fixed_value _ -> Utils.PSet.singleton a
-    | _ -> Utils.PSet.empty in function
+    | State.Fixed_value _ -> PSet.singleton a
+    | _ -> PSet.empty in function
   | Attribute (a, v) -> aux (State.PlayerAttribute a) v
   | Contact (a, _, v) -> aux (State.ContactAttribute a) v
 
 let provided_attributes (e, other) =
   let provided_attributes_constraint_list =
     List.fold_left (fun s c ->
-      Utils.PSet.merge s (provided_attributes_constraint c)) in
-  Utils.PSet.to_list (Array.fold_left (fun s ce ->
+      PSet.merge s (provided_attributes_constraint c)) in
+  PSet.to_list (Array.fold_left (fun s ce ->
       provided_attributes_constraint_list s ce.constraints)
-    (provided_attributes_constraint_list Utils.PSet.empty other) e)
+    (provided_attributes_constraint_list PSet.empty other) e)
 
 (** States whether [v1] and [v2] are compatible and make some progress.
  * The return value is expressed as for [compatible_and_progress]:
@@ -108,7 +108,7 @@ let check_contact m inst st c con cha v1 =
   | Some cha -> check cha
   | None ->
     List.fold_left (fun acc cha ->
-      let cha = Utils.Id.to_array cha in
+      let cha = Id.to_array cha in
       merge_progress acc (check cha)) (Some false) (other_players st inst)
 
 (** As [respect_constraints], but takes an instanciation and thus also checks
@@ -135,7 +135,7 @@ let search_instantiation m st (e, other) =
   let all_players = State.all_players st in
   (** Players that can be placed as [other]. **)
   let possible_other =
-    Utils.PSet.from_list
+    PSet.from_list
       (List.filter (fun c ->
         respect_constraints m cst other [] c <> None) all_players) in
   let possible_players_progress_no_progress =
@@ -169,7 +169,7 @@ let search_instantiation m st (e, other) =
   let rec aux partial_instantiation = function
     | [] ->
       let inst =
-        let inst = Array.make (Array.length e) (Utils.Id.from_array (-1)) in
+        let inst = Array.make (Array.length e) (Id.from_array (-1)) in
         List.iteri (fun i j ->
           let i = redirection_array.(i) in
           inst.(i) <- j) (List.rev partial_instantiation) ;
@@ -179,23 +179,23 @@ let search_instantiation m st (e, other) =
        | Some progress -> Some (inst, progress))
     | i :: redirection_list ->
       let possible = possible_players.(i) in
-      let partial_instantiation_set = Utils.PSet.from_list partial_instantiation in
+      let partial_instantiation_set = PSet.from_list partial_instantiation in
       (** We remove already chosen players (a player can’t be chosen twice). **)
       let possible =
-        List.filter (fun j -> not (Utils.PSet.mem j partial_instantiation_set))
+        List.filter (fun j -> not (PSet.mem j partial_instantiation_set))
           possible in
       (** We filter out possibilities that would make further instantiations
        * impossible to satisfy the constraints on [other]. **)
       let possible =
         let possible_future =
-          Utils.PSet.flatten (Utils.PSet.from_list (List.map (fun i ->
-            Utils.PSet.from_list (possible_players.(i))) redirection_list)) in
+          PSet.flatten (PSet.from_list (List.map (fun i ->
+            PSet.from_list (possible_players.(i))) redirection_list)) in
         List.filter (fun j ->
           List.for_all (fun p ->
               p = j
-              || Utils.PSet.mem p partial_instantiation_set
-              || Utils.PSet.mem p possible_other
-              || Utils.PSet.mem p (Utils.PSet.remove j possible_future))
+              || PSet.mem p partial_instantiation_set
+              || PSet.mem p possible_other
+              || PSet.mem p (PSet.remove j possible_future))
             all_players) possible in
       let rec aux' = function
         | [] -> None (** No instantiation led to a compatible state. **)

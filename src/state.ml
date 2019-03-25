@@ -1,5 +1,5 @@
 
-type character = Utils.Id.t
+type character = Id.t
 
 type objective = {
     difficulty : int ;
@@ -29,16 +29,16 @@ let create_relation_state n =
    Array.make n zero_objective)
 
 let rec read_relation_state (a, _) c1 c2 =
-  let c1 = Utils.Id.to_array c1 in
-  let c2 = Utils.Id.to_array c2 in
+  let c1 = Id.to_array c1 in
+  let c2 = Id.to_array c2 in
   if c1 = c2 then Relation.neutral
   else if c2 > c1 then
     a.(c2 - 1).(c1)
   else Relation.reverse a.(c1 - 1).(c2)
 
 let write_relation_state (a, rs) c1 c2 r =
-  let c1 = Utils.Id.to_array c1 in
-  let c2 = Utils.Id.to_array c2 in
+  let c1 = Id.to_array c1 in
+  let c2 = Id.to_array c2 in
   let (x, y, r) =
     if c1 = c2 then
       raise SelfRelation
@@ -67,24 +67,24 @@ let add_relation_state a c1 c2 r =
     write_relation_state a c1 c2 (Relation.compose r' r)
 
 let character_complexity (_, r) c =
-  r.(Utils.Id.to_array c).complexity
+  r.(Id.to_array c).complexity
 
 let character_difficulty (_, r) c =
-  r.(Utils.Id.to_array c).difficulty
+  r.(Id.to_array c).difficulty
 
 let set_complexity (_, r) c v =
-  r.(Utils.Id.to_array c) <- { r.(Utils.Id.to_array c) with complexity = v }
+  r.(Id.to_array c) <- { r.(Id.to_array c) with complexity = v }
 
 let set_difficulty (_, r) c v =
-  r.(Utils.Id.to_array c) <- { r.(Utils.Id.to_array c) with difficulty = v }
+  r.(Id.to_array c) <- { r.(Id.to_array c) with difficulty = v }
 
 let add_complexity (_, r) c d =
-  let o = r.(Utils.Id.to_array c) in
-  r.(Utils.Id.to_array c) <- { o with complexity = d + o.complexity }
+  let o = r.(Id.to_array c) in
+  r.(Id.to_array c) <- { o with complexity = d + o.complexity }
 
 let add_difficulty (_, r) c d =
-  let o = r.(Utils.Id.to_array c) in
-  r.(Utils.Id.to_array c) <- { o with difficulty = d + o.difficulty }
+  let o = r.(Id.to_array c) in
+  r.(Id.to_array c) <- { o with difficulty = d + o.difficulty }
 
 module type Attribute = sig
     type attribute
@@ -108,12 +108,12 @@ module type Attribute = sig
 module AttributeInst () =
   struct
 
-    type attribute = Utils.Id.t
-    type constructor = Utils.Id.t
+    type attribute = Id.t
+    type constructor = Id.t
 
     type constructor_map =
-      string Utils.Id.map (** Attribute names **)
-      * (attribute * string) Utils.Id.map
+      string Id.map (** Attribute names **)
+      * (attribute * string) Id.map
           (** The map storing each constructor.
            * The attribute is part of the constructor,
            * with the constructor name. **)
@@ -123,40 +123,40 @@ module AttributeInst () =
           (** For each constructor, what are its compatibility list. **)
 
     let empty_constructor_map =
-      (Utils.Id.map_create (),
-       Utils.Id.map_create (),
+      (Id.map_create (),
+       Id.map_create (),
        PMap.empty,
        PMap.empty)
 
     let attribute_name (m, _, _, _) a =
-      Utils.Id.map_inverse m a
+      Id.map_inverse m a
 
     let constructor_name (_, m, _, _) c =
-      Option.map snd (Utils.Id.map_inverse m c)
+      Option.map snd (Id.map_inverse m c)
 
     let constructor_attribute (_, m, _, _) c =
-      Option.map fst (Utils.Id.map_inverse m c)
+      Option.map fst (Id.map_inverse m c)
 
     let constructors (_, _, m, _) a =
       try Some (PMap.find a m)
       with Not_found -> None
 
     let declare_attribute (mn, mc, al, comp) a =
-      let (a, mn) = Utils.Id.map_insert_t mn a in
+      let (a, mn) = Id.map_insert_t mn a in
       (a, (mn, mc, (if PMap.mem a al then al else PMap.add a [] al), comp))
 
     let declare_constructor (mn, mc, al, comp) a c =
-      let (c, mc) = Utils.Id.map_insert_t mc (a, c) in
+      let (c, mc) = Id.map_insert_t mc (a, c) in
       let l =
         try PMap.find a al
         with Not_found -> assert false in
       (c, (mn, mc, PMap.add a (c :: l) al, comp))
 
     let get_attribute (mn, _, _, _) a =
-      Utils.Id.get_id mn a
+      Id.get_id mn a
 
     let get_constructor (_, mc, _, _) a c =
-      Utils.Id.get_id mc (a, c)
+      Id.get_id mc (a, c)
 
     let remove_constructor m c =
       let a = Utils.assert_option __LOC__ (constructor_attribute m c) in
@@ -289,14 +289,14 @@ let create_character_state n =
   Array.init n (fun i -> (PMap.empty, PMap.empty))
 
 let get_all_attributes_character st c =
-  fst st.(Utils.Id.to_array c)
+  fst st.(Id.to_array c)
 
 let get_attribute_character st c a =
   try Some (PMap.find a (get_all_attributes_character st c))
   with Not_found -> None
 
 let write_attribute_character st c a v =
-  let c = Utils.Id.to_array c in
+  let c = Id.to_array c in
   st.(c) <- (PMap.add a v (fst st.(c)), snd st.(c))
 
 let force_get_attribute_character cm st c a =
@@ -309,11 +309,11 @@ let force_get_attribute_character cm st c a =
     v
 
 let get_contact_character st c a ct =
-  try Some (PMap.find a (PMap.find ct (snd st.(Utils.Id.to_array c))))
+  try Some (PMap.find a (PMap.find ct (snd st.(Id.to_array c))))
   with Not_found -> None
 
 let write_contact_character st c a ct v =
-  let c = Utils.Id.to_array c in
+  let c = Id.to_array c in
   let m =
     try PMap.find ct (snd st.(c))
     with Not_found -> PMap.empty in
@@ -322,11 +322,11 @@ let write_contact_character st c a ct v =
 
 let get_all_contact_character st c ct =
   Utils.pmap_to_list (
-    try PMap.find ct (snd st.(Utils.Id.to_array c))
+    try PMap.find ct (snd st.(Id.to_array c))
     with Not_found -> PMap.empty)
 
 let get_all_contacts_character st c =
-  PMap.map Utils.pmap_to_list (snd st.(Utils.Id.to_array c))
+  PMap.map Utils.pmap_to_list (snd st.(Id.to_array c))
 
 type t =
   character_state * relation_state * History.state
@@ -348,7 +348,7 @@ let get_character_state (st, _, _) = st
 
 (** Creates a list of characters from the total number of characters. **)
 let all_players_length l =
-  List.map Utils.Id.from_array (Utils.seq l)
+  List.map Id.from_array (Utils.seq l)
 
 let number_of_player (st, _, _) = Array.length st
 

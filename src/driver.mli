@@ -59,22 +59,22 @@ val empty_intermediary : intermediary
 val is_intermediary_final : intermediary -> bool
 
 (** Returns a set of missing categories. **)
-val categories_to_be_defined : intermediary -> string Utils.PSet.t
+val categories_to_be_defined : intermediary -> string PSet.t
 
 (** Returns a set of missing events. **)
-val events_to_be_defined : intermediary -> string Utils.PSet.t
+val events_to_be_defined : intermediary -> string PSet.t
 
 (** Returns a set of missing attributes and contacts. **)
-val attributes_to_be_defined : intermediary -> (string Utils.PSet.t * string Utils.PSet.t)
+val attributes_to_be_defined : intermediary -> (string PSet.t * string PSet.t)
 
 (** Returns a set of missing constructors for attributes and contacts.
  * The first element of each couple is the attribute name, then the constructor
  * name. **)
-val constructors_to_be_defined : intermediary -> ((string * string) Utils.PSet.t * (string * string) Utils.PSet.t)
+val constructors_to_be_defined : intermediary -> ((string * string) PSet.t * (string * string) PSet.t)
 
 (** Returns a set of missing tags.
  * The first element of each couple is the language code, then the tag. **)
-val tags_to_be_defined : intermediary -> (string * string) Utils.PSet.t
+val tags_to_be_defined : intermediary -> (string * string) PSet.t
 
 (** This type stores all the informations returned by [parse]. **)
 type state
@@ -85,35 +85,35 @@ type state
 val parse : intermediary -> state
 
 (** This map stores the identifiers of each element. **)
-val elements : state -> (Utils.Id.t, Element.t) PMap.t
+val elements : state -> (Id.t, Element.t) PMap.t
 
 (** Takes an element identifier as argument as returns the set of categories
  * that this element depends on. **)
-val get_element_dependencies : state -> Utils.Id.t -> Utils.Id.t list
+val get_element_dependencies : state -> Id.t -> Id.t list
 
 (** Returns all defined elements in this state that are compatible with
  * the chosen set of categories (given as identifiers) and at most this
  * number of players. **)
-val get_all_elements : state -> Utils.Id.t Utils.PSet.t -> int -> Utils.Id.t list
+val get_all_elements : state -> Id.t PSet.t -> int -> Id.t list
 
 (** Once the state has been built, categories can be listed. **)
-val all_categories : state -> Utils.Id.t list
+val all_categories : state -> Id.t list
 
 (** Takes a category identifier and returns the list of categories
  * that this category depends on. **)
-val get_category_dependencies : state -> Utils.Id.t -> Utils.Id.t Utils.PSet.t
+val get_category_dependencies : state -> Id.t -> Id.t PSet.t
 
 (** Takes an attribute and returns the list of categories
  * that this attribute depends on. **)
-val get_attribute_dependencies : state -> State.attribute -> Utils.Id.t Utils.PSet.t
+val get_attribute_dependencies : state -> State.attribute -> Id.t PSet.t
 
 (** Takes a constructor and returns the list of categories
  * that this constructor depends on. **)
-val get_constructor_dependencies : state -> State.constructor -> Utils.Id.t Utils.PSet.t
+val get_constructor_dependencies : state -> State.constructor -> Id.t PSet.t
 
 (** Takes an element identifier and returns the list of categories
  * that this element depends on. **)
-val get_element_dependencies : state -> Utils.Id.t -> Utils.Id.t Utils.PSet.t
+val get_element_dependencies : state -> Id.t -> Id.t PSet.t
 
 (** Returns the translations for elements. **)
 val get_translations : state -> Translation.element

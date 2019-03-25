@@ -3,7 +3,7 @@
  * that can explain the currently needed attributes. **)
 
 (** In this file, elements are supposed to be given as identifiers. **)
-type element = Utils.Id.t
+type element = Id.t
 
 (** A register of existing elements. **)
 type global

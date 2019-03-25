@@ -1,37 +1,37 @@
 
 type global = {
     branch_exploration : float ;
-    element_register : Element.t Utils.Id.map
+    element_register : Element.t Id.map
       (** The set of all registered elements. **) ;
     constructor_informations : State.constructor_maps
       (** Informations about constructors. **) ;
     pool_informations : Pool.global (** Informations needed by the pool. **) ;
-    all_elements : Utils.Id.t Utils.BidirectionalList.t
+    all_elements : Id.t BidirectionalList.t
       (** The list of all elements. **)
   }
 
 (** Reads the element from the register map. **)
 let read_element g e =
-  Utils.assert_option __LOC__ (Utils.Id.map_inverse g.element_register e)
+  Utils.assert_option __LOC__ (Id.map_inverse g.element_register e)
 
 let empty_global p = {
     branch_exploration = p *. p ;
-    element_register = Utils.Id.map_create () ;
+    element_register = Id.map_create () ;
     constructor_informations = State.empty_constructor_maps ;
-    all_elements = Utils.BidirectionalList.empty ;
+    all_elements = BidirectionalList.empty ;
     pool_informations = Pool.empty_global
   }
 
 let register_element g e =
-  let (eid, m) = Utils.Id.map_insert_t g.element_register e in
+  let (eid, m) = Id.map_insert_t g.element_register e in
   let attrs = Element.provided_attributes e in
   { g with element_register = m ;
-           all_elements = Utils.BidirectionalList.add_left eid g.all_elements ;
+           all_elements = BidirectionalList.add_left eid g.all_elements ;
            pool_informations = Pool.register_element g.pool_informations eid attrs }
 
 let filter_elements g f =
   let f e = f (read_element g e) in
-  { g with all_elements = Utils.BidirectionalList.filter f g.all_elements ;
+  { g with all_elements = BidirectionalList.filter f g.all_elements ;
            pool_informations =
              Pool.filter_global g.pool_informations f }
 
@@ -47,7 +47,7 @@ let evaluate_character o s c =
 
 let evaluate o s =
   Utils.array_sum (Array.mapi (fun i o ->
-    evaluate_character o s (Utils.Id.from_array i)) o)
+    evaluate_character o s (Id.from_array i)) o)
 
 let evaluate_state o s =
   evaluate o (State.get_relation_state s)
@@ -175,12 +175,12 @@ let add_random g o optimistic (s, evs) =
     let rec aux g acc = function
       | 0 -> (g, acc)
       | n ->
-        match Utils.BidirectionalList.match_left g.all_elements with
+        match BidirectionalList.match_left g.all_elements with
         | None -> (g, acc)
         | Some (e, all_elements) ->
           let g =
             { g with all_elements =
-                       Utils.BidirectionalList.add_right all_elements e } in
+                       BidirectionalList.add_right all_elements e } in
           let e = read_element g e in
           match grade g o s e with
           | None -> aux g acc (n - 1)
@@ -268,7 +268,7 @@ let final g (s, evs) o m =
       let (g, (s, evs), m, l) = aux g (s, evs) m [] l in
       repeat g (s, evs) m l (n - 1) in
   let l =
-    List.map (read_element g) (Utils.BidirectionalList.to_list g.all_elements) in
+    List.map (read_element g) (BidirectionalList.to_list g.all_elements) in
   repeat g (s, evs) m l (get_branch g 1 20)
 
 (** This function performs a simulted annealing based on [wide_step].
@@ -301,8 +301,8 @@ let wider_step g (s, evs) o m =
 
 let solve g s o =
   let g = { g with all_elements =
-    Utils.BidirectionalList.from_list (Utils.shuffle
-      (Utils.BidirectionalList.to_list g.all_elements)) } in
+    BidirectionalList.from_list (Utils.shuffle
+      (BidirectionalList.to_list g.all_elements)) } in
   let m = Element.empty_difference in
   (* TODO: Change the value of [m] to consider all the relevant elements given by
    * the constraints provided by the user. *)

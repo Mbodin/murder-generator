@@ -29,11 +29,11 @@ type 'a tree =
  * as well as a set of tag that has been added and a set of tag that
  * has been removed. **)
 type 'a gt =
-  ('a * language, (string * tag Utils.PSet.t * tag Utils.PSet.t) tree) PMap.t
+  ('a * language, (string * tag PSet.t * tag PSet.t) tree) PMap.t
 
 type 'b sitem =
   | Direct of string
-  | Variable of 'b * tag Utils.PSet.t * tag Utils.PSet.t * tag Utils.PSet.t
+  | Variable of 'b * tag PSet.t * tag PSet.t * tag PSet.t
 
 (** Splits the commands into a list of constraints (conserving the ordering),
  * a set of added tags, and a set of removed tags. **)
@@ -44,27 +44,27 @@ let splits_commands commands =
       | None -> Utils.Left tag
       | Some b -> Utils.Right (b, tag)) commands in
   let (added, removed) =
-    Utils.PSet.partition_map (fun (b, tag) ->
-      if b then Utils.Left tag else Utils.Right tag) (Utils.PSet.from_list diff) in
+    PSet.partition_map (fun (b, tag) ->
+      if b then Utils.Left tag else Utils.Right tag) (PSet.from_list diff) in
   (tags, added, removed)
 
 let variable x commands =
   let (tags, added, removed) = splits_commands commands in
-  Variable (x, Utils.PSet.from_list tags, added, removed)
+  Variable (x, PSet.from_list tags, added, removed)
 
 (** Similar to type [gt], the first set is the set of added tags and the second
  * of removed tags. **)
 type ('a, 'b) st =
-  ('a * language, ('b sitem list * tag Utils.PSet.t * tag Utils.PSet.t) tree) PMap.t
+  ('a * language, ('b sitem list * tag PSet.t * tag PSet.t) tree) PMap.t
 
-type translation_function = tag Utils.PSet.t -> (string * tag Utils.PSet.t) option
-type complete_translation_function = tag Utils.PSet.t -> string * tag Utils.PSet.t
+type translation_function = tag PSet.t -> (string * tag PSet.t) option
+type complete_translation_function = tag PSet.t -> string * tag PSet.t
 
 type element = {
-    category : Utils.Id.t t ;
+    category : Id.t t ;
     attribute : State.attribute t ;
     constructor : State.constructor gt ;
-    add : (State.constructor * language, tag Utils.PSet.t) PMap.t
+    add : (State.constructor * language, tag PSet.t) PMap.t
   }
 
 
@@ -111,7 +111,7 @@ let force_translate m lg o =
 let rec naive_search_tree tags = function
   | Leaf l -> l
   | Node (t, t1, t2) ->
-    if Utils.PSet.mem t tags then
+    if PSet.mem t tags then
       naive_search_tree tags t1
     else naive_search_tree tags t2
 
@@ -125,7 +125,7 @@ let search_tree tags =
   let rec aux ts = function
     | Leaf l -> (l, ts)
     | Node (t, t1, t2) ->
-      if Utils.PSet.mem t tags then
+      if PSet.mem t tags then
         aux (t2 :: ts) t1
       else aux ts t2 in
   aux []
@@ -139,7 +139,7 @@ let apply_tree tags f =
   | Leaf l -> f (List.rev seen) l
   | Node (t, t1, t2) ->
     let (t1, t2) =
-      if Utils.PSet.mem t tags then
+      if PSet.mem t tags then
         (aux (t :: seen) t1, t2)
       else (t1, aux (t :: seen) t2) in
     Node (t, t1, t2) in
@@ -156,7 +156,7 @@ let gadd m lg commands o str =
   let t =
     try PMap.find (o, lg) m
     with Not_found -> Leaf [] in
-  PMap.add (o, lg) (apply_tree (Utils.PSet.from_list tags) (fun seen l ->
+  PMap.add (o, lg) (apply_tree (PSet.from_list tags) (fun seen l ->
     let rec aux l = function
       | [] -> Leaf ((str, added, removed) :: l)
       | tag :: tags ->
@@ -168,7 +168,7 @@ let sadd = gadd
 
 (** Removes and adds the requested tags. **)
 let apply_patch tags added removed =
-  Utils.PSet.merge added (Utils.PSet.diff tags removed)
+  PSet.merge added (PSet.diff tags removed)
 
 let gtranslate m lg o tags =
   let rec aux = function
@@ -185,7 +185,7 @@ let gtranslate m lg o tags =
 let gforce_translate m lg o tags =
   fallback_to_generic lg
     (fun lg -> gtranslate m lg o tags)
-    (String.concat ", " (Utils.PSet.to_list tags), Utils.PSet.empty)
+    (String.concat ", " (PSet.to_list tags), PSet.empty)
     (fun f (str, s) -> (f str, s))
 
 let stranslate m lg tgv trv o tags =
@@ -200,7 +200,7 @@ let stranslate m lg tgv trv o tags =
                | Variable (x, constrs, added, removed) ->
                  let tags = apply_patch (tgv x) added removed in
                  Utils.if_option (trv x tags) (fun (tr, tags) ->
-                   if Utils.PSet.incl constrs tags then
+                   if PSet.incl constrs tags then
                      Some tr
                    else None)) l with
         | Some l ->
@@ -214,7 +214,7 @@ let stranslate m lg tgv trv o tags =
 let sforce_translate m lg tgv trv o tags =
   fallback_to_generic lg
     (fun lg -> stranslate m lg tgv (fun x tags -> Some (trv x tags)) o tags)
-    (String.concat ", " (Utils.PSet.to_list tags), Utils.PSet.empty)
+    (String.concat ", " (PSet.to_list tags), PSet.empty)
     (fun f (str, s) -> (f str, s))
 
 

@@ -59,7 +59,7 @@ let get_data _ =
     let categories = Driver.categories_to_be_defined !intermediate in
     let (attributes, contacts) = Driver.attributes_to_be_defined !intermediate in
     let missing str s =
-      " Missing " ^ str ^ ": " ^ print_list "and" (Utils.PSet.to_list s) ^ "." in
+      " Missing " ^ str ^ ": " ^ print_list "and" (PSet.to_list s) ^ "." in
     Lwt.fail (Invalid_argument
       ("Non final intermediary after parsing all files."
        ^ missing "categories" categories
@@ -74,7 +74,7 @@ type parameters = {
     general_level : float ;
     general_complexity : float ;
     computation_power : float ;
-    categories : Utils.Id.t Utils.PSet.t option ;
+    categories : Id.t PSet.t option ;
     player_information : (string (** Character name *)
                           * int (** Complexity **)
                           * int (** Difficulty **)
@@ -168,7 +168,7 @@ let _ =
                       let (names, state) = Export.from_json m fileName str in
                       let informations =
                         List.mapi (fun c name ->
-                          let c = Utils.Id.from_array c in
+                          let c = Id.from_array c in
                           let st = State.get_relation_state state in
                           (name, State.character_complexity st c,
                            State.character_difficulty st c, ())) names in
@@ -176,7 +176,7 @@ let _ =
                         { parameters with
                             player_information = informations ;
                             categories =
-                              Some (Utils.PSet.from_list
+                              Some (PSet.from_list
                                       (Driver.all_categories data)) } in
                       display parameters state
                     )))
@@ -244,14 +244,14 @@ let _ =
       let all_categories = Driver.all_categories data in
       let selected_categories =
         match parameters.categories with
-        | None -> Utils.PSet.from_list all_categories
+        | None -> PSet.from_list all_categories
         | Some s -> s in
       let onCategoryClick = ref (fun _ -> ()) in
       let categoriesButtons =
         List.fold_left (fun m c ->
           let dependencies =
             let deps =
-              List.map translate_categories (Utils.PSet.to_list
+              List.map translate_categories (PSet.to_list
                 (Driver.get_category_dependencies data c)) in
             if deps = [] then None
             else
@@ -259,25 +259,25 @@ let _ =
                     ^ print_list (get_translation "and") deps ^ ")") in
           let (e, set, get) =
             InOut.createSwitch (translate_categories c)
-              None dependencies (Utils.PSet.mem c selected_categories)
+              None dependencies (PSet.mem c selected_categories)
               (fun _ -> !onCategoryClick c) in
-          PMap.add c (e, set, get, Utils.PSet.empty) m) PMap.empty all_categories in
+          PMap.add c (e, set, get, PSet.empty) m) PMap.empty all_categories in
       let categoriesButtons =
         List.fold_left (fun m c ->
             let deps = Driver.get_category_dependencies data c in
-            Utils.PSet.fold (fun cd m ->
+            PSet.fold (fun cd m ->
               let (e, set, get, ideps) = PMap.find cd m in
-              PMap.add cd (e, set, get, Utils.PSet.add c ideps) m) m deps)
+              PMap.add cd (e, set, get, PSet.add c ideps) m) m deps)
           categoriesButtons all_categories in
       onCategoryClick := (fun c ->
         let (_, _, get, ideps) = PMap.find c categoriesButtons in
         if get () then
           let deps = Driver.get_category_dependencies data c in
-          Utils.PSet.iter (fun c ->
+          PSet.iter (fun c ->
             let (_, set, _, _) = PMap.find c categoriesButtons in
             set true) deps
         else
-          Utils.PSet.iter (fun c ->
+          PSet.iter (fun c ->
             let (_, set, _, _) = PMap.find c categoriesButtons in
             set false) ideps) ;
       InOut.print_block (InOut.Div (InOut.Normal, [
@@ -299,8 +299,8 @@ let _ =
           let selected_categories =
             PMap.foldi (fun c (_, _, get, _) s ->
               if get () then
-                Utils.PSet.add c s
-              else s) categoriesButtons Utils.PSet.empty in
+                PSet.add c s
+              else s) categoriesButtons PSet.empty in
           { parameters with categories = Some selected_categories })
         (Some ask_for_basic) (Some ask_for_player_constraints) ;
       let%lwt cont = cont in cont ()

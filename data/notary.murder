@@ -318,6 +318,8 @@ begin
 
   provide attribute Famousness to A as Hiding
 
+  add difficulty to A
+
   provide short event to P
   begin
     event Work

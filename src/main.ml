@@ -170,8 +170,8 @@ let _ =
                         List.mapi (fun c name ->
                           let c = Utils.Id.from_array c in
                           let st = State.get_relation_state state in
-                          (name, Solver.character_complexity st c,
-                           Solver.character_difficulty st c, ())) names in
+                          (name, State.character_complexity st c,
+                           State.character_difficulty st c, ())) names in
                       let parameters =
                         { parameters with
                             player_information = informations ;
@@ -397,8 +397,8 @@ let _ =
           (Solver.empty_global parameters.computation_power) elements in
       let objectives =
         Array.of_list (List.map (fun (_, complexity, difficulty, _) -> {
-            Solver.complexity = complexity ;
-            Solver.difficulty = difficulty
+            State.complexity = complexity ;
+            State.difficulty = difficulty
           }) parameters.player_information) in
       let state = State.create_state parameters.player_number in
       (* TODO: Update the state according to the miscellaneous player

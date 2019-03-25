@@ -21,15 +21,18 @@ type character_constraint =
      * element. **)
 
 (** All the changes applied by an elements to players are summed up in this type. **)
-type cell =
-  character_constraint list (** The constraints on this player. **)
-  * History.event list (** The events that this element would provide to
-                        * this player. **)
-  * Relation.t array (** The relations that would be added to this player,
-                      * for each characters.
-                      * This array can be less than the number of players
-                      * in this element ([Neutral] is then assumed for all
-                      * other cells). **)
+type cell = {
+    constraints : character_constraint list (** The constraints on this player. **) ;
+    events : History.event list
+      (** The events that this element would provide to this player. **) ;
+    relations : Relation.t array
+      (** The relations that would be added to this player,  for each characters.
+       * This array can be less than the number of players  in this element
+       * ([Neutral] is then assumed for all other cells). **) ;
+    added_objective : State.objective
+      (** Some difficulty or complexity, provided in addition
+       * to the ones naturally provided by the relations. **)
+  }
 
 (** Each players considered by the element are represented as a cell.
  * A list of constraints given to other players is also given
@@ -92,7 +95,7 @@ val apply : State.constructor_maps -> State.t -> t -> character array -> State.t
 (** Same as [apply], but create a copy of the state before the application. **)
 val safe_apply : State.constructor_maps -> State.t -> t -> character array -> State.t * attribute_differences
 
-(** Get the resulting relation array from an instantiation.
+(** Get the resulting relation state from an instantiation.
  * The input state is not modified by this function. **)
 val apply_relations : State.relation_state -> t -> character array -> State.relation_state
 

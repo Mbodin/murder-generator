@@ -31,6 +31,8 @@ begin
   let P be player
 
   provide compatible attribute Specy to P as God
+
+  add complexity to P
 end
 
 element LonelyGod
@@ -39,6 +41,8 @@ begin
   let any other player be with attribute Specy not as God
 
   provide compatible attribute Specy to P as God
+
+  add complexity to P
 end
 
 element GodAlwaysExisted

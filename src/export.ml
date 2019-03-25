@@ -71,6 +71,7 @@ let to_graphviz s =
 let to_json s =
   let s = generic s in
   let cst = State.get_character_state s.state in
+  let rst = State.get_relation_state s.state in
   Yojson.Safe.to_string ~std:true (`List (List.mapi (fun c name ->
     let c = Utils.Id.from_array c in `Assoc [
         ("name", `String name) ;
@@ -91,6 +92,9 @@ let to_json s =
           let r = State.read_relation s.state c c' in
           if c <= c' then l
           else `String (Relation.to_string r) :: l) [] s.names)) ;
+        ("complexity", `Int (State.character_complexity rst c)) ;
+        ("difficulty", `Int (State.character_difficulty rst c)) ;
+        ("events", `List [(*TODO*)])
       ]) s.names))
 
 let from_json m fileName fileContent =
@@ -187,6 +191,29 @@ let from_json m fileName fileContent =
                 state
               | _ -> failwith ("Ill-formed `relations' field in file `"
                                ^ fileName ^ "'.")) state relations in
+          let state =
+            try
+              match List.assoc "complexity" l with
+              | `Int v ->
+                let rst = State.get_relation_state state in
+                State.set_complexity rst c v ;
+                state
+              | _ -> failwith ("A field `complexity' in file `" ^ fileName
+                               ^ "' is not an integer")
+            with
+            | Not_found -> state in
+          let state =
+            try
+              match List.assoc "difficulty" l with
+              | `Int v ->
+                let rst = State.get_relation_state state in
+                State.set_difficulty rst c v ;
+                state
+              | _ -> failwith ("A field `difficulty' in file `" ^ fileName
+                               ^ "' is not an integer")
+            with
+            | Not_found -> state in
+          (* TODO: Deal with events. *)
           (name :: names, state)
         | _ -> failwith ("A character in file `" ^ fileName
                  ^ "' is not a associated an object.")) ([], state) l in

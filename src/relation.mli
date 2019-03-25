@@ -33,10 +33,12 @@ type relation =
  * whether the relation is strong or not. **)
 type t = relation * bool
 
-(** How complex it is to understand the character relation. **)
+(** How complex it is to understand the character relation.
+ * Note that [reverse] does not change the complexity. **)
 val complexity : t -> int
 
-(** How complex it is to play and survive the murder. **)
+(** How complex it is to play and survive the murder.
+ * Note that [reverse] does not change the difficulty. **)
 val difficulty : t -> int
 
 (** Whether a relation is strong. **)
@@ -50,7 +52,8 @@ val is_explosive : t -> bool
 val left_projection : t -> t
 val right_projection : t -> t
 
-(** Compose two relations. Tries to summarize both into one. **)
+(** Compose two relations.
+ * It tries to summarize both into one as much as it can. **)
 val compose : t -> t -> t
 
 (** A neutral element for the composition. **)

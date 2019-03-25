@@ -18,10 +18,12 @@ open Ast
 %token          DECLARE PROVIDE LET BE ASSUME
 %token          WITH AND OR NOT NO FROM TO BETWEEN AS ANY OTHER
 %token          STRICT COMPATIBLE
+%token          DIFFICULTY COMPLEXITY
 %token          NEUTRAL HATE TRUST CHAOTIC UNDETERMINED AVOIDANCE
 %token          ASYMMETRICAL EXPLOSIVE STRONG
 %token<string>  LIDENT UIDENT STRING
-%token          TRANSLATION ADD COLON PLUS MINUS
+%token          ADD REMOVE
+%token          TRANSLATION COLON PLUS MINUS
 %token          BEFORE AFTER
 %token          IMMEDIATE VERY SHORT MEDIUM LONG LIFE
 
@@ -118,6 +120,10 @@ command:
           contact_destination = d ;
           contact_value = v
         } }
+  | d = add_remove; DIFFICULTY; TO; l = separated_list (AND, UIDENT)
+    { AddDifficulty (d, l) }
+  | d = add_remove; COMPLEXITY; TO; l = separated_list (AND, UIDENT)
+    { AddComplexity (d, l) }
   | EVENT; event = UIDENT
     { EventKind event }
   | PROVIDE; t = time; EVENT;
@@ -128,6 +134,10 @@ command:
     { e true }
   | e = event_constraint (NO, OR)
     { e false }
+
+add_remove:
+  | ADD     { true }
+  | REMOVE  { true }
 
 target_destination (player):
   | FROM; p1 = player; TO; p2 = player

@@ -111,6 +111,12 @@ type command =
   | ProvideRelation of provide_relation
   | ProvideAttribute of provide_attribute
   | ProvideContact of provide_contact
+  | AddDifficulty of bool * string list
+    (** This element is more difficult than it looks like for these players.
+     * If the boolean is [false], it is actually less difficult. **)
+  | AddComplexity of bool * string list
+    (** This element is more complex than it looks like for these players.
+     * If the boolean is [false], it is actually less complex. **)
   | EventKind of string (** The event is of this particular kind. **)
   | ProvideEvent of provide_event
   | EventConstraint of event_constraint

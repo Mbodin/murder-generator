@@ -16,29 +16,16 @@ val register_element : global -> Element.t -> global
  * the given predicate. **)
 val filter_elements : global -> (Element.t -> bool) -> global
 
-(** The target difficulty and simplicity measures for each player.
- * See the Relation module for more information. **)
-type objective = {
-    difficulty : int ;
-    complexity : int
-  }
-
-(** Returns the current complexity of a character in a given state. **)
-val character_complexity : State.relation_state -> State.character -> int
-
-(** Returns the current difficulty of a character in a given state. **)
-val character_difficulty : State.relation_state -> State.character -> int
-
 (** Evaluates the provided relation state with respect to the target
  * difficulty and simplicity (an objective for each player of the state).
  * The higher, the better the grade.
  * Note that most grades are negative. **)
-val evaluate : objective array -> State.relation_state -> int
+val evaluate : State.objective array -> State.relation_state -> int
 
 (** Same as [evaluate], but takes a state as argument instead of a
  * relationnal state. **)
-val evaluate_state : objective array -> State.t -> int
+val evaluate_state : State.objective array -> State.t -> int
 
 (** Tries to optimise the state to make it match the objectives. **)
-val solve : global -> State.t -> objective array -> State.t Lwt.t
+val solve : global -> State.t -> State.objective array -> State.t Lwt.t
 

@@ -35,29 +35,14 @@ let filter_elements g f =
            pool_informations =
              Pool.filter_global g.pool_informations f }
 
-type objective = {
-    difficulty : int ;
-    complexity : int
-  }
-
-(** Given a function [f] and a character [c], sums each evaluation
- * via the function [f] of the relations of [c] in the state [s]. **)
-let collect f s c =
-  Utils.sum (List.map (Utils.compose f (State.read_relation_state s c))
-    (State.all_players_relation s))
-
-let character_complexity = collect Relation.difficulty
-
-let character_difficulty = collect Relation.difficulty
-
 (** Evaluates a character [c] in a relation state [s] compared to its objective [o].
  * Complexity is difficult to compensate later on, whilst difficulty
  * is easy (it’s just applying an helping element).
  * The evaluation thus punishes more increases of complexity above its target than
  * difficulty. **)
 let evaluate_character o s c =
-  let d = character_difficulty s c - o.difficulty in
-  let s = character_complexity s c - o.complexity in
+  let d = State.character_difficulty s c - o.State.difficulty in
+  let s = State.character_complexity s c - o.State.complexity in
   (if s >= 0 then - 2 * s * s * s else s) - d * d
 
 let evaluate o s =

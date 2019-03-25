@@ -43,6 +43,8 @@ type block = {
     provide_relation : Ast.provide_relation list ;
     provide_attribute : Ast.provide_attribute list ;
     provide_contact : Ast.provide_contact list ;
+    add_difficulty : (bool * string) list ;
+    add_complexity : (bool * string) list ;
     event_kind : string list ;
     provide_event : Ast.provide_event list ;
     event_constraint : Ast.event_constraint list
@@ -57,6 +59,8 @@ let empty_block = {
     provide_relation = [] ;
     provide_attribute = [] ;
     provide_contact = [] ;
+    add_difficulty = [] ;
+    add_complexity = [] ;
     event_kind = [] ;
     provide_event = [] ;
     event_constraint = []
@@ -220,6 +224,8 @@ type command_type =
   | ProvideRelation
   | ProvideAttribute
   | ProvideContact
+  | AddDifficulty
+  | AddComplexity
   | EventKind
   | ProvideEvent
   | EventConstraint
@@ -234,6 +240,8 @@ let command_type_to_string = function
   | ProvideRelation -> "relation provision"
   | ProvideAttribute -> "attribute provision"
   | ProvideContact -> "contact provision"
+  | AddDifficulty -> "difficulty provision"
+  | AddComplexity -> "complexity provision"
   | EventKind -> "event kind declaration"
   | ProvideEvent -> "event provision"
   | EventConstraint -> "event constraint"
@@ -291,6 +299,14 @@ let convert_block block_name expected =
       | Ast.ProvideContact p ->
         check ProvideContact ;
         { acc with provide_contact = p :: acc.provide_contact }
+      | Ast.AddDifficulty (d, p) ->
+        check AddDifficulty ;
+        let l = List.map (fun p -> (d, p)) p in
+        { acc with add_difficulty = l @ acc.add_difficulty }
+      | Ast.AddComplexity (d, p) ->
+        check AddComplexity ;
+        let l = List.map (fun p -> (d, p)) p in
+        { acc with add_complexity = l @ acc.add_complexity }
       | Ast.EventKind kind ->
         check EventKind ;
         { acc with event_kind = kind :: acc.event_kind }
@@ -654,7 +670,9 @@ let prepare_declaration i =
       Utils.Id.map_insert_t i.current_state.elements_names name in
     let block =
       convert_block name [OfCategory; LetPlayer; ProvideRelation;
-                          ProvideAttribute; ProvideContact; ProvideEvent] block in
+                          ProvideAttribute; ProvideContact;
+                          AddDifficulty; AddComplexity;
+                          ProvideEvent] block in
     { i with
         waiting_elements = (id, name, block) :: i.waiting_elements ;
         current_state =
@@ -775,7 +793,13 @@ let parse_element st element_name block =
     Array.map (fun (a, m) -> Array.sub a 0 m) triangle in
   (** We define our current element and constraints over other players,
    * and we will update them by considering each declaration. **)
-  let elementBase = Array.map (fun a -> ([], [], a)) relations in
+  let elementBase =
+    Array.map (fun a -> {
+        Element.constraints = [] ;
+        Element.events = [] ;
+        Element.relations = a ;
+        Element.added_objective = State.zero_objective
+      }) relations in
   let otherPlayers = ref [] in
   let (_, deps) =
     try category_names_to_dep_dep true st block.of_category
@@ -793,8 +817,9 @@ let parse_element st element_name block =
    * using this function with side effects. **)
   let add_constraint p c =
     let p = Utils.Id.to_array p in
-    let (cl, el, rs) = elementBase.(p) in
-    elementBase.(p) <- (c :: cl, el, rs) in
+    elementBase.(p) <-
+      { elementBase.(p) with Element.constraints =
+                               c :: elementBase.(p).Element.constraints } in
   let add_constraint_other c =
     otherPlayers := c :: !otherPlayers in
   let add_constraint_all c =
@@ -848,6 +873,25 @@ let parse_element st element_name block =
         (List.fold_left (fun deps cid ->
             intersect_with_constructor_dependencies deps cid)
           (get_constructor_dependencies cid) cidl) in
+  (** We now consider added difficulty and complexity. **)
+  List.iter (fun (d, p) ->
+      let d = if d then 1 else -1 in
+      let p = Utils.Id.to_array (get_player p) in
+      let o = elementBase.(p).Element.added_objective in
+      elementBase.(p) <-
+        { elementBase.(p) with
+            Element.added_objective =
+              { o with State.difficulty = d + o.State.difficulty } })
+    block.add_difficulty ;
+  List.iter (fun (d, p) ->
+      let d = if d then 1 else -1 in
+      let p = Utils.Id.to_array (get_player p) in
+      let o = elementBase.(p).Element.added_objective in
+      elementBase.(p) <-
+        { elementBase.(p) with
+            Element.added_objective =
+              { o with State.complexity = d + o.State.complexity } })
+    block.add_complexity ;
   (** We now consider attributes. **)
   let deps =
     List.fold_left (fun deps pa ->

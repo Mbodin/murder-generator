@@ -3,6 +3,16 @@
 
 type character = History.character
 
+(** The target difficulty and simplicity measures for each player.
+ * See the Relation module for more information. **)
+type objective = {
+    difficulty : int ;
+    complexity : int
+  }
+
+(** The empty objective. **)
+val zero_objective : objective
+
 (** A mapping from pairs of characters to Relation.t. **)
 type relation_state
 
@@ -18,12 +28,31 @@ val copy_relation_state : relation_state -> relation_state
  * it returns the default relation [Relation.Basic Relation.Neutral]. **)
 val read_relation_state : relation_state -> character -> character -> Relation.t
 
-(** Non-functionally update the relation state. **)
+(** Non-functionally update the relation state.
+ * It updates both the relation and the associated complexities and difficulties. **)
 val write_relation_state : relation_state -> character -> character -> Relation.t -> unit
 
 (** As [write_relation_state], but composes the new relation with the already
  * existing one. **)
 val add_relation_state : relation_state -> character -> character -> Relation.t -> unit
+
+(** Returns the current complexity of a character in a given state. **)
+val character_complexity : relation_state -> character -> int
+
+(** Returns the current difficulty of a character in a given state. **)
+val character_difficulty : relation_state -> character -> int
+
+(** Adds a given amount of complexity to a character. **)
+val add_complexity : relation_state -> character -> int -> unit
+
+(** Adds a given amount of difficulty to a character. **)
+val add_difficulty : relation_state -> character -> int -> unit
+
+(** Set the complexity of a character to this value, by-passing any other mechanism. **)
+val set_complexity : relation_state -> character -> int -> unit
+
+(** Set the difficulty of a character to this value, by-passing any other mechanism. **)
+val set_difficulty : relation_state -> character -> int -> unit
 
 (** The following exception is returned if one tries to write or read
  * a relation between two identical characters. **)

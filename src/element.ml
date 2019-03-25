@@ -11,10 +11,12 @@ type character_constraint =
                * int option
                * State.ContactAttribute.constructor State.attribute_value
 
-type cell =
-  character_constraint list
-  * History.event list
-  * Relation.t array
+type cell = {
+    constraints : character_constraint list ;
+    events : History.event list ;
+    relations : Relation.t array ;
+    added_objective : State.objective
+  }
 
 type t = cell array * character_constraint list
 
@@ -30,8 +32,8 @@ let provided_attributes (e, other) =
   let provided_attributes_constraint_list =
     List.fold_left (fun s c ->
       Utils.PSet.merge s (provided_attributes_constraint c)) in
-  Utils.PSet.to_list (Array.fold_left (fun s (l, _, _) ->
-      provided_attributes_constraint_list s l)
+  Utils.PSet.to_list (Array.fold_left (fun s ce ->
+      provided_attributes_constraint_list s ce.constraints)
     (provided_attributes_constraint_list Utils.PSet.empty other) e)
 
 (** States whether [v1] and [v2] are compatible and make some progress.
@@ -123,7 +125,8 @@ let compatible_and_progress m st (e, other) inst =
           (respect_constraints_base (check_contact m inst st c) m cst other c))
       (Some false) (other_players st inst) in
   Utils.array_fold_lefti (fun i acc c ->
-    let (conss, evs, rs) = e.(i) in
+    let conss = e.(i).constraints in
+    let evs = e.(i).events in
     merge_progress acc
       (respect_constraints_inst m inst st conss evs c)) compatible_others inst
 
@@ -137,7 +140,8 @@ let search_instantiation m st (e, other) =
         respect_constraints m cst other [] c <> None) all_players) in
   let possible_players_progress_no_progress =
     Array.map (fun ei ->
-      let (conss, evs, rs) = ei in
+      let conss = ei.constraints in
+      let evs = ei.events in
       let result_list =
         List.map (fun c ->
           (c, respect_constraints m cst conss evs c)) all_players in
@@ -289,14 +293,15 @@ let apply m state (e, other) inst =
     List.fold_left (fun (state, diff) c -> apply_constraints state diff c other)
       (state, diff) other_players in
   Utils.array_fold_left2 (fun (state, diff) ei c ->
-    let (conss, evs, rs) = ei in
-    let (state, diff) = apply_constraints state diff c conss in
-    (* TODO: Event [evs] *)
-    let _ =
-      Array.iteri (fun i r ->
-        let c' = inst.(i) in
-        if c <> c' then
-          State.add_relation state c c' r) rs in
+    let (state, diff) = apply_constraints state diff c ei.constraints in
+    (* TODO: Event [ei.events] *)
+    Array.iteri (fun i r ->
+      let c' = inst.(i) in
+      if c <> c' then
+        State.add_relation state c c' r) ei.relations ;
+    let rst = State.get_relation_state state in
+    State.add_difficulty rst c ei.added_objective.State.difficulty ;
+    State.add_complexity rst c ei.added_objective.State.complexity ;
     (state, diff)) (state, diff) e inst
 
 let safe_apply m state = apply m (State.copy state)
@@ -304,10 +309,11 @@ let safe_apply m state = apply m (State.copy state)
 let apply_relations state (e, _) inst =
   let result = State.copy_relation_state state in
   Array.iter2 (fun ei c ->
-    let (conss, evs, rs) = ei in
     Array.iteri (fun i r ->
       let c' = inst.(i) in
       if c <> c' then
-        State.add_relation_state result c c' r) rs) e inst ;
+        State.add_relation_state result c c' r) ei.relations ;
+    State.add_difficulty result c ei.added_objective.State.difficulty ;
+    State.add_complexity result c ei.added_objective.State.complexity) e inst ;
   result
 

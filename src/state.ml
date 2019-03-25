@@ -1,22 +1,34 @@
 
 type character = Utils.Id.t
 
-type relation_state =
-  Relation.t array array
+type objective = {
+    difficulty : int ;
+    complexity : int
+  }
 
-let copy_relation_state = Array.map Array.copy
+type relation_state =
+  Relation.t array array * objective array
+
+let copy_relation_state (r, o) =
+  (Array.map Array.copy r, Array.copy o)
 
 exception SelfRelation
+
+let zero_objective = {
+    difficulty = 0 ;
+    complexity = 0
+  }
 
 (** Relation states have as little cells as possible: [n - 1] for the
  * first counter, and [i + 1] for the second.
  * To get the relation between characters [c1] and [c2], with [c1 < c2],
  * one has to check the array at [.(c2 - 1).(c1)]. **)
 let create_relation_state n =
-  Array.init (n - 1) (fun i ->
-    Array.make (i + 1) Relation.neutral)
+  (Array.init (n - 1) (fun i ->
+     Array.make (i + 1) Relation.neutral),
+   Array.make n zero_objective)
 
-let rec read_relation_state a c1 c2 =
+let rec read_relation_state (a, _) c1 c2 =
   let c1 = Utils.Id.to_array c1 in
   let c2 = Utils.Id.to_array c2 in
   if c1 = c2 then Relation.neutral
@@ -24,18 +36,55 @@ let rec read_relation_state a c1 c2 =
     a.(c2 - 1).(c1)
   else Relation.reverse a.(c1 - 1).(c2)
 
-let write_relation_state a c1 c2 r =
+let write_relation_state (a, rs) c1 c2 r =
   let c1 = Utils.Id.to_array c1 in
   let c2 = Utils.Id.to_array c2 in
-  if c1 = c2 then
-    raise SelfRelation
-  else if c2 > c1 then
-    a.(c2 - 1).(c1) <- r
-  else a.(c1 - 1).(c2) <- Relation.reverse r
+  let (x, y, r) =
+    if c1 = c2 then
+      raise SelfRelation
+    else if c2 > c1 then
+      (c2 - 1, c1, r)
+    else (c1 - 1, c2, Relation.reverse r) in
+  let old = a.(x).(y) in
+  a.(x).(y) <- r ;
+  let dd = Relation.difficulty r - Relation.difficulty old in
+  let dc = Relation.complexity r - Relation.complexity old in
+  rs.(c1) <- {
+      difficulty = rs.(c1).difficulty + dd ;
+      complexity = rs.(c1).complexity + dc
+    } ;
+  rs.(c2) <- {
+      difficulty = rs.(c2).difficulty + dd ;
+      complexity = rs.(c2).complexity + dc
+    }
 
 let add_relation_state a c1 c2 r =
-  let r' = read_relation_state a c1 c2 in
-  write_relation_state a c1 c2 (Relation.compose r' r)
+  (** As [Relation.neutral] is neutral for [Relation.compose] and that it
+   * happens frequently, we first check whether we really need to update
+   * anything. **)
+  if r <> Relation.neutral then
+    let r' = read_relation_state a c1 c2 in
+    write_relation_state a c1 c2 (Relation.compose r' r)
+
+let character_complexity (_, r) c =
+  r.(Utils.Id.to_array c).complexity
+
+let character_difficulty (_, r) c =
+  r.(Utils.Id.to_array c).difficulty
+
+let set_complexity (_, r) c v =
+  r.(Utils.Id.to_array c) <- { r.(Utils.Id.to_array c) with complexity = v }
+
+let set_difficulty (_, r) c v =
+  r.(Utils.Id.to_array c) <- { r.(Utils.Id.to_array c) with difficulty = v }
+
+let add_complexity (_, r) c d =
+  let o = r.(Utils.Id.to_array c) in
+  r.(Utils.Id.to_array c) <- { o with complexity = d + o.complexity }
+
+let add_difficulty (_, r) c d =
+  let o = r.(Utils.Id.to_array c) in
+  r.(Utils.Id.to_array c) <- { o with difficulty = d + o.difficulty }
 
 module type Attribute = sig
     type attribute
@@ -306,9 +355,7 @@ let number_of_player (st, _, _) = Array.length st
 let all_players st =
   all_players_length (number_of_player st)
 
-(** Remember that relation state do not store self-relation and is
- * thus one cell smaller than usual arrays. **)
-let number_of_player_relation_state st = 1 + Array.length st
+let number_of_player_relation_state (_, rs) = Array.length rs
 
 let all_players_relation st =
   all_players_length (number_of_player_relation_state st)

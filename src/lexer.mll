@@ -62,6 +62,9 @@ rule read = parse
   | "strict"                { STRICT }
   | "compatible"            { COMPATIBLE }
 
+  | "difficulty"            { DIFFICULTY }
+  | "complexity"            { COMPLEXITY }
+
   | "neutral"               { NEUTRAL }
   | "hate"                  { HATE }
   | "trust"                 { TRUST }
@@ -74,6 +77,7 @@ rule read = parse
 
   | "translation"           { TRANSLATION }
   | "add"                   { ADD }
+  | "remove"                { REMOVE }
   | ':'                     { COLON }
   | "+"                     { PLUS }
   | "-"                     { MINUS }

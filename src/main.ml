@@ -88,7 +88,7 @@ let _ =
     let%lwt (translation, languages) = get_translations () in
     let get_translation_language lg key =
       Utils.assert_option ("No key `" ^ key ^ "' found for language `"
-                           ^ (Translation.iso639 lg) ^ "'.")
+                           ^ (Translation.iso639 lg) ^ "' at " ^ __LOC__ ^ ".")
         (Translation.translate translation lg key) in
     let get_language p = Utils.assert_option __LOC__ p.language in
     let get_translation p = get_translation_language (get_language p) in
@@ -415,6 +415,7 @@ let _ =
           Export.names =
             List.map (fun (name, _, _, _) -> name) parameters.player_information ;
           Export.translation = Driver.get_translations data ;
+          Export.generic_translation = translation ;
           Export.state = state
         } in
       InOut.print_block (InOut.Div (InOut.Normal, [
@@ -425,7 +426,7 @@ let _ =
           InOut.Div (InOut.Inlined, [
               InOut.LinkFile (get_translation "downloadAs"
                               ^ " " ^ get_translation name,
-                              fileName, mime, f estate) ;
+                              fileName, mime, fun _ -> f estate) ;
               InOut.Text (get_translation descr)
             ])) Export.all_production)])) ;
       InOut.stopLoading () ;%lwt

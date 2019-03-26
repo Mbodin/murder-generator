@@ -3,6 +3,7 @@ type state = {
     names : string list ;
     language : Translation.language ;
     translation : Translation.element ;
+    generic_translation : string Translation.t ;
     state : State.t
   }
 
@@ -67,6 +68,67 @@ let to_graphviz s =
         (State.get_all_contacts_character cst c) []) s.names)) ;
       "}" ; ""
     ]
+
+let to_icalendar s =
+  let events =
+    let id_postfix =
+      "-" ^ string_of_float (Sys.time ())
+      ^ "-" ^ History.rfc2445 History.now
+      ^ "-" ^ string_of_int (Hashtbl.hash s.names)
+      ^ "-murder-generator" in
+    List.concat (List.map (fun e ->
+      "BEGIN:VEVENT"
+      :: ("UID:" ^ string_of_int (Random.int max_int)
+                 ^ "-" ^ string_of_int (Hashtbl.hash e) ^ id_postfix)
+      :: ("DTSTAMP:" ^ History.rfc2445 History.now)
+      :: ("DTSTART:" ^ History.rfc2445 e.History.event_begin)
+      :: ("DTEND:" ^ History.rfc2445 e.History.event_end)
+      :: List.map (fun c ->
+           "ATTENDEE:" ^ List.nth s.names (Id.to_array c)) e.History.event_attendees
+      @ "DESCRIPTION:" (* TODO *)
+      :: "END:VEVENT"
+      :: []) [(*TODO*)]) in
+  String.concat "\n" (
+    "BEGIN:VCALENDAR"
+    :: "VERSION:2.0"
+    :: ("PRODID:-//Martin Constantino-Bodin//Murder Generator//"
+        ^ String.uppercase_ascii (Translation.iso639 s.language))
+    :: events
+    @ "END:VCALENDAR"
+    :: [])
+
+let to_org s =
+  let cst = State.get_character_state s.state in
+  let get_translation key =
+    Utils.assert_option ("No key `" ^ key ^ "' found for language `"
+                         ^ (Translation.iso639 s.language) ^ "' at "
+                         ^ __LOC__ ^ ".")
+      (Translation.translate s.generic_translation s.language key) in
+  let print_event n e =
+    String.concat "\n" (
+      (String.make n '*' ^ " " (* TODO: Description *))
+      :: (String.make (2 + n) ' '
+          ^ History.orgmode_range e.History.event_begin e.History.event_end)
+      :: List.map (fun c ->
+           String.make (1 + n) ' ' ^ "- [X] "
+           ^ List.nth s.names (Id.to_array c)) e.History.event_attendees) in
+  String.concat "\n\n" (
+    String.concat "\n" (
+      ("* " ^ get_translation "forTheGM")
+      :: List.map (print_event 3) [(* TODO: All events *)])
+    :: List.mapi (fun c name ->
+         let c = Id.from_array c in
+         String.concat "\n" (
+           ("* " ^ name)
+           :: ("** " ^ get_translation "characterAttributes")
+           :: PMap.foldi (fun a v l ->
+                  let tra = translate_attribute s (State.PlayerAttribute a) in
+                  let trv =
+                    translate_value s (fun v -> State.PlayerConstructor v) v in
+                  (String.make 4 ' ' ^ "- " ^ tra ^ ": " ^ trv) :: l)
+                (State.get_all_attributes_character cst c) []
+           @ ("** " ^ get_translation "characterEvents")
+           :: List.map (print_event 3) [(* TODO: Events *)])) s.names)
 
 let to_json s =
   let s = generic s in
@@ -221,7 +283,9 @@ let from_json m fileName fileContent =
   | _ -> failwith ("The file `" ^ fileName ^ "' is not a list.")
 
 let all_production = [
+    ("json", "jsonDescription", "application/json", "json", to_json) ;
+    ("orgmode", "orgDescription", "text/x-org", "org", to_org) ;
     ("graphviz", "graphvizDescription", "text/vnd.graphviz", "dot", to_graphviz) ;
-    ("json", "jsonDescription", "application/json", "json", to_json)
+    ("iCalendar", "icalDescription", "text/calendar", "ics", to_icalendar)
   ]
 

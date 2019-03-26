@@ -52,7 +52,7 @@ type block =
   | Text of string
   | Link of string * string
   | LinkContinuation of bool * string * (unit -> unit)
-  | LinkFile of string * string * string * string
+  | LinkFile of string * string * string * (unit -> string)
   | Table of block list * block list list
   | Node of Dom_html.element Js.t
 
@@ -137,11 +137,9 @@ let rec block_node =
       Lwt_js_events.clicks a (fun _ _ -> Lwt.return (cont ()))) ;
     a
   | LinkFile (text, fileName, mime, cont) ->
-      (* FIXME: Should I use
-       * [File.blob_from_string ?contentType=mime ?ending=`native cont]? *)
-    let content = Js.to_string (Js.encodeURIComponent (Js.string cont)) in
-    let a =
-      block_node (Link (text, "data:" ^ mime ^ ";charset=utf-8," ^ content)) in
+    let blob = File.blob_from_string ~contentType:mime ~endings:`Native (cont ()) in
+    let url = Dom_html.window##._URL##createObjectURL (blob) in
+    let a = block_node (Link (text, Js.to_string url)) in
     ignore (a##setAttribute (Js.string "download") (Js.string fileName)) ;
     a
   | Table (headers, content) ->

@@ -131,7 +131,7 @@ val gforce_translate : 'a gt -> language -> 'a -> complete_translation_function
 val stranslate : ('a, 'b) st -> language -> ('b -> tag PSet.t) -> ('b -> translation_function) -> 'a -> translation_function
 
 (** Similar to [stranslate], but never fails. **)
-val sforce_translate : ('a, 'b) st -> language -> ('b -> tag PSet.t) -> ('b -> complete_translation_function) -> 'a -> complete_translation_function
+val sforce_translate : ('a, 'b) st -> language -> ('b -> tag PSet.t) -> ('b -> translation_function) -> 'a -> complete_translation_function
 
 (** [from_json fileName fileContent] reads the [fileContent] string as a
  * JSON object representing translations in different languages.

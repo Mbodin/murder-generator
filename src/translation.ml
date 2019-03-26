@@ -157,10 +157,11 @@ let gadd m lg commands o str =
     try PMap.find (o, lg) m
     with Not_found -> Leaf [] in
   PMap.add (o, lg) (apply_tree (PSet.from_list tags) (fun seen l ->
+    let seen = PSet.from_list seen in
     let rec aux l = function
       | [] -> Leaf ((str, added, removed) :: l)
       | tag :: tags ->
-        if List.mem tag seen then aux l tags
+        if PSet.mem tag seen then aux l tags
         else Node (tag, aux [] tags, Leaf l) in
     aux l tags) t) m
 
@@ -213,7 +214,7 @@ let stranslate m lg tgv trv o tags =
 
 let sforce_translate m lg tgv trv o tags =
   fallback_to_generic lg
-    (fun lg -> stranslate m lg tgv (fun x tags -> Some (trv x tags)) o tags)
+    (fun lg -> stranslate m lg tgv trv o tags)
     (String.concat ", " (PSet.to_list tags), PSet.empty)
     (fun f (str, s) -> (f str, s))
 

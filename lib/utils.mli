@@ -155,3 +155,12 @@ val array_fold_left2 : ('a -> 'b -> 'c -> 'a) -> 'a -> 'b array -> 'c array -> '
 (** Flattens a map into a list. **)
 val pmap_to_list : ('a, 'b) PMap.t -> ('a * 'b) list
 
+
+(** Given a prefix, a string, and a size, concat the prefix and the string
+ * up to when the string is larger to or the same size than the given size. **)
+val complete_string_pre : string -> string -> int -> string
+
+(** Same than [complete_string_pre], but the first argument is now a postfix
+ * and no longer a prefix. **)
+val complete_string_post : string -> string -> int -> string
+

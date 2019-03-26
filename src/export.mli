@@ -11,6 +11,9 @@ type state = {
        * file (like a JSON file), but not for the one targetted to the final
        * user (character sheets or tools for the game master). **) ;
     translation : Translation.element (** The translation objects. **) ;
+    generic_translation : string Translation.t
+      (** Generic translations, defined in [web/translations.json]
+       * instead of files in [data/]. **) ;
     state : State.t (** The actual generated state. **)
   }
 

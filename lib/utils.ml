@@ -1,7 +1,7 @@
 
 let _ = Random.self_init ()
 
-let assert_defend = true
+let assert_defend = false
 
 
 let id x = x
@@ -197,4 +197,14 @@ let array_fold_lefti f acc a =
 
 let pmap_to_list m =
   PMap.foldi (fun k v l -> (k, v) :: l) m []
+
+let rec complete_string_pre pre s n =
+  if n > String.length s then
+    complete_string_pre pre (pre ^ s) n
+  else s
+
+let rec complete_string_post post s n =
+  if n > String.length s then
+    complete_string_post post (s ^ post) n
+  else s
 

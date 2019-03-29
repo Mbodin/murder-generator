@@ -195,12 +195,12 @@ event_constraint (N, O):
         } }
 
 time:
-  | LIFE        { History.For_life_event }
-  | LONG        { History.Long_term_event }
-  | MEDIUM      { History.Medium_term_event }
-  | SHORT       { History.Short_term_event }
-  | VERY; SHORT { History.Very_short_term_event }
-  | IMMEDIATE   { History.Immediate_event }
+  | LIFE        { Event.For_life_event }
+  | LONG        { Event.Long_term_event }
+  | MEDIUM      { Event.Medium_term_event }
+  | SHORT       { Event.Short_term_event }
+  | VERY; SHORT { Event.Very_short_term_event }
+  | IMMEDIATE   { Event.Immediate_event }
 
 direction:
   | AFTER   { true }

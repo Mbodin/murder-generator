@@ -344,7 +344,7 @@ let get_all_contacts_character st c =
   PMap.map Utils.pmap_to_list (snd st.(Id.to_array c))
 
 type t =
-  character_state * relation_state * History.state
+  character_state * relation_state * History.t
 
 let copy (st, a, h) =
   (Array.copy st, copy_relation_state a, History.copy h)

@@ -123,7 +123,7 @@ type command =
 
 (** Provide an event of this kind to these players. **)
 and provide_event =
-  History.event_type * string list * block
+  Event.event_type * string list * block
   (** Provides an event to a list of player.
    * Accepts the following commands: [Translation], [EventKind],
    * and [EventConstraint]. **)

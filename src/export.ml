@@ -90,17 +90,18 @@ let to_icalendar s =
   let events =
     let id_postfix =
       "-" ^ string_of_float (Sys.time ())
-      ^ "-" ^ History.rfc2445 History.now
+      ^ "-" ^ Date.rfc2445 Date.now
       ^ "-" ^ string_of_int (Hashtbl.hash s.names)
       ^ "-murder-generator" in
     List.concat (List.map (fun e ->
       "BEGIN:VEVENT"
       :: ("UID:" ^ string_of_int (Random.int max_int)
                  ^ "-" ^ string_of_int (Hashtbl.hash e) ^ id_postfix)
-      :: ("DTSTAMP:" ^ History.rfc2445 History.now)
-      :: ("DTSTART:" ^ History.rfc2445 e.History.event_begin)
-      :: ("DTEND:" ^ History.rfc2445 e.History.event_end)
-      :: List.map (fun c -> "ATTENDEE:" ^ get_name s c) e.History.event_attendees
+      :: ("DTSTAMP:" ^ Date.rfc2445 Date.now)
+      :: ("DTSTART:" ^ Date.rfc2445 e.History.event_begin)
+      :: ("DTEND:" ^ Date.rfc2445 e.History.event_end)
+      :: List.map (fun c -> "ATTENDEE:" ^ get_name s c)
+           e.History.event.Event.event_attendees
       @ "DESCRIPTION:" (* TODO *)
       :: "END:VEVENT"
       :: []) [(*TODO*)]) in
@@ -123,10 +124,10 @@ let to_org s =
     String.concat "\n" (
       (String.make n '*' ^ " " (* TODO: Description *))
       :: (String.make (2 + n) ' '
-          ^ History.orgmode_range e.History.event_begin e.History.event_end)
+          ^ Date.orgmode_range e.History.event_begin e.History.event_end)
       :: List.map (fun c ->
            String.make (1 + n) ' ' ^ "- [X] "
-           ^ get_name s c) e.History.event_attendees) in
+           ^ get_name s c) e.History.event.Event.event_attendees) in
   String.concat "\n\n" (
     String.concat "\n" (
       ("* " ^ get_translation "forTheGM")

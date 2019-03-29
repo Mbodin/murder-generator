@@ -14,7 +14,7 @@ type state = {
     generic_translation : string Translation.t
       (** Generic translations, defined in [web/translations.json]
        * instead of files in [data/]. **) ;
-    state : State.t (** The actual generated state. **)
+    state : State.final (** The actual generated state. **)
   }
 
 (** Produces a Graphviz representation of the interactions between players. **)

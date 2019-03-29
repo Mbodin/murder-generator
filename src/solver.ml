@@ -202,7 +202,11 @@ let wide_step g o temperature (s, evs) m =
     initial_weigth + 5 * int_of_float (log (float_of_int temperature)) + 2 in
   let step g (s, evs) m parameter =
     let l = Element.difference_attribute_in_need m in
-    if l = [] || Random.int 20 = 0 then (
+    if l = [] ||
+        (let dw = objective_weigth - Element.difference_weigth m in
+         dw > 0 &&
+           let p = 10 + objective_weigth - initial_weigth - dw in
+           p > 0 && Random.int p = 0) then (
       let optimistic = 7 - 6 * parameter / 100 in
       let (g, (s, m'), evs) = add_random g o optimistic (s, evs) in
       Lwt.return (g, (s, evs), Element.merge_attribute_differences m m')

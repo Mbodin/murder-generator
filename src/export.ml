@@ -4,24 +4,42 @@ type state = {
     language : Translation.language ;
     translation : Translation.element ;
     generic_translation : string Translation.t ;
-    state : State.t
+    state : State.final
   }
 
+(** As the state [s], but there the translation language has moved to
+ * the “generic” language. **)
 let generic s = { s with language = Translation.generic }
 
+(** Provide a human-readable version of the attribute. **)
 let translate_attribute s a =
   let tr = s.translation.Translation.attribute in
   Translation.force_translate tr s.language a
 
+(** The following two functions instantiate [translate_attribute]
+ * to player and contact attributes. **)
+let translate_attribute_player s a =
+  translate_attribute s (State.PlayerAttribute a)
+let translate_attribute_contact s a =
+  translate_attribute s (State.ContactAttribute a)
+
+(** Provide a human-readable version of the constructor.
+ * The function [f] is either [State.PlayerConstructor] or
+ * [State.ContactConstructor]. **)
 let translate_value s f v =
-  let tr l =
-    let tr = s.translation.Translation.constructor in
-    let v = Utils.select_any l in
-    let v = f v in
-    fst (Translation.gforce_translate tr s.language v PSet.empty) in
-  match v with
-  | State.Fixed_value (l, strict) -> tr l
-  | State.One_value_of l -> tr l
+  let tr = s.translation.Translation.constructor in
+  fst (Translation.gforce_translate tr s.language (f v) PSet.empty)
+
+(** The following two functions instantiate [translate_value]
+ * to player and contact attributes. **)
+let translate_value_player s =
+  translate_value s (fun v -> State.PlayerConstructor v)
+let translate_value_contact s =
+  translate_value s (fun v -> State.ContactConstructor v)
+
+(** Return the name of a character [c]. **)
+let get_name s c =
+  List.nth s.names (Id.to_array c)
 
 (** Some special constructors provides negative information
  * (that is, that something is absent instead of present).
@@ -30,12 +48,11 @@ let translate_value s f v =
  * Some exportation functions will display these differently, but it
  * should never profundly change the behaviour of the exportation. **)
 let negative s v =
-  let trv = translate_value (generic s) (fun v -> State.ContactConstructor v) v in
+  let trv = translate_value_contact (generic s) v in
   List.mem trv ["False"; "None"; "Absent"; "Undefined"]
 
 let to_graphviz s =
   let player_node c = "player" ^ string_of_int (Id.to_array c) in
-  let cst = State.get_character_state s.state in
   let get_color s =
     let n = float_of_int (Hashtbl.hash s mod 1000) /. 1000. in
     string_of_float n ^ " 1 0.7" in
@@ -49,23 +66,23 @@ let to_graphviz s =
         "  " ^ player_node c ^ " [label=\"{"
         ^ name ^ "|"
         ^ String.concat "|" (PMap.foldi (fun a v l ->
-              let tra = translate_attribute s (State.PlayerAttribute a) in
-              let trv = translate_value s (fun v -> State.PlayerConstructor v) v in
+              let tra = translate_attribute_player s a in
+              let trv = translate_value_player s v in
               ("{" ^ tra ^ "|" ^ trv ^ "}") :: l)
-            (State.get_all_attributes_character cst c) [])
+            (State.get_all_attributes_character_final s.state c) [])
         ^ "}\"]") s.names) ; "" ;
       (** Declaring their relations **)
       String.concat "\n" (List.concat (List.mapi (fun c _ ->
         let c = Id.from_array c in
         PMap.foldi (fun c' lv l ->
-          List.map (fun (a, v) ->
-            let tra = translate_attribute s (State.ContactAttribute a) in
-            let trv = translate_value s (fun v -> State.ContactConstructor v) v in
-            let color = if negative s v then "transparent" else get_color tra in
-            "  " ^ player_node c ^ " -> " ^ player_node c'
-            ^ " [label=\"" ^ tra ^ ":" ^ trv ^ "\""
-            ^ " color=\"" ^ color ^ "\"] ;") lv @ l)
-        (State.get_all_contacts_character cst c) []) s.names)) ;
+            List.map (fun (a, v) ->
+              let tra = translate_attribute_contact s a in
+              let trv = translate_value_contact s v in
+              let color = if negative s v then "transparent" else get_color tra in
+              "  " ^ player_node c ^ " -> " ^ player_node c'
+              ^ " [label=\"" ^ tra ^ ":" ^ trv ^ "\""
+              ^ " color=\"" ^ color ^ "\"] ;") lv @ l)
+          (State.get_all_contacts_character_final s.state c) []) s.names)) ;
       "}" ; ""
     ]
 
@@ -83,8 +100,7 @@ let to_icalendar s =
       :: ("DTSTAMP:" ^ History.rfc2445 History.now)
       :: ("DTSTART:" ^ History.rfc2445 e.History.event_begin)
       :: ("DTEND:" ^ History.rfc2445 e.History.event_end)
-      :: List.map (fun c ->
-           "ATTENDEE:" ^ List.nth s.names (Id.to_array c)) e.History.event_attendees
+      :: List.map (fun c -> "ATTENDEE:" ^ get_name s c) e.History.event_attendees
       @ "DESCRIPTION:" (* TODO *)
       :: "END:VEVENT"
       :: []) [(*TODO*)]) in
@@ -98,7 +114,6 @@ let to_icalendar s =
     :: [])
 
 let to_org s =
-  let cst = State.get_character_state s.state in
   let get_translation key =
     Utils.assert_option ("No key `" ^ key ^ "' found for language `"
                          ^ (Translation.iso639 s.language) ^ "' at "
@@ -111,10 +126,11 @@ let to_org s =
           ^ History.orgmode_range e.History.event_begin e.History.event_end)
       :: List.map (fun c ->
            String.make (1 + n) ' ' ^ "- [X] "
-           ^ List.nth s.names (Id.to_array c)) e.History.event_attendees) in
+           ^ get_name s c) e.History.event_attendees) in
   String.concat "\n\n" (
     String.concat "\n" (
       ("* " ^ get_translation "forTheGM")
+      :: ("** " ^ get_translation "GMEvents")
       :: List.map (print_event 3) [(* TODO: All events *)])
     :: List.mapi (fun c name ->
          let c = Id.from_array c in
@@ -122,40 +138,44 @@ let to_org s =
            ("* " ^ name)
            :: ("** " ^ get_translation "characterAttributes")
            :: PMap.foldi (fun a v l ->
-                  let tra = translate_attribute s (State.PlayerAttribute a) in
-                  let trv =
-                    translate_value s (fun v -> State.PlayerConstructor v) v in
+                  let tra = translate_attribute_player s a in
+                  let trv = translate_value_player s v in
                   (String.make 4 ' ' ^ "- " ^ tra ^ ": " ^ trv) :: l)
-                (State.get_all_attributes_character cst c) []
+                (State.get_all_attributes_character_final s.state c) []
+           @ ("** " ^ get_translation "characterContacts")
+           :: PMap.foldi (fun c' lv l ->
+                  ("*** " ^ get_translation "contactTo" ^ " " ^ get_name s c')
+                  :: List.map (fun (a, v) ->
+                      let tra = translate_attribute_contact s a in
+                      let trv = translate_value_contact s v in
+                      String.make 5 ' ' ^ "- " ^ tra ^ ": " ^ trv) lv @ l)
+                (State.get_all_contacts_character_final s.state c) []
            @ ("** " ^ get_translation "characterEvents")
            :: List.map (print_event 3) [(* TODO: Events *)])) s.names)
 
 let to_json s =
   let s = generic s in
-  let cst = State.get_character_state s.state in
-  let rst = State.get_relation_state s.state in
   Yojson.Safe.to_string ~std:true (`List (List.mapi (fun c name ->
     let c = Id.from_array c in `Assoc [
         ("name", `String name) ;
         ("attributes", `Assoc (PMap.foldi (fun a v l ->
-             let tra = translate_attribute s (State.PlayerAttribute a) in
-             let trv = translate_value s (fun v -> State.PlayerConstructor v) v in
+             let tra = translate_attribute_player s a in
+             let trv = translate_value_player s v in
              (tra, `String trv) :: l)
-           (State.get_all_attributes_character cst c) [])) ;
-        ("contacts", `List (List.mapi (fun c' _ ->
-          let c' = Id.from_array c' in
+           (State.get_all_attributes_character_final s.state c) [])) ;
+        ("contacts", `List (PMap.foldi (fun c' lv l ->
           `Assoc (List.map (fun (a, v) ->
-              let tra = translate_attribute s (State.ContactAttribute a) in
-              let trv = translate_value s (fun v -> State.ContactConstructor v) v in
-              (tra, `String trv))
-            (State.get_all_contact_character cst c c'))) s.names)) ;
+              let tra = translate_attribute_contact s a in
+              let trv = translate_value_contact s v in
+              (tra, `String trv)) lv) :: l)
+            (State.get_all_contacts_character_final s.state c) [])) ;
         ("relations", `List (Utils.list_fold_lefti (fun c' l _ ->
           let c' = Id.from_array c' in
-          let r = State.read_relation s.state c c' in
+          let r = State.read_relation_final s.state c c' in
           if c <= c' then l
           else `String (Relation.to_string r) :: l) [] s.names)) ;
-        ("complexity", `Int (State.character_complexity rst c)) ;
-        ("difficulty", `Int (State.character_difficulty rst c)) ;
+        ("complexity", `Int (State.character_complexity_final s.state c)) ;
+        ("difficulty", `Int (State.character_difficulty_final s.state c)) ;
         ("events", `List [(*TODO*)])
       ]) s.names))
 

@@ -69,8 +69,14 @@ val generate_event : date (** Beginning **) -> event_type (** Duration **) -> ch
 val compatible_events : event -> event -> bool
 
 (** The history of a character is a list of events that created
- * the current mind state of the character. **)
-type t = event list
+ * the current mind state of the character.
+ * This typed is used when looking for solution to constraints
+ * and only stores the relevant interactions between events. **)
+type t
+
+(** The final type, where each event have actually been assigned
+ * a particular moment in type. **)
+type final
 
 (** States whether an event is compatible with an history. **)
 val compatible : t -> event -> bool
@@ -84,4 +90,7 @@ val copy : state -> state
 (** Creates an empty history state for the given number n of characters,
  * each indexed from 0 to n - 1. **)
 val create_state : int -> state
+
+(** Provide an actual instantiation of each event’s date and time. **)
+val finalise : state -> final
 

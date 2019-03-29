@@ -276,14 +276,29 @@ let attribute_value_can_progress = function
   | One_value_of l -> l <> []
   | Fixed_value (_, _) -> false
 
-type attribute_map =
-  (PlayerAttribute.attribute, PlayerAttribute.constructor attribute_value) PMap.t
-type contact_map =
-  (character, (ContactAttribute.attribute,
-    ContactAttribute.constructor attribute_value) PMap.t) PMap.t
+(** Mapping from attribute to its value (either [PlayerAttribute.constructor]
+ * or [PlayerAttribute.constructor attribute_value]. **)
+type 'value attribute_map =
+  (PlayerAttribute.attribute, 'value) PMap.t
+
+(** Mapping for contacts to their values (either [ContactAttribute.constructor]
+ * or [ContactAttribute.constructor attribute_value]. **)
+type 'value contact_map =
+  (character, (ContactAttribute.attribute, 'value) PMap.t) PMap.t
+
+(** A generic map, to be either instantiated by [character_state] when
+ * solving the constraints or by [character_state_final] once solved. **)
+type ('player, 'contact) generic_character_state =
+  ('player attribute_map * 'contact contact_map) array
 
 type character_state =
-  (attribute_map * contact_map) array
+  (PlayerAttribute.constructor attribute_value,
+   ContactAttribute.constructor attribute_value) generic_character_state
+
+(** Same as [character_state], but without any doubt on the actual constructor. **)
+type character_state_final =
+  (PlayerAttribute.constructor,
+   ContactAttribute.constructor) generic_character_state
 
 let create_character_state n =
   Array.init n (fun i -> (PMap.empty, PMap.empty))
@@ -359,4 +374,30 @@ let number_of_player_relation_state (_, rs) = Array.length rs
 
 let all_players_relation st =
   all_players_length (number_of_player_relation_state st)
+
+type final =
+  character_state_final * relation_state * History.final
+
+let select_value = function
+  | Fixed_value (l, strict) -> Utils.select_any l
+  | One_value_of l -> Utils.select_any l
+
+let finalise (cst, rst, est) =
+  (Array.map (fun (a, c) ->
+    (PMap.map select_value a,
+     PMap.map (PMap.map select_value) c)) cst, rst, History.finalise est)
+
+let get_all_attributes_character_final (cst, _, _) =
+  get_all_attributes_character cst
+
+let get_all_contacts_character_final (cst, _, _) =
+  get_all_contacts_character cst
+
+let read_relation_final = read_relation
+
+let character_complexity_final (_, rst, _) =
+  character_complexity rst
+
+let character_difficulty_final (_, rst, _) =
+  character_difficulty rst
 

@@ -147,3 +147,7 @@ let copy = Array.copy
 let create_state n =
     Array.make n []
 
+type final = state (* FIXME *)
+
+let finalise = Utils.id (* TODO *)
+

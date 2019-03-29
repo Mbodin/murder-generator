@@ -409,6 +409,7 @@ let _ =
       let get_translation = get_translation parameters in
       let (cont, w) = Lwt.task () in
       let%lwt data = data in
+      let state = State.finalise state in
       (** Exports the generated state to various formats. **)
       let estate = {
           Export.language = get_language parameters ;

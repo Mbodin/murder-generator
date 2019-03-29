@@ -231,12 +231,14 @@ val get_all_contact_character : character_state -> character -> character -> (Co
 
 (** Similar to [get_all_attributes_character], returns all the current contact
  * given to a player.
- * This function is meant to be called once the state is stable. **)
+ * This function is meant to only be called once the state is stable. **)
 val get_all_contacts_character : character_state -> character -> (character, (ContactAttribute.attribute * ContactAttribute.constructor attribute_value) list) PMap.t
 
-(** A state is just a combination of each state component. **)
-type t =
-  character_state * relation_state * History.state
+(** A state is just a combination of each state component:
+ * - a character state,
+ * - a relation state,
+ * - a history state. **)
+type t
 
 (** The state involves non-functional effects.
  * This function creates a copy of the current state. **)
@@ -277,4 +279,32 @@ val all_players : t -> character list
 
 (** Similar to [all_players], but from a relation state. **)
 val all_players_relation : relation_state -> character list
+
+(** The type [t] is mainly used in the process of generating the scenario.
+ * It is optimised to store constraints, and in particular if there are
+ * several solutions, it will try to keep all of them, possibly abstracting
+ * them to only their relevant bits.
+ * However, the final scenario must actually concretise each of these
+ * abstracted values.
+ * This is the goal of this type. **)
+type final
+
+(** Fixes a state to its final state. **)
+val finalise : t -> final
+
+
+(** Similar to [get_all_attributes_character_final], but for the finalised state. **)
+val get_all_attributes_character_final : final -> character -> (PlayerAttribute.attribute, PlayerAttribute.constructor) PMap.t
+
+(** Similar to [get_all_contacts_character], but for the finalised state. **)
+val get_all_contacts_character_final : final -> character -> (character, (ContactAttribute.attribute * ContactAttribute.constructor) list) PMap.t
+
+(** Similar to [read_relation], but for the finalised state. **)
+val read_relation_final : final -> character -> character -> Relation.t
+
+(** Similar to [character_complexity], but for the finalised state. **)
+val character_complexity_final : final -> character -> int
+
+(** Similar to [character_difficulty], but for the finalised state. **)
+val character_difficulty_final : final -> character -> int
 

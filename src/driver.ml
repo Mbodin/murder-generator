@@ -70,15 +70,16 @@ type state = {
     category_names : string Id.map (** All declared category names. **) ;
     event_names : string Id.map (** All declared event names. **) ;
     elements_names : string Id.map (** All declared element names. **) ;
-    constructor_information : State.constructor_maps (** The constructor maps. **) ;
+    constructor_information : Attribute.constructor_maps
+      (** The constructor maps. **) ;
     (* LATER: There may be a way to factorise these dependency structures *)
     category_dependencies : (Id.t, Id.t PSet.t) PMap.t
       (** For each category, associates its set of category dependencies.
        * Note that this list is global: it also comprises the dependencies
        * of each dependencies, and so on. **) ;
-    attribute_dependencies : (State.attribute, Id.t PSet.t) PMap.t
+    attribute_dependencies : (Attribute.attribute, Id.t PSet.t) PMap.t
       (** Similarly, the dependencies of each attribute. **) ;
-    constructor_dependencies : (State.constructor, Id.t PSet.t) PMap.t
+    constructor_dependencies : (Attribute.constructor, Id.t PSet.t) PMap.t
       (** Similarly, the dependencies of each constructor. **) ;
     elements_dependencies : (Id.t, Id.t PSet.t) PMap.t
       (** Similarly, the dependencies of each element. **) ;
@@ -97,8 +98,8 @@ type intermediary = {
     categories_to_be_defined :
       (Id.t, Id.t PSet.t
                    * Id.t PSet.t
-                   * State.attribute PSet.t
-                   * State.constructor PSet.t) PMap.t
+                   * Attribute.attribute PSet.t
+                   * Attribute.constructor PSet.t) PMap.t
       (** The set of categories expected to be declared.
        * For each of these, we also put thee sets to which the category dependencies
        * should be attached: they are respectively the set of category identifiers,
@@ -107,10 +108,10 @@ type intermediary = {
       (** Similarly, the set of events to be declared.
        * For each event, we also associate the other events depending on it. **) ;
     attributes_to_be_defined :
-      (State.attribute, State.constructor PSet.t) PMap.t
+      (Attribute.attribute, Attribute.constructor PSet.t) PMap.t
       (** Similarly, the set of attributes expected to be declared and their
        * dependent constructors. **) ;
-    constructors_to_be_defined : State.constructor PSet.t
+    constructors_to_be_defined : Attribute.constructor PSet.t
       (** A set of constructors expected to be defined. **) ;
     tags_to_be_defined : (Translation.language * Translation.tag) PSet.t
       (** Similarly, a set of tags expected to be defined. **) ;
@@ -126,7 +127,7 @@ let empty_state = {
     category_names = Id.map_create () ;
     event_names = Id.map_create () ;
     elements_names = Id.map_create () ;
-    constructor_information = State.empty_constructor_maps ;
+    constructor_information = Attribute.empty_constructor_maps ;
     category_dependencies = PMap.empty ;
     attribute_dependencies = PMap.empty ;
     constructor_dependencies = PMap.empty ;
@@ -162,41 +163,41 @@ let events_to_be_defined i =
 
 let attributes_to_be_defined i =
   PSet.partition_map (function
-      | State.PlayerAttribute id ->
+      | Attribute.PlayerAttribute id ->
         Utils.Left (Utils.assert_option __LOC__
-          (State.PlayerAttribute.attribute_name
-            i.current_state.constructor_information.State.player id))
-      | State.ContactAttribute id ->
+          (Attribute.PlayerAttribute.attribute_name
+            i.current_state.constructor_information.Attribute.player id))
+      | Attribute.ContactAttribute id ->
         Utils.Right (Utils.assert_option __LOC__
-          (State.ContactAttribute.attribute_name
-            i.current_state.constructor_information.State.contact id)))
+          (Attribute.ContactAttribute.attribute_name
+            i.current_state.constructor_information.Attribute.contact id)))
     (PSet.domain i.attributes_to_be_defined)
 
 let constructors_to_be_defined i =
   PSet.partition_map (function
-      | State.PlayerConstructor c ->
-        let i = i.current_state.constructor_information.State.player in
+      | Attribute.PlayerConstructor c ->
+        let i = i.current_state.constructor_information.Attribute.player in
         let a =
           Utils.assert_option __LOC__
-            (State.PlayerAttribute.constructor_attribute i c) in
+            (Attribute.PlayerAttribute.constructor_attribute i c) in
         let a =
           Utils.assert_option __LOC__
-            (State.PlayerAttribute.attribute_name i a) in
+            (Attribute.PlayerAttribute.attribute_name i a) in
         let c =
           Utils.assert_option __LOC__
-            (State.PlayerAttribute.constructor_name i c) in
+            (Attribute.PlayerAttribute.constructor_name i c) in
         Utils.Left (a, c)
-      | State.ContactConstructor c ->
-        let i = i.current_state.constructor_information.State.contact in
+      | Attribute.ContactConstructor c ->
+        let i = i.current_state.constructor_information.Attribute.contact in
         let a =
           Utils.assert_option __LOC__
-            (State.ContactAttribute.constructor_attribute i c) in
+            (Attribute.ContactAttribute.constructor_attribute i c) in
         let a =
           Utils.assert_option __LOC__
-            (State.ContactAttribute.attribute_name i a) in
+            (Attribute.ContactAttribute.attribute_name i a) in
         let c =
           Utils.assert_option __LOC__
-            (State.ContactAttribute.constructor_name i c) in
+            (Attribute.ContactAttribute.constructor_name i c) in
         Utils.Right (a, c)) i.constructors_to_be_defined
 
 let tags_to_be_defined i =
@@ -366,26 +367,26 @@ let event_names_to_dep_dep state l =
  * functions, only depending on whether called on attributes or contacts.
  * The following tuples store each instantiations of the needed functions. **)
 let attribute_functions =
-  (State.PlayerAttribute.declare_attribute,
-   State.PlayerAttribute.declare_constructor,
-   State.PlayerAttribute.get_attribute,
-   State.PlayerAttribute.get_constructor,
-   State.PlayerAttribute.declare_compatibility,
-   (fun m -> m.State.player),
-   (fun i state -> { i with State.player = state }),
-   (fun id -> State.PlayerAttribute id),
-   (fun id -> State.PlayerConstructor id),
+  (Attribute.PlayerAttribute.declare_attribute,
+   Attribute.PlayerAttribute.declare_constructor,
+   Attribute.PlayerAttribute.get_attribute,
+   Attribute.PlayerAttribute.get_constructor,
+   Attribute.PlayerAttribute.declare_compatibility,
+   (fun m -> m.Attribute.player),
+   (fun i state -> { i with Attribute.player = state }),
+   (fun id -> Attribute.PlayerAttribute id),
+   (fun id -> Attribute.PlayerConstructor id),
    "attribute")
 let contact_functions =
-  (State.ContactAttribute.declare_attribute,
-   State.ContactAttribute.declare_constructor,
-   State.ContactAttribute.get_attribute,
-   State.ContactAttribute.get_constructor,
-   State.ContactAttribute.declare_compatibility,
-   (fun m -> m.State.contact),
-   (fun i state -> { i with State.contact = state }),
-   (fun id -> State.ContactAttribute id),
-   (fun id -> State.ContactConstructor id),
+  (Attribute.ContactAttribute.declare_attribute,
+   Attribute.ContactAttribute.declare_constructor,
+   Attribute.ContactAttribute.get_attribute,
+   Attribute.ContactAttribute.get_constructor,
+   Attribute.ContactAttribute.declare_compatibility,
+   (fun m -> m.Attribute.contact),
+   (fun i state -> { i with Attribute.contact = state }),
+   (fun id -> Attribute.ContactAttribute id),
+   (fun id -> Attribute.ContactConstructor id),
    "contact")
 
 (** States whether a category has been defined. **)
@@ -908,7 +909,7 @@ let parse_element st element_name block =
           | Ast.AllOtherPlayers -> add_constraint_other c
           | Ast.AllPlayers -> add_constraint_all c in
         merge_with_constructor_dependencies_list deps
-          (List.map (fun id -> State.PlayerConstructor id) cid))
+          (List.map (fun id -> Attribute.PlayerConstructor id) cid))
       deps block.provide_attribute in
   (** We then consider contacts. **)
   let deps =
@@ -953,43 +954,44 @@ let parse_element st element_name block =
           | Ast.FromTo (p1, p2) -> add p1 p2
           | Ast.Between (p1, p2) -> add p1 p2 ; add p2 p1 in
         merge_with_constructor_dependencies_list deps
-          (List.map (fun id -> State.ContactConstructor id) cid))
+          (List.map (fun id -> Attribute.ContactConstructor id) cid))
       deps block.provide_contact in
   (** We finally consider player constraints. **)
   let deps =
     List.fold_left (fun deps (p, pc) ->
         let consider_constraints add_constraint =
           List.fold_left (fun deps -> function
-            | Ast.HasAttribute (a, n, c) ->
-              let aid = get_attribute_id attribute_functions a in
-              let cid = List.map (get_constructor_id attribute_functions aid) c in
-              let cid =
-                if n then (
-                  let total =
-                    Utils.assert_option __LOC__
-                      (State.PlayerAttribute.constructors
-                        st.constructor_information.player aid) in
-                  List.filter (fun c -> not (List.mem c cid)) total
-                ) else cid in
-              add_constraint (Element.Attribute (aid, State.One_value_of cid)) ;
-              intersect_with_constructor_dependencies_list deps
-                (List.map (fun id -> State.PlayerConstructor id) cid)
-            | Ast.HasContact (a, p', n, c) ->
-              let aid = get_attribute_id contact_functions a in
-              let cid = List.map (get_constructor_id contact_functions aid) c in
-              let cid =
-                if n then (
-                  let total =
-                    Utils.assert_option __LOC__
-                      (State.ContactAttribute.constructors
-                        st.constructor_information.contact aid) in
-                  List.filter (fun c -> not (List.mem c cid)) total
-                ) else cid in
-              add_constraint
-                (Element.Contact (aid, Some (Id.to_array (get_player p')),
-                  State.One_value_of cid)) ;
-              intersect_with_constructor_dependencies_list deps
-                (List.map (fun id -> State.ContactConstructor id) cid)) deps pc in
+              | Ast.HasAttribute (a, n, c) ->
+                let aid = get_attribute_id attribute_functions a in
+                let cid = List.map (get_constructor_id attribute_functions aid) c in
+                let cid =
+                  if n then (
+                    let total =
+                      Utils.assert_option __LOC__
+                        (Attribute.PlayerAttribute.constructors
+                          st.constructor_information.player aid) in
+                    List.filter (fun c -> not (List.mem c cid)) total
+                  ) else cid in
+                add_constraint (Element.Attribute (aid, State.One_value_of cid)) ;
+                intersect_with_constructor_dependencies_list deps
+                  (List.map (fun id -> Attribute.PlayerConstructor id) cid)
+              | Ast.HasContact (a, p', n, c) ->
+                let aid = get_attribute_id contact_functions a in
+                let cid = List.map (get_constructor_id contact_functions aid) c in
+                let cid =
+                  if n then (
+                    let total =
+                      Utils.assert_option __LOC__
+                        (Attribute.ContactAttribute.constructors
+                          st.constructor_information.contact aid) in
+                    List.filter (fun c -> not (List.mem c cid)) total
+                  ) else cid in
+                add_constraint
+                  (Element.Contact (aid, Some (Id.to_array (get_player p')),
+                    State.One_value_of cid)) ;
+                intersect_with_constructor_dependencies_list deps
+                  (List.map (fun id -> Attribute.ContactConstructor id) cid))
+            deps pc in
         match p with
         | None -> consider_constraints add_constraint_other
         | Some p ->

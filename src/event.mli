@@ -14,6 +14,16 @@ type event_type =
   | Very_short_term_event (** Several minutes **)
   | Immediate_event (** Less than a minute **)
 
+(** Event kinds **)
+type kind
+
+(** Build a kind from a kind name. **)
+val kind_of_string : string -> kind
+
+(** Build a kind from an attribute (meaning that this event provides
+ * such an attribute). **)
+val kind_of_attribute : Attribute.attribute -> kind
+
 (** The structure of an event.
  * This structure stores all the needed information to describe the event,
  * but lacks any mention of its date and dependencies.
@@ -25,7 +35,10 @@ type t = {
       (** List of characters fully involved during this event,
        * or that can not be involved during this event takes place.
        * Two events with non-disjunct character lists can not happen
-       * simultaneously. **)
+       * simultaneously. **) ;
+    event_kinds : kind PSet.t
+      (** The set of event kinds that this event inherit from. **)
+    (* TODO: Constraints. *)
     (* TODO: Translations. *)
   }
 

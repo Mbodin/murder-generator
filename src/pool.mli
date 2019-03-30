@@ -13,7 +13,7 @@ val empty_global : global
 
 (** Register that an element exists, and that it may provide the following
  * attributes. **)
-val register_element : global -> element -> State.attribute list -> global
+val register_element : global -> element -> Attribute.attribute list -> global
 
 (** Unregister an element.
  * It won’t be considered by the pool. **)
@@ -51,17 +51,17 @@ val pop : t -> element option * t
 val shuffle : t -> t
 
 (** Remove from the pool all elements that don’t provide this attribute. **)
-val restrict : t -> State.attribute -> t
+val restrict : t -> Attribute.attribute -> t
 
 (** Only keeps from the pool the elements satisfying the provided predicate. **)
 val filter : t -> (element -> bool) -> t
 
 (** Remove from the pool all elements that provide this attribute. **)
-val filter_out : t -> State.attribute -> t
+val filter_out : t -> Attribute.attribute -> t
 
 (** Add an element to the pool to its end. **)
 val add : t -> element -> t
 
 (** Add all elements that provide this attribute to the pool. **)
-val add_attribute : t -> State.attribute -> t
+val add_attribute : t -> Attribute.attribute -> t
 

@@ -19,9 +19,9 @@ let translate_attribute s a =
 (** The following two functions instantiate [translate_attribute]
  * to player and contact attributes. **)
 let translate_attribute_player s a =
-  translate_attribute s (State.PlayerAttribute a)
+  translate_attribute s (Attribute.PlayerAttribute a)
 let translate_attribute_contact s a =
-  translate_attribute s (State.ContactAttribute a)
+  translate_attribute s (Attribute.ContactAttribute a)
 
 (** Provide a human-readable version of the constructor.
  * The function [f] is either [State.PlayerConstructor] or
@@ -33,9 +33,9 @@ let translate_value s f v =
 (** The following two functions instantiate [translate_value]
  * to player and contact attributes. **)
 let translate_value_player s =
-  translate_value s (fun v -> State.PlayerConstructor v)
+  translate_value s (fun v -> Attribute.PlayerConstructor v)
 let translate_value_contact s =
-  translate_value s (fun v -> State.ContactConstructor v)
+  translate_value s (fun v -> Attribute.ContactConstructor v)
 
 (** Return the name of a character [c]. **)
 let get_name s c =
@@ -229,11 +229,12 @@ let from_json m fileName fileContent =
             List.fold_left (fun state -> function
               | (attribute, `String v) ->
                 let attribute =
-                  get_attribute "attribute" State.PlayerAttribute.get_attribute
-                    m.State.player attribute in
+                  get_attribute "attribute" Attribute.PlayerAttribute.get_attribute
+                    m.Attribute.player attribute in
                 let v =
-                  get_constructor "attribute" State.PlayerAttribute.get_constructor
-                    m.State.player attribute v in
+                  get_constructor "attribute"
+                    Attribute.PlayerAttribute.get_constructor
+                    m.Attribute.player attribute v in
                 State.write_attribute_character (State.get_character_state state) c
                   attribute (Fixed_value ([v], Strict)) ;
                 state
@@ -249,12 +250,13 @@ let from_json m fileName fileContent =
                 List.fold_left (fun state -> function
                   | (attribute, `String v) ->
                     let attribute =
-                      get_attribute "contact" State.ContactAttribute.get_attribute
-                        m.State.contact attribute in
+                      get_attribute "contact"
+                        Attribute.ContactAttribute.get_attribute
+                        m.Attribute.contact attribute in
                     let v =
                       get_constructor "contact"
-                        State.ContactAttribute.get_constructor
-                        m.State.contact attribute v in
+                        Attribute.ContactAttribute.get_constructor
+                        m.Attribute.contact attribute v in
                     State.write_contact_character (State.get_character_state state)
                       c attribute c' (Fixed_value ([v], Strict)) ;
                     state

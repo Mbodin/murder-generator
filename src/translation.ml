@@ -62,9 +62,9 @@ type complete_translation_function = tag PSet.t -> string * tag PSet.t
 
 type element = {
     category : Id.t t ;
-    attribute : State.attribute t ;
-    constructor : State.constructor gt ;
-    add : (State.constructor * language, tag PSet.t) PMap.t
+    attribute : Attribute.attribute t ;
+    constructor : Attribute.constructor gt ;
+    add : (Attribute.constructor * language, tag PSet.t) PMap.t
   }
 
 

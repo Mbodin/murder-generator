@@ -5,18 +5,18 @@ type character = State.character
 
 (** A constraint on a character **)
 type character_constraint =
-  | Attribute of State.PlayerAttribute.attribute
-                 * State.PlayerAttribute.constructor State.attribute_value
+  | Attribute of Attribute.PlayerAttribute.attribute
+                 * Attribute.PlayerAttribute.constructor State.attribute_value
     (** The given attribute value is provided by the element.
       * Note that [State.attribute_constructor] can be of the form
       * [State.One_value_of], in which case the attribute is required to be of
       * this value, but also [State.Fixed_value], where the element actually
       * provides an explanation for it. **)
-  | Contact of State.ContactAttribute.attribute
+  | Contact of Attribute.ContactAttribute.attribute
                * int option (** If this number is [None], this contact is meant
                               * towards all other players than the ones declared
                               * in the element. **)
-               * State.ContactAttribute.constructor State.attribute_value
+               * Attribute.ContactAttribute.constructor State.attribute_value
     (** The given contact (identified in the local array) is provided by the
      * element. **)
 
@@ -40,7 +40,7 @@ type cell = {
 type t = cell array * character_constraint list
 
 (** Returns the list of attribute that an element may provide. **)
-val provided_attributes : t -> State.attribute list
+val provided_attributes : t -> Attribute.attribute list
 
 (** Given a state, an element, and an instantiation of the characters, states
  * whether the event can be applied.
@@ -48,13 +48,13 @@ val provided_attributes : t -> State.attribute list
  * If the element can be applied, it states whether the element is making
  * progress, that is whether there exists at least one attribute value that
  * has been changed to something recognised by [State.attribute_value_progress]. **)
-val compatible_and_progress : State.constructor_maps -> State.t -> t -> character array -> bool option
+val compatible_and_progress : Attribute.constructor_maps -> State.t -> t -> character array -> bool option
 
 (** Look for instantiations.
  * The second return value is the result of [compatible_and_progress] on this
  * instantiation.
  * It tries to return an instantiation that progresses. **)
-val search_instantiation : State.constructor_maps -> State.t -> t -> (character array * bool) option
+val search_instantiation : Attribute.constructor_maps -> State.t -> t -> (character array * bool) option
 
 (** This type carries information about how the state have been changed
  * by the [apply] function. **)
@@ -74,11 +74,11 @@ val merge_attribute_differences : attribute_differences -> attribute_differences
 val difference_weigth : attribute_differences -> int
 
 (** Returns the difference for a specific attribute. **)
-val difference_for_attribute : attribute_differences -> State.attribute -> int
+val difference_for_attribute : attribute_differences -> Attribute.attribute -> int
 
 (** Returns all attributes who value associated by [difference_for_attribute]
  * is negative, that is, the attributes with constraints to be solved. **)
-val difference_attribute_in_need : attribute_differences -> State.attribute list
+val difference_attribute_in_need : attribute_differences -> Attribute.attribute list
 
 (** Return an empty difference, with a weight of zero. **)
 val empty_difference : attribute_differences
@@ -90,10 +90,10 @@ val empty_difference : attribute_differences
  * [compatible_and_progress] returns [Some].
  * Once the total number of attribute to be defined is zero, the state can be
  * published. **)
-val apply : State.constructor_maps -> State.t -> t -> character array -> State.t * attribute_differences
+val apply : Attribute.constructor_maps -> State.t -> t -> character array -> State.t * attribute_differences
 
 (** Same as [apply], but create a copy of the state before the application. **)
-val safe_apply : State.constructor_maps -> State.t -> t -> character array -> State.t * attribute_differences
+val safe_apply : Attribute.constructor_maps -> State.t -> t -> character array -> State.t * attribute_differences
 
 (** Get the resulting relation state from an instantiation.
  * The input state is not modified by this function. **)

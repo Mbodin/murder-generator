@@ -8,8 +8,8 @@ type element = Id.t
   *   elements (the elements that provide this attribute).
   * They are not supposed to be changed once pools are created. **)
 type global = {
-    all_elements : (element, State.attribute list) PMap.t ;
-    element_attribute : (State.attribute, element list) PMap.t
+    all_elements : (element, Attribute.attribute list) PMap.t ;
+    element_attribute : (Attribute.attribute, element list) PMap.t
   }
 
 let empty_global = {
@@ -62,7 +62,7 @@ type t = {
     pool : element BidirectionalList.t
       (** The pool.
        * Each element is present at most once in the pool. **) ;
-    filtered_out_attributes : State.attribute PSet.t
+    filtered_out_attributes : Attribute.attribute PSet.t
       (** Attributes meant to be removed from the pool. **) ;
     global : global
       (** The associated global values. **)

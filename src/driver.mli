@@ -105,11 +105,11 @@ val get_category_dependencies : state -> Id.t -> Id.t PSet.t
 
 (** Takes an attribute and returns the list of categories
  * that this attribute depends on. **)
-val get_attribute_dependencies : state -> State.attribute -> Id.t PSet.t
+val get_attribute_dependencies : state -> Attribute.attribute -> Id.t PSet.t
 
 (** Takes a constructor and returns the list of categories
  * that this constructor depends on. **)
-val get_constructor_dependencies : state -> State.constructor -> Id.t PSet.t
+val get_constructor_dependencies : state -> Attribute.constructor -> Id.t PSet.t
 
 (** Takes an element identifier and returns the list of categories
  * that this element depends on. **)
@@ -119,5 +119,5 @@ val get_element_dependencies : state -> Id.t -> Id.t PSet.t
 val get_translations : state -> Translation.element
 
 (** Return the constructor maps generated while loading the files. **)
-val get_constructor_maps : state -> State.constructor_maps
+val get_constructor_maps : state -> Attribute.constructor_maps
 

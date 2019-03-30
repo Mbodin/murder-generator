@@ -142,9 +142,9 @@ val from_json : string -> string -> string t * language list
 (** A type to store each notion used in elements. **)
 type element = {
     category : Id.t t (** The translations of categories. **) ;
-    attribute : State.attribute t (** The translations of attributes. **) ;
-    constructor : State.constructor gt (** The translations of constructors. **) ;
-    add : (State.constructor * language, tag PSet.t) PMap.t
+    attribute : Attribute.attribute t (** The translations of attributes. **) ;
+    constructor : Attribute.constructor gt (** The translations of constructors. **) ;
+    add : (Attribute.constructor * language, tag PSet.t) PMap.t
       (** For each constructor and language, provides a set of added tags. **)
   }
 

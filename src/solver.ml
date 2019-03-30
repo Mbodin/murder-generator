@@ -3,7 +3,7 @@ type global = {
     branch_exploration : float ;
     element_register : Element.t Id.map
       (** The set of all registered elements. **) ;
-    constructor_informations : State.constructor_maps
+    constructor_informations : Attribute.constructor_maps
       (** Informations about constructors. **) ;
     pool_informations : Pool.global (** Informations needed by the pool. **) ;
     all_elements : Id.t BidirectionalList.t
@@ -17,7 +17,7 @@ let read_element g e =
 let empty_global p = {
     branch_exploration = p *. p ;
     element_register = Id.map_create () ;
-    constructor_informations = State.empty_constructor_maps ;
+    constructor_informations = Attribute.empty_constructor_maps ;
     all_elements = BidirectionalList.empty ;
     pool_informations = Pool.empty_global
   }

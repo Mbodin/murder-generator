@@ -760,6 +760,13 @@ let parse_element st element_name block =
     match Id.get_id player_names p with
     | None -> raise (Undeclared ("player", p, Some element_name))
     | Some i -> i in
+  (** We pre-parse the events, as they might contain declarations. **)
+  let events =
+    List.map (fun (k, l, b) ->
+      (k, List.map get_player l,
+       convert_block element_name
+         [Translation; ProvideAttribute; ProvideContact; EventKind; EventConstraint]
+         b)) block.provide_event in
   (** We first consider relations. **)
   let relations =
     (** We create this triangle of relations.
@@ -797,7 +804,6 @@ let parse_element st element_name block =
   let elementBase =
     Array.map (fun a -> {
         Element.constraints = [] ;
-        Element.events = [] ;
         Element.relations = a ;
         Element.added_objective = State.zero_objective
       }) relations in
@@ -894,6 +900,11 @@ let parse_element st element_name block =
               { o with State.complexity = d + o.State.complexity } })
     block.add_complexity ;
   (** We now consider attributes. **)
+  let attributes =
+    (** Attribute declarations may be placed inside events to mean that
+     * it was a particular event that triggered this declaration. **)
+    List.fold_left (fun l (_, _, b) ->
+      b.provide_attribute @ l) block.provide_attribute events in
   let deps =
     List.fold_left (fun deps pa ->
         let aid = get_attribute_id attribute_functions pa.Ast.attribute_name in
@@ -910,8 +921,13 @@ let parse_element st element_name block =
           | Ast.AllPlayers -> add_constraint_all c in
         merge_with_constructor_dependencies_list deps
           (List.map (fun id -> Attribute.PlayerConstructor id) cid))
-      deps block.provide_attribute in
+      deps attributes in
   (** We then consider contacts. **)
+  let contacts =
+    (** Similarly to attributes, contact declarations may be placed
+     * inside events. **)
+    List.fold_left (fun l (_, _, b) ->
+      b.provide_contact @ l) block.provide_contact events in
   let deps =
     List.fold_left (fun deps pc ->
         let aid = get_attribute_id contact_functions pc.Ast.contact_name in
@@ -955,8 +971,8 @@ let parse_element st element_name block =
           | Ast.Between (p1, p2) -> add p1 p2 ; add p2 p1 in
         merge_with_constructor_dependencies_list deps
           (List.map (fun id -> Attribute.ContactConstructor id) cid))
-      deps block.provide_contact in
-  (** We finally consider player constraints. **)
+      deps contacts in
+  (** We then consider player constraints. **)
   let deps =
     List.fold_left (fun deps (p, pc) ->
         let consider_constraints add_constraint =
@@ -997,8 +1013,9 @@ let parse_element st element_name block =
         | Some p ->
           consider_constraints (add_constraint (get_player p)))
       deps block.let_player in
-  (* TODO: events *)
-  ((elementBase, !otherPlayers), deps)
+  (** We finally consider events. **)
+  let evs = [] (* TODO: List.map ?? events *) in
+  ((elementBase, !otherPlayers, evs), deps)
 
 let parse i =
   let (elements, elements_dependencies) =
@@ -1023,7 +1040,7 @@ let get_element_dependencies s e =
 let get_all_elements s cats maxPlayers =
   PMap.foldi (fun e deps el ->
     if PSet.for_all (fun c -> PSet.mem c cats) deps then (
-      let (et, _) = PMap.find e s.elements in
+      let (et, _, _) = PMap.find e s.elements in
       if Array.length et <= maxPlayers then
         e :: el
       else el)

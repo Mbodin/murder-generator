@@ -32,6 +32,9 @@ type t = {
     events : event Id.map
       (** Events are not stored directly in the timeline,
        * but through identifiers. **) ;
+    kind_map : (Event.kind * character, Id.t list) PMap.t
+      (** For each kind and character, returns a list of event identifier
+       * satisfying them. **) ;
     graph : (Id.t, Id.t list * Id.t list) PMap.t
       (** The graph of event constraints.
        * Each event is associated two sets of events:
@@ -74,16 +77,23 @@ let rec all_successors f st e =
         aux (PSet.add e visited) (f next @ l) in
   aux PSet.empty [e]
 
-let compatible st e = true (* TODO *)
+let lcompatible_and_progress st el = Some false (* TODO *)
+
+let compatible_and_progress st e = lcompatible_and_progress st [e]
+
+let lapply st el = st (* TODO *)
+
+let apply st e = lapply st [e]
 
 let create_state _ = {
     events = Id.map_create () ;
+    kind_map = PMap.empty ;
     graph = PMap.empty ;
     constraint_none = PMap.empty ;
     constraint_some = PMap.empty
   }
 
-type final = t (* FIXME *)
+type final = event list
 
-let finalise = Utils.id (* TODO *)
+let finalise st = [] (* TODO *)
 

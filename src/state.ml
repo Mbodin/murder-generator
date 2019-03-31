@@ -231,6 +231,14 @@ let create_state n =
 
 let get_character_state (st, _, _) = st
 
+let get_history_state (_, _, h) = h
+
+let apply_event (st, a, h) ev =
+  (st, a, History.apply h ev)
+
+let apply_events (st, a, h) evs =
+  (st, a, History.lapply h evs)
+
 (** Creates a list of characters from the total number of characters. **)
 let all_players_length l =
   List.map Id.from_array (Utils.seq l)

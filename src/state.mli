@@ -183,6 +183,15 @@ val create_state : int -> t
 (** Get the character state component of a state. **)
 val get_character_state : t -> character_state
 
+(** Get the history state component of a state. **)
+val get_history_state : t -> History.t
+
+(** Calls [History.apply] on an events. **)
+val apply_event : t -> Event.t -> t
+
+(** Calls [History.lapply] on a set of events. **)
+val apply_events : t -> Event.t list -> t
+
 (** Returns the size of the state, that its number of players. **)
 val number_of_player : t -> int
 

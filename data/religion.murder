@@ -49,12 +49,13 @@ element GodAlwaysExisted
 begin
   let P be player with attribute Specy as God
 
-  provide strict attribute Born to P as AlwaysExisted
-
   provide immediate event to P
   begin
     event Description
     assume no event Personnal to P before
+
+    provide strict attribute Born to P as AlwaysExisted
+
     translation fr P:+sbeg " a existé aussi loin que remontent les mémoires."
                    "  " P:+sbeg:+pro " était, " P:+pro " est, " P:+pro " sera."
                    "  À tout jamais."
@@ -70,12 +71,13 @@ element GodHasNoGender
 begin
   let P be player with attribute Specy as God
 
-  provide strict attribute Gender to P as NonBinary
-
   provide immediate event to P
   begin
     event Description
     assume no event Personnal to P before
+
+    provide strict attribute Gender to P as NonBinary
+
     translation fr "Les notions de genre ne s’appliquent pas à " P "."
                    "  " P:+sbeg:+pro " n’est ni masculin, ni féminin."
                    "  " P:+sbeg:+pro " est."
@@ -130,11 +132,12 @@ element PriestSinceEarly
 begin
   let P be player
 
-  provide attribute Job to P as Priest
-
   provide immediate event to P
   begin
     (* TODO *)
+
+    provide attribute Job to P as Priest
+
   end
 end
 

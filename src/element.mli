@@ -23,8 +23,6 @@ type character_constraint =
 (** All the changes applied by an elements to players are summed up in this type. **)
 type cell = {
     constraints : character_constraint list (** The constraints on this player. **) ;
-    events : History.event list
-      (** The events that this element would provide to this player. **) ;
     relations : Relation.t array
       (** The relations that would be added to this player,  for each characters.
        * This array can be less than the number of players  in this element
@@ -37,7 +35,7 @@ type cell = {
 (** Each players considered by the element are represented as a cell.
  * A list of constraints given to other players is also given
  * (it corresponds to the [let any other player] declarations. **)
-type t = cell array * character_constraint list
+type t = cell array * character_constraint list * Event.partial list
 
 (** Returns the list of attribute that an element may provide. **)
 val provided_attributes : t -> Attribute.attribute list

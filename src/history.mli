@@ -26,10 +26,29 @@ type t
 
 (** The final type, where each event have actually been assigned
  * a particular moment in type. **)
-type final
+type final = event list
 
-(** States whether an event is compatible with a timeline. **)
-val compatible : t -> event -> bool
+(** States whether an event is compatible with a timeline.
+ * Its return value is the same as [Element.compatible_and_progress]:
+ * [None] if incompatible, [Some false] is compatible but does not help
+ * with the already present constraints, and finally [Some true] means
+ * that this event not only applies, but it helps the already present
+ * events. **)
+val compatible_and_progress : t -> Event.t -> bool option
+
+(** States whether a list of events is compatible with a timeline,
+ * assuming that each event has to be in this particular order. **)
+val lcompatible_and_progress : t -> Event.t list -> bool option
+
+(** Apply an event to a timeline.
+ * This function should only be called on events for which
+ * [compatible_and_progress] returns [Some]. **)
+val apply : t -> Event.t -> t
+
+(** Same as [apply], but for a list of events for which
+ * [lcompatible_and_progress] returns [Some].
+ * Their relative order will be conserved. **)
+val lapply : t -> Event.t list -> t
 
 (** (Deeply) copies the state. **)
 val copy : t -> t

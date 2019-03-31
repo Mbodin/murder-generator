@@ -23,10 +23,14 @@ val remove : 'a -> 'a t -> 'a t
 (** Checks whether an element is present in the set. **)
 val mem : 'a -> 'a t -> bool
 
-(** Merges two sets. **)
+(** Merges two sets.
+ * This function has been optimised with the assumption that the second set is
+ * larger than the first. **)
 val merge : 'a t -> 'a t -> 'a t
 
-(** Computes the intersection of two sets. **)
+(** Computes the intersection of two sets.
+ * This function has been optimised with the assumption that the second set is
+ * larger than the first. **)
 val inter : 'a t -> 'a t -> 'a t
 
 (** Computes the difference of two sets. **)
@@ -49,7 +53,7 @@ val for_all : ('a -> bool) -> 'a t -> bool
  * the given predicate. **)
 val exists : ('a -> bool) -> 'a t -> bool
 
-(** Maps the set to a function. **)
+(** Maps the set through a function. **)
 val map : ('a -> 'b) -> 'a t -> 'b t
 
 (** Given a predicate, splits the set into a set of elements

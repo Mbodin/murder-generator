@@ -56,7 +56,7 @@ let test_relations _ =
     print_newline ()
   done
 
-let test_parser =
+let test_parser _ =
   print_endline ("Total number of files: " ^
                  string_of_int (List.length MurderFiles.files)) ;
   let read_file f =
@@ -88,7 +88,7 @@ let test_parser =
   let _s = Driver.parse i in
   ()
 
-let test_translations =
+let test_translations _ =
   let f = "web/translations.json" in
   print_endline ("Reading file " ^ f) ;
   let content = Std.input_file f in
@@ -123,4 +123,8 @@ let test_translations =
         (Utils.seq_range 3 8)) languages in
   if not !ok then
     failwith "There were some missing translations."
+
+let main =
+  test_parser () ;
+  test_translations ()
 

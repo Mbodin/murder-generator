@@ -56,6 +56,16 @@ val exists : ('a -> bool) -> 'a t -> bool
 (** Maps the set through a function. **)
 val map : ('a -> 'b) -> 'a t -> 'b t
 
+(** Only conserves the element of the set that satisfy the given predicate. **)
+val filter : ('a -> bool) -> 'a t -> 'a t
+
+(** Maps the set through a function, removing any element returning [None]. **)
+val map_filter : ('a -> 'b option) -> 'a t -> 'b t
+
+(** Maps the set through a function.
+ * If any element gets mapped to [None], the whole function returns [None]. **)
+val map_option : ('a -> 'b option) -> 'a t -> 'b t option
+
 (** Given a predicate, splits the set into a set of elements
  * satisfying the predicate and a set of elements that don’t. **)
 val partition : ('a -> bool) -> 'a t -> 'a t * 'a t

@@ -48,6 +48,8 @@ rule read = parse
   | "let"                   { LET }
   | "be"                    { BE }
   | "assume"                { ASSUME }
+  | "add"                   { ADD }
+  | "remove"                { REMOVE }
 
   | "with"                  { WITH }
   | "and"                   { AND }
@@ -76,8 +78,6 @@ rule read = parse
   | "strong"                { STRONG }
 
   | "translation"           { TRANSLATION }
-  | "add"                   { ADD }
-  | "remove"                { REMOVE }
   | ':'                     { COLON }
   | "+"                     { PLUS }
   | "-"                     { MINUS }
@@ -85,6 +85,7 @@ rule read = parse
 
   | "before"                { BEFORE }
   | "after"                 { AFTER }
+  | "providing"             { PROVIDING }
 
   | "immediate"             { IMMEDIATE }
   | "very"                  { VERY }

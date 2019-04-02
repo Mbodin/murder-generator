@@ -17,13 +17,13 @@ exception UnexpectedCommandInBlock of string * string
 
 (** An error indicating that something of kind described by the first
  * string has been defined twice, the second string being its name,
- * and the third an optional position. **)
-exception DefinedTwice of string * string * string option
+ * and the third describe its enclosing block. **)
+exception DefinedTwice of string * string * string
 
 (** An error indicating that something of kind described by the first
  * string has been used without being declared, the second string being its name,
- * and the third an optional position. **)
-exception Undeclared of string * string * string option
+ * and the third describe its enclosing block. **)
+exception Undeclared of string * string * string
 
 (** An error indicating that there is a loop definitions.
  * The first argument is the definition kind, the second its name. **)

@@ -1,19 +1,19 @@
 (** Module History
  * Stores the timeline of characters. **)
 
-type character = Event.character
+type character = Id.t
 
 (** This type enriches [Event.t] with a date and duration. **)
 type event = {
     event_begin : Date.t (** Beginning of the event **) ;
     event_end : Date.t (** End of the event **) ;
-    event : Event.t (** The actual event **)
+    event : character Event.t (** The actual event **)
   }
 
 (** A smart constructor for events.
  * It takes its starting date and an event and associates it with
  * an actual duration. **)
-val generate_event : Date.t -> Event.t -> event
+val generate_event : Date.t -> character Event.t -> event
 
 (** States whether two events are compatible, that is that they do not overlap,
  * or that they are of different types. **)
@@ -34,21 +34,21 @@ type final = event list
  * with the already present constraints, and finally [Some true] means
  * that this event not only applies, but it helps the already present
  * events. **)
-val compatible_and_progress : t -> Event.t -> bool option
+val compatible_and_progress : t -> character Event.t -> bool option
 
 (** States whether a list of events is compatible with a timeline,
  * assuming that each event has to be in this particular order. **)
-val lcompatible_and_progress : t -> Event.t list -> bool option
+val lcompatible_and_progress : t -> character Event.t list -> bool option
 
 (** Apply an event to a timeline.
  * This function should only be called on events for which
  * [compatible_and_progress] returns [Some]. **)
-val apply : t -> Event.t -> t
+val apply : t -> character Event.t -> t
 
 (** Same as [apply], but for a list of events for which
  * [lcompatible_and_progress] returns [Some].
  * Their relative order will be conserved. **)
-val lapply : t -> Event.t list -> t
+val lapply : t -> character Event.t list -> t
 
 (** (Deeply) copies the state. **)
 val copy : t -> t

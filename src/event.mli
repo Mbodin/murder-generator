@@ -1,8 +1,6 @@
 (** Module Event
  * Describes an event as used by the History module. **)
 
-type character = Id.t
-
 (** Each event is associated an event type, which describes whether
  * two events can be at the same time: two events of the same type
  * can not be at the same time. **)
@@ -14,68 +12,57 @@ type event_type =
   | Very_short_term_event (** Several minutes **)
   | Immediate_event (** Less than a minute **)
 
-(** Event kinds **)
-type kind
+(** Event kinds.
+ * They can store characters and are parameterised that way. **)
+type 'character kind
 
 (** Build a kind from a kind name. **)
-val kind_of_string : string -> kind
+val kind_of_string : string -> 'character kind
 
 (** Build a kind from an attribute (meaning that this event provides
  * such an attribute). **)
-val kind_of_attribute : Attribute.attribute -> kind
+val kind_of_attribute : Attribute.PlayerAttribute.attribute -> 'character kind
+
+(** Similar than [kind_of_attribute], but for contacts.
+ * The target characters is taken as argument. **)
+val kind_of_contact : Attribute.ContactAttribute.attribute -> 'character -> 'character kind
+
+(** Change each representation of characters in a kind. **)
+val kind_convert : ('a -> 'b option) -> 'a kind -> 'b kind option
 
 (** The structure of an event.
  * This structure stores all the needed information to describe the event,
  * but lacks any mention of its date and dependencies.
- * See the History module for a richer type. **)
-type t = {
+ * See the History module for a richer type.
+ * Events are parameterised by the kind of characters. **)
+type 'character t = {
     event_type : event_type
       (** Two events with the same event type can not happen simultaneously. **) ;
-    event_attendees : character list
+    event_attendees : 'character PSet.t
       (** List of characters fully involved during this event,
        * or that can not be involved during this event takes place.
        * Two events with non-disjunct character lists can not happen
        * simultaneously. **) ;
-    event_kinds : kind PSet.t
+    event_kinds : 'character kind PSet.t
       (** The set of event kinds that this event inherit from. **) ;
-    constraints_none : (kind * character) PSet.t * (kind * character) PSet.t
-      (** Provides two sets of kinds and characters: one for before and one
-       * for after this event.
+    constraints_none :
+      ('character, ('character kind,
+        'character PSet.t * 'character PSet.t) PMap.t) PMap.t
+      (** For each character and kind, provides two sets of characters:
+       * one for before and one for after this event.
        * None of these combinations of kinds and characters should appear
        * after or before this event. **) ;
-    constraints_some : (kind * character) PSet.t * (kind * character) PSet.t
+    constraints_some :
+      ('character, ('character kind,
+        'character PSet.t * 'character PSet.t) PMap.t) PMap.t
       (** Same as [constraints_none], but instead of requiring no such events,
        * it requires that at least one of this kind and character combination
        * appear before or after for each element of these sets. **)
     (* TODO: Translations. *)
   }
 
-(** The type [t] has already been instantiated for its attendees,
- * but events are not parsed that way: one only knows which attendee
- * corresponds to which character once an instantiation has been chosen
- * by [Element.search_instantiation].
- * This type corresponds to an event that has not yet been instantiated. **)
-type partial = {
-    partial_type : event_type
-      (** The type of the partial event. **) ;
-    partial_kinds : kind PSet.t
-      (** The kinds of the partial event. **) ;
-    partial_attendees : int PSet.t
-      (** The set of character that attend this event.
-       * Characters are here expressed as integers and correspond
-       * to the same integers as in [Element.Contact]. **) ;
-    constraints_none : (int, kind PSet.t * kind PSet.t) PMap.t
-      (** For each character, expressed as an integer, provide a set of
-       * kinds that can’t appen before and after, respectively. **) ;
-    constraints_some : (int, kind PSet.t * kind PSet.t) PMap.t
-      (** Similarly, sets of kinds that must appear at least once before
-       * and after for each character. **) ;
-    (* TODO: Translations. *)
-  }
-
-(** Given an instantiation, translate the partial event to a fully instantiated
- * event. **)
-val instantiate : character array -> partial -> t
+(** Given an instantiation of characters, instantiate an event. **)
+val instantiate : ('a -> 'b option) -> 'a t -> 'b t option
 
 (** This is kind of a silly function, but we need it in the Element module
  * to quickly evaluate whether a given character can be instantiated as a
@@ -92,8 +79,7 @@ val instantiate : character array -> partial -> t
  * This event is such that if the full event applies, then the projection
  * also applies (but the projection might apply even if the full event does
  * not).
- * The provided integer is the local integer representing the character to
- * be projected, and the provided character is its instantiation.
- * This function returns [None] if this character does not attend this event. **)
-val partially_instantiate : int -> character -> partial -> t option
+ * The first argument is the local name of the character and the second its
+ * instantiation. **)
+val partially_instantiate : 'a -> 'b -> 'a t -> 'b t option
 

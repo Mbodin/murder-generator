@@ -101,7 +101,7 @@ let to_icalendar s =
       :: ("DTSTART:" ^ Date.rfc2445 e.History.event_begin)
       :: ("DTEND:" ^ Date.rfc2445 e.History.event_end)
       :: List.map (fun c -> "ATTENDEE:" ^ get_name s c)
-           e.History.event.Event.event_attendees
+           (PSet.to_list e.History.event.Event.event_attendees)
       @ "DESCRIPTION:" (* TODO *)
       :: "END:VEVENT"
       :: []) [(*TODO*)]) in
@@ -127,7 +127,7 @@ let to_org s =
           ^ Date.orgmode_range e.History.event_begin e.History.event_end)
       :: List.map (fun c ->
            String.make (1 + n) ' ' ^ "- [X] "
-           ^ get_name s c) e.History.event.Event.event_attendees) in
+           ^ get_name s c) (PSet.to_list e.History.event.Event.event_attendees)) in
   String.concat "\n\n" (
     String.concat "\n" (
       ("* " ^ get_translation "forTheGM")

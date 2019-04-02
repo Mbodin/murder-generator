@@ -12,12 +12,6 @@ begin
   category Money
 end
 
-declare event GotRich
-begin
-  event Personal
-  category Money
-end
-
 declare attribute Richness
 begin
   category Money
@@ -240,7 +234,6 @@ begin
   provide very short event to A and B
   begin
     event MoneyExchange
-    assume event GotRich to B after
 
     provide contact FinancialDebt from B to A as Old
 
@@ -261,7 +254,7 @@ begin
   provide long event to B
   begin
     event Personal
-    assume event MoneyExchange to B before
+    assume no event providing attribute Richness to B before
 
     provide attribute Richness to B as Rich
 
@@ -299,7 +292,6 @@ begin
   provide long event to B
   begin
     event Personal
-    assume event MoneyExchange to B before
 
     provide attribute Richness to B as Poor
 
@@ -337,16 +329,16 @@ begin
   let A be player with contact FinancialDebt to B as Large
   let B be player
 
-  provide short event to P
+  provide short event to A
   begin
     event Work
-    assume event MoneyExchange to P before
+    assume event providing contact FinancialDebt from A to B before
 
     provide attribute Famousness to A as Hiding
 
-    translation fr "Vu l’importance des ses dettes, " P " decidait de disparaître définitivement."
-    translation en "Given the reach of debts, " P " decided to definitively disappear from the sight of others."
-    translation eo "Pro ties grandegaj ŝuldoj, " P " decidis por ĉiam malaperi."
+    translation fr "Vu l’importance des ses dettes, " A " decidait de disparaître définitivement."
+    translation en "Given the reach of debts, " A " decided to definitively disappear from the sight of others."
+    translation eo "Pro ties grandegaj ŝuldoj, " A " decidis por ĉiam malaperi."
   end
 
   add difficulty to A

@@ -1,10 +1,11 @@
 
-type character = Id.t
-
 (** There are two kinds of kinds: user defined and kinds from attributes. **)
-type kind =
+type 'character kind =
   | Kind of Id.t (** A user-defined kind. **)
-  | Attribute of Attribute.attribute
+  | ProvidePlayerAttribute of Attribute.PlayerAttribute.attribute
+      (** An event that provide this attribute **)
+  | ProvideContactAttribute of Attribute.ContactAttribute.attribute * 'character
+      (** An event that provide this contact to this character. **)
 
 let kind_names = ref (Id.map_create ())
 
@@ -13,7 +14,15 @@ let kind_of_string name =
   kind_names := m ;
   Kind k
 
-let kind_of_attribute a = Attribute a
+let kind_of_attribute a = ProvidePlayerAttribute a
+
+let kind_of_contact a c = ProvideContactAttribute (a, c)
+
+let kind_convert f = function
+  | Kind id -> Some (Kind id)
+  | ProvidePlayerAttribute a -> Some (ProvidePlayerAttribute a)
+  | ProvideContactAttribute (a, c) ->
+    Utils.apply_option (f c) (fun c -> ProvideContactAttribute (a, c))
 
 type event_type =
     | For_life_event
@@ -23,51 +32,59 @@ type event_type =
     | Very_short_term_event
     | Immediate_event
 
-type t = {
+type 'character t = {
     event_type : event_type ;
-    event_attendees : character list ;
-    event_kinds : kind PSet.t ;
-    constraints_none : (kind * character) PSet.t * (kind * character) PSet.t ;
-    constraints_some : (kind * character) PSet.t * (kind * character) PSet.t
+    event_attendees : 'character PSet.t ;
+    event_kinds : 'character kind PSet.t ;
+    constraints_none :
+      ('character, ('character kind,
+        'character PSet.t * 'character PSet.t) PMap.t) PMap.t ;
+    constraints_some :
+      ('character, ('character kind,
+        'character PSet.t * 'character PSet.t) PMap.t) PMap.t ;
   }
 
-type partial = {
-    partial_type : event_type ;
-    partial_kinds : kind PSet.t ;
-    partial_attendees : int PSet.t ;
-    constraints_none : (int, kind PSet.t * kind PSet.t) PMap.t ;
-    constraints_some : (int, kind PSet.t * kind PSet.t) PMap.t
-  }
-
-let partially_instantiate i c e =
+let partially_instantiate a b e =
+  let convert a' = if a' = a then Some b else None in
   let get_constraints m =
-    let (before, after) =
-      try PMap.find i m
-      with Not_found -> (PSet.empty, PSet.empty) in
-    let add k = (k, c) in
-    (PSet.map add before, PSet.map add after) in
-  if PSet.mem i e.partial_attendees then
+    let m =
+      try PMap.find a m
+      with Not_found -> PMap.empty in
+    PMap.add b (PMap.foldi (fun k (before, after) m ->
+      match kind_convert convert k with
+      | Some k ->
+        PMap.add k (PSet.map_filter convert before, PSet.map_filter convert after) m
+      | None -> m) m PMap.empty) PMap.empty in
+  if PSet.mem a e.event_attendees then
     Some {
-      event_type = e.partial_type ;
-      event_attendees = [c] ;
-      event_kinds = e.partial_kinds ;
+      event_type = e.event_type ;
+      event_attendees = PSet.singleton b ;
+      event_kinds = PSet.map_filter (kind_convert convert) e.event_kinds ;
       constraints_none = get_constraints e.constraints_none ;
       constraints_some = get_constraints e.constraints_some
     }
   else None
 
-let instantiate inst e =
+let instantiate f e =
   let convert m =
-    PMap.foldi (fun i (beforei, afteri) (before, after) ->
-      let c = inst.(i) in
-      let add k = (k, c) in
-      (PSet.merge (PSet.map add beforei) before,
-       PSet.merge (PSet.map add afteri) after)) m (PSet.empty, PSet.empty) in {
-    event_type = e.partial_type ;
-    event_attendees =
-      List.map (fun i -> inst.(i)) (PSet.to_list e.partial_attendees) ;
-    event_kinds = e.partial_kinds ;
-    constraints_none = convert e.constraints_none ;
-    constraints_some = convert e.constraints_some
-  }
+    PMap.foldi (fun c mk m ->
+      Utils.if_option m (fun m ->
+        Utils.if_option (f c) (fun c ->
+          Utils.apply_option (PMap.foldi (fun k (before, after) mk ->
+              Utils.if_option mk (fun mk ->
+                Utils.if_option (kind_convert f k) (fun k ->
+                  Utils.if_option (PSet.map_option f before) (fun before ->
+                    Utils.apply_option (PSet.map_option f after) (fun after ->
+                      PMap.add k (before, after) mk))))) mk (Some PMap.empty))
+            (fun mk -> PMap.add c mk m)))) m (Some PMap.empty) in
+  Utils.if_option (PSet.map_option f e.event_attendees) (fun attendees ->
+    Utils.if_option (PSet.map_option (kind_convert f) e.event_kinds) (fun kinds ->
+      Utils.if_option (convert e.constraints_none) (fun none ->
+        Utils.apply_option (convert e.constraints_some) (fun some -> {
+            event_type = e.event_type ;
+            event_attendees = attendees ;
+            event_kinds = kinds ;
+            constraints_none = none ;
+            constraints_some = some
+          }))))
 

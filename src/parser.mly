@@ -15,16 +15,15 @@ open Ast
 %token          CATEGORY ELEMENT EVENT
 %token          ATTRIBUTE CONTACT RELATION
 %token          PLAYER
-%token          DECLARE PROVIDE LET BE ASSUME
+%token          DECLARE PROVIDE LET BE ASSUME ADD REMOVE
 %token          WITH AND OR NOT NO FROM TO BETWEEN AS ANY OTHER
 %token          STRICT COMPATIBLE
 %token          DIFFICULTY COMPLEXITY
 %token          NEUTRAL HATE TRUST CHAOTIC UNDETERMINED AVOIDANCE
 %token          ASYMMETRICAL EXPLOSIVE STRONG
 %token<string>  LIDENT UIDENT STRING
-%token          ADD REMOVE
 %token          TRANSLATION COLON PLUS MINUS
-%token          BEFORE AFTER
+%token          PROVIDING BEFORE AFTER
 %token          IMMEDIATE VERY SHORT MEDIUM LONG LIFE
 
 %start<Ast.declaration list> main
@@ -183,16 +182,25 @@ strictness:
   | STRICT      { State.Strict }
 
 event_constraint (N, O):
-    ASSUME; N; EVENT; event = UIDENT;
-    TO; players = separated_list (O, UIDENT);
+    ASSUME; N; EVENT; kp = kind_players (O);
     d = direction
     { fun any ->
         EventConstraint {
-          event_kind = event ;
-          event_players = players ;
+          event_kind = fst kp ;
+          event_players = snd kp ;
           event_after = d ;
           event_any = any
         } }
+
+kind_players (O):
+  | event = UIDENT; TO; players = separated_list (O, UIDENT)
+    { (Ast.Kind event, players) }
+  | PROVIDING; ATTRIBUTE; a = UIDENT; TO; players = separated_list (O, UIDENT)
+    { (Ast.KindAttribute a, players) }
+  | PROVIDING; CONTACT; c = UIDENT;
+    FROM; players = separated_list (O, UIDENT);
+    TO; targets = separated_list (O, UIDENT)
+    { (Ast.KindContact (c, targets), players) }
 
 time:
   | LIFE        { Event.For_life_event }

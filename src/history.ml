@@ -1,10 +1,10 @@
 
-type character = Event.character
+type character = Id.t
 
 type event = {
     event_begin : Date.t ;
     event_end : Date.t ;
-    event : Event.t
+    event : character Event.t
   }
 
 let generate_event beg e =
@@ -32,7 +32,7 @@ type t = {
     events : event Id.map
       (** Events are not stored directly in the timeline,
        * but through identifiers. **) ;
-    kind_map : (Event.kind * character, Id.t list) PMap.t
+    kind_map : (character Event.kind * character, Id.t list) PMap.t
       (** For each kind and character, returns a list of event identifier
        * satisfying them. **) ;
     graph : (Id.t, Id.t list * Id.t list) PMap.t
@@ -44,15 +44,17 @@ type t = {
        * The transitive closure is not stored, though: to get the set of all
        * event after a particular one, one has to recursively explore the
        * graph. **) ;
-    constraint_none : (Event.kind * character, Id.t PSet.t * Id.t PSet.t) PMap.t
-      (** For each event kind and character, provides two sets:
+    constraint_none :
+      (character, (character Event.kind, Id.t PSet.t * Id.t PSet.t) PMap.t) PMap.t
+      (** For each event character and kind, provides two sets:
         * - the set for which no event of this kind can be before the given event,
         * - the set for which no event of this kind can be after the given event.
         * These sets are kept to a minimum: if an event is before another,
         * and that both prevents any event of a given kind to be placed after them,
         * then only the latter really have to prevent any such event to
         * happen. **) ;
-    constraint_some : (Event.kind * character, Id.t PSet.t * Id.t PSet.t) PMap.t
+    constraint_some :
+      (character, (character Event.kind, Id.t PSet.t * Id.t PSet.t) PMap.t) PMap.t
       (** Same as [constraint_none], but enforce that there is at least one event
        * of the given kind before/after them.
        * Elements of these sets are naturally removed when their constraints have

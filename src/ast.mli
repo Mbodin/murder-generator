@@ -84,9 +84,16 @@ type provide_contact = {
        * Each constructor in this list are valid possibilities. **)
   }
 
+type event_kind =
+  | Kind of string (** User-declared kind. **)
+  | KindAttribute of string (** An event providing this attribute. **)
+  | KindContact of string * string list
+      (** An event providing this contact to these players. **)
+
 (** Declare some constraints over events. **)
 type event_constraint = {
-    event_kind : string (** The constraint is about this event kind. **) ;
+    event_kind : event_kind
+      (** The constraint is about this event kind. **) ;
     event_players : string list
       (** The constraint only applies for these players **) ;
     event_after : bool

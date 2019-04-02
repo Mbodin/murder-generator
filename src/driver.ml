@@ -249,9 +249,9 @@ let command_type_to_string = function
 
 exception UnexpectedCommandInBlock of string * string
 
-exception DefinedTwice of string * string * string option
+exception DefinedTwice of string * string * string
 
-exception Undeclared of string * string * string option
+exception Undeclared of string * string * string
 
 exception CircularDependency of string * string
 
@@ -451,7 +451,7 @@ let prepare_declaration i =
       declare (extract i.current_state.constructor_information) name in
     let id = constructor id in
     if attribute_exists i.current_state id then
-      raise (DefinedTwice (en, name, None)) ;
+      raise (DefinedTwice (en, name, "")) ;
     let (category_names, deps) =
       category_names_to_dep_dep false i.current_state block.of_category in
     (** We consider each constructor dependent on this attribute. **)
@@ -526,7 +526,7 @@ let prepare_declaration i =
     let id = constructor_constructor id in
     let attribute = attribute_constructor attribute in
     if PMap.mem id i.current_state.constructor_dependencies then
-      raise (DefinedTwice (en ^ " constructor", constructor, Some attribute_name)) ;
+      raise (DefinedTwice (en ^ " constructor", constructor, attribute_name)) ;
     let (category_names, deps) =
       category_names_to_dep_dep false i.current_state block.of_category in
     (** If the associated attribute is already defined, we fetch its dependencies,
@@ -607,7 +607,7 @@ let prepare_declaration i =
     let (id, category_names) =
       Id.map_insert_t category_names name in
     if category_exists i.current_state id then
-      raise (DefinedTwice ("category", name, None)) ;
+      raise (DefinedTwice ("category", name, "")) ;
     if PSet.mem id deps then
       raise (CircularDependency ("category", name)) ;
     (** We consider each elements dependent on this category. **)
@@ -666,7 +666,7 @@ let prepare_declaration i =
   | Ast.DeclareElement (name, block) ->
     (match Id.get_id i.current_state.elements_names name with
      | None -> ()
-     | Some _ -> raise (DefinedTwice ("element", name, None))) ;
+     | Some _ -> raise (DefinedTwice ("element", name, ""))) ;
     let (id, elements) =
       Id.map_insert_t i.current_state.elements_names name in
     let block =
@@ -681,7 +681,7 @@ let prepare_declaration i =
   | Ast.DeclareCase (lang, tag) ->
     if PSet.mem (lang, tag) i.declared_tags then
       raise (DefinedTwice ("tag", Translation.print_tag tag,
-                           Some (Translation.iso639 lang))) ;
+                           Translation.iso639 lang)) ;
     { i with
         declared_tags = PSet.add (lang, tag) i.declared_tags ;
         tags_to_be_defined = PSet.remove (lang, tag) i.tags_to_be_defined }
@@ -695,7 +695,7 @@ let prepare_declaration i =
     let (id, event_names) =
       Id.map_insert_t event_names kind in
     if event_exists i.current_state id then
-      raise (DefinedTwice ("event", kind, None)) ;
+      raise (DefinedTwice ("event", kind, "")) ;
     if PSet.mem id event_deps then
       raise (CircularDependency ("event", kind)) ;
     let event_dep =
@@ -752,13 +752,13 @@ let parse_element st element_name block =
   let player_names =
     List.fold_left (fun player_names name ->
         if Id.get_id player_names name <> None then
-          raise (DefinedTwice ("player", name, Some element_name)) ;
+          raise (DefinedTwice ("player", name, element_name)) ;
         Id.map_insert player_names name)
       (Id.map_create ())
       (Utils.list_map_filter fst block.let_player) in
   let get_player p =
     match Id.get_id player_names p with
-    | None -> raise (Undeclared ("player", p, Some element_name))
+    | None -> raise (Undeclared ("player", p, element_name))
     | Some i -> i in
   (** We pre-parse the events, as they might contain declarations. **)
   let events =
@@ -818,7 +818,7 @@ let parse_element st element_name block =
             | None -> true
             | Some id ->
               not (category_exists st id)) block.of_category in
-        raise (Undeclared ("category", c, Some element_name))
+        raise (Undeclared ("category", c, element_name))
       with Not_found -> assert false in
   (** Now that the basic information have been gotten, we can add any constraint
    * using this function with side effects. **)
@@ -847,13 +847,13 @@ let parse_element st element_name block =
    * understand the large tuple argument.**)
   let get_attribute_id (_, _, get_attribute, _, _, get_state, _, _ , _, en) name =
     match get_attribute (get_state st.constructor_information) name with
-    | None -> raise (Undeclared (en, name, Some element_name))
+    | None -> raise (Undeclared (en, name, element_name))
     | Some id -> id in
   (** Similar to [get_attribute_id], but for constructors. **)
   let get_constructor_id (_, _, get_attribute, get_constructor, _, get_state,
         _, _ , _, en) aid name =
     match get_constructor (get_state st.constructor_information) aid name with
-    | None -> raise (Undeclared (en ^ " constructor", name, Some element_name))
+    | None -> raise (Undeclared (en ^ " constructor", name, element_name))
     | Some id -> id in
   (** Merges the current dependencies with the ones of the given constructor.
    * Note that the corresponding attribute’s dependencies already have been

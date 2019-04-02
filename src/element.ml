@@ -17,7 +17,7 @@ type cell = {
     added_objective : State.objective
   }
 
-type t = cell array * character_constraint list * Event.partial list
+type t = cell array * character_constraint list * int Event.t list
 
 (** Returns the list of attributes provided by this cosntraint. **)
 let provided_attributes_constraint =
@@ -129,7 +129,9 @@ let compatible_and_progress m st (e, other, events) inst =
       (Some false) (other_players st inst) in
   Utils.array_fold_lefti (fun i acc c ->
     let conss = e.(i).constraints in
-    let evs = List.map (Event.instantiate inst) events in
+    let evs =
+      Utils.assert_option __LOC__ (Utils.list_map_option
+        (Event.instantiate (fun i -> Some (inst.(i)))) events) in
     merge_progress acc
       (respect_constraints_inst m inst st conss evs c)) compatible_others inst
 
@@ -247,7 +249,9 @@ let merge_attribute_differences (m1, s1, l1) (m2, s2, l2) =
 let apply m state (e, other, events) inst =
   if Utils.assert_defend then
     assert (compatible_and_progress m state (e, other, events) inst <> None) ;
-  let evs = List.map (Event.instantiate inst) events in
+  let evs =
+    Utils.assert_option __LOC__ (Utils.list_map_option
+      (Event.instantiate (fun i -> Some (inst.(i)))) events) in
   let diff = empty_difference in
   let other_players = other_players state inst in
   let apply_constraint c (state, diff) =

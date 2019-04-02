@@ -34,8 +34,10 @@ type cell = {
 
 (** Each players considered by the element are represented as a cell.
  * A list of constraints given to other players is also given
- * (it corresponds to the [let any other player] declarations. **)
-type t = cell array * character_constraint list * Event.partial list
+ * (it corresponds to the [let any other player] declarations.
+ * Events are stored as a list, characters being represented by their
+ * index in the cell array. **)
+type t = cell array * character_constraint list * int Event.t list
 
 (** Returns the list of attribute that an element may provide. **)
 val provided_attributes : t -> Attribute.attribute list

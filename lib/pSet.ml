@@ -31,6 +31,21 @@ let inter s1 s2 =
 let map f =
   fold (fun e -> add (f e)) empty
 
+let filter f =
+  fold (fun e -> if f e then add e else Utils.id) empty
+
+let map_filter f =
+  fold (fun e ->
+   match f e with
+   | Some e -> add e
+   | None -> Utils.id) empty
+
+let map_option f =
+  fold (fun e m ->
+    Utils.if_option m (fun m ->
+      Utils.apply_option (f e) (fun e ->
+        add e m))) (Some empty)
+
 let partition f =
   fold (fun e (sy, sn) ->
     if f e then (add e sy, sn) else (sy, add e sn)) (empty, empty)

@@ -211,6 +211,90 @@ let search_instantiation m st (e, other, events) =
       aux' possible in
   aux [] (Array.to_list redirection_array)
 
+(* This is a failed attempty to optimise [search_instantiation].
+ * I expected that the local constraint were overevaluated in the first version,
+ * and that it might be better to lazily evaluate them.
+ * However, in practise, this function evaluates more than 80% of the delayed
+ * evaluation, with an additionnal cost due to the fact that we can’t prioritise
+ * the evaluation of characters.
+ * Overall, it is actually slower than the original version.
+ * I’m however leaving this slower version here in case that someone would like
+ * to make new optimisations and would like to have some inspiration.
+let search_instantiation m st (e, other, events) =
+  let all_players = State.all_players st in
+  let num_player = State.number_of_player st in
+  (** To keep local check operations to a minimum, we lazily evaluate them. **)
+  (** Players that can be placed as [other]. **)
+  let (tmp_respect_other, respect_other) =
+    (** This part is speed-critical.
+     * I thus decided to avoid creating avoidable closures on the fly. **)
+    let a = Array.map (fun _ -> None) (Array.of_list all_players) in (a, fun c ->
+    match a.(Id.to_array c) with
+    | None ->
+      let r = respect_constraints m st other [] c in
+      a.(Id.to_array c) <- Some r ;
+      r <> None
+    | Some r -> r <> None) in
+  let (tmp_respect_ith, respect_ith) =
+    let a =
+      Array.map (fun ei ->
+        Array.map (fun c -> None) (Array.of_list all_players)) e in (a, fun i c ->
+      match a.(i).(Id.to_array c) with
+      | None ->
+        let conss = e.(i).constraints in
+        let evs =
+          Utils.list_map_filter (Event.partially_instantiate i c) events in
+        let r = respect_constraints m st conss evs c in
+        a.(i).(Id.to_array c) <- Some r ;
+        r
+      | Some r -> r) in
+  (** To avoid always picking the same players, their order is randomized. **)
+  let redirection = Utils.shuffle all_players in
+  (** The function [possible from seen i] returns a player [c] from the [from] set,
+   * such that [c] is not in the [seen] set and such that [respect_ith i c] returns
+   * [Some].
+   * It also returns prioritarily the ones for which is returns [Some true].
+   * Returns [None] if no player respect this constraint. **)
+  let possible from seen i =
+    let rec aux maybe = function
+      | [] -> maybe
+      | c :: redirection ->
+        if PSet.mem c seen then
+          aux maybe redirection
+        else
+          match respect_ith i c with
+          | None -> aux maybe redirection
+          | Some true -> Some (c, redirection)
+          | Some false ->
+            let maybe = if maybe = None then Some (c, redirection) else maybe in
+            aux maybe redirection in
+    aux None from in
+  let rec aux inst chosen = function
+    | [] ->
+      let inst = Array.of_list (List.rev inst) in
+      Utils.apply_option (compatible_and_progress m st (e, other, events) inst)
+        (fun progress ->
+          (inst, progress))
+    | i :: redirection_list ->
+      let rec aux' redirection chosen_and_not_working =
+        Utils.if_option (possible redirection chosen_and_not_working i)
+          (fun (p, redirection) ->
+            (** We check that further instantiations of [other] are still possible.
+             * That is that there is still room for characters that don’t to be
+             * further instanciated and thus not be placed in the [other] group. **)
+            let n =
+              Utils.count (fun p' ->
+                p = p'
+                || PSet.mem p' chosen
+                || respect_other p') all_players in
+            if n >= i + 1 + num_player - Array.length e then
+              match aux (p :: inst) (PSet.add p chosen) redirection_list with
+              | None -> aux' redirection (PSet.add p chosen_and_not_working)
+              | Some r -> Some r
+            else aux' redirection (PSet.add p chosen_and_not_working)) in
+      aux' redirection chosen in
+  aux [] PSet.empty (Utils.seq (Array.length e)) *)
+
 (** This type represents the difference of attributes that have been fixed with
  * the ones that have been created, as a number for each attribute.
  * For instance, if an instantiation defines an attribute [a] that was to be defined

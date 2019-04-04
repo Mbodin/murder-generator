@@ -116,6 +116,11 @@ let rec list_partition_map f = function
 let shuffle l =
   List.sort (fun _ _ -> if Random.bool () then 1 else -1) l
 
+let array_shuffle a =
+  let a = Array.copy a in
+  Array.sort (fun _ _ -> if Random.bool () then 1 else -1) a ;
+  a
+
 let rec list_match_right = function
   | [] -> None
   | e :: l ->
@@ -184,6 +189,7 @@ let take_any = function
 let sum = List.fold_left (+) 0
 let array_sum = Array.fold_left (+) 0
 
+let count f = List.fold_left (fun v x -> v + if f x then 1 else 0) 0
 let array_count f = Array.fold_left (fun v x -> v + if f x then 1 else 0) 0
 
 let array_fold_left2 f i a1 a2 =

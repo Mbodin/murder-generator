@@ -100,6 +100,9 @@ val uniq : 'a list -> 'a list
 (** Shuffle a list. **)
 val shuffle : 'a list -> 'a list
 
+(** Shuffle an array. **)
+val array_shuffle : 'a array -> 'a array
+
 (** Pattern match the list in the right instead of the left. **)
 val list_match_right : 'a list -> ('a list * 'a) option
 
@@ -140,6 +143,9 @@ val sum : int list -> int
 
 (** Sums the integers of the array. **)
 val array_sum : int array -> int
+
+(** Indicates how many elements of the list satisfy the predicates. **)
+val count : ('a -> bool) -> 'a list -> int
 
 (** Indicates how many elements of the array satisfy the predicates. **)
 val array_count : ('a -> bool) -> 'a array -> int

@@ -30,7 +30,8 @@ val from_json : Attribute.constructor_maps -> string -> string -> string list * 
 
 (** All the functions of this file are resumed in the following list.
  * Each function is associated two identifiers in [web/translations.json]
- * (one for the name and one for the description), a mime type, and an
- * extension. **)
-val all_production : (string * string * string * string * (state -> string)) list
+ * (one for the name and one for the description), a mime type, a boolean,
+ * and an extension.  The boolean indicates whether newlines should be
+ * converted to suits the host’s operating system. **)
+val all_production : (string * string * string * string * bool * (state -> string)) list
 

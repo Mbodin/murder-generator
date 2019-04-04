@@ -89,13 +89,12 @@ let to_graphviz s =
 let to_icalendar s =
   let events =
     let id_postfix =
-      "-" ^ string_of_float (Sys.time ())
-      ^ "-" ^ Date.rfc2445 Date.now
-      ^ "-" ^ string_of_int (Hashtbl.hash s.names)
+      "-" ^ string_of_int (Hashtbl.hash s.names)
+      ^ "-" ^ string_of_int (Hashtbl.hash (Date.now, Sys.time ()))
       ^ "-murder-generator" in
     List.concat (List.map (fun e ->
       "BEGIN:VEVENT"
-      :: ("UID:" ^ string_of_int (Random.int max_int)
+      :: ("UID:" ^ string_of_int (Random.bits ())
                  ^ "-" ^ string_of_int (Hashtbl.hash e) ^ id_postfix)
       :: ("DTSTAMP:" ^ Date.rfc2445 Date.now)
       :: ("DTSTART:" ^ Date.rfc2445 e.History.event_begin)
@@ -104,8 +103,8 @@ let to_icalendar s =
            (PSet.to_list e.History.event.Event.event_attendees)
       @ "DESCRIPTION:" (* TODO *)
       :: "END:VEVENT"
-      :: []) [(*TODO*)]) in
-  String.concat "\n" (
+      :: []) (State.get_history_final s.state)) in
+  String.concat "\r\n" (
     "BEGIN:VCALENDAR"
     :: "VERSION:2.0"
     :: ("PRODID:-//Martin Constantino-Bodin//Murder Generator//"
@@ -132,7 +131,7 @@ let to_org s =
     String.concat "\n" (
       ("* " ^ get_translation "forTheGM")
       :: ("** " ^ get_translation "GMEvents")
-      :: List.map (print_event 3) [(* TODO: All events *)])
+      :: List.map (print_event 3) (State.get_history_final s.state))
     :: List.mapi (fun c name ->
          let c = Id.from_array c in
          String.concat "\n" (
@@ -152,7 +151,7 @@ let to_org s =
                       String.make 5 ' ' ^ "- " ^ tra ^ ": " ^ trv) lv @ l)
                 (State.get_all_contacts_character_final s.state c) []
            @ ("** " ^ get_translation "characterEvents")
-           :: List.map (print_event 3) [(* TODO: Events *)])) s.names)
+           :: List.map (print_event 3) (State.get_history_final s.state))) s.names)
 
 let to_json s =
   let s = generic s in
@@ -177,7 +176,12 @@ let to_json s =
           else `String (Relation.to_string r) :: l) [] s.names)) ;
         ("complexity", `Int (State.character_complexity_final s.state c)) ;
         ("difficulty", `Int (State.character_difficulty_final s.state c)) ;
-        ("events", `List [(*TODO*)])
+        ("events", `List (List.map (fun e ->
+          `Assoc [
+              ("begin", `String (Date.rfc2445 e.History.event_begin)) ;
+              ("end", `String (Date.rfc2445 e.History.event_end)) ;
+              ("event", `Assoc [(* TODO *)])
+            ])(State.get_history_final s.state)))
       ]) s.names))
 
 let from_json m fileName fileContent =
@@ -306,9 +310,10 @@ let from_json m fileName fileContent =
   | _ -> failwith ("The file `" ^ fileName ^ "' is not a list.")
 
 let all_production = [
-    ("json", "jsonDescription", "application/json", "json", to_json) ;
-    ("orgmode", "orgDescription", "text/x-org", "org", to_org) ;
-    ("graphviz", "graphvizDescription", "text/vnd.graphviz", "dot", to_graphviz) ;
-    ("iCalendar", "icalDescription", "text/calendar", "ics", to_icalendar)
+    ("json", "jsonDescription", "application/json", "json", true, to_json) ;
+    ("orgmode", "orgDescription", "text/x-org", "org", true, to_org) ;
+    ("graphviz", "graphvizDescription", "text/vnd.graphviz", "dot", true,
+      to_graphviz) ;
+    ("iCalendar", "icalDescription", "text/calendar", "ics", false, to_icalendar)
   ]
 

@@ -422,12 +422,12 @@ let _ =
       InOut.print_block (InOut.Div (InOut.Normal, [
         InOut.P [ InOut.Text (get_translation "exportList") ] ;
         InOut.List (true,
-        List.map (fun (name, descr, mime, ext, f) ->
+        List.map (fun (name, descr, mime, ext, native, f) ->
           let fileName = "murder" ^ if ext = "" then "" else ("." ^ ext) in
           InOut.Div (InOut.Inlined, [
               InOut.LinkFile (get_translation "downloadAs"
                               ^ " " ^ get_translation name,
-                              fileName, mime, fun _ -> f estate) ;
+                              fileName, mime, native, fun _ -> f estate) ;
               InOut.Text (get_translation descr)
             ])) Export.all_production)])) ;
       InOut.stopLoading () ;%lwt

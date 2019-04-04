@@ -52,7 +52,7 @@ type block =
   | Text of string
   | Link of string * string
   | LinkContinuation of bool * string * (unit -> unit)
-  | LinkFile of string * string * string * (unit -> string)
+  | LinkFile of string * string * string * bool * (unit -> string)
   | Table of block list * block list list
   | Node of Dom_html.element Js.t
 
@@ -136,8 +136,9 @@ let rec block_node =
     Lwt.async (fun _ ->
       Lwt_js_events.clicks a (fun _ _ -> Lwt.return (cont ()))) ;
     a
-  | LinkFile (text, fileName, mime, cont) ->
-    let blob = File.blob_from_string ~contentType:mime ~endings:`Native (cont ()) in
+  | LinkFile (text, fileName, mime, native, cont) ->
+    let endings = if native then `Native else `Transparent in
+    let blob = File.blob_from_string ~contentType:mime ~endings:endings (cont ()) in
     let url = Dom_html.window##._URL##createObjectURL (blob) in
     let a = block_node (Link (text, Js.to_string url)) in
     ignore (a##setAttribute (Js.string "download") (Js.string fileName)) ;

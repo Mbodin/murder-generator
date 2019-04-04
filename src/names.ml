@@ -23,7 +23,8 @@ let convertAlternative spec =
   let halt size =
     (** The basic decide function is simple, but we may want to alter
      * its distribution.**)
-    let decide () = Random.int size = 0 in
+    let decide () =
+      size <= 0 || Random.int size = 0 in
     if size > spec.alternative_size * 3 / 2 then
       decide () && decide ()
     else if size < spec.alternative_size / 2 then (

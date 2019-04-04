@@ -52,7 +52,7 @@ begin
   provide immediate event to P
   begin
     event Description
-    assume no event Personnal to P before
+    assume no event Personal to P before
 
     provide strict attribute Born to P as AlwaysExisted
 
@@ -74,7 +74,7 @@ begin
   provide immediate event to P
   begin
     event Description
-    assume no event Personnal to P before
+    assume no event Personal to P before
 
     provide strict attribute Gender to P as NonBinary
 
@@ -166,7 +166,7 @@ begin
   provide immediate event to G
   begin
     event Description
-    assume no event Personnal to P before
+    assume no event Personal to G before
     translation fr G:+sbeg " est la divinité de la paix, de l’absence de souffrance, et de l’ataraxie."
                    "  " G:+sbeg:+pro " est aussi souvent associé à la mort."
                    "  Il est vrai qu’" G:+pro " apprécie la mort par sa vertue libératrice, mais cette description est assez réductrice."
@@ -188,7 +188,7 @@ begin
   provide immediate event to G
   begin
     event Description
-    assume no event Personnal to P before
+    assume no event Personal to G before
     translation fr G:+sbeg " est la divinité du dialogue et des compromis."
                    "  " G:+sbeg:+pro " apprécie que les gens s’écoutent, changent d’avis, et argumentent."
                    "  " G:+sbeg:+pro " considère que la réalité est fondamentallement relative et changeante qu’il est important de constamment changer ses croyances."
@@ -210,7 +210,7 @@ begin
   provide immediate event to G
   begin
     event Description
-    assume no event Personnal to P before
+    assume no event Personal to G before
     translation fr G:+sbeg " est la divinité de la curiosité et de la recherche active de la vérité."
                    "  " G:+sbeg:+pro " considère que le monde est un immense terrain de jeu à expérimenter."
                    "  " G:+sbeg:+pro " sera toujours là pour la conception d’expériences en tous genres."
@@ -232,7 +232,7 @@ begin
   provide immediate event to G
   begin
     event Description
-    assume no event Personnal to P before
+    assume no event Personal to G before
     translation fr G:+sbeg " est la divinité du chaos."
                    "  " G:+sbeg:+pro " cherche à toujours s’amuser, à ajouter sa pincée de sel dans le monde."
                    "  " G:+sbeg:+pro " est une divinité colorée qui pousse les gens à agir sans se soucier des conséquences."
@@ -254,7 +254,7 @@ begin
   provide immediate event to G
   begin
     event Description
-    assume no event Personnal to P before
+    assume no event Personal to G before
     translation fr G:+sbeg " est la divinité de la musique et de l’harmonie."
                    "  " G:+sbeg:+pro " est capable d’écouter la mélodie de l’Univers tout entier."
                    "  Malheureusement, il faut le dire, cette dernière est actuellement une cacophonie."
@@ -276,7 +276,7 @@ begin
   provide immediate event to G
   begin
     event Description
-    assume no event Personnal to P before
+    assume no event Personal to G before
     translation fr G:+sbeg " est la divinité des labyrinthes et des âmes perdues."
                    "  " G:+sbeg:+pro " vient en aide à tous ceux en face de choix qui les mènent vers l’inconnu, afin de les guider."
                    "  En parallèle, " G:+pro " invite tout le monde à se mettre dans une telle situation."
@@ -298,7 +298,7 @@ begin
   provide immediate event to G
   begin
     event Description
-    assume no event Personnal to P before
+    assume no event Personal to G before
     translation fr G:+sbeg " est l’Unique Vraie Divinité de cet Univers."
                    "  C’est l’Univers tout entier."
                    "  " G:+sbeg:+pro " est présent partout."

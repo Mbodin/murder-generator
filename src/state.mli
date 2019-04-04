@@ -232,3 +232,6 @@ val character_complexity_final : final -> character -> int
 (** Similar to [character_difficulty], but for the finalised state. **)
 val character_difficulty_final : final -> character -> int
 
+(** Get the final generated timeline. **)
+val get_history_final : final -> History.final
+

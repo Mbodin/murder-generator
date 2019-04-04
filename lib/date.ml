@@ -61,7 +61,7 @@ let month_day (y, d, _) =
 
 let rfc2445 (y, d, m) =
   let (month, day) = month_day (y, d, m) in
-  let y = Utils.positive_mod y 1000 in
+  let y = Utils.positive_mod y 10_000 in
   Utils.complete_string_pre "0" (string_of_int y) 4
   ^ Utils.complete_string_pre "0" (string_of_int month) 2
   ^ Utils.complete_string_pre "0" (string_of_int day) 2

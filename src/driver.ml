@@ -353,15 +353,17 @@ let event_names_to_id_set state l =
       (event_names, PSet.add id s))
     (state.event_names, PSet.empty) l
 
-let event_dependencies_of_dependencies state s =
+let event_dependencies_of_dependencies throw state s =
   PSet.merge s
    (PSet.flatten (PSet.map (fun id ->
      try PMap.find id state.event_event_dependencies
-     with Not_found -> PSet.empty) s))
+     with Not_found ->
+       if throw then raise Not_found
+       else PSet.empty) s))
 
-let event_names_to_dep_dep state l =
+let event_names_to_dep_dep throw state l =
   let (event_names, s) = event_names_to_id_set state l in
-  (event_names, event_dependencies_of_dependencies state s)
+  (event_names, event_dependencies_of_dependencies throw state s)
 
  (** Some subfunctions of [prepare_declaration] and [parse_element] use similar
  * functions, only depending on whether called on attributes or contacts.
@@ -691,7 +693,7 @@ let prepare_declaration i =
     let (category_names, deps) =
       category_names_to_dep_dep false i.current_state block.of_category in
     let (event_names, event_deps) =
-      event_names_to_dep_dep i.current_state block.event_kind in
+      event_names_to_dep_dep false i.current_state block.event_kind in
     let (id, event_names) =
       Id.map_insert_t event_names kind in
     if event_exists i.current_state id then
@@ -762,8 +764,8 @@ let parse_element st element_name block =
     | Some i -> i in
   (** We pre-parse the events, as they might contain declarations. **)
   let events =
-    List.map (fun (k, l, b) ->
-      (k, List.map get_player l,
+    List.map (fun (t, l, b) ->
+      (t, List.map get_player l,
        convert_block element_name
          [Translation; ProvideAttribute; ProvideContact; EventKind; EventConstraint]
          b)) block.provide_event in
@@ -811,13 +813,13 @@ let parse_element st element_name block =
   let (_, deps) =
     try category_names_to_dep_dep true st block.of_category
     with Not_found ->
+      (** A category has not been defined.  Let us find which one. **)
       try
         let c =
           List.find (fun c ->
             match Id.get_id st.category_names c with
             | None -> true
-            | Some id ->
-              not (category_exists st id)) block.of_category in
+            | Some id -> not (category_exists st id)) block.of_category in
         raise (Undeclared ("category", c, element_name))
       with Not_found -> assert false in
   (** Now that the basic information have been gotten, we can add any constraint
@@ -1014,7 +1016,99 @@ let parse_element st element_name block =
           consider_constraints (add_constraint (get_player p)))
       deps block.let_player in
   (** We finally consider events. **)
-  let evs = [] (* TODO: List.map ?? events *) in
+  let evs =
+    List.map (fun (t, attendees, b) ->
+      let kinds =
+        let kinds =
+          let (_, deps) =
+            try event_names_to_dep_dep true st block.event_kind
+            with Not_found ->
+              (** An event kind has not been defined.  Let us find which one. **)
+              try
+                let k =
+                  List.find (fun k ->
+                    match Id.get_id st.event_names k with
+                    | None -> true
+                    | Some id -> not (event_exists st id)) block.event_kind in
+                raise (Undeclared ("event kind", k, element_name))
+              with Not_found -> assert false in
+          let deps = PSet.map Event.kind_of_id deps in
+          List.fold_left (fun kinds p -> PMap.add (Id.to_array p) deps kinds)
+            PMap.empty attendees in
+        let add p k kinds =
+          let s =
+            try PMap.find p kinds
+            with Not_found -> PSet.empty in
+          PMap.add p (PSet.add k s) kinds in
+        let kinds =
+          List.fold_left (fun kinds pa ->
+             let p =
+               match pa.Ast.attribute_player with
+               | Ast.DestinationPlayer p -> Id.to_array (get_player p)
+               | _ ->
+                 raise (UnexpectedCommandInBlock (element_name,
+                         "destination of attribute in event block")) in
+             let aid = get_attribute_id attribute_functions pa.Ast.attribute_name in
+             add p (Event.kind_of_attribute aid) kinds)
+           kinds b.provide_attribute in
+        let kinds =
+          List.fold_left (fun kinds pa ->
+            let aid = get_attribute_id contact_functions pa.Ast.contact_name in
+            let get_player = function
+              | Ast.DestinationPlayer p -> Id.to_array (get_player p)
+              | _ ->
+                raise (UnexpectedCommandInBlock (element_name,
+                        "destination of contact in event block")) in
+            let add p p' =
+              let p = get_player p in
+              let p' = get_player p' in
+              add p (Event.kind_of_contact aid p') in
+            match pa.Ast.contact_destination with
+            | Between (p1, p2) -> add p1 p2 (add p2 p1 kinds)
+            | FromTo (p1, p2) -> add p1 p2 kinds) kinds b.provide_contact in
+        kinds in
+      (* TODO: [b.translation] *)
+      let (constraints_none, constraints_some) =
+        List.fold_left (fun (none, some) c ->
+            let (mns, bns) =
+              if c.Ast.event_any then
+                (some, fun some -> (none, some))
+              else
+                (none, fun none -> (none, some)) in
+            let (fba, uba) =
+              if c.Ast.event_after then
+                (snd, fun ba after -> (fst ba, after))
+              else
+                (fst, fun ba before -> (before, snd ba)) in
+            let k =
+              match c.Ast.event_kind with
+              | Ast.Kind k ->
+                PSet.singleton (match Id.get_id st.event_names k with
+                                | None ->
+                                  raise (Undeclared ("event kind", k, element_name))
+                                | Some id -> Event.kind_of_id id)
+              | Ast.KindAttribute a ->
+                PSet.singleton (Event.kind_of_attribute
+                  (get_attribute_id attribute_functions a))
+              | Ast.KindContact (c, l) ->
+                let c = get_attribute_id contact_functions c in
+                PSet.from_list (List.map (fun p ->
+                  let p = Id.to_array (get_player p) in
+                  Event.kind_of_contact c p) l) in
+            bns (List.fold_left (fun m p ->
+                    let p = Id.to_array (get_player p) in
+                    let ba =
+                      try PMap.find p m
+                      with Not_found -> (PSet.empty, PSet.empty) in
+                    PMap.add p (uba ba (PSet.merge k (fba ba))) m) mns
+                  c.Ast.event_players)) (PMap.empty, PMap.empty)
+          b.event_constraint in {
+        Event.event_type = t ;
+        Event.event_attendees = PSet.from_list (List.map Id.to_array attendees) ;
+        Event.event_kinds = kinds ;
+        Event.constraints_none = constraints_none ;
+        Event.constraints_some = constraints_some
+      }) events in
   ((elementBase, !otherPlayers, evs), deps)
 
 let parse i =

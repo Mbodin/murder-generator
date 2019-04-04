@@ -16,8 +16,8 @@ type event_type =
  * They can store characters and are parameterised that way. **)
 type 'character kind
 
-(** Build a kind from a kind name. **)
-val kind_of_string : string -> 'character kind
+(** Build a kind from a kind identifier. **)
+val kind_of_id : Id.t -> 'character kind
 
 (** Build a kind from an attribute (meaning that this event provides
  * such an attribute). **)
@@ -43,18 +43,16 @@ type 'character t = {
        * or that can not be involved during this event takes place.
        * Two events with non-disjunct character lists can not happen
        * simultaneously. **) ;
-    event_kinds : 'character kind PSet.t
-      (** The set of event kinds that this event inherit from. **) ;
+    event_kinds : ('character, 'character kind PSet.t) PMap.t
+      (** The set of event kinds that this event inherit from, for each player. **) ;
     constraints_none :
-      ('character, ('character kind,
-        'character PSet.t * 'character PSet.t) PMap.t) PMap.t
-      (** For each character and kind, provides two sets of characters:
+      ('character, 'character kind PSet.t * 'character kind PSet.t) PMap.t
+      (** For each character, provides two sets of kinds:
        * one for before and one for after this event.
        * None of these combinations of kinds and characters should appear
        * after or before this event. **) ;
     constraints_some :
-      ('character, ('character kind,
-        'character PSet.t * 'character PSet.t) PMap.t) PMap.t
+      ('character, 'character kind PSet.t * 'character kind PSet.t) PMap.t
       (** Same as [constraints_none], but instead of requiring no such events,
        * it requires that at least one of this kind and character combination
        * appear before or after for each element of these sets. **)

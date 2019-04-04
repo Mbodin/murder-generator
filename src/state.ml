@@ -279,3 +279,5 @@ let character_complexity_final (_, rst, _) =
 let character_difficulty_final (_, rst, _) =
   character_difficulty rst
 
+let get_history_final (_, _, hst) = hst
+

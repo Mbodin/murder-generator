@@ -67,6 +67,9 @@ let domain m = PMap.map (fun _ -> ()) m
 let flatten s =
   fold merge empty s
 
+let flat_map f =
+  fold (fun e -> merge (f e)) empty
+
 let for_all p =
   fold (fun e b -> b && p e) true
 

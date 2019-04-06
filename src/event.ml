@@ -20,12 +20,21 @@ let kind_convert f = function
     Utils.apply_option (f c) (fun c -> ProvideContactAttribute (a, c))
 
 type event_type =
-    | For_life_event
-    | Long_term_event
-    | Medium_term_event
-    | Short_term_event
-    | Very_short_term_event
-    | Immediate_event
+  | For_life_event
+  | Long_term_event
+  | Medium_term_event
+  | Short_term_event
+  | Very_short_term_event
+  | Immediate_event
+
+let all_event_type = [
+    For_life_event ;
+    Long_term_event ;
+    Medium_term_event ;
+    Short_term_event ;
+    Very_short_term_event ;
+    Immediate_event
+  ]
 
 type 'character t = {
     event_type : event_type ;

@@ -45,6 +45,12 @@ let compare (y1, d1, m1) (y2, d2, m2) =
   else if d1 > d2 then 1
   else compare m1 m2
 
+let min d1 d2 =
+  if compare d1 d2 = -1 then d1 else d2
+
+let max d1 d2 =
+  if compare d1 d2 = -1 then d2 else d1
+
 (** Returns the size of the months of a given year. **)
 let months y =
   [ 31 ; if leap_year y then 29 else 28 ;
@@ -84,7 +90,7 @@ let orgmode ?active:(active=false) (y, d, m) =
   ^ "-" ^ Utils.complete_string_pre "0" (string_of_int month) 2
   ^ "-" ^ Utils.complete_string_pre "0" (string_of_int day) 2
   ^ " _ " ^ string_of_int (m / 60)
-  ^ ":" ^ string_of_int (m mod 60)
+  ^ ":" ^ Utils.complete_string_pre "0" (string_of_int (m mod 60)) 2
   ^ orgmode_end active
 
 let orgmode_range ?active:(active=false) (y1, d1, m1) (y2, d2, m2) =

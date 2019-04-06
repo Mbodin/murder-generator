@@ -12,6 +12,9 @@ type event_type =
   | Very_short_term_event (** Several minutes **)
   | Immediate_event (** Less than a minute **)
 
+(** The list of all event type. **)
+val all_event_type : event_type list
+
 (** Event kinds.
  * They can store characters and are parameterised that way. **)
 type 'character kind

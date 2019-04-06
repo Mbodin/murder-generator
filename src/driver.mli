@@ -41,6 +41,12 @@ exception TranslationError of string * string * Ast.translation
  * are incompatible). **)
 exception VacuumElement of string
 
+(** If a sequence of event is not satisfyable in an element, report the element.
+ * A sequence of event may not be satisfyable if for instance an event prevents
+ * an event of a given kind to appear after it… but that one appears in the
+ * event. **)
+exception UnsatisfyableEventSequence of string
+
 (** Treating the data sent from the parser is done in two phases.
  * The first phase is to assimilate each globally declared names
  * into identifiers.

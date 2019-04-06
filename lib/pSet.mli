@@ -86,3 +86,6 @@ val domain : ('a, 'b) PMap.t -> 'a t
 (** Merges a set of set into a single set. **)
 val flatten : 'a t t -> 'a t
 
+(** Equivalent to [flatten] compose to [map], but more efficient. **)
+val flat_map : ('a -> 'b t) -> 'a t -> 'b t
+

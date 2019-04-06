@@ -22,6 +22,12 @@ val max_date : t
 (** Compare dates. **)
 val compare : t -> t -> int
 
+(** Returns the date the furthest in the past of its two arguments. **)
+val min : t -> t -> t
+
+(** Returns the date the furthest in the future of its two arguments. **)
+val max : t -> t -> t
+
 (** Translate the date into an RFC 2445 date-time string. **)
 val rfc2445 : t -> string
 

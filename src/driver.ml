@@ -261,6 +261,8 @@ exception TranslationError of string * string * Ast.translation
 
 exception VacuumElement of string
 
+exception UnsatisfyableEventSequence of string
+
 
 (** Converts an [Ast.block] into a [block].
  * It takes a list of command types and checks that only these are present
@@ -1109,6 +1111,27 @@ let parse_element st element_name block =
         Event.constraints_none = constraints_none ;
         Event.constraints_some = constraints_some
       }) events in
+  (** We check that there is no contradiction within these events. **)
+  if let rec check f acc = function
+       | [] -> true
+       | e :: l ->
+         let (r, acc) =
+           PSet.fold (fun c (r, acc) ->
+             if not r then (r, acc)
+             else
+               let k =
+                 try PMap.find c e.Event.event_kinds
+                 with Not_found -> PSet.empty in
+               let c =
+                 try PMap.find c e.Event.constraints_none
+                 with Not_found -> (PSet.empty, PSet.empty) in
+               let c = f c in
+               (PSet.is_empty (PSet.inter c acc),
+                PSet.merge k acc)) (true, acc) e.Event.event_attendees in
+         r && check f acc l in
+     not (check fst PSet.empty evs)
+     || not (check snd PSet.empty (List.rev evs)) then
+    raise (UnsatisfyableEventSequence element_name) ;
   ((elementBase, !otherPlayers, evs), deps)
 
 let parse i =

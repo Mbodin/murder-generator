@@ -5,7 +5,7 @@ type tag = string
 
 type command = bool option * tag
 
-let generic = ""
+let generic = "<generic>"
 
 let iso639 = Utils.id
 let from_iso639 = Utils.id
@@ -35,6 +35,15 @@ type 'b sitem =
   | Direct of string
   | Variable of 'b * tag PSet.t * tag PSet.t * tag PSet.t
 
+let sitem_map f = function
+  | Direct str -> Direct str
+  | Variable (x, constr, added, removed) -> Variable (f x, constr, added, removed)
+
+let sitem_map_option f = function
+  | Direct str -> Some (Direct str)
+  | Variable (x, constr, added, removed) ->
+    Utils.apply_option (f x) (fun x -> Variable (x, constr, added, removed))
+
 (** Splits the commands into a list of constraints (conserving the ordering),
  * a set of added tags, and a set of removed tags. **)
 let splits_commands commands =
@@ -57,8 +66,8 @@ let variable x commands =
 type ('a, 'b) st =
   ('a * language, ('b sitem list * tag PSet.t * tag PSet.t) tree) PMap.t
 
-type translation_function = tag PSet.t -> (string * tag PSet.t) option
-type complete_translation_function = tag PSet.t -> string * tag PSet.t
+type 'a translation_function = 'a -> tag PSet.t -> (string * tag PSet.t) option
+type 'a complete_translation_function = 'a -> tag PSet.t -> string * tag PSet.t
 
 type element = {
     category : Id.t t ;
@@ -99,10 +108,11 @@ let fallback_to_generic lg f d change =
     | None ->
       change (fun str ->
         let str = if str = "" then "" else (" (" ^ str ^ ")") in
-        "<Missing translation" ^ str ^ ">") d
+        "<Missing translation for language " ^ lg ^ str ^ ">") (Lazy.force d)
 
-let force_translate m lg o =
-  fallback_to_generic lg (fun lg -> translate m lg o) "" Utils.id
+let force_translate ?(debug = fun _ -> None) m lg o =
+  let d = lazy (Option.default "" (debug o)) in
+  fallback_to_generic lg (fun lg -> translate m lg o) d Utils.id
 
 
 (** Given a set of tags and a tree, explores the tree following the path
@@ -183,10 +193,14 @@ let gtranslate m lg o tags =
   try let t = PMap.find (o, lg) m in aux [t]
   with Not_found -> None
 
-let gforce_translate m lg o tags =
+let gforce_translate ?(debug = fun _ -> None) m lg o tags =
   fallback_to_generic lg
     (fun lg -> gtranslate m lg o tags)
-    (String.concat ", " (PSet.to_list tags), PSet.empty)
+    (lazy
+      ((match debug o with
+       | None -> ""
+       | Some str -> str ^ " with ")
+       ^ "tags: " ^ String.concat ", " (PSet.to_list tags), PSet.empty))
     (fun f (str, s) -> (f str, s))
 
 let stranslate m lg tgv trv o tags =
@@ -212,11 +226,33 @@ let stranslate m lg tgv trv o tags =
   try let t = PMap.find (o, lg) m in aux [t]
   with Not_found -> None
 
-let sforce_translate m lg tgv trv o tags =
+let sforce_translate ?(debug = fun _ -> None) m lg tgv trv o tags =
   fallback_to_generic lg
     (fun lg -> stranslate m lg tgv trv o tags)
-    (String.concat ", " (PSet.to_list tags), PSet.empty)
+    (lazy
+      ((match debug o with
+        | None -> ""
+        | Some str -> str ^ " with ")
+        ^ "tags: " ^ String.concat ", " (PSet.to_list tags), PSet.empty))
     (fun f (str, s) -> (f str, s))
+
+
+let rec tree_map_option f = function
+  | Leaf l ->
+    Utils.apply_option (Utils.list_map_option f l) (fun l -> Leaf l)
+  | Node (t, t1, t2) ->
+    Utils.if_option (tree_map_option f t1) (fun t1 ->
+      Utils.apply_option (tree_map_option f t2) (fun t2 ->
+        Node (t, t1, t2)))
+
+let smap_option f tr =
+  let f' (l, added, removed) =
+    Utils.apply_option (Utils.list_map_option (sitem_map_option f) l) (fun l ->
+      (l, added, removed)) in
+  PMap.foldi (fun ilg t m ->
+    Utils.if_option m (fun m ->
+      Utils.apply_option (tree_map_option f' t) (fun t ->
+        PMap.add ilg t m))) tr (Some PMap.empty)
 
 
 let from_json fileName fileContent =

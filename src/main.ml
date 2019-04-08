@@ -6,6 +6,9 @@ open Js_of_ocaml
 open ExtList
 open ExtString
 
+let webpage_link = "https://github.com/Mbodin/murder-generator"
+let webpage_issues = "https://github.com/Mbodin/murder-generator/issues"
+
 
 (** The default error messages. **)
 let errorTranslationsDefault =
@@ -99,8 +102,8 @@ let _ =
      * Both functions are given as option-types: if [None] is given, the
      * corresponding button doesn’t appear.
      * The text (more precisely, its key) for each button can be changed. **)
-    let next_button ?previousText:(previousText="previous")
-          ?nextText:(nextText="next") w p get_parameters previous next =
+    let next_button ?(previousText = "previous") ?(nextText = "next")
+        w p get_parameters previous next =
       let jump f _ =
         InOut.clear_response () ;
         Lwt.wakeup_later w (fun _ -> f (get_parameters ())) in
@@ -141,8 +144,7 @@ let _ =
       InOut.print_block (InOut.P [
           InOut.Text (get_translation "description") ;
           InOut.Text (get_translation "openSource") ;
-          InOut.Link (get_translation "there",
-                      "https://github.com/Mbodin/murder-generator")
+          InOut.Link (get_translation "there", webpage_link)
         ]) ;
       (** Suggest to shortcut the generation by importing a file. **)
       let (shortcut, readShortcut) =
@@ -240,7 +242,8 @@ let _ =
       let translate_categories =
         let translate_categories =
           (Driver.get_translations data).Translation.category in
-        Translation.force_translate translate_categories (get_language parameters) in
+        Translation.force_translate translate_categories
+          (get_language parameters) in
       let all_categories = Driver.all_categories data in
       let selected_categories =
         match parameters.categories with
@@ -434,8 +437,7 @@ let _ =
       InOut.print_block (InOut.P [
         InOut.Text (get_translation "underConstruction") ;
         InOut.Text (get_translation "participate") ;
-        InOut.Link (get_translation "there",
-                    "https://github.com/Mbodin/murder-generator") ]) ;
+        InOut.Link (get_translation "there", webpage_link) ]) ;
       next_button w parameters (fun _ -> parameters)
         (Some ask_for_player_constraints) None ;
       let%lwt cont = cont in cont () in
@@ -451,13 +453,12 @@ let _ =
     ask_for_languages parameters
   (** Reporting errors. **)
   with e ->
-    let issues = "https://github.com/Mbodin/murder-generator/issues" in
     try%lwt
       let (errorOccurred, reportIt, there, errorDetails) = !errorTranslations in
       InOut.print_block ~error:true (InOut.Div (InOut.Normal, [
           InOut.P [
               InOut.Text errorOccurred ; InOut.Text reportIt ;
-              InOut.Link (there, issues)
+              InOut.Link (there, webpage_issues)
             ] ;
           InOut.P [
               InOut.Text errorDetails ;
@@ -469,7 +470,7 @@ let _ =
     with e' -> (** If there have been an error when printing the error,
                 * we failback to the console. **)
       Firebug.console##log "Unfortunately, a important error happened." ;
-      Firebug.console##log ("Please report it to " ^ issues) ;
+      Firebug.console##log ("Please report it to " ^ webpage_issues) ;
       Firebug.console##log ("Primary error details: " ^ Printexc.to_string e) ;
       Firebug.console##log ("Secondary error details: " ^ Printexc.to_string e') ;
       Lwt.return ()

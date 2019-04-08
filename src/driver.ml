@@ -37,6 +37,7 @@ let parse_relation str =
 type block = {
     of_category : string list ;
     translation : Ast.translation list ;
+    sentence : Ast.block list ;
     add : Ast.add list ;
     compatible_with : string list ;
     let_player : Ast.let_player list ;
@@ -53,6 +54,7 @@ type block = {
 let empty_block = {
     of_category = [] ;
     translation = [] ;
+    sentence = [] ;
     add = [] ;
     compatible_with = [] ;
     let_player = [] ;
@@ -219,6 +221,7 @@ let all_categories i =
 type command_type =
   | OfCategory
   | Translation
+  | Sentence
   | Add
   | CompatibleWith
   | LetPlayer
@@ -235,6 +238,7 @@ type command_type =
 let command_type_to_string = function
   | OfCategory -> "category"
   | Translation -> "translation"
+  | Sentence -> "sentence"
   | Add -> "add"
   | CompatibleWith -> "category compatibility"
   | LetPlayer -> "player declaration"
@@ -274,7 +278,22 @@ let convert_block block_name expected =
     if not (List.mem c expected) then
       raise (UnexpectedCommandInBlock (block_name, command_type_to_string c)) in
   let rec aux acc = function
-  | [] -> acc
+  | [] -> {
+      of_category = List.rev acc.of_category ;
+      translation = List.rev acc.translation ;
+      sentence = List.rev acc.sentence ;
+      add = List.rev acc.add ;
+      compatible_with = List.rev acc.compatible_with ;
+      let_player = List.rev acc.let_player ;
+      provide_relation = List.rev acc.provide_relation ;
+      provide_attribute = List.rev acc.provide_attribute ;
+      provide_contact = List.rev acc.provide_contact ;
+      add_difficulty = List.rev acc.add_difficulty ;
+      add_complexity = List.rev acc.add_complexity ;
+      event_kind = List.rev acc.event_kind ;
+      provide_event = List.rev acc.provide_event ;
+      event_constraint = List.rev acc.event_constraint
+    }
   | c :: l ->
     aux
       (match c with
@@ -284,6 +303,9 @@ let convert_block block_name expected =
       | Ast.Translation t ->
         check Translation ;
         { acc with translation = t :: acc.translation }
+      | Ast.Sentence b ->
+        check Sentence ;
+        { acc with sentence = b :: acc.sentence }
       | Ast.Add a ->
         check Add ;
         { acc with add = a :: acc.add }
@@ -318,8 +340,8 @@ let convert_block block_name expected =
         { acc with provide_event = p :: acc.provide_event }
       | Ast.EventConstraint p ->
         check EventConstraint ;
-        { acc with event_constraint = p :: acc.event_constraint }) l
-  in aux empty_block
+        { acc with event_constraint = p :: acc.event_constraint }) l in
+  aux empty_block
 
 (** Takes a list of category names and returns a set of category identifiers,
  * as well as the possibly-changed [category_names] field. **)
@@ -764,13 +786,14 @@ let parse_element st element_name block =
     match Id.get_id player_names p with
     | None -> raise (Undeclared ("player", p, element_name))
     | Some i -> i in
+  let get_player_array p = Id.to_array (get_player p) in
   (** We pre-parse the events, as they might contain declarations. **)
   let events =
     List.map (fun (t, l, b) ->
       (t, List.map get_player l,
        convert_block element_name
-         [Translation; ProvideAttribute; ProvideContact; EventKind; EventConstraint]
-         b)) block.provide_event in
+         [Translation; Sentence; ProvideAttribute; ProvideContact;
+          EventKind; EventConstraint] b)) block.provide_event in
   (** We first consider relations. **)
   let relations =
     (** We create this triangle of relations.
@@ -887,7 +910,7 @@ let parse_element st element_name block =
   (** We now consider added difficulty and complexity. **)
   List.iter (fun (d, p) ->
       let d = if d then 1 else -1 in
-      let p = Id.to_array (get_player p) in
+      let p = get_player_array p in
       let o = elementBase.(p).Element.added_objective in
       elementBase.(p) <-
         { elementBase.(p) with
@@ -896,7 +919,7 @@ let parse_element st element_name block =
     block.add_difficulty ;
   List.iter (fun (d, p) ->
       let d = if d then 1 else -1 in
-      let p = Id.to_array (get_player p) in
+      let p = get_player_array p in
       let o = elementBase.(p).Element.added_objective in
       elementBase.(p) <-
         { elementBase.(p) with
@@ -1007,7 +1030,7 @@ let parse_element st element_name block =
                     List.filter (fun c -> not (List.mem c cid)) total
                   ) else cid in
                 add_constraint
-                  (Element.Contact (aid, Some (Id.to_array (get_player p')),
+                  (Element.Contact (aid, Some (get_player_array p'),
                     State.One_value_of cid)) ;
                 intersect_with_constructor_dependencies_list deps
                   (List.map (fun id -> Attribute.ContactConstructor id) cid))
@@ -1019,7 +1042,8 @@ let parse_element st element_name block =
       deps block.let_player in
   (** We finally consider events. **)
   let evs =
-    List.map (fun (t, attendees, b) ->
+    List.mapi (fun i (t, attendees, b) ->
+      let event_name = element_name ^ "#" ^ string_of_int i in
       let kinds =
         let kinds =
           let (_, deps) =
@@ -1032,7 +1056,7 @@ let parse_element st element_name block =
                     match Id.get_id st.event_names k with
                     | None -> true
                     | Some id -> not (event_exists st id)) block.event_kind in
-                raise (Undeclared ("event kind", k, element_name))
+                raise (Undeclared ("event kind", k, event_name))
               with Not_found -> assert false in
           let deps = PSet.map Event.kind_of_id deps in
           List.fold_left (fun kinds p -> PMap.add (Id.to_array p) deps kinds)
@@ -1046,10 +1070,10 @@ let parse_element st element_name block =
           List.fold_left (fun kinds pa ->
              let p =
                match pa.Ast.attribute_player with
-               | Ast.DestinationPlayer p -> Id.to_array (get_player p)
+               | Ast.DestinationPlayer p -> get_player_array p
                | _ ->
-                 raise (UnexpectedCommandInBlock (element_name,
-                         "destination of attribute in event block")) in
+                 raise (UnexpectedCommandInBlock (event_name,
+                         "destination of attribute")) in
              let aid = get_attribute_id attribute_functions pa.Ast.attribute_name in
              add p (Event.kind_of_attribute aid) kinds)
            kinds b.provide_attribute in
@@ -1059,8 +1083,8 @@ let parse_element st element_name block =
             let get_player = function
               | Ast.DestinationPlayer p -> Id.to_array (get_player p)
               | _ ->
-                raise (UnexpectedCommandInBlock (element_name,
-                        "destination of contact in event block")) in
+                raise (UnexpectedCommandInBlock (event_name,
+                        "destination of contact")) in
             let add p p' =
               let p = get_player p in
               let p' = get_player p' in
@@ -1069,7 +1093,25 @@ let parse_element st element_name block =
             | Between (p1, p2) -> add p1 p2 (add p2 p1 kinds)
             | FromTo (p1, p2) -> add p1 p2 kinds) kinds b.provide_contact in
         kinds in
-      (* TODO: [b.translation] *)
+      let translation =
+        let translations =
+          if b.translation <> [] && b.sentence <> [] then
+            raise (TranslationError ("translation item around sentences",
+                                     event_name, List.hd b.translation)) ;
+          if b.translation <> [] then
+            [b.translation]
+          else
+            List.map (fun b ->
+              (convert_block event_name [Translation] b).translation) b.sentence in
+        let translation =
+          Translation.sadd Translation.sempty Translation.generic [] (-1)
+            [Translation.Direct event_name] in
+        (List.length translations,
+         Utils.list_fold_lefti (fun i translation sentence ->
+           List.fold_left (fun translation (lg, commands, tr) ->
+               let tr = List.map (Translation.sitem_map get_player_array) tr in
+               Translation.sadd translation lg commands i tr)
+             translation sentence) translation translations) in
       let (constraints_none, constraints_some) =
         List.fold_left (fun (none, some) c ->
             let (mns, bns) =
@@ -1095,21 +1137,24 @@ let parse_element st element_name block =
               | Ast.KindContact (c, l) ->
                 let c = get_attribute_id contact_functions c in
                 PSet.from_list (List.map (fun p ->
-                  let p = Id.to_array (get_player p) in
+                  let p = get_player_array p in
                   Event.kind_of_contact c p) l) in
             bns (List.fold_left (fun m p ->
-                    let p = Id.to_array (get_player p) in
+                    let p = get_player_array p in
                     let ba =
                       try PMap.find p m
                       with Not_found -> (PSet.empty, PSet.empty) in
                     PMap.add p (uba ba (PSet.merge k (fba ba))) m) mns
                   c.Ast.event_players)) (PMap.empty, PMap.empty)
-          b.event_constraint in {
+          b.event_constraint in
+      let attendees = List.map Id.to_array attendees in {
         Event.event_type = t ;
-        Event.event_attendees = PSet.from_list (List.map Id.to_array attendees) ;
+        Event.event_attendees = PSet.from_list attendees ;
+        Event.event_attendees_list = attendees ;
         Event.event_kinds = kinds ;
         Event.constraints_none = constraints_none ;
-        Event.constraints_some = constraints_some
+        Event.constraints_some = constraints_some ;
+        Event.translation = translation
       }) events in
   (** We check that there is no contradiction within these events. **)
   if let rec check f acc = function

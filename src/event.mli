@@ -42,12 +42,13 @@ type 'character t = {
     event_type : event_type
       (** Two events with the same event type can not happen simultaneously. **) ;
     event_attendees : 'character PSet.t
-      (** List of characters fully involved during this event,
-       * or that can not be involved during this event takes place.
-       * Two events with non-disjunct character lists can not happen
-       * simultaneously. **) ;
+      (** Characters involved in this event. **) ;
+    event_attendees_list : 'character list
+      (** Only used when extracting the event: the list of attendees, in the
+       * same order that they are declared in the event. **) ;
     event_kinds : ('character, 'character kind PSet.t) PMap.t
-      (** The set of event kinds that this event inherit from, for each player. **) ;
+      (** The set of event kinds that this event inherit from, for each
+       * player. **) ;
     constraints_none :
       ('character, 'character kind PSet.t * 'character kind PSet.t) PMap.t
       (** For each character, provides two sets of kinds:
@@ -58,8 +59,11 @@ type 'character t = {
       ('character, 'character kind PSet.t * 'character kind PSet.t) PMap.t
       (** Same as [constraints_none], but instead of requiring no such events,
        * it requires that at least one of this kind and character combination
-       * appear before or after for each element of these sets. **)
-    (* TODO: Translations. *)
+       * appear before or after for each element of these sets. **) ;
+    translation :
+      (int * (** Number of sentence in the event. **)
+       (int, 'character) Translation.st
+       (** For each sentence number (counting from [0]), how to translate it. **))
   }
 
 (** Given an instantiation of characters, instantiate an event. **)
@@ -81,6 +85,7 @@ val instantiate : ('a -> 'b option) -> 'a t -> 'b t option
  * also applies (but the projection might apply even if the full event does
  * not).
  * The first argument is the local name of the character and the second its
- * instantiation. **)
+ * instantiation.
+ * The translation part of this event is not to be used. **)
 val partially_instantiate : 'a -> 'b -> 'a t -> 'b t option
 

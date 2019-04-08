@@ -109,6 +109,9 @@ type command =
   | OfCategory of string
     (** The given category is required to consider this block. **)
   | Translation of translation
+  | Sentence of block
+    (** A sentence with multiple translations for an event.
+     * Only accepts [Translation] commands. **)
   | Add of add
   | CompatibleWith of string
     (** States that if the current constructor is required in a

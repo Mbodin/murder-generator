@@ -64,6 +64,9 @@ type 'b sitem =
  * of three sets. **)
 val variable : 'b -> command list -> 'b sitem
 
+(** Change the variables used in a sentence item. **)
+val sitem_map : ('a -> 'b) -> 'a sitem -> 'b sitem
+
 (** Returns the two/three-letters code corresponding to the provided language. **)
 val iso639 : language -> string
 
@@ -79,7 +82,7 @@ val sempty : ('a, 'b) st
 val add : 'a t -> language -> 'a -> string -> 'a t
 
 (** Returned by [gadd] and [sadd] when given commands that conflicts with
- * each others (typically when the same tag is bath added and removed). **)
+ * each others (typically when the same tag is both added and removed). **)
 exception ConflictingCommands of command * command
 
 (** Add a translation to an object with a specification on the tags where
@@ -95,16 +98,18 @@ val sadd : ('a, 'b) st -> language -> command list -> 'a -> 'b sitem list -> ('a
  * Returns [None] if the object has not been translated to this language. **)
 val translate : 'a t -> language -> 'a -> string option
 
-(** Calls [translate], and finds a way to translate it anyway. **)
-val force_translate : 'a t -> language -> 'a -> string
+(** Calls [translate], and finds a way to translate it anyway.
+ * The additional debugging argument helps understanding from where came
+ * a missing translation. **)
+val force_translate : ?debug:('a -> string option) -> 'a t -> language -> 'a -> string
 
 (** Translation functions involving grammar have the following type.
  * See [gtranslate] for more details. **)
-type translation_function = tag PSet.t -> (string * tag PSet.t) option
+type 'a translation_function = 'a -> tag PSet.t -> (string * tag PSet.t) option
 
 (** An alternative to [translation_function] where the function uses heuristics
  * to always return a result. **)
-type complete_translation_function = tag PSet.t -> string * tag PSet.t
+type 'a complete_translation_function = 'a -> tag PSet.t -> string * tag PSet.t
 
 (** Translates an object to a given language.
  * Each tag associated with the return value is assured to be given as argument.
@@ -119,19 +124,22 @@ type complete_translation_function = tag PSet.t -> string * tag PSet.t
  * Typically, if a generic translation is gendered, this gender has to be propagated
  * to the rest of the sentence even though the original notion was not directly
  * gendered. **)
-val gtranslate : 'a gt -> language -> 'a -> translation_function
+val gtranslate : 'a gt -> language -> 'a translation_function
 
 (** Similar to [gtranslate], but will try to find a translation following
  * some heuristics (but no guarantee is provided about them). **)
-val gforce_translate : 'a gt -> language -> 'a -> complete_translation_function
+val gforce_translate : ?debug:('a -> string option) -> 'a gt -> language -> 'a complete_translation_function
 
 (** Like [gtranslate] but for sentences.
  * It is supposed to be given a translation function for the variables, as well
  * as a function providing for each variable its natural tags. **)
-val stranslate : ('a, 'b) st -> language -> ('b -> tag PSet.t) -> ('b -> translation_function) -> 'a -> translation_function
+val stranslate : ('a, 'b) st -> language -> ('b -> tag PSet.t) -> 'b translation_function -> 'a translation_function
 
 (** Similar to [stranslate], but never fails. **)
-val sforce_translate : ('a, 'b) st -> language -> ('b -> tag PSet.t) -> ('b -> translation_function) -> 'a -> complete_translation_function
+val sforce_translate : ?debug:('a -> string option) -> ('a, 'b) st -> language -> ('b -> tag PSet.t) -> 'b translation_function -> 'a complete_translation_function
+
+(** Update the variables used in a translation object. **)
+val smap_option : ('b -> 'c option) -> ('a, 'b) st -> ('a, 'c) st option
 
 (** [from_json fileName fileContent] reads the [fileContent] string as a
  * JSON object representing translations in different languages.

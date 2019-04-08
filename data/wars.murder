@@ -39,12 +39,22 @@ begin
   provide immediate event to D and E
   begin
     event History
-    translation fr "Les nains et les elfes ne se sont jamais mélangés."
-                   "  Chacun connait bien sûr l’existence des autres, mais les circonstances n’ont jamais été propices pour des échanges pacifiques."
-    translation en "Dwarves and elves never mixed each others."
-                   "  Each recognizes the existence of the other, naturally, but the circumstances were never satified for peaceful exchanges to happen."
-    translation eo "Gnomoj kaj elfoj neniam miksis unu la alian."
-                   "  Ĉiuj scias ke la alia ekzistas, kompreneble, sed neniam okazis kuntekston por ke pacaj interŝanĝoj okazu."
+
+    assume no event Personal to D or E before
+
+    sentence
+    begin
+      translation fr "Les nains et les elfes ne se sont jamais mélangés."
+      translation en "Dwarves and elves never mixed each others."
+      translation eo "Gnomoj kaj elfoj neniam miksis unu la alian."
+    end
+
+    sentence
+    begin
+      translation fr "Chacun connait bien sûr l’existence des autres, mais les circonstances n’ont jamais été propices pour des échanges pacifiques."
+      translation en "Each recognizes the existence of the other, naturally, but the circumstances were never satified for peaceful exchanges to happen."
+      translation eo "Ĉiuj scias ke la alia ekzistas, kompreneble, sed neniam okazis kuntekston por ke pacaj interŝanĝoj okazu."
+    end
   end
 
   provide immediate event to D

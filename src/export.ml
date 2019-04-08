@@ -1,4 +1,7 @@
 
+let webpage_address_base = "github.com/Mbodin/murder-generator"
+let webpage_address = "https://" ^ webpage_address_base
+
 type state = {
     names : string list ;
     language : Translation.language ;
@@ -37,6 +40,36 @@ let translate_value_player s =
 let translate_value_contact s =
   translate_value s (fun v -> Attribute.ContactConstructor v)
 
+(** Provides a recoverable identifier for an event. **)
+let translate_event_generic s e =
+  let (nb_sentence, tr) = e.Event.translation in
+  let tr = Translation.sforce_translate tr Translation.generic in
+  fst (tr (fun _ -> PSet.empty) (fun _ _ -> None) (-1) PSet.empty)
+
+(** Translates an event from a translation object [trp] for player. **)
+let translate_event s trp e =
+  let (nb_sentence, tr) = e.Event.translation in
+  let tr =
+    Translation.sforce_translate ~debug:(fun i ->
+        Some (string_of_int i ^ " of " ^ translate_event_generic s e))
+      tr s.language in
+  let l =
+    List.map (fun i ->
+      fst (tr (fst trp) (snd trp) i PSet.empty)) (Utils.seq nb_sentence) in
+  if String.concat "" l = "" then
+    ["<Empty translation for " ^ translate_event_generic s e ^ ">"]
+  else l
+
+(** Generate a translation object for player for [translate_event]. **)
+(* TODO: This function is actually a dummy one, waiting for a better one to come. *)
+let translation_players s =
+  let tags = PMap.empty in
+  let read_tags p =
+    try PMap.find p tags
+    with Not_found -> PSet.empty in
+  let names = Array.of_list s.names in
+  (read_tags, fun c _ -> Some (names.(Id.to_array c), PSet.empty))
+
 (** Return the name of a character [c]. **)
 let get_name s c =
   List.nth s.names (Id.to_array c)
@@ -58,7 +91,7 @@ let to_graphviz s =
     string_of_float n ^ " 1 0.7" in
   String.concat "\n" [
       "digraph {" ; "" ;
-      "  // Generated from https://github.com/Mbodin/murder-generator" ; "" ;
+      "  // Generated from " ^ webpage_address ; "" ;
       "  node [shape=record]" ; "" ;
       (** Declaring each player **)
       String.concat "\n" (List.mapi (fun c name ->
@@ -87,7 +120,16 @@ let to_graphviz s =
     ]
 
 let to_icalendar s =
+  let rec split = function
+    | [] -> []
+    | str :: l ->
+      if String.length str < 75 then
+        str :: split l
+      else
+        String.sub str 0 74
+        :: split ((" " ^ String.sub str 74 (String.length str - 74)) :: l) in
   let events =
+    let tr_players = translation_players s in
     let id_postfix =
       "-" ^ string_of_int (Hashtbl.hash s.names)
       ^ "-" ^ string_of_int (Hashtbl.hash (Date.now, Sys.time ()))
@@ -99,19 +141,25 @@ let to_icalendar s =
       :: ("DTSTAMP:" ^ Date.rfc2445 Date.now)
       :: ("DTSTART:" ^ Date.rfc2445 e.History.event_begin)
       :: ("DTEND:" ^ Date.rfc2445 e.History.event_end)
-      :: List.map (fun c -> "ATTENDEE:" ^ get_name s c)
+      :: List.map (fun c ->
+             "ATTENDEE:urn:tag:" ^ webpage_address_base
+             ^ "," ^ Date.iso8601 Date.now
+             ^ ":" ^ string_of_int (Id.to_array c)
+             ^ "," ^ Url.urlencode (get_name s c))
            (PSet.to_list e.History.event.Event.event_attendees)
-      @ "DESCRIPTION:" (* TODO *)
-      :: "END:VEVENT"
+      @ "DESCRIPTION:"
+      :: List.map (fun str -> "   " ^ str)
+           (translate_event s tr_players e.History.event)
+      @ "END:VEVENT"
       :: []) (State.get_history_final s.state)) in
-  String.concat "\r\n" (
+  String.concat "\r\n" (split (
     "BEGIN:VCALENDAR"
     :: "VERSION:2.0"
     :: ("PRODID:-//Martin Constantino-Bodin//Murder Generator//"
         ^ String.uppercase_ascii (Translation.iso639 s.language))
     :: events
     @ "END:VCALENDAR"
-    :: [])
+    :: []))
 
 let to_org s =
   let get_translation key =
@@ -119,10 +167,13 @@ let to_org s =
                          ^ (Translation.iso639 s.language) ^ "' at "
                          ^ __LOC__ ^ ".")
       (Translation.translate s.generic_translation s.language key) in
+  let tr_players = translation_players s in
   let print_event n e =
     String.concat "\n" (
-      (String.make n '*' ^ " " (* TODO: Description *))
-      :: (String.make (2 + n) ' '
+      (String.make n '*' ^ " " ^
+        String.concat ("\n" ^ String.make (1 + n) ' ')
+          (translate_event s tr_players e.History.event))
+      :: (String.make (1 + n) ' '
           ^ Date.orgmode_range e.History.event_begin e.History.event_end)
       :: List.map (fun c ->
            String.make (1 + n) ' ' ^ "- [X] "
@@ -151,7 +202,10 @@ let to_org s =
                       String.make 5 ' ' ^ "- " ^ tra ^ ": " ^ trv) lv @ l)
                 (State.get_all_contacts_character_final s.state c) []
            @ ("** " ^ get_translation "characterEvents")
-           :: List.map (print_event 3) (State.get_history_final s.state))) s.names)
+           :: Utils.list_map_filter (fun e ->
+                if PSet.mem c e.History.event.Event.event_attendees then
+                  Some (print_event 3 e)
+                else None) (State.get_history_final s.state))) s.names)
 
 let to_json s =
   let s = generic s in
@@ -176,11 +230,16 @@ let to_json s =
           else `String (Relation.to_string r) :: l) [] s.names)) ;
         ("complexity", `Int (State.character_complexity_final s.state c)) ;
         ("difficulty", `Int (State.character_difficulty_final s.state c)) ;
+        (* TODO: Move this: events needs to be global.
+         * Here, they are copy/pasted again for each player. *)
         ("events", `List (List.map (fun e ->
           `Assoc [
               ("begin", `String (Date.rfc2445 e.History.event_begin)) ;
               ("end", `String (Date.rfc2445 e.History.event_end)) ;
-              ("event", `Assoc [(* TODO *)])
+              ("event", `String (translate_event_generic s e.History.event)) ;
+              ("attendees",
+                `List (List.map (fun c -> `Int (Id.to_array c))
+                        (e.History.event.Event.event_attendees_list)))
             ])(State.get_history_final s.state)))
       ]) s.names))
 

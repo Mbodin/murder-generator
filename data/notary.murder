@@ -62,12 +62,19 @@ begin
 
     provide compatible attribute Richness to P as Rich
 
-    translation fr "Mort des parents de " P "."
-                   "  Ils " P:+pro:+cli " laissent une importante fortune."
-    translation en "Death of " P "’s parents."
-                   "  They leave " P:+pro:+cli " with an important wealth."
-    translation eo "Morto de la gepatroj de " P "."
-                   "  Ili forlasas " P:+pro:+acc " kun granda heredaĵo."
+    sentence
+    begin
+      translation fr "Mort des parents de " P "."
+      translation en "Death of " P "’s parents."
+      translation eo "Morto de la gepatroj de " P "."
+    end
+
+    sentence
+    begin
+      translation fr "Ils " P:+pro:+cli " laissent une importante fortune."
+      translation en "They leave " P:+pro:+cli " with an important wealth."
+      translation eo "Ili forlasas " P:+pro:+acc " kun granda heredaĵo."
+    end
   end
 end
 
@@ -86,12 +93,19 @@ begin
     provide compatible attribute Richness to A as Rich
     provide compatible attribute Richness to B as Rich
 
-    translation fr "Mort des parents de " A " et " B "."
-                   "  Ils leur laissent une importante fortune."
-    translation en "Death of " A " and " B "’s parents."
-                   "  They leave them with an important wealth."
-    translation eo "Morto de la gepatroj de " A " kaj " B "."
-                   "  Ili forlasas ilin kun granda heredaĵo."
+    sentence
+    begin
+      translation fr "Mort des parents de " A " et " B "."
+      translation en "Death of " A " and " B "’s parents."
+      translation eo "Morto de la gepatroj de " A " kaj " B "."
+    end
+
+    sentence
+    begin
+      translation fr "Ils leur laissent une importante fortune."
+      translation en "They leave them with an important wealth."
+      translation eo "Ili forlasas ilin kun granda heredaĵo."
+    end
   end
 end
 
@@ -177,12 +191,19 @@ begin
 
     provide compatible contact FinancialDebt from A to B as Small
 
-    translation fr A:+sbeg " a demandé de l’argent à " B "."
-                   "  " B:+sbeg:+pro " " A:+pro:+cli " en a donné."
-    translation en A:+sbeg " asked money to " B "."
-                   "  " B:+sbeg:+pro " gave some to " A:+pro:+cli "."
-    translation eo A:+sbeg " petis monon al " B "."
-                   "  " B:+sbeg:+pro " al " A:+pro " donis."
+    sentence
+    begin
+      translation fr A:+sbeg " a demandé de l’argent à " B "."
+      translation en A:+sbeg " asked money to " B "."
+      translation eo A:+sbeg " petis monon al " B "."
+    end
+
+    sentence
+    begin
+      translation fr B:+sbeg:+pro " " A:+pro:+cli " en a donné."
+      translation en B:+sbeg:+pro " gave some to " A:+pro:+cli "."
+      translation eo B:+sbeg:+pro " al " A:+pro " donis."
+    end
   end
 
   provide relation between A and B as asymmetrical trust neutral
@@ -200,12 +221,19 @@ begin
 
     provide compatible contact FinancialDebt from A to B as Small
 
-    translation fr A:+sbeg " a demandé de l’argent à " B "."
-                   "  Vu le besoin, " B:+pro " " A:+pro:+cli " en a donné."
-    translation en A:+sbeg " asked money to " B "."
-                   "  Given the circumstances, " B:+pro " gave some to " A:+pro:+cli "."
-    translation eo A:+sbeg " petis monon al " B "."
-                   "  Komprenante la bezonon, " B:+pro " al " A:+pro " donis."
+    sentence
+    begin
+      translation fr A:+sbeg " a demandé de l’argent à " B "."
+      translation en A:+sbeg " asked money to " B "."
+      translation eo A:+sbeg " petis monon al " B "."
+    end
+
+    sentence
+    begin
+      translation fr "Vu le besoin, " B:+pro " " A:+pro:+cli " en a donné."
+      translation en "Given the circumstances, " B:+pro " gave some to " A:+pro:+cli "."
+      translation eo "Komprenante la bezonon, " B:+pro " al " A:+pro " donis."
+    end
   end
 
   provide relation between A and B as asymmetrical avoidance undetermined
@@ -218,12 +246,43 @@ begin
                   with contact Know to B as True
   let B be player
 
-  provide contact FinancialDebt from A to B as Large
+  provide very short event to A and B
+  begin
+    event MoneyExchange
+
+    provide contact FinancialDebt from A to B as Large
+
+    sentence
+    begin
+      translation fr A:+sbeg " étant tempororairement en manque de liquidités, " A:+pro " en a demandé à " B "."
+      translation en A:+sbeg " experiencing temporarily cash shortage, " A:+pro " asked money to " B "."
+      translation eo "Pro " A " portempe mankis monerojn, " A:+pro " petis monon al " B "."
+    end
+
+    sentence
+    begin
+      translation fr "Vu les richesses de " A ", " A:+pro " n’aura aucun mal à rembourser " B " dans l’avenir."
+      translation en "Given " A "’s wealth, " A:+pro " would have no trouble giving the money back to " B " in the future."
+      translation eo "Laŭ la riĉeco de " A ", " A:+pro " neniel havos problemon redoni la monon al " B " en la estonteco."
+    end
+
+    sentence
+    begin
+      translation fr B:+sbeg:+pro " " A:+pro:+cli " en a donc donné."
+      translation en B:+sbeg:+pro " thus gave some to " A:+pro:+cli "."
+      translation eo "Tial " B:+pro " al " A:+pro " donis."
+    end
+  end
+
+  provide very short event to B
+  begin
+    translation fr A:+sbeg " n’a toujours pas rendu son emprunt : il serait temps de le lui rappeller."
+    translation en A:+sbeg " never gave the money back: a recall is now needed."
+    translation eo A:+sbeg " neniam redonis la monon: rememorigo necesiĝas."
+  end
 
   provide relation between A and B as asymmetrical neutral undetermined
   provide compatible contact Know from B to A as True
-
-  (* TODO: provide event to A and B *)
 end
 
 element TookMoneyToBuildAShopAndIsNowRich
@@ -237,12 +296,19 @@ begin
 
     provide contact FinancialDebt from B to A as Old
 
-    translation fr A:+sbeg " a demandé de l’argent à " B " pour monter son entreprise."
-                   "  " B:+sbeg:+pro " " A:+pro:+cli " en a donné."
-    translation en A:+sbeg " asked money to " B " to set up a shop."
-                   "  " B:+sbeg:+pro " gave some to " A:+pro:+cli "."
-    translation eo A:+sbeg " petis monon al " B " por komenci ties komercon."
-                   "  " B:+sbeg:+pro " al " A:+pro " donis."
+    sentence
+    begin
+      translation fr A:+sbeg " a demandé de l’argent à " B " pour monter son entreprise."
+      translation en A:+sbeg " asked money to " B " to set up a shop."
+      translation eo A:+sbeg " petis monon al " B " por komenci ties komercon."
+    end
+
+    sentence
+    begin
+      translation fr B:+sbeg:+pro " " A:+pro:+cli " en a donné."
+      translation en B:+sbeg:+pro " gave some to " A:+pro:+cli "."
+      translation eo B:+sbeg:+pro " al " A:+pro " donis."
+    end
   end
 
   (* TODO: Put the as an assumption of this event, to enable another
@@ -278,12 +344,19 @@ begin
 
     provide contact FinancialDebt from B to A as Large
 
-    translation fr A:+sbeg " a demandé de l’argent à " B " pour monter son entreprise."
-                   "  " B:+sbeg:+pro " " A:+pro:+cli " en a donné."
-    translation en A:+sbeg " asked money to " B " to set up a shop."
-                   "  " B:+sbeg:+pro " gave some to " A:+pro:+cli "."
-    translation eo A:+sbeg " petis monon al " B " por komenci ties komercon."
-                   "  " B:+sbeg:+pro " al " A:+pro " donis."
+    sentence
+    begin
+      translation fr A:+sbeg " a demandé de l’argent à " B " pour monter son entreprise."
+      translation en A:+sbeg " asked money to " B " to set up a shop."
+      translation eo A:+sbeg " petis monon al " B " por komenci ties komercon."
+    end
+
+    sentence
+    begin
+      translation fr B:+sbeg:+pro " " A:+pro:+cli " en a donné."
+      translation en B:+sbeg:+pro " gave some to " A:+pro:+cli "."
+      translation eo B:+sbeg:+pro " al " A:+pro " donis."
+    end
   end
 
   (* TODO: Same as above: put this as an assumption and set up the chronology of events. *)
@@ -317,8 +390,8 @@ begin
 
     provide compatible attribute Richness to P as Rich
 
-    translation fr P:+sbeg:mas " a longuement travaillé pour devenir un marchand réputé et fortuné."
-    translation fr P:+sbeg:mas " a longuement travaillé pour devenir une marchande réputée et fortunée."
+    translation fr P:+sbeg:fem " a longuement travaillé pour devenir une marchande réputée et fortunée."
+    translation fr P:+sbeg " a longuement travaillé pour devenir un marchand réputé et fortuné."
     translation en P:+sbeg " worked quite a long time to reach this level of wealth and reputation."
     translation eo P:+sbeg " longe laboris por atingi tiun nivelon de riĉeco kaj bonreputacio."
   end

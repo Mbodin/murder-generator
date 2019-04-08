@@ -65,6 +65,13 @@ let month_day (y, d, _) =
       else aux (m + 1) (d - c) l in
   aux 1 d (months y)
 
+let iso8601 (y, d, m) =
+  let (month, day) = month_day (y, d, m) in
+  let y = Utils.positive_mod y 10_000 in
+  Utils.complete_string_pre "0" (string_of_int y) 4
+  ^ "-" ^ Utils.complete_string_pre "0" (string_of_int month) 2
+  ^ "-" ^ Utils.complete_string_pre "0" (string_of_int day) 2
+
 let rfc2445 (y, d, m) =
   let (month, day) = month_day (y, d, m) in
   let y = Utils.positive_mod y 10_000 in

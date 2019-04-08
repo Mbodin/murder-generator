@@ -28,6 +28,9 @@ val min : t -> t -> t
 (** Returns the date the furthest in the future of its two arguments. **)
 val max : t -> t -> t
 
+(** Translate the date into an ISO 8601 date string (without the time). **)
+val iso8601 : t -> string
+
 (** Translate the date into an RFC 2445 date-time string. **)
 val rfc2445 : t -> string
 

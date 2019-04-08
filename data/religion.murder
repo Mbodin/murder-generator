@@ -56,14 +56,26 @@ begin
 
     provide strict attribute Born to P as AlwaysExisted
 
-    translation fr P:+sbeg " a existé aussi loin que remontent les mémoires."
-                   "  " P:+sbeg:+pro " était, " P:+pro " est, " P:+pro " sera."
-                   "  À tout jamais."
-    translation en P:+sbeg " existed for as long as memory can remember."
-                   "  " P:+sbeg:+pro " was, " P:+pro " is, " P:+pro " will be."
-                   "  Always."
-    translation eo P:+sbeg " ĉiam ekzistis laŭ ies ajn memoro."
-                   "  " P:+sbeg:+pro " estis, " P:+pro " estas, kaj " P:+pro " por ĉiam estos."
+    sentence
+    begin
+      translation fr P:+sbeg " a existé aussi loin que remontent les mémoires."
+      translation en P:+sbeg " existed for as long as memory can remember."
+      translation eo P:+sbeg " ĉiam ekzistis laŭ ies ajn memoro."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " était, " P:+pro " est, " P:+pro " sera."
+      translation en P:+sbeg:+pro " was, " P:+pro " is, " P:+pro " will be."
+      translation eo P:+sbeg:+pro " estis, " P:+pro " estas, kaj " P:+pro " por ĉiam estos."
+    end
+
+    sentence
+    begin
+      translation fr "À tout jamais."
+      translation en "Always."
+      translation eo
+    end
   end
 end
 
@@ -78,15 +90,26 @@ begin
 
     provide strict attribute Gender to P as NonBinary
 
-    translation fr "Les notions de genre ne s’appliquent pas à " P "."
-                   "  " P:+sbeg:+pro " n’est ni masculin, ni féminin."
-                   "  " P:+sbeg:+pro " est."
-    translation en "Gender does not apply to " P "."
-                   "  " P:+sbeg:+pro " is neither male nor female."
-                   "  " P:+sbeg:+pro " is."
-    translation eo "Gendro ne aplikiĝas al " P "."
-                   "  " P:+sbeg:+pro " nek iĉas, nek inas."
-                   "  " P:+sbeg:+pro " estas."
+    sentence
+    begin
+      translation fr "Les notions de genre ne s’appliquent pas à " P "."
+      translation en "Gender does not apply to " P "."
+      translation eo "Gendro ne aplikiĝas al " P "."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " n’est ni masculin, ni féminin."
+      translation en P:+sbeg:+pro " is neither male nor female."
+      translation eo P:+sbeg:+pro " nek iĉas, nek inas."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " est."
+      translation en P:+sbeg:+pro " is."
+      translation eo P:+sbeg:+pro " estas."
+    end
   end
 end
 
@@ -108,7 +131,7 @@ begin
   translation en "Priest"
   translation eo "Pastro"
 
-  translation fr:nom:sin:fem "une prêtre"
+  translation fr:nom:sin:fem "une prêtresse"
   translation fr:nom:sin:mas "un prêtre"
   translation fr:nom:def:sin:fem "la prêtre"
   translation fr:nom:def:sin:mas "le prêtre"
@@ -132,12 +155,27 @@ element PriestSinceEarly
 begin
   let P be player
 
-  provide immediate event to P
+  provide long event to P
   begin
-    (* TODO *)
+    event Personal
 
     provide attribute Job to P as Priest
 
+    sentence
+    begin
+      translation fr "Jeune, " P:fem " était fascinée par la religion."
+      translation fr "Jeune, " P " était fasciné par la religion."
+      translation en P:+sbeg " has always been fascianted by religion."
+      translation eo P:+sbeg " ĉiam interesiĝis pri religio."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro:fem " a logiquement été appelée à devenir prêtresse."
+      translation fr P:+sbeg:+pro " a logiquement été appelé à devenir prêtre."
+      translation en P:+sbeg " logically became priest."
+      translation eo P:+sbeg " logike pastriĝis."
+    end
   end
 end
 
@@ -167,10 +205,26 @@ begin
   begin
     event Description
     assume no event Personal to G before
-    translation fr G:+sbeg " est la divinité de la paix, de l’absence de souffrance, et de l’ataraxie."
-                   "  " G:+sbeg:+pro " est aussi souvent associé à la mort."
-                   "  Il est vrai qu’" G:+pro " apprécie la mort par sa vertue libératrice, mais cette description est assez réductrice."
-                   "  " G:+pro " attache une importance capitale à la méditation."
+
+    sentence
+    begin
+      translation fr G:+sbeg " est la divinité de la paix, de l’absence de souffrance, et de l’ataraxie."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " est aussi souvent associé à la mort."
+    end
+
+    sentence
+    begin
+      translation fr "Il est vrai qu’" G:+pro " apprécie la mort par sa vertue libératrice, mais cette description est assez réductrice."
+    end
+
+    sentence
+    begin
+      translation fr G:+pro " attache une importance capitale à la méditation."
+    end
   end
 end
 
@@ -189,10 +243,26 @@ begin
   begin
     event Description
     assume no event Personal to G before
-    translation fr G:+sbeg " est la divinité du dialogue et des compromis."
-                   "  " G:+sbeg:+pro " apprécie que les gens s’écoutent, changent d’avis, et argumentent."
-                   "  " G:+sbeg:+pro " considère que la réalité est fondamentallement relative et changeante qu’il est important de constamment changer ses croyances."
-                   "  En conséquence, " G:+pro " pourra même adapter la réalité aux croyances de ceux qui écoutent et dialoguent."
+
+    sentence
+    begin
+      translation fr G:+sbeg " est la divinité du dialogue et des compromis."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " apprécie que les gens s’écoutent, changent d’avis, et argumentent."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " considère que la réalité est fondamentallement relative et changeante qu’il est important de constamment changer ses croyances."
+    end
+
+    sentence
+    begin
+      translation fr "En conséquence, " G:+pro " pourra même adapter la réalité aux croyances de ceux qui écoutent et dialoguent."
+    end
   end
 end
 
@@ -211,10 +281,26 @@ begin
   begin
     event Description
     assume no event Personal to G before
-    translation fr G:+sbeg " est la divinité de la curiosité et de la recherche active de la vérité."
-                   "  " G:+sbeg:+pro " considère que le monde est un immense terrain de jeu à expérimenter."
-                   "  " G:+sbeg:+pro " sera toujours là pour la conception d’expériences en tous genres."
-                   "  A contrario, " G:+pro " a tendance à fortement punir toute personne ignorant des données connues parce qu’elle ne correspondent pas à leurs croyances."
+
+    sentence
+    begin
+      translation fr G:+sbeg " est la divinité de la curiosité et de la recherche active de la vérité."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " considère que le monde est un immense terrain de jeu à expérimenter."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " sera toujours là pour la conception d’expériences en tous genres."
+    end
+
+    sentence
+    begin
+      translation fr "A contrario, " G:+pro " a tendance à fortement punir toute personne ignorant des données connues parce qu’elle ne correspondent pas à leurs croyances."
+    end
   end
 end
 
@@ -233,10 +319,26 @@ begin
   begin
     event Description
     assume no event Personal to G before
-    translation fr G:+sbeg " est la divinité du chaos."
-                   "  " G:+sbeg:+pro " cherche à toujours s’amuser, à ajouter sa pincée de sel dans le monde."
-                   "  " G:+sbeg:+pro " est une divinité colorée qui pousse les gens à agir sans se soucier des conséquences."
-                   "  Dans tous les cas, cela sera de toutes façons intéressant."
+
+    sentence
+    begin
+      translation fr G:+sbeg " est la divinité du chaos."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " cherche à toujours s’amuser, à ajouter sa pincée de sel dans le monde."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " est une divinité colorée qui pousse les gens à agir sans se soucier des conséquences."
+    end
+
+    sentence
+    begin
+      translation fr "Dans tous les cas, cela sera de toutes façons intéressant."
+    end
   end
 end
 
@@ -255,10 +357,26 @@ begin
   begin
     event Description
     assume no event Personal to G before
-    translation fr G:+sbeg " est la divinité de la musique et de l’harmonie."
-                   "  " G:+sbeg:+pro " est capable d’écouter la mélodie de l’Univers tout entier."
-                   "  Malheureusement, il faut le dire, cette dernière est actuellement une cacophonie."
-                   "  " G:+sbeg:+pro " cherche donc à recomposer l’Univers pour lui donner de l’ordre."
+
+    sentence
+    begin
+      translation fr G:+sbeg " est la divinité de la musique et de l’harmonie."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " est capable d’écouter la mélodie de l’Univers tout entier."
+    end
+
+    sentence
+    begin
+      translation fr "Malheureusement, il faut le dire, cette dernière est actuellement une cacophonie."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " cherche donc à recomposer l’Univers pour lui donner de l’ordre."
+    end
   end
 end
 
@@ -277,10 +395,26 @@ begin
   begin
     event Description
     assume no event Personal to G before
-    translation fr G:+sbeg " est la divinité des labyrinthes et des âmes perdues."
-                   "  " G:+sbeg:+pro " vient en aide à tous ceux en face de choix qui les mènent vers l’inconnu, afin de les guider."
-                   "  En parallèle, " G:+pro " invite tout le monde à se mettre dans une telle situation."
-                   "  Le savoir est une malédiction car il gâche la surprise finale."
+
+    sentence
+    begin
+      translation fr G:+sbeg " est la divinité des labyrinthes et des âmes perdues."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " vient en aide à tous ceux en face de choix qui les mènent vers l’inconnu, afin de les guider."
+    end
+
+    sentence
+    begin
+      translation fr "En parallèle, " G:+pro " invite tout le monde à se mettre dans une telle situation."
+    end
+
+    sentence
+    begin
+      translation fr "Le savoir est une malédiction : il gâche la surprise finale."
+    end
   end
 end
 
@@ -299,12 +433,36 @@ begin
   begin
     event Description
     assume no event Personal to G before
-    translation fr G:+sbeg " est l’Unique Vraie Divinité de cet Univers."
-                   "  C’est l’Univers tout entier."
-                   "  " G:+sbeg:+pro " est présent partout."
-                   "  " G:+sbeg:+pro " observe."
-                   "  " G:+sbeg:+pro " sait."
-                   "  " G:+sbeg:+pro " guide."
+
+    sentence
+    begin
+      translation fr G:+sbeg " est l’Unique Vraie Divinité."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " est l’Univers lui-même."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " est présent partout."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " observe."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " sait."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " guide."
+    end
   end
 end
 

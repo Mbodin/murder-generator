@@ -22,7 +22,7 @@ open Ast
 %token          NEUTRAL HATE TRUST CHAOTIC UNDETERMINED AVOIDANCE
 %token          ASYMMETRICAL EXPLOSIVE STRONG
 %token<string>  LIDENT UIDENT STRING
-%token          TRANSLATION COLON PLUS MINUS
+%token          SENTENCE TRANSLATION COLON PLUS MINUS
 %token          PROVIDING BEFORE AFTER
 %token          IMMEDIATE VERY SHORT MEDIUM LONG LIFE
 
@@ -85,6 +85,8 @@ command:
              | id = UIDENT; tags = language_tags
                { Translation.variable id tags })
     { Translation (Translation.from_iso639 lang, tags, l) }
+  | SENTENCE; b = block
+    { Sentence b }
   | ADD; lang = language; COLON; tag = LIDENT
     { Add (Translation.from_iso639 lang, Translation.get_tag tag) }
   | COMPATIBLE; WITH; v = UIDENT

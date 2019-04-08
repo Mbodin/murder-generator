@@ -77,6 +77,7 @@ rule read = parse
   | "explosive"             { EXPLOSIVE }
   | "strong"                { STRONG }
 
+  | "sentence"              { SENTENCE }
   | "translation"           { TRANSLATION }
   | ':'                     { COLON }
   | "+"                     { PLUS }

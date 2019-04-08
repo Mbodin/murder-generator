@@ -66,6 +66,12 @@ Again, these commands will change the committed file [usedTranslations.ml](./src
 ./tests.byte
 ```
 
+In order to avoid messing up with the repository, the following command calls Git to checkout each file described above as results of the compilation that should not be committed.
+```bash
+./build.sh checkout
+```
+
+
 # murder-generator
 
 What follows it some description of the project in French.

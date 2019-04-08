@@ -34,8 +34,8 @@ begin
 
     provide strict attribute Born to P as True
 
-    translation fr P:+sbeg:mas " est né."
     translation fr P:+sbeg:fem " est née."
+    translation fr P:+sbeg " est né."
     translation en P:+sbeg " is born."
     translation eo P:+sbeg " naskiĝis."
   end

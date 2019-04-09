@@ -38,6 +38,14 @@ let rec add_minutes (y, d, m) i =
     (y, d, m + i)
   else add_days (y, d, (m + i) mod (60 * 24)) ((m + i) / (60 * 24))
 
+(** The functions of this file always make sure to return
+ * a normalised date (with days between 0 and [size_year y - 1]
+ * and minutes between [0] and [24 * 60].
+ * This function effectively normalises an unnormalised date so
+ * that functions that might produce non-normalised intermediate
+ * dates can normalise them. **)
+let normalise d = add_days (add_minutes d 0) 0
+
 let compare (y1, d1, m1) (y2, d2, m2) =
   if y1 < y2 then -1
   else if y1 > y2 then 1
@@ -65,12 +73,44 @@ let month_day (y, d, _) =
       else aux (m + 1) (d - c) l in
   aux 1 d (months y)
 
+(** Gets the year and day of the year from a year (starting from [0]),
+ * a month, and a day of the month (starting from [1]). **)
+let rec month_day_inv y m d =
+  if m < 1 then
+    month_day_inv (y - 1) (m + 12) d
+  else
+    let rec aux d m = function
+      | [] -> month_day_inv (1 + y) m d
+      | c :: l ->
+        if m = 1 then (y, d - 1)
+        else aux (d + c) (m - 1) l in
+    aux d m (months y)
+
 let iso8601 (y, d, m) =
   let (month, day) = month_day (y, d, m) in
   let y = Utils.positive_mod y 10_000 in
   Utils.complete_string_pre "0" (string_of_int y) 4
   ^ "-" ^ Utils.complete_string_pre "0" (string_of_int month) 2
   ^ "-" ^ Utils.complete_string_pre "0" (string_of_int day) 2
+
+let from_iso8601 str =
+  if str = "" then now
+  else
+    let l = String.split_on_char '-' str in
+    let rec get n = function
+      | [] -> (1, [])
+      | str :: l ->
+        try
+          if String.length str > n then
+            (int_of_string (String.sub str 0 n),
+             String.sub str n (String.length str - n) :: l)
+          else (int_of_string str, l)
+        with _ -> (1, l) in
+    let (y, l) = get 4 l in
+    let (month, l) = get 2 l in
+    let (day, l) = get 2 l in
+    let (y, d) = month_day_inv y month day in
+    normalise (y, d, 0)
 
 let rfc2445 (y, d, m) =
   let (month, day) = month_day (y, d, m) in

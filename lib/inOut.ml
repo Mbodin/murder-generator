@@ -39,6 +39,16 @@ let get_file url =
   res
 
 
+let languages =
+  let navigator = Dom_html.window##.navigator in
+  let to_list o =
+    match Js.Optdef.to_option o with
+    | None -> []
+    | Some a -> [Js.to_string a] in
+  to_list navigator##.language @ to_list navigator##.userLanguage
+
+type node = Dom_html.element Js.t
+
 type layout =
   | Normal
   | Centered
@@ -54,7 +64,7 @@ type block =
   | LinkContinuation of bool * string * (unit -> unit)
   | LinkFile of string * string * string * bool * (unit -> string)
   | Table of block list * block list list
-  | Node of Dom_html.element Js.t
+  | Node of node
 
 let rec add_spaces =
   let need_space = function
@@ -209,6 +219,12 @@ let createPercentageInput d =
   input##.value := Js.string (string_of_int (int_of_float (maxvf *. d))) ;
   ((input :> Dom_html.element Js.t), fun _ ->
     (max 0. (min maxvf (float_of_string (Js.to_string input##.value)))) /. maxvf)
+
+let createDateInput d =
+  let input = Dom_html.createInput ~_type:(Js.string "date") document in
+  input##.value := Js.string (Date.iso8601 d) ;
+  ((input :> Dom_html.element Js.t), fun _ ->
+    (Date.from_iso8601 (Js.to_string input##.value)))
 
 let createSwitch text texton textoff b f =
   let label = Dom_html.createLabel document in

@@ -31,6 +31,9 @@ val max : t -> t -> t
 (** Translate the date into an ISO 8601 date string (without the time). **)
 val iso8601 : t -> string
 
+(** Inverts the function [iso8601]. **)
+val from_iso8601 : string -> t
+
 (** Translate the date into an RFC 2445 date-time string. **)
 val rfc2445 : t -> string
 

@@ -24,17 +24,10 @@ let get_translations _ =
     let%lwt translations = InOut.get_file translations_file in
     Lwt.return (Translation.from_json translations_file translations) in
   (** Shuffling languages, but putting the user languages on top. **)
-  let userLangs =
-    let navigator = Dom_html.window##.navigator in
-    let to_list o =
-      match Js.Optdef.to_option o with
-      | None -> []
-      | Some a -> [Js.to_string a] in
-    to_list navigator##.language @ to_list navigator##.userLanguage in
   let (matching, nonmatching) =
     List.partition (fun lg ->
       let lg = Translation.iso639 lg in
-      List.exists (fun ulg -> String.exists ulg lg) userLangs) languages in
+      List.exists (fun ulg -> String.exists ulg lg) InOut.languages) languages in
   Lwt.return (translation, Utils.shuffle matching @ Utils.shuffle nonmatching)
 
 (** Prints a list of strings, [andw] being the word for “and”
@@ -76,12 +69,14 @@ type parameters = {
     player_number : int ;
     general_level : float ;
     general_complexity : float ;
+    play_date : Date.t ;
     computation_power : float ;
     categories : Id.t PSet.t option ;
     player_information : (string (** Character name *)
                           * int (** Complexity **)
                           * int (** Difficulty **)
-                          * unit (** Miscellaneous **)) list
+                          * unit (** Miscellaneous **)) list ;
+    chosen_productions : string PSet.t (** The name of each chosen production. **)
   }
 
 (** The main script. **)
@@ -136,8 +131,8 @@ let _ =
                 Lwt.wakeup_later w lg) ]])) languages)) ;
         InOut.stopLoading () ;%lwt
         res in
-      ask_for_basic { parameters with language = Some language }
-    and ask_for_basic parameters =
+      load_or_create { parameters with language = Some language }
+    and load_or_create parameters =
       let get_translation = get_translation parameters in
       let (cont, w) = Lwt.task () in
       (** Describing the project to the user. **)
@@ -146,6 +141,14 @@ let _ =
           InOut.Text (get_translation "openSource") ;
           InOut.Link (get_translation "there", webpage_link)
         ]) ;
+      (** Start a new scenario. **)
+      InOut.print_block (InOut.P [
+          InOut.Text (get_translation "createNewScenario") ;
+          InOut.LinkContinuation (true, get_translation "startGeneration",
+            fun _ ->
+              Lwt.wakeup_later w (fun _ ->
+                InOut.clear_response () ;
+                ask_for_basic parameters)) ]) ;
       (** Suggest to shortcut the generation by importing a file. **)
       let (shortcut, readShortcut) =
         InOut.createFileImport ["json"] (fun _ ->
@@ -163,7 +166,7 @@ let _ =
                       InOut.print_block ~error:true (InOut.P [
                         InOut.Text (get_translation "noFileSelected") ]) ;
                       InOut.stopLoading () ;%lwt
-                      ask_for_basic parameters
+                      load_or_create parameters
                     ) else (
                       let%lwt data = data in
                       let m = Driver.get_constructor_maps data in
@@ -180,10 +183,16 @@ let _ =
                             categories =
                               Some (PSet.from_list
                                       (Driver.all_categories data)) } in
-                      display parameters state
+                      chooseFormats (Lwt.return state) parameters
                     )))
             ])
         ])) ;
+      next_button ~nextText:"startGeneration" w parameters (fun _ -> parameters)
+        (Some ask_for_languages) (Some ask_for_basic) ;
+      let%lwt cont = cont in cont ()
+    and ask_for_basic parameters =
+      let get_translation = get_translation parameters in
+      let (cont, w) = Lwt.task () in
       (** Asking the first basic questions about the murder party. **)
       let (playerNumber, readPlayerNumber) =
         InOut.createNumberInput ~min:1 parameters.player_number in
@@ -211,6 +220,12 @@ let _ =
               InOut.Text (get_translation "longSheets")
             ])
         ])) ;
+      let (playDate, readPlayDate) =
+        InOut.createDateInput parameters.play_date in
+      InOut.print_block (InOut.P [
+          InOut.Text (get_translation "whenDoYouPlanToPlay") ;
+          InOut.Node playDate
+        ]) ;
       let (fastOrSlow, readFastOrSlow) =
         InOut.createPercentageInput parameters.computation_power in
       InOut.print_block (InOut.Div (InOut.Normal, [
@@ -226,8 +241,9 @@ let _ =
               player_number = readPlayerNumber () ;
               general_level = readGeneralLevel () ;
               general_complexity = readGeneralComplexity () ;
+              play_date = readPlayDate () ;
               computation_power = readFastOrSlow () })
-        (Some ask_for_languages) (Some ask_for_categories) ;
+        (Some load_or_create) (Some ask_for_categories) ;
       let%lwt cont = cont in cont ()
     and ask_for_categories parameters =
       let get_translation = get_translation parameters in
@@ -387,32 +403,72 @@ let _ =
       let%lwt cont = cont in cont ()
     and generate parameters =
       (** Starts the generation! **)
-      InOut.startLoading () ;%lwt
-      let%lwt data = data in
-      let categories = Utils.assert_option __LOC__ parameters.categories in
-      let global =
-        let elements_map = Driver.elements data in
-        let elements =
-          Driver.get_all_elements data categories parameters.player_number in
-        let elements =
-          List.map (fun e -> PMap.find e elements_map) elements in
-        List.fold_left Solver.register_element
-          (Solver.empty_global parameters.computation_power) elements in
-      let objectives =
-        Array.of_list (List.map (fun (_, complexity, difficulty, _) -> {
-            State.complexity = complexity ;
-            State.difficulty = difficulty
-          }) parameters.player_information) in
-      let state = State.create_state parameters.player_number in
-      (* TODO: Update the state according to the miscellaneous player
-       * informations. *)
-      let%lwt state = Solver.solve global state objectives in
-      display parameters state
-    and display parameters state =
+      let state =
+        InOut.pause () ;%lwt
+        let%lwt data = data in
+        let categories = Utils.assert_option __LOC__ parameters.categories in
+        let global =
+          let elements_map = Driver.elements data in
+          let elements =
+            Driver.get_all_elements data categories parameters.player_number in
+          let elements =
+            List.map (fun e -> PMap.find e elements_map) elements in
+          List.fold_left Solver.register_element
+            (Solver.empty_global parameters.computation_power) elements in
+        let objectives =
+          Array.of_list (List.map (fun (_, complexity, difficulty, _) -> {
+              State.complexity = complexity ;
+              State.difficulty = difficulty
+            }) parameters.player_information) in
+        let state = State.create_state parameters.player_number in
+        (* TODO: Update the state according to the miscellaneous player
+         * informations. *)
+        Solver.solve global state objectives in
+      chooseFormats state parameters
+    and chooseFormats state parameters =
+      let get_translation = get_translation parameters in
+      let (cont, w) = Lwt.task () in
+      if Lwt.state state = Lwt.Sleep then
+        InOut.print_block (InOut.P [
+          InOut.Text (get_translation "backgroundGeneration")]) ;
+      let exportButtons =
+        List.map (fun (name, descr, _, _, _, _) ->
+            let (node, set, get) =
+              InOut.createSwitch (get_translation "generateAs"
+                                  ^ " " ^ get_translation name) None None
+                (PSet.mem name parameters.chosen_productions) Utils.id in
+            let node =
+              InOut.Div (InOut.Inlined, [
+                InOut.Node node ;
+                InOut.Text (get_translation descr) ]) in
+            (name, node, set, get))
+          Export.all_production in
+      InOut.print_block (InOut.Div (InOut.Normal, [
+          InOut.P [ InOut.Text (get_translation "exportPossibilities") ] ;
+          InOut.List (false,
+            List.map (fun (_, node, _, _) -> node) exportButtons)
+        ])) ;
+      let check cont parameters =
+        if PSet.is_empty parameters.chosen_productions then (
+          InOut.print_block ~error:true (InOut.P [
+            InOut.Text (get_translation "noProductionSelected") ]) ;
+          chooseFormats state parameters
+        ) else (
+          InOut.startLoading () ;%lwt
+          cont parameters
+        ) in
+      next_button w parameters (fun _ ->
+          { parameters with chosen_productions =
+              List.fold_left (fun s (name, _, _, get) ->
+                if get () then PSet.add name s else s) PSet.empty exportButtons })
+        (Some ask_for_player_constraints) (Some (check (display state))) ;
+      let%lwt cont = cont in cont ()
+    and display state parameters =
       let get_translation = get_translation parameters in
       let (cont, w) = Lwt.task () in
       let%lwt data = data in
-      let state = State.finalise state in
+      let%lwt state = state in
+      let final = State.finalise state in
       (** Exports the generated state to various formats. **)
       let estate = {
           Export.language = get_language parameters ;
@@ -420,35 +476,40 @@ let _ =
             List.map (fun (name, _, _, _) -> name) parameters.player_information ;
           Export.translation = Driver.get_translations data ;
           Export.generic_translation = translation ;
-          Export.state = state
+          Export.state = final
         } in
       InOut.print_block (InOut.Div (InOut.Normal, [
-        InOut.P [ InOut.Text (get_translation "exportList") ] ;
-        InOut.List (true,
-        List.map (fun (name, descr, mime, ext, native, f) ->
-          let fileName = "murder" ^ if ext = "" then "" else ("." ^ ext) in
-          InOut.Div (InOut.Inlined, [
-              InOut.LinkFile (get_translation "downloadAs"
-                              ^ " " ^ get_translation name,
-                              fileName, mime, native, fun _ -> f estate) ;
-              InOut.Text (get_translation descr)
-            ])) Export.all_production)])) ;
+          InOut.P [ InOut.Text (get_translation "exportList") ] ;
+          InOut.List (true,
+          List.map (fun (name, descr, mime, ext, native, f) ->
+            let fileName = "murder" ^ if ext = "" then "" else ("." ^ ext) in
+            InOut.Div (InOut.Inlined, [
+                InOut.LinkFile (get_translation "downloadAs"
+                                ^ " " ^ get_translation name,
+                                fileName, mime, native, fun _ -> f estate) ;
+                InOut.Text (get_translation descr)
+              ])) (List.filter (fun (name, _, _, _, _, _) ->
+                       PSet.mem name parameters.chosen_productions)
+                     Export.all_production))
+        ])) ;
       InOut.stopLoading () ;%lwt
       InOut.print_block (InOut.P [
         InOut.Text (get_translation "underConstruction") ;
         InOut.Text (get_translation "participate") ;
         InOut.Link (get_translation "there", webpage_link) ]) ;
       next_button w parameters (fun _ -> parameters)
-        (Some ask_for_player_constraints) None ;
+        (Some (chooseFormats (Lwt.return state))) None ;
       let%lwt cont = cont in cont () in
     let parameters = {
         language = None ;
         player_number = 13 ;
         general_level = 0.5 ;
         general_complexity = 0.5 ;
+        play_date = Date.now ;
         computation_power = 0.5 ;
         categories = None ;
-        player_information = []
+        player_information = [] ;
+        chosen_productions = PSet.empty
       } in
     ask_for_languages parameters
   (** Reporting errors. **)

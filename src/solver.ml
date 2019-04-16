@@ -196,7 +196,7 @@ let add_random g o optimistic (s, evs) =
 (** Calls the functions [weighted_step] and [add_random], trying
  * to reach a step [s] whose associated attribute difference [m]
  * has been increased by [temperature]. **)
-let wide_step g o temperature (s, evs) m =
+let wide_step pause g o temperature (s, evs) m =
   let initial_weigth = Element.difference_weigth m in
   let objective_weigth =
     initial_weigth + 5 * int_of_float (log (float_of_int temperature)) + 2 in
@@ -220,7 +220,7 @@ let wide_step g o temperature (s, evs) m =
       let rec aux p m (s, evs) = function
         | 0 -> Lwt.return (g, (s, evs), m)
         | n ->
-          InOut.pause () ;%lwt
+          pause () ;%lwt
           let (p, r) = weighted_step g o (110 * parameter / 100) (s, evs) p in
           match r with
           | None -> aux p m (s, evs) (n - 1)
@@ -234,7 +234,7 @@ let wide_step g o temperature (s, evs) m =
   let rec aux g (s, evs) m = function
     | 0 -> Lwt.return (g, (s, evs), m)
     | n ->
-      InOut.pause () ;%lwt
+      pause () ;%lwt
       let current_weigth = Element.difference_weigth m in
       if current_weigth >= objective_weigth then
         Lwt.return (g, (s, evs), m)
@@ -278,15 +278,15 @@ let final g (s, evs) o m =
 (** This function performs a simulted annealing based on [wide_step].
  * This last function is considered costly and we thus starts using the [Lwt.t]
  * type here. **)
-let wider_step g (s, evs) o m =
+let wider_step pause g (s, evs) o m =
   let rec aux temperature g (s, evs) m =
     if temperature <= 0 then
       Lwt.return (final g (s, evs) o m)
     else (
-      InOut.pause () ;%lwt
+      pause () ;%lwt
       if Utils.assert_defend then assert (evs = evaluate_state o s) ;
       let%lwt l =
-        Lwt_list.map_s (fun _ -> wide_step g o temperature (s, evs) m)
+        Lwt_list.map_s (fun _ -> wide_step pause g o temperature (s, evs) m)
           (Utils.seq (get_branch g 3 6)) in
       match Utils.argmax (fun (_, (s1, evs1), _) (_, (s2, evs2), _) ->
               compare evs1 evs2) l with
@@ -303,13 +303,13 @@ let wider_step g (s, evs) o m =
     max 0 (int_of_float (sqrt (float_of_int (abs evs)))) in
   aux (distance_to_objective / 3 + 1) g (s, evs) m
 
-let solve g s o =
+let solve pause g s o =
   let g = { g with all_elements =
     BidirectionalList.from_list (Utils.shuffle
       (BidirectionalList.to_list g.all_elements)) } in
   let m = Element.empty_difference in
   (* TODO: Change the value of [m] to consider all the relevant elements given by
    * the constraints provided by the user. *)
-  let%lwt (g, (s, _), m) = wider_step g (s, evaluate_state o s) o m in
+  let%lwt (g, (s, _), m) = wider_step pause g (s, evaluate_state o s) o m in
   Lwt.return s
 

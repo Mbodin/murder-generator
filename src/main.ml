@@ -1,10 +1,14 @@
-(** Module main.
+(** Module Main.
  * This file is the one compiled to JavaScript, then fetched and executed
  * to run the whole program. **)
 
-open Js_of_ocaml
 open ExtList
 open ExtString
+
+
+(** This entire file is parameterised by an interface as specified in the
+ * InOut Module. **)
+module Main (InOut : InOut.T) = struct
 
 let webpage_link = "https://github.com/Mbodin/murder-generator"
 let webpage_issues = "https://github.com/Mbodin/murder-generator/issues"
@@ -423,7 +427,7 @@ let _ =
         let state = State.create_state parameters.player_number in
         (* TODO: Update the state according to the miscellaneous player
          * informations. *)
-        Solver.solve global state objectives in
+        Solver.solve InOut.pause global state objectives in
       chooseFormats state parameters
     and chooseFormats state parameters =
       let get_translation = get_translation parameters in
@@ -530,9 +534,11 @@ let _ =
       Lwt.return ()
     with e' -> (** If there have been an error when printing the error,
                 * we failback to the console. **)
-      Firebug.console##log "Unfortunately, a important error happened." ;
-      Firebug.console##log ("Please report it to " ^ webpage_issues) ;
-      Firebug.console##log ("Primary error details: " ^ Printexc.to_string e) ;
-      Firebug.console##log ("Secondary error details: " ^ Printexc.to_string e') ;
+      InOut.log "Unfortunately, a important error happened." ;
+      InOut.log ("Please report it to " ^ webpage_issues) ;
+      InOut.log ("Primary error details: " ^ Printexc.to_string e) ;
+      InOut.log ("Secondary error details: " ^ Printexc.to_string e') ;
       Lwt.return ()
+
+end
 

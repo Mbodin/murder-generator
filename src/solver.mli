@@ -26,6 +26,7 @@ val evaluate : State.objective array -> State.relation_state -> int
  * relationnal state. **)
 val evaluate_state : State.objective array -> State.t -> int
 
-(** Tries to optimise the state to make it match the objectives. **)
-val solve : global -> State.t -> State.objective array -> State.t Lwt.t
+(** Tries to optimise the state to make it match the objectives.
+ * It features a pausing function returning a [Lwt.t] value called regularly. **)
+val solve : (unit -> unit Lwt.t) -> global -> State.t -> State.objective array -> State.t Lwt.t
 

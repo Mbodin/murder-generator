@@ -1,3 +1,7 @@
+(** Module InOut_js
+ * An implementation of [InOut.T] for JavaScript. **)
+
+
 open Js_of_ocaml
 
 
@@ -37,6 +41,8 @@ let get_file url =
                 ^ Js.to_string request##.statusText)))) ;
   request##send Js.null ;
   res
+
+let log msg = Firebug.console##log msg
 
 
 let languages =
@@ -88,10 +94,7 @@ let rec add_spaces =
   let aux l = aux (List.map add_spaces l) in function
     | Div (layout, l) -> Div (layout, aux l)
     | P l -> P (aux l)
-    | List (visible, l) ->
-      (** Calling directly [add_spaces] instead of [aux]
-       * to avoid adding elements to the list. **)
-      List (visible, List.map add_spaces l)
+    | List (visible, l) -> List (visible, List.map add_spaces l)
     | Table (h, l) ->
       Table (List.map add_spaces h, List.map (List.map add_spaces) l)
     | e -> e
@@ -184,14 +187,14 @@ let clear_response _ =
     | None -> () in
   aux ()
 
-let print_node ?error:(error=false) n =
+let print_node ?(error=false) n =
   let response = get_response () in
   let div = Dom_html.createDiv document in
   div##.className := Js.string (if error then "error" else "block") ;
   ignore (Dom.appendChild div n) ;
   ignore (Dom.appendChild response div)
 
-let print_block ?error:(error=false) =
+let print_block ?(error=false) =
   Utils.compose (print_node ~error) (Utils.compose block_node add_spaces)
 
 

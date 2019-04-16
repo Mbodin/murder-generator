@@ -1,7 +1,9 @@
 (** Module InOut
- * Contains functions for intputs and outputs. **)
+ * Specifies an interface for inputs and outputs. **)
 
-open Js_of_ocaml
+(** This is the signature specified in this file.
+ * It is satisfied by the various files [lib/inOut_*.ml]. **)
+module type T = sig
 
 (** Pauses the program for a short amount of time. **)
 val pause : unit -> unit Lwt.t
@@ -12,8 +14,11 @@ val stopLoading : unit -> unit Lwt.t
 (** Starts the loading animation. **)
 val startLoading : unit -> unit Lwt.t
 
-(** Fetch a file from an adress and returns its content. **)
+(** Fetch a file from an address and returns its content. **)
 val get_file : string -> string Lwt.t
+
+(** Log the given message. **)
+val log : string -> unit
 
 
 (** The local set of accepted languages. **)
@@ -23,6 +28,8 @@ val languages : string list
 (** An abstract type for representing nodes. **)
 type node
 
+(* LATER: Some of these definitions are commond between [InOut_js] and
+ * [InOut_native] and should be factorised. *)
 (** Specifies the different properties of div elements. **)
 type layout =
   | Normal (** No special layout. **)
@@ -36,7 +43,7 @@ type block =
   | List of bool * block list
       (** A list of items.
        * The boolean indicates whether bullets should be drawn. **)
-  | Space (** Some space between text **)
+  | Space (** Some space between texts. **)
   | Text of string (** A simple text. **)
   | Link of string * string (** A link and its associated address. **)
   | LinkContinuation of bool * string * (unit -> unit)
@@ -53,6 +60,7 @@ type block =
   | Node of node (** For all cases where more control is needed,
                   * we can directly send a node. **)
 
+(* LATER: This function is common between [InOut_js] and [InOut_native]. *)
 (** Adds the expected spaces between block elements. **)
 val add_spaces : block -> block
 
@@ -100,4 +108,6 @@ val createSwitch : string -> string option -> string option -> bool -> (unit -> 
  * a reading function.
  * This reading function returns both the file name and its content. **)
 val createFileImport : string list -> (unit -> unit Lwt.t) -> node * (unit -> (string * string) Lwt.t)
+
+end
 

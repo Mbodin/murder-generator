@@ -39,7 +39,8 @@ before_script:
 
 script:
   - ./build.sh tests.byte && ./tests.byte
-  - ./build.sh check main.js && mv main.js web/
+  - ./build.sh check main.js && mv -f main_js.js web/main.js
+  - ./build.sh main.native
 
 deploy:
   provider: pages

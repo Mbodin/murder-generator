@@ -34,9 +34,8 @@ then
   echo "${COLOR}No argument given: compiling main.js as a default.${ROLOC}"
   TARGET=main
   JS="true"
+  NATIVE="false"
 else
-  TARGET=`echo "$1" | sed -e 's/\\..*//'`
-
   if [ $1 = "murderFiles.ml" ]
   then
     if [ $CHECK = "true" ]
@@ -72,11 +71,40 @@ else
     exit 0
   fi
 
+  TARGET=`echo "$1" | sed -e 's/\\..*//'`
+
   if expr match "$1" ".*\.js" > /dev/null
   then
     JS="true"
+    NATIVE="false"
   else
     JS="false"
+    if expr match "$1" ".*\.native" > /dev/null
+    then
+      NATIVE="true"
+    else
+      NATIVE="false"
+    fi
+  fi
+fi
+
+if [ $NATIVE = "true" ]
+then
+  EXT="native"
+else
+  EXT="byte"
+fi
+
+if [ $TARGET = "main" ]
+then
+  if [ $JS = "true" ]
+  then
+    TARGET="main_js"
+  else
+    if [ $NATIVE = "true" ]
+    then
+      TARGET="main_native"
+    fi
   fi
 fi
 
@@ -87,13 +115,20 @@ else
   DEBUGFLAG=""
 fi
 
+if [ $JS = "true" ]
+then
+  ADDITIONALPACKAGES=",js_of_ocaml,js_of_ocaml-lwt,js_of_ocaml-ppx,js_of_ocaml-ppx.deriving,js_of_ocaml.deriving"
+else
+  ADDITIONALPACKAGES=""
+fi
+
 # Compile to bytecode
-echo "${COLOR}Compiling to bytecode as $TARGET.byte…${ROLOC}"
+echo "${COLOR}Compiling to bytecode as ${TARGET}.${EXT}…${ROLOC}"
 ocamlbuild -use-ocamlfind -Is src,lib,dummy \
-           -pkgs unix,extlib,yojson,lwt,lwt_ppx,js_of_ocaml,js_of_ocaml-lwt,js_of_ocaml-ppx,ppx_deriving,js_of_ocaml-ppx.deriving,js_of_ocaml.deriving \
+           -pkgs unix,extlib,yojson,lwt,lwt_ppx,ppx_deriving${ADDITIONALPACKAGES} \
            -use-menhir -menhir "menhir --explain" \
-           -tags "optimize(3)$DEBUGFLAG" \
-           $TARGET.byte
+           -tags "optimize(3)${DEBUGFLAG}" \
+           $TARGET.$EXT
 echo "${COLOR}Done.${ROLOC}"
 
 if [ $JS = "true" ]
@@ -111,7 +146,7 @@ then
     DEBUGFLAG=""
   fi
 
-  echo "${COLOR}Compiling to JavaScript as $TARGET.js…${ROLOC}"
+  echo "${COLOR}Compiling to JavaScript as ${TARGET}.js…${ROLOC}"
 
   # Translate to JavaScript
   js_of_ocaml $DEBUGFLAG $TARGET.byte

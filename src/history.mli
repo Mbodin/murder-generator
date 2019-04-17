@@ -57,6 +57,7 @@ val copy : t -> t
  * each indexed from 0 to n - 1. **)
 val create_state : int -> t
 
-(** Provide an actual instantiation of each event’s date and time. **)
-val finalise : t -> final
+(** Provide an actual instantiation of each event’s date and time.
+ * It needs the date of the played scenario. **)
+val finalise : t -> Date.t -> final
 

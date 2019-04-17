@@ -334,7 +334,7 @@ type final = event list
 let all_players st =
   PMap.foldi (fun c _ l -> c :: l) st []
 
-let finalise st =
+let finalise st now =
   (** We first consider all events with no successor. **)
   let start =
     PMap.foldi (fun e (before, after) l ->
@@ -365,14 +365,14 @@ let finalise st =
           (List.fold_left (fun t e ->
             let t' =
               try PMap.find e (fst state)
-              with Not_found -> Date.now in
-            Date.min t t') Date.now after)
+              with Not_found -> now in
+            Date.min t t') now after)
           (PMap.foldi (fun c ks t ->
             PSet.fold (fun k ->
               let t =
                 try PMap.find (c, k) (snd state)
-                with Not_found -> Date.now in
-              Date.min t) t ks) ev.Events.event_kinds Date.now) in
+                with Not_found -> now in
+              Date.min t) t ks) ev.Events.event_kinds now) in
       let t = Date.add_minutes t (- Utils.rand 0 5) in
       let ev = generate_event_inv t ev in
       let state =

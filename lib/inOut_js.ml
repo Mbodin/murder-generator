@@ -187,18 +187,18 @@ let clear_response _ =
     | None -> () in
   aux ()
 
-let print_node ?(error=false) n =
+let print_node ?(error = false) n =
   let response = get_response () in
   let div = Dom_html.createDiv document in
   div##.className := Js.string (if error then "error" else "block") ;
   ignore (Dom.appendChild div n) ;
   ignore (Dom.appendChild response div)
 
-let print_block ?(error=false) =
+let print_block ?(error = false) =
   Utils.compose (print_node ~error) (Utils.compose block_node add_spaces)
 
 
-let createNumberInput ?min:(mi=0) ?max:(ma=max_int) d =
+let createNumberInput ?min:(mi = 0) ?max:(ma = max_int) d =
   let d = min ma (max mi d) in
   let input = Dom_html.createInput ~_type:(Js.string "number") document in
   ignore (input##setAttribute (Js.string "min") (Js.string (string_of_int mi))) ;

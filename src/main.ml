@@ -84,7 +84,7 @@ type parameters = {
   }
 
 (** The main script. **)
-let _ =
+let main =
   try%lwt
     InOut.clear_response () ;
     let%lwt (translation, languages) = get_translations () in
@@ -472,7 +472,7 @@ let _ =
       let (cont, w) = Lwt.task () in
       let%lwt data = data in
       let%lwt state = state in
-      let final = State.finalise state in
+      let final = State.finalise state parameters.play_date in
       (** Exports the generated state to various formats. **)
       let estate = {
           Export.language = get_language parameters ;

@@ -130,7 +130,7 @@ let orgmode_start active =
 let orgmode_end active =
   if active then ">" else "]"
 
-let orgmode ?active:(active=false) (y, d, m) =
+let orgmode ?(active = false) (y, d, m) =
   let (month, day) = month_day (y, d, m) in
   orgmode_start active
   ^ Utils.complete_string_pre "0" (string_of_int y) 4
@@ -140,7 +140,7 @@ let orgmode ?active:(active=false) (y, d, m) =
   ^ ":" ^ Utils.complete_string_pre "0" (string_of_int (m mod 60)) 2
   ^ orgmode_end active
 
-let orgmode_range ?active:(active=false) (y1, d1, m1) (y2, d2, m2) =
+let orgmode_range ?(active = false) (y1, d1, m1) (y2, d2, m2) =
   let (month1, day1) = month_day (y1, d1, m1) in
   let (month2, day2) = month_day (y2, d2, m2) in
   if (y1, month1, day1) = (y2, month2, day2) then

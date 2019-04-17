@@ -260,10 +260,10 @@ let select_value = function
   | Fixed_value (l, strict) -> Utils.select_any l
   | One_value_of l -> Utils.select_any l
 
-let finalise (cst, rst, est) =
+let finalise (cst, rst, est) d =
   (Array.map (fun (a, c) ->
     (PMap.map select_value a,
-     PMap.map (PMap.map select_value) c)) cst, rst, History.finalise est)
+     PMap.map (PMap.map select_value) c)) cst, rst, History.finalise est d)
 
 let get_all_attributes_character_final (cst, _, _) =
   get_all_attributes_character cst

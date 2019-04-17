@@ -213,8 +213,9 @@ val all_players_relation : relation_state -> character list
  * This is the goal of this type. **)
 type final
 
-(** Fixes a state to its final state. **)
-val finalise : t -> final
+(** Fixes a state to its final state.
+ * It needs the date of the played scenario. **)
+val finalise : t -> Date.t -> final
 
 
 (** Similar to [get_all_attributes_character_final], but for the finalised state. **)

@@ -3,3 +3,6 @@
 
 module Main = Main.Main (InOut_native)
 
+let _ =
+  Lwt_main.run Main.main
+

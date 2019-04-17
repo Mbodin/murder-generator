@@ -97,7 +97,7 @@ let block_node b link =
         aux current right_margin (fun str ->
           match layout with
           | Normal ->
-            let (str, current) = new_line (line ^ str) in
+            let (str, current) = new_line str in
             let space =
               if current < start then
                 String.make (start - current) ' '
@@ -105,8 +105,8 @@ let block_node b link =
             (str ^ space, start)
           | Centered ->
             let space = (right_margin - String.length str) / 2 in
-            new_line (line ^ String.make space ' ' ^ str)
-          | Inlined -> new_line (line ^ str)) str) ("", current) l
+            new_line (String.make (max 0 space) ' ' ^ str)
+          | Inlined -> new_line str) str) (line, current) l
     | P l ->
       List.fold_left (fun (str, current) ->
         aux current right_margin new_line str) (just_print "  " (line, current)) l
@@ -147,9 +147,29 @@ let links = ref []
 
 (** Starting the server. **)
 let _ =
-  Lwt_io.read_line_opt;;
+  let rec aux _ =
+    (* TODO: Print all registered nodes. *)
+    match%lwt Lwt_io.read_line_opt Lwt_io.stdin with
+    | None -> Lwt.return ()
+    | Some str ->
+      let i =
+        try int_of_string str
+        with _ -> -1 in
+      match try List.nth_opt !links i
+            with _ -> None with
+      | None ->
+        print_endline "Invalid number." ;
+        aux ()
+      | Some f ->
+        print_string ("[" ^ string_of_int i ^ "]: ") ;
+        f () ;
+        aux () in
+  aux ()
 
-let print_node ?(error=false) n =
+let print_node ?(error = false) n =
+  (* TODO: Currently, this function prints the node.
+   * It should actually be the server that deals with the actual printing:
+   * this function should just add the nodes in the global state. *)
   let header =
     String.make !screen_length (if error then '!' else '-') in
   let new_line str =
@@ -165,31 +185,33 @@ let print_node ?(error=false) n =
   print_endline str ;
   print_endline header
 
-let print_block ?(error=false) =
+let print_block ?(error = false) =
   Utils.compose (print_node ~error) (Utils.compose block_node add_spaces)
 
-let clear_response _ =
-  links := [] ;
-  print_endline (String.make !screen_length '=')
+let numberInput r =
+  print_string (string_of_int !r ^ " -> ") ;
+  flush stdout ;
+  let str = input_line stdin in
+  let v =
+    try int_of_string str
+    with _ -> print_endline "Invalid value."; !r in
+  r := v
 
-let createNumberInput ?min:(mi=0) ?max:(ma=max_int) n =
+let createNumberInput ?min:(mi = 0) ?max:(ma = max_int) n =
   let v = ref n in
   let node link (current, right_margin, new_line, line) =
     just_print
       (" " ^ string_of_int !v ^ " " ^ link (fun _ ->
-        print_endline (string_of_int !v ^ " -> ") ;
-        let str = input_line stdin in
-        let v' =
-          try int_of_string str
-          with _ -> print_endline "Invalid value."; !v in
-        v := max mi (min v' ma))) (line, current) in
+        numberInput v ;
+        v := max mi (min !v ma))) (line, current) in
   (node, fun _ -> !v)
 
 let createTextInput str =
   let txt = ref str in
   let node link (current, right_margin, new_line, line) =
     just_print (" <" ^ !txt ^ "> " ^ link (fun _ ->
-                 print_endline ("<" ^ !txt ^ "> -> ") ;
+                 print_string ("<" ^ !txt ^ "> -> ") ;
+                 flush stdout ;
                  let str = input_line stdin in
                  txt := str)) (line, current) in
   (node, fun _ -> !txt)
@@ -199,7 +221,8 @@ let createPercentageInput d =
   let v = ref (100. *. d) in
   let node link (current, right_margin, new_line, line) =
     just_print (" " ^ string_of_float !v ^ "% " ^ link (fun _ ->
-      print_endline (string_of_float !v ^ "% -> ") ;
+      print_string (string_of_float !v ^ "% -> ") ;
+      flush stdout ;
       let str = input_line stdin in
       let str =
         let len = String.length str in
@@ -216,7 +239,8 @@ let createDateInput d =
   let v = ref d in
   let node link (current, right_margin, new_line, line) =
     just_print (" " ^ Date.iso8601 !v ^ "% " ^ link (fun _ ->
-      print_endline (Date.iso8601 !v ^ "% -> ") ;
+      print_string (Date.iso8601 !v ^ "% -> ") ;
+      flush stdout ;
       let str = input_line stdin in
       let v' =
         try Date.from_iso8601 str
@@ -237,4 +261,9 @@ let createFileImport extensions prepare = (* TODO *)
   let node link (current, right_margin, new_line, line) =
     just_print "<file import>" (line, current) in
   (node, fun _ -> Lwt.return ("", ""))
+
+let clear_response _ =
+  links := [fun _ -> numberInput screen_length] ;
+  print_newline () ;
+  print_endline (String.make !screen_length '=')
 

@@ -58,6 +58,13 @@ Note that this requires to set up a server.
 This README does not aim at explaining how to set it up; if you are using Github, you can push these changes online and access the corresponding [github.io](https://github.io) address.
 Alternatively, Firefox seems to accept to locally execute JavaScript files: it seems that just openning the file with Firefox does the trick.
 
+The JavaScript webpage is pretty, but its generation is significantly slower than a native version.
+Such a native version can be built and run through the following commands.
+```bash
+./build.sh check main.native
+./main.native
+```
+
 Optionnally, one can perform some tests using the following commands.
 Again, these commands will change the committed file [usedTranslations.ml](./src/usedTranslations.ml): take care not to commit it.
 ```bash

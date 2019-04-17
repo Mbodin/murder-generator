@@ -39,7 +39,7 @@ before_script:
 
 script:
   - ./build.sh tests.byte && ./tests.byte
-  - ./build.sh check main.js && mv -f main_js.js web/main.js
+  - ./build.sh check main.js && mv -f main.js web/main.js
   - ./build.sh main.native
 
 deploy:

@@ -40,7 +40,7 @@ type cell = {
  * Events must not be directly contradictory: if an event has a
  * constraint preventing an event of a given kind to be after this
  * event, it must not be after it in the list. **)
-type t = cell array * character_constraint list * int Event.t list
+type t = cell array * character_constraint list * int Events.t list
 
 (** Returns the list of attribute that an element may provide. **)
 val provided_attributes : t -> Attribute.attribute list

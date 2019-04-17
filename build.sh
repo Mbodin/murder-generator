@@ -35,7 +35,10 @@ then
   TARGET=main
   JS="true"
   NATIVE="false"
+  REALTARGET="main.js"
 else
+  REALTARGET=$1
+
   if [ $1 = "murderFiles.ml" ]
   then
     if [ $CHECK = "true" ]
@@ -125,11 +128,19 @@ fi
 # Compile to bytecode
 echo "${COLOR}Compiling to bytecode as ${TARGET}.${EXT}…${ROLOC}"
 ocamlbuild -use-ocamlfind -Is src,lib,dummy \
-           -pkgs unix,extlib,yojson,lwt,lwt_ppx,ppx_deriving${ADDITIONALPACKAGES} \
+           -pkgs unix,extlib,yojson,lwt,lwt.unix,lwt_ppx,ppx_deriving${ADDITIONALPACKAGES} \
            -use-menhir -menhir "menhir --explain" \
-           -tags "optimize(3)${DEBUGFLAG}" \
+           -tags "thread,optimize(3)${DEBUGFLAG}" \
            $TARGET.$EXT
 echo "${COLOR}Done.${ROLOC}"
+
+REALTARGETBASE=`echo "$REALTARGET" | sed -e 's/\\..*//'`
+if [ $TARGET.$EXT != $REALTARGETBASE ]
+then
+  echo "${COLOR}Moving file from ${TARGET}.${EXT} to ${REALTARGETBASE}.${EXT}.${ROLOC}"
+  mv -f $TARGET.$EXT $REALTARGETBASE.$EXT
+  TARGET=$REALTARGETBASE
+fi
 
 if [ $JS = "true" ]
 then

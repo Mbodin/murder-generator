@@ -1,5 +1,5 @@
-(** Module Event
- * Describes an event as used by the History module. **)
+(** Module Events
+ * Describes events as used by the History module. **)
 
 (** Each event is associated an event type, which describes whether
  * two events can be at the same time: two events of the same type

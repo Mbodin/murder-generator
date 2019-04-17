@@ -205,12 +205,12 @@ kind_players (O):
     { (Ast.KindContact (c, targets), players) }
 
 time:
-  | LIFE        { Event.For_life_event }
-  | LONG        { Event.Long_term_event }
-  | MEDIUM      { Event.Medium_term_event }
-  | SHORT       { Event.Short_term_event }
-  | VERY; SHORT { Event.Very_short_term_event }
-  | IMMEDIATE   { Event.Immediate_event }
+  | LIFE        { Events.For_life_event }
+  | LONG        { Events.Long_term_event }
+  | MEDIUM      { Events.Medium_term_event }
+  | SHORT       { Events.Short_term_event }
+  | VERY; SHORT { Events.Very_short_term_event }
+  | IMMEDIATE   { Events.Immediate_event }
 
 direction:
   | AFTER   { true }

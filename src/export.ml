@@ -42,13 +42,13 @@ let translate_value_contact s =
 
 (** Provides a recoverable identifier for an event. **)
 let translate_event_generic s e =
-  let (nb_sentence, tr) = e.Event.translation in
+  let (nb_sentence, tr) = e.Events.translation in
   let tr = Translation.sforce_translate tr Translation.generic in
   fst (tr (fun _ -> PSet.empty) (fun _ _ -> None) (-1) PSet.empty)
 
 (** Translates an event from a translation object [trp] for player. **)
 let translate_event s trp e =
-  let (nb_sentence, tr) = e.Event.translation in
+  let (nb_sentence, tr) = e.Events.translation in
   let tr =
     Translation.sforce_translate ~debug:(fun i ->
         Some (string_of_int i ^ " of " ^ translate_event_generic s e))
@@ -145,8 +145,8 @@ let to_icalendar s =
              "ATTENDEE:urn:tag:" ^ webpage_address_base
              ^ "," ^ Date.iso8601 Date.now
              ^ ":" ^ string_of_int (Id.to_array c)
-             ^ "," ^ Url.urlencode (get_name s c))
-           (PSet.to_list e.History.event.Event.event_attendees)
+             ^ "," ^ String.escaped (get_name s c))
+           (PSet.to_list e.History.event.Events.event_attendees)
       @ "DESCRIPTION:"
       :: List.map (fun str -> "   " ^ str)
            (translate_event s tr_players e.History.event)
@@ -177,7 +177,7 @@ let to_org s =
           ^ Date.orgmode_range e.History.event_begin e.History.event_end)
       :: List.map (fun c ->
            String.make (1 + n) ' ' ^ "- [X] "
-           ^ get_name s c) (PSet.to_list e.History.event.Event.event_attendees)) in
+           ^ get_name s c) (PSet.to_list e.History.event.Events.event_attendees)) in
   String.concat "\n\n" (
     String.concat "\n" (
       ("* " ^ get_translation "forTheGM")
@@ -203,76 +203,86 @@ let to_org s =
                 (State.get_all_contacts_character_final s.state c) []
            @ ("** " ^ get_translation "characterEvents")
            :: Utils.list_map_filter (fun e ->
-                if PSet.mem c e.History.event.Event.event_attendees then
+                if PSet.mem c e.History.event.Events.event_attendees then
                   Some (print_event 3 e)
                 else None) (State.get_history_final s.state))) s.names)
 
 let to_json s =
   let s = generic s in
-  Yojson.Safe.to_string ~std:true (`List (List.mapi (fun c name ->
-    let c = Id.from_array c in `Assoc [
-        ("name", `String name) ;
-        ("attributes", `Assoc (PMap.foldi (fun a v l ->
-             let tra = translate_attribute_player s a in
-             let trv = translate_value_player s v in
-             (tra, `String trv) :: l)
-           (State.get_all_attributes_character_final s.state c) [])) ;
-        ("contacts", `List (PMap.foldi (fun c' lv l ->
-          `Assoc (List.map (fun (a, v) ->
-              let tra = translate_attribute_contact s a in
-              let trv = translate_value_contact s v in
-              (tra, `String trv)) lv) :: l)
-            (State.get_all_contacts_character_final s.state c) [])) ;
-        ("relations", `List (Utils.list_fold_lefti (fun c' l _ ->
-          let c' = Id.from_array c' in
-          let r = State.read_relation_final s.state c c' in
-          if c <= c' then l
-          else `String (Relation.to_string r) :: l) [] s.names)) ;
-        ("complexity", `Int (State.character_complexity_final s.state c)) ;
-        ("difficulty", `Int (State.character_difficulty_final s.state c)) ;
-        (* TODO: Move this: events needs to be global.
-         * Here, they are copy/pasted again for each player. *)
-        ("events", `List (List.map (fun e ->
-          `Assoc [
-              ("begin", `String (Date.rfc2445 e.History.event_begin)) ;
-              ("end", `String (Date.rfc2445 e.History.event_end)) ;
-              ("event", `String (translate_event_generic s e.History.event)) ;
-              ("attendees",
-                `List (List.map (fun c -> `Int (Id.to_array c))
-                        (e.History.event.Event.event_attendees_list)))
-            ])(State.get_history_final s.state)))
-      ]) s.names))
+  Yojson.Safe.to_string ~std:true (`Assoc [
+    ("characters", `List (List.mapi (fun c name ->
+       let c = Id.from_array c in `Assoc [
+           ("name", `String name) ;
+           ("attributes", `Assoc (PMap.foldi (fun a v l ->
+                let tra = translate_attribute_player s a in
+                let trv = translate_value_player s v in
+                (tra, `String trv) :: l)
+              (State.get_all_attributes_character_final s.state c) [])) ;
+           ("contacts", `List (PMap.foldi (fun c' lv l ->
+             `Assoc (List.map (fun (a, v) ->
+                 let tra = translate_attribute_contact s a in
+                 let trv = translate_value_contact s v in
+                 (tra, `String trv)) lv) :: l)
+               (State.get_all_contacts_character_final s.state c) [])) ;
+           ("relations", `List (Utils.list_fold_lefti (fun c' l _ ->
+             let c' = Id.from_array c' in
+             let r = State.read_relation_final s.state c c' in
+             if c <= c' then l
+             else `String (Relation.to_string r) :: l) [] s.names)) ;
+           ("complexity", `Int (State.character_complexity_final s.state c)) ;
+           ("difficulty", `Int (State.character_difficulty_final s.state c)) ;
+         ]) s.names)) ;
+    ("events", `List (List.map (fun e ->
+      `Assoc [
+          ("begin", `String (Date.rfc2445 e.History.event_begin)) ;
+          ("end", `String (Date.rfc2445 e.History.event_end)) ;
+          ("event", `String (translate_event_generic s e.History.event)) ;
+          ("attendees",
+            `List (List.map (fun c -> `Int (Id.to_array c))
+                    (e.History.event.Events.event_attendees_list)))
+        ]) (State.get_history_final s.state))) ])
 
 let from_json m fileName fileContent =
   match Yojson.Safe.from_string ~fname:fileName fileContent with
-  | `List l ->
+  | `Assoc l ->
+    let events =
+      try match List.assoc "events" l with
+        | `List l -> l
+        | _ -> failwith ("The field `events' of file `" ^ fileName
+                         ^ "' is not a list.")
+      with Not_found ->
+        failwith ("Missing field `events' in file `" ^ fileName ^ "'.") in
+    let l =
+      try match List.assoc "characters" l with
+        | `List l -> l
+        | _ -> failwith ("The field `characters' of file `" ^ fileName
+                         ^ "' is not a list.")
+      with Not_found ->
+        failwith ("Missing field `characters' in file `" ^ fileName ^ "'.") in
     let state = State.create_state (List.length l) in
     let (names, state) =
       Utils.list_fold_lefti (fun c (names, state) ->
         let c = Id.from_array c in function
         | `Assoc l ->
           let name =
-            try
-              match List.assoc "name" l with
-              | `String name -> name
-              | _ -> failwith ("A field `name' in file `" ^ fileName
-                               ^ "' is not a string.")
+            try match List.assoc "name" l with
+            | `String name -> name
+            | _ -> failwith ("A field `name' in file `" ^ fileName
+                             ^ "' is not a string.")
             with Not_found ->
               failwith ("Missing field `name' in file `" ^ fileName ^ "'.") in
           let get_field_list fld =
-            try
-              match List.assoc fld l with
-              | `List l -> l
-              | _ -> failwith ("A field `" ^ fld ^ "' in file `" ^ fileName
-                               ^ "' is not a list")
+            try match List.assoc fld l with
+            | `List l -> l
+            | _ -> failwith ("A field `" ^ fld ^ "' in file `" ^ fileName
+                             ^ "' is not a list")
             with
             | Not_found -> [] in
           let get_field_assoc fld =
-            try
-              match List.assoc fld l with
-              | `Assoc l -> l
-              | _ -> failwith ("A field `" ^ fld ^ "' in file `" ^ fileName
-                               ^ "' is not an object")
+            try match List.assoc fld l with
+            | `Assoc l -> l
+            | _ -> failwith ("A field `" ^ fld ^ "' in file `" ^ fileName
+                             ^ "' is not an object")
             with
             | Not_found -> [] in
           let get_attribute en get m attribute =
@@ -340,33 +350,31 @@ let from_json m fileName fileContent =
               | _ -> failwith ("Ill-formed `relations' field in file `"
                                ^ fileName ^ "'.")) state relations in
           let state =
-            try
-              match List.assoc "complexity" l with
-              | `Int v ->
-                let rst = State.get_relation_state state in
-                State.set_complexity rst c v ;
-                state
-              | _ -> failwith ("A field `complexity' in file `" ^ fileName
-                               ^ "' is not an integer")
+            try match List.assoc "complexity" l with
+            | `Int v ->
+              let rst = State.get_relation_state state in
+              State.set_complexity rst c v ;
+              state
+            | _ -> failwith ("A field `complexity' in file `" ^ fileName
+                             ^ "' is not an integer")
             with
             | Not_found -> state in
           let state =
-            try
-              match List.assoc "difficulty" l with
-              | `Int v ->
-                let rst = State.get_relation_state state in
-                State.set_difficulty rst c v ;
-                state
-              | _ -> failwith ("A field `difficulty' in file `" ^ fileName
-                               ^ "' is not an integer")
+            try match List.assoc "difficulty" l with
+            | `Int v ->
+              let rst = State.get_relation_state state in
+              State.set_difficulty rst c v ;
+              state
+            | _ -> failwith ("A field `difficulty' in file `" ^ fileName
+                             ^ "' is not an integer")
             with
             | Not_found -> state in
-          (* TODO: Deal with events. *)
           (name :: names, state)
         | _ -> failwith ("A character in file `" ^ fileName
                  ^ "' is not a associated an object.")) ([], state) l in
+    (* TODO: Deal with events (using Variable [events]). *)
     (List.rev names, state)
-  | _ -> failwith ("The file `" ^ fileName ^ "' is not a list.")
+  | _ -> failwith ("The file `" ^ fileName ^ "' is not an object.")
 
 let all_production = [
     ("json", "jsonDescription", "application/json", "json", true, to_json) ;

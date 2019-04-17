@@ -97,12 +97,16 @@ let block_node b link =
         aux current right_margin (fun str ->
           match layout with
           | Normal ->
-            let (str, current) = new_line str in
-            (str ^ String.make (start - current) ' ', start)
+            let (str, current) = new_line (line ^ str) in
+            let space =
+              if current < start then
+                String.make (start - current) ' '
+              else "" in
+            (str ^ space, start)
           | Centered ->
             let space = (right_margin - String.length str) / 2 in
-            new_line (String.make space ' ' ^ str)
-          | Inlined -> new_line str) str) (line, current) l
+            new_line (line ^ String.make space ' ' ^ str)
+          | Inlined -> new_line (line ^ str)) str) ("", current) l
     | P l ->
       List.fold_left (fun (str, current) ->
         aux current right_margin new_line str) (just_print "  " (line, current)) l
@@ -140,6 +144,10 @@ let block_node b link =
 
 (** Actions linked to each link. **)
 let links = ref []
+
+(** Starting the server. **)
+let _ =
+  Lwt_io.read_line_opt;;
 
 let print_node ?(error=false) n =
   let header =

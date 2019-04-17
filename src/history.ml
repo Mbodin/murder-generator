@@ -4,18 +4,18 @@ type character = Id.t
 type event = {
     event_begin : Date.t ;
     event_end : Date.t ;
-    event : character Event.t
+    event : character Events.t
   }
 
 let generate_event beg e =
   let en =
-    match e.Event.event_type with
-    | Event.For_life_event -> Date.add_years beg (Utils.rand 20 100)
-    | Event.Long_term_event -> Date.add_years beg (Utils.rand 1 10)
-    | Event.Medium_term_event -> Date.add_days beg (Utils.rand 14 100)
-    | Event.Short_term_event -> Date.add_days beg (Utils.rand 2 10)
-    | Event.Very_short_term_event -> Date.add_minutes beg (Utils.rand 2 300)
-    | Event.Immediate_event -> beg
+    match e.Events.event_type with
+    | Events.For_life_event -> Date.add_years beg (Utils.rand 20 100)
+    | Events.Long_term_event -> Date.add_years beg (Utils.rand 1 10)
+    | Events.Medium_term_event -> Date.add_days beg (Utils.rand 14 100)
+    | Events.Short_term_event -> Date.add_days beg (Utils.rand 2 10)
+    | Events.Very_short_term_event -> Date.add_minutes beg (Utils.rand 2 300)
+    | Events.Immediate_event -> beg
   in {
     event_begin = beg ;
     event_end = en ;
@@ -24,13 +24,13 @@ let generate_event beg e =
 
 let generate_event_inv en e =
   let beg =
-    match e.Event.event_type with
-    | Event.For_life_event -> Date.add_years en (- Utils.rand 20 100)
-    | Event.Long_term_event -> Date.add_years en (- Utils.rand 1 10)
-    | Event.Medium_term_event -> Date.add_days en (- Utils.rand 14 100)
-    | Event.Short_term_event -> Date.add_days en (- Utils.rand 2 10)
-    | Event.Very_short_term_event -> Date.add_minutes en (- Utils.rand 2 300)
-    | Event.Immediate_event -> en
+    match e.Events.event_type with
+    | Events.For_life_event -> Date.add_years en (- Utils.rand 20 100)
+    | Events.Long_term_event -> Date.add_years en (- Utils.rand 1 10)
+    | Events.Medium_term_event -> Date.add_days en (- Utils.rand 14 100)
+    | Events.Short_term_event -> Date.add_days en (- Utils.rand 2 10)
+    | Events.Very_short_term_event -> Date.add_minutes en (- Utils.rand 2 300)
+    | Events.Immediate_event -> en
   in {
     event_begin = beg ;
     event_end = en ;
@@ -44,10 +44,10 @@ let compatible_events e1 e2 =
 
 
 type t = {
-    events : character Event.t Id.map
-      (** Events are not stored directly in the timeline,
+    events : character Events.t Id.map
+      (** Eventss are not stored directly in the timeline,
        * but through identifiers. **) ;
-    kind_map : (character Event.kind * character, Id.t PSet.t) PMap.t
+    kind_map : (character Events.kind * character, Id.t PSet.t) PMap.t
       (** For each kind and character, returns a set of event identifiers
        * satisfying them. **) ;
     graph : (Id.t, Id.t list * Id.t list) PMap.t
@@ -62,7 +62,7 @@ type t = {
        * This graph is guaranteed to be symmetrical: if [e] must be after [e'],
        * then [e'] must be before [e]. **) ;
     constraints_none :
-      (character, (character Event.kind, Id.t PSet.t * Id.t PSet.t) PMap.t) PMap.t
+      (character, (character Events.kind, Id.t PSet.t * Id.t PSet.t) PMap.t) PMap.t
       (** For each event character and kind, provides two sets:
        * - the set for which no event of this kind can be before the given event,
        * - the set for which no event of this kind can be after the given event.
@@ -71,7 +71,7 @@ type t = {
        * then only the latter really have to prevent any such event to
        * happen. **) ;
     constraints_some :
-      (character, (character Event.kind, Id.t PSet.t * Id.t PSet.t) PMap.t) PMap.t
+      (character, (character Events.kind, Id.t PSet.t * Id.t PSet.t) PMap.t) PMap.t
       (** Same as [constraints_none], but enforce that there is at least one event
        * of the given kind before/after them.
        * Elements of these sets are naturally removed when their constraints have
@@ -111,7 +111,7 @@ let get_constraints st e =
       try PMap.find c st.constraints_none
       with Not_found -> PMap.empty in
     let k =
-      try PMap.find c e.Event.event_kinds
+      try PMap.find c e.Events.event_kinds
       with Not_found -> PSet.empty in
     let (before, after) =
       PSet.fold (fun k (before, after) ->
@@ -122,7 +122,7 @@ let get_constraints st e =
          PSet.merge no_before after)) (before, after) k in
     let (before, after) =
       let (no_before, no_after) =
-        try PMap.find c e.Event.constraints_none
+        try PMap.find c e.Events.constraints_none
         with Not_found -> (PSet.empty, PSet.empty) in
       let no_before =
         PSet.flat_map (fun k ->
@@ -133,7 +133,7 @@ let get_constraints st e =
           try PMap.find (k, c) st.kind_map
           with Not_found -> PSet.empty) no_after in
       (PSet.merge no_after before, PSet.merge no_before after) in
-    (before, after)) (PSet.empty, PSet.empty) e.Event.event_attendees
+    (before, after)) (PSet.empty, PSet.empty) e.Events.event_attendees
 
 (** Generalizes [get_constraints]: given a list of events [el],
  * returns a list a sets [before] and [after] corresponding to
@@ -187,7 +187,7 @@ let lcompatible_and_progress st el =
                           with Not_found -> (PSet.empty, PSet.empty) in
                         not (PSet.is_empty (PSet.inter before sb))
                         || not (PSet.is_empty (PSet.inter after sa)))
-                 false ks) e.Event.event_kinds false) l in
+                 false ks) e.Events.event_kinds false) l in
   aux false (get_full_constraints st el)
 
 let compatible_and_progress st e = lcompatible_and_progress st [e]
@@ -226,14 +226,14 @@ let lapply st el =
                   let e = Utils.assert_option __LOC__ (Id.map_inverse events id) in
                   PSet.fold (fun c map ->
                       let k =
-                        try PMap.find c e.Event.event_kinds
+                        try PMap.find c e.Events.event_kinds
                         with Not_found -> PSet.empty in
                       PSet.fold (fun k map ->
                         let ids =
                           try PMap.find (k, c) map
                           with Not_found -> PSet.empty in
                         PMap.add (k, c) (PSet.add id ids) map) map k)
-                    map e.Event.event_attendees) st.kind_map idl } in
+                    map e.Events.event_attendees) st.kind_map idl } in
   let rec intermediate_constraints st = function
     | [] | _ :: [] -> st
     | e1 :: e2 :: l -> intermediate_constraints (make_before st e1 e2) (e2 :: l) in
@@ -253,7 +253,7 @@ let lapply st el =
       let (eb, ea) = (PSet.from_list eb, PSet.from_list ea) in
       PSet.fold (fun c constraints_none ->
           let (no_before, no_after) =
-            try PMap.find c e.Event.constraints_none
+            try PMap.find c e.Events.constraints_none
             with Not_found -> (PSet.empty, PSet.empty) in
           let none =
             try PMap.find c constraints_none
@@ -281,7 +281,7 @@ let lapply st el =
                 else k_no_after in
               PMap.add k (k_no_before, k_no_after) none) none no_after in
           PMap.add c none constraints_none)
-        st.constraints_none e.Event.event_attendees) st.constraints_none idl in
+        st.constraints_none e.Events.event_attendees) st.constraints_none idl in
   let st = { st with constraints_none = constraints_none } in
   let st =
     let rec aux st added_before = function
@@ -313,7 +313,7 @@ let lapply st el =
                   (st, added_before, m)) (st, added_before, m) ks in
               let st =
                 { st with constraints_some = PMap.add c m st.constraints_some } in
-              (st, added_before)) ev.Event.event_kinds (st, added_before) in
+              (st, added_before)) ev.Events.event_kinds (st, added_before) in
         aux st added_before l in
     aux st PSet.empty idl in
   st
@@ -372,7 +372,7 @@ let finalise st =
               let t =
                 try PMap.find (c, k) (snd state)
                 with Not_found -> Date.now in
-              Date.min t) t ks) ev.Event.event_kinds Date.now) in
+              Date.min t) t ks) ev.Events.event_kinds Date.now) in
       let t = Date.add_minutes t (- Utils.rand 0 5) in
       let ev = generate_event_inv t ev in
       let state =
@@ -380,7 +380,7 @@ let finalise st =
          PMap.foldi (fun c ks m ->
              PSet.fold (fun k ->
                PMap.add (c, k) ev.event_begin) m ks)
-           ev.event.Event.event_kinds (snd state)) in
+           ev.event.Events.event_kinds (snd state)) in
       (ev :: acc, state)) ([], (PMap.empty, PMap.empty)) sorted in
   List.rev l
 

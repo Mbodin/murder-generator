@@ -17,7 +17,7 @@ type cell = {
     added_objective : State.objective
   }
 
-type t = cell array * character_constraint list * int Event.t list
+type t = cell array * character_constraint list * int Events.t list
 
 (** Returns the list of attributes provided by this cosntraint. **)
 let provided_attributes_constraint =
@@ -86,7 +86,7 @@ let respect_constraints_events f m st conss evs c =
 
 (** Checks whether the constraints [conss] are locally valid for the
  * character [c] in the character state [cst].
- * Events are also checked to be addable to the characters’s events.
+ * Eventss are also checked to be addable to the characters’s events.
  * Only local constraints are considered: no constraint depending on the
  * instantiation are checked at this point. **)
 let respect_constraints =
@@ -131,7 +131,7 @@ let compatible_and_progress m st (e, other, events) inst =
     let conss = e.(i).constraints in
     let evs =
       Utils.assert_option __LOC__ (Utils.list_map_option
-        (Event.instantiate (fun i -> Some (inst.(i)))) events) in
+        (Events.instantiate (fun i -> Some (inst.(i)))) events) in
     merge_progress acc
       (respect_constraints_inst m inst st conss evs c)) compatible_others inst
 
@@ -148,7 +148,7 @@ let search_instantiation m st (e, other, events) =
       let result_list =
         List.map (fun c ->
           let evs =
-            Utils.list_map_filter (Event.partially_instantiate i c) events in
+            Utils.list_map_filter (Events.partially_instantiate i c) events in
           (c, respect_constraints m st conss evs c)) all_players in
       let compatible_list =
         List.filter (fun (_, d) -> d <> None) result_list in
@@ -243,7 +243,7 @@ let search_instantiation m st (e, other, events) =
       | None ->
         let conss = e.(i).constraints in
         let evs =
-          Utils.list_map_filter (Event.partially_instantiate i c) events in
+          Utils.list_map_filter (Events.partially_instantiate i c) events in
         let r = respect_constraints m st conss evs c in
         a.(i).(Id.to_array c) <- Some r ;
         r
@@ -335,7 +335,7 @@ let apply m state (e, other, events) inst =
     assert (compatible_and_progress m state (e, other, events) inst <> None) ;
   let evs =
     Utils.assert_option __LOC__ (Utils.list_map_option
-      (Event.instantiate (fun i -> Some (inst.(i)))) events) in
+      (Events.instantiate (fun i -> Some (inst.(i)))) events) in
   let diff = empty_difference in
   let other_players = other_players state inst in
   let apply_constraint c (state, diff) =

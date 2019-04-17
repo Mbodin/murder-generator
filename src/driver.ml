@@ -1058,7 +1058,7 @@ let parse_element st element_name block =
                     | Some id -> not (event_exists st id)) block.event_kind in
                 raise (Undeclared ("event kind", k, event_name))
               with Not_found -> assert false in
-          let deps = PSet.map Event.kind_of_id deps in
+          let deps = PSet.map Events.kind_of_id deps in
           List.fold_left (fun kinds p -> PMap.add (Id.to_array p) deps kinds)
             PMap.empty attendees in
         let add p k kinds =
@@ -1075,7 +1075,7 @@ let parse_element st element_name block =
                  raise (UnexpectedCommandInBlock (event_name,
                          "destination of attribute")) in
              let aid = get_attribute_id attribute_functions pa.Ast.attribute_name in
-             add p (Event.kind_of_attribute aid) kinds)
+             add p (Events.kind_of_attribute aid) kinds)
            kinds b.provide_attribute in
         let kinds =
           List.fold_left (fun kinds pa ->
@@ -1088,7 +1088,7 @@ let parse_element st element_name block =
             let add p p' =
               let p = get_player p in
               let p' = get_player p' in
-              add p (Event.kind_of_contact aid p') in
+              add p (Events.kind_of_contact aid p') in
             match pa.Ast.contact_destination with
             | Between (p1, p2) -> add p1 p2 (add p2 p1 kinds)
             | FromTo (p1, p2) -> add p1 p2 kinds) kinds b.provide_contact in
@@ -1130,15 +1130,15 @@ let parse_element st element_name block =
                 PSet.singleton (match Id.get_id st.event_names k with
                                 | None ->
                                   raise (Undeclared ("event kind", k, element_name))
-                                | Some id -> Event.kind_of_id id)
+                                | Some id -> Events.kind_of_id id)
               | Ast.KindAttribute a ->
-                PSet.singleton (Event.kind_of_attribute
+                PSet.singleton (Events.kind_of_attribute
                   (get_attribute_id attribute_functions a))
               | Ast.KindContact (c, l) ->
                 let c = get_attribute_id contact_functions c in
                 PSet.from_list (List.map (fun p ->
                   let p = get_player_array p in
-                  Event.kind_of_contact c p) l) in
+                  Events.kind_of_contact c p) l) in
             bns (List.fold_left (fun m p ->
                     let p = get_player_array p in
                     let ba =
@@ -1148,13 +1148,13 @@ let parse_element st element_name block =
                   c.Ast.event_players)) (PMap.empty, PMap.empty)
           b.event_constraint in
       let attendees = List.map Id.to_array attendees in {
-        Event.event_type = t ;
-        Event.event_attendees = PSet.from_list attendees ;
-        Event.event_attendees_list = attendees ;
-        Event.event_kinds = kinds ;
-        Event.constraints_none = constraints_none ;
-        Event.constraints_some = constraints_some ;
-        Event.translation = translation
+        Events.event_type = t ;
+        Events.event_attendees = PSet.from_list attendees ;
+        Events.event_attendees_list = attendees ;
+        Events.event_kinds = kinds ;
+        Events.constraints_none = constraints_none ;
+        Events.constraints_some = constraints_some ;
+        Events.translation = translation
       }) events in
   (** We check that there is no contradiction within these events. **)
   if let rec check f acc = function
@@ -1165,14 +1165,14 @@ let parse_element st element_name block =
              if not r then (r, acc)
              else
                let k =
-                 try PMap.find c e.Event.event_kinds
+                 try PMap.find c e.Events.event_kinds
                  with Not_found -> PSet.empty in
                let c =
-                 try PMap.find c e.Event.constraints_none
+                 try PMap.find c e.Events.constraints_none
                  with Not_found -> (PSet.empty, PSet.empty) in
                let c = f c in
                (PSet.is_empty (PSet.inter c acc),
-                PSet.merge k acc)) (true, acc) e.Event.event_attendees in
+                PSet.merge k acc)) (true, acc) e.Events.event_attendees in
          r && check f acc l in
      not (check fst PSet.empty evs)
      || not (check snd PSet.empty (List.rev evs)) then

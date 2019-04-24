@@ -18,7 +18,133 @@ let get_file fileName =
 let log msg =
   print_endline ("Log: " ^ msg)
 
-let languages = [] (* TODO *)
+let languages =
+  Option.map_default (fun l -> [l]) [] (Sys.getenv_opt "LANG")
+
+(** A module to print on screen with potential breaking points. **)
+module type PrintType =
+  sig
+
+    (** The current screen size. **)
+    val screen_size : unit -> int
+
+    (** Update the current screen size. **)
+    val set_screen_size : int -> unit
+
+    (** Print the following string. **)
+    val print : string -> unit
+
+    (** Print a new line. **)
+    val newline : unit -> unit
+
+    (** Inserts a breakpoint: if further printing go beyond the
+     * length limit, this breakpoint will be replaced by a new line.
+     * Two strings can be given: one to be printed at this place
+     * when the breakpoint is not replaced by a newline, and one
+     * to be printed if it has been replaced by a newline.
+     * In the later case, two strings must be provided: one printed
+     * before the newline, and one after.
+     * No character “\n” or “\r” should appear in these strings. **)
+    val breakpoint : ?normal:string -> ?break:(string * string) -> unit -> unit
+
+    (** Flushing the output.
+     * Any previously-printed break-point will be lost. **)
+    val flush : unit -> unit
+
+    (** Start a context: any further newlines will start by this string
+     * (in addition to the ones provided by outer contexts). **)
+    val push : string -> unit
+
+    (** Remove the last provided context. **)
+    val pop : unit -> unit
+
+  end
+
+(** Implemenation of [PrintType]. **)
+module Print : PrintType =
+  struct
+
+    let (screen_size, set_screen_size) =
+      let screen_size = ref 100 in
+      let get _ = !screen_size in
+      let set size =
+        screen_size := max 0 size in
+      (get, set)
+
+    (** An empty breakpoint. **)
+    let empty_breakpoint = ("", ("", ""))
+
+    (** A triple containing the text currently written in the current line
+     * up to the last breakpoint, information about this breakpoint
+     * (following the arguments of the [breakpoint] function: string to be
+     * written if not breaking, and pair of strings for when it is breaking),
+     * and what is to be written after this last breakpoint. **)
+    let current_line = ref ("", ("", ("", "")), "")
+
+    (** The current context, and the associated string. **)
+    let context = ref ([], "")
+
+    let push str =
+      let (l, line) = !context in
+      context := (str :: l, line ^ str)
+
+    let pop _ =
+      match fst !context with
+      | [] -> assert false
+      | _ :: l ->
+        context := (l, String.concat "" (List.rev l))
+
+    let flush _ =
+      let (line, (br, _), line') = !current_line in
+      let line = line ^ br ^ line' in
+      print_string line ;
+      flush stdout ;
+      current_line := ("", empty_breakpoint, line)
+
+    (** Consider whether the variable [current_line] should be partially
+     * printed because its breakpoint has been activated, and do so if
+     * needed.
+     * This function should be called whenever [current_line] is modified
+     * with a non-empty breakpoint. **)
+    let normalize _ =
+      let (line, (br, (brb, bfa)), line') = !current_line in
+      if String.length line + String.length br + String.length line'
+           >= screen_size ()
+         && String.length line + String.length brb > 0 then (
+        print_endline (line ^ brb) ;
+        current_line := ("", empty_breakpoint, snd !context ^ bfa ^ line')
+      )
+
+    let print text =
+      let (line, br, line') = !current_line in
+      current_line := (line, br, line' ^ text) ;
+      normalize ()
+
+    let newline _ =
+      let (line, (br, _), line') = !current_line in
+      let line = line ^ br ^ line' in
+      print_endline line ;
+      current_line := ("", empty_breakpoint, snd !context)
+
+    let breakpoint ?(normal = "") ?(break = ("", "")) _ =
+      let (line, (br, (brb, bfa)), line') = !current_line in
+      if String.length line + String.length br + String.length line'
+         + String.length normal >= screen_size ()
+         && String.length line + String.length brb > 0 then (
+        if String.length line + String.length br + String.length line'
+           + String.length (fst break) <= screen_size () then (
+          print_endline (line ^ br ^ line' ^ fst break) ;
+          current_line := (snd !context ^ snd break, empty_breakpoint, "")
+        ) else (
+          print_endline (line ^ brb) ;
+          current_line := (snd !context ^ bfa ^ line', (normal, break), "")
+        )
+      ) else (
+        current_line := (line ^ br ^ line', (normal, break), "")
+      )
+
+  end
+
 
 
 (** A node is just a function to print this node.

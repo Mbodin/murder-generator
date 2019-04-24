@@ -132,23 +132,28 @@ let to_icalendar s =
     let tr_players = translation_players s in
     let id_postfix =
       "-" ^ string_of_int (Hashtbl.hash s.names)
-      ^ "-" ^ string_of_int (Hashtbl.hash (Date.now, Sys.time ()))
+      ^ "-" ^ string_of_int (Random.bits ())
+      ^ "-" ^ string_of_float (Sys.time ())
+      ^ "-" ^ Date.rfc2445 Date.now
       ^ "-murder-generator" in
     List.concat (List.map (fun e ->
       "BEGIN:VEVENT"
       :: ("UID:" ^ string_of_int (Random.bits ())
+                 ^ Date.rfc2445 e.History.event_begin
+                 ^ Date.rfc2445 e.History.event_end
                  ^ "-" ^ string_of_int (Hashtbl.hash e) ^ id_postfix)
       :: ("DTSTAMP:" ^ Date.rfc2445 Date.now)
       :: ("DTSTART:" ^ Date.rfc2445 e.History.event_begin)
       :: ("DTEND:" ^ Date.rfc2445 e.History.event_end)
       :: List.map (fun c ->
-             "ATTENDEE:urn:tag:" ^ webpage_address_base
+             "ATTENDEE;CN=\"" ^ get_name s c ^ "\""
+             ^ ":URN:tag:" ^ webpage_address_base
              ^ "," ^ Date.iso8601 Date.now
              ^ ":" ^ string_of_int (Id.to_array c)
              ^ "," ^ String.escaped (get_name s c))
            (PSet.to_list e.History.event.Events.event_attendees)
-      @ "DESCRIPTION:"
-      :: List.map (fun str -> "   " ^ str)
+      @ ("DESCRIPTION;LANGUAGE=" ^ Translation.iso639 s.language ^ ":")
+      :: List.map (fun str -> " " ^ str ^ "\\n")
            (translate_event s tr_players e.History.event)
       @ "END:VEVENT"
       :: []) (State.get_history_final s.state)) in

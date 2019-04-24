@@ -140,7 +140,10 @@ REALTARGETBASE=`echo "$REALTARGET" | sed -e 's/\\..*//'`
 if [ $TARGET.$EXT != $REALTARGETBASE ]
 then
   echo "${COLOR}Moving file from ${TARGET}.${EXT} to ${REALTARGETBASE}.${EXT}.${ROLOC}"
-  mv -f $TARGET.$EXT $REALTARGETBASE.$EXT
+  if [ $TARGET.$EXT != $REALTARGETBASE.$EXT ]
+  then
+    mv -f $TARGET.$EXT $REALTARGETBASE.$EXT
+  fi
   TARGET=$REALTARGETBASE
 fi
 

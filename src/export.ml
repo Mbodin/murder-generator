@@ -84,6 +84,11 @@ let negative s v =
   let trv = translate_value_contact (generic s) v in
   List.mem trv ["False"; "None"; "Absent"; "Undefined"]
 
+(** Replace the characters '"' by '\"' and '\' by '\\'. **)
+let escape_quote str =
+  let replace input = Str.global_replace (Str.regexp_string input) in
+  replace "\"" "\\\"" (replace "\\" "\\\\" str)
+
 let to_graphviz s =
   let player_node c = "player" ^ string_of_int (Id.to_array c) in
   let get_color s =
@@ -97,11 +102,11 @@ let to_graphviz s =
       String.concat "\n" (List.mapi (fun c name ->
         let c = Id.from_array c in
         "  " ^ player_node c ^ " [label=\"{"
-        ^ name ^ "|"
+        ^ escape_quote name ^ "|"
         ^ String.concat "|" (PMap.foldi (fun a v l ->
               let tra = translate_attribute_player s a in
               let trv = translate_value_player s v in
-              ("{" ^ tra ^ "|" ^ trv ^ "}") :: l)
+              ("{" ^ escape_quote tra ^ "|" ^ escape_quote trv ^ "}") :: l)
             (State.get_all_attributes_character_final s.state c) [])
         ^ "}\"]") s.names) ; "" ;
       (** Declaring their relations **)
@@ -113,7 +118,7 @@ let to_graphviz s =
               let trv = translate_value_contact s v in
               let color = if negative s v then "transparent" else get_color tra in
               "  " ^ player_node c ^ " -> " ^ player_node c'
-              ^ " [label=\"" ^ tra ^ ":" ^ trv ^ "\""
+              ^ " [label=\"" ^ escape_quote tra ^ ":" ^ escape_quote trv ^ "\""
               ^ " color=\"" ^ color ^ "\"] ;") lv @ l)
           (State.get_all_contacts_character_final s.state c) []) s.names)) ;
       "}" ; ""
@@ -146,7 +151,7 @@ let to_icalendar s =
       :: ("DTSTART:" ^ Date.rfc2445 e.History.event_begin)
       :: ("DTEND:" ^ Date.rfc2445 e.History.event_end)
       :: List.map (fun c ->
-             "ATTENDEE;CN=\"" ^ get_name s c ^ "\""
+             "ATTENDEE;CN=\"" ^ escape_quote (get_name s c) ^ "\""
              ^ ":URN:tag:" ^ webpage_address_base
              ^ "," ^ Date.iso8601 Date.now
              ^ ":" ^ string_of_int (Id.to_array c)

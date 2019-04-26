@@ -14,7 +14,9 @@ The generator is available online at [this adress](https://mbodin.github.io/murd
 # Installation
 
 You do not need to compile the program to use it, as it is already available [online](https://mbodin.github.io/murder-generator/).
-If you want to compile it yourself, you will need an OCaml environment.
+Compiling the program yourself however provides an additional native version of the program, which is sensibly faster (but not as pretty as the online interface).
+
+To compile the program, you will need an OCaml environment.
 The simplest way to set it up is by using Opam.
 On Debian, this would look like that:
 ```bash

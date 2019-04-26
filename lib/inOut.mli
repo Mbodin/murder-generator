@@ -28,7 +28,7 @@ val languages : string list
 (** An abstract type for representing nodes. **)
 type node
 
-(* LATER: Some of these definitions are commond between [InOut_js] and
+(* LATER: Some of these definitions are common between [InOut_js] and
  * [InOut_native] and should be factorised. *)
 (** Specifies the different properties of div elements. **)
 type layout =

@@ -1,4 +1,6 @@
 
+(* LATER: There would be a lot of possible factorisations in this file. *)
+
 let webpage_address_base = "github.com/Mbodin/murder-generator"
 let webpage_address = "https://" ^ webpage_address_base
 
@@ -169,6 +171,67 @@ let to_icalendar s =
     :: events
     @ "END:VCALENDAR"
     :: []))
+
+let to_block s =
+  let get_translation key =
+    Utils.assert_option ("No key `" ^ key ^ "' found for language `"
+                         ^ (Translation.iso639 s.language) ^ "' at "
+                         ^ __LOC__ ^ ".")
+      (Translation.translate s.generic_translation s.language key) in
+  let tr_players = translation_players s in
+  let print_event e =
+    InOut.Div (InOut.Normal, [
+        InOut.List (false,
+          List.map (fun text -> InOut.Text text)
+            (translate_event s tr_players e.History.event)) ;
+        InOut.P [
+            InOut.Text (Date.rfc2445 e.History.event_begin) ;
+            InOut.Text "–" ;
+            InOut.Text (Date.rfc2445 e.History.event_end) ;
+            InOut.Space ;
+            InOut.Text ("("
+              ^ String.concat ", "
+                  (List.map (get_name s)
+                     (PSet.to_list e.History.event.Events.event_attendees))
+              ^ ")")
+          ] ;
+      ]) in
+  InOut.List (false,
+    InOut.FoldableBlock (false, get_translation "forTheGM",
+      InOut.List (false, [
+          InOut.FoldableBlock (true, get_translation "GMEvents",
+            InOut.List (true,
+              List.map print_event (State.get_history_final s.state))) ;
+        ]))
+    :: List.mapi (fun c name ->
+         let c = Id.from_array c in
+         InOut.FoldableBlock (false, name,
+           InOut.List (false, [
+               InOut.FoldableBlock (true, get_translation "characterAttributes",
+                 InOut.List (true,
+                   PMap.foldi (fun a v l ->
+                       let tra = translate_attribute_player s a in
+                       let trv = translate_value_player s v in
+                       InOut.Text (tra ^ ": " ^ trv) :: l)
+                     (State.get_all_attributes_character_final s.state c) [])) ;
+               InOut.FoldableBlock (true, get_translation "characterContacts",
+                 InOut.List (false,
+                   PMap.foldi (fun c' lv l ->
+                       InOut.FoldableBlock (false,
+                         get_translation "contactTo" ^ " " ^ get_name s c',
+                           InOut.List (true,
+                             List.map (fun (a, v) ->
+                                 let tra = translate_attribute_contact s a in
+                                 let trv = translate_value_contact s v in
+                                 InOut.Text (tra ^ ": " ^ trv)) lv)) :: l)
+                     (State.get_all_contacts_character_final s.state c) [])) ;
+               InOut.FoldableBlock (true, get_translation "characterEvents",
+                 InOut.List (true,
+                   Utils.list_map_filter (fun e ->
+                     if PSet.mem c e.History.event.Events.event_attendees then
+                       Some (print_event e)
+                     else None) (State.get_history_final s.state)))
+             ]))) s.names)
 
 let to_org s =
   let get_translation key =

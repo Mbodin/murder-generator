@@ -436,7 +436,7 @@ let main =
         IO.print_block (InOut.P [
           InOut.Text (get_translation "backgroundGeneration")]) ;
       let exportButtons =
-        List.map (fun (name, descr, _, _, _, _) ->
+        List.map (fun (name, descr) ->
             let (node, set, get) =
               IO.createSwitch (get_translation "generateAs"
                                   ^ " " ^ get_translation name) None None
@@ -446,7 +446,9 @@ let main =
                 InOut.Node node ;
                 InOut.Text (get_translation descr) ]) in
             (name, node, set, get))
-          Export.all_production in
+          (("html", "htmlDescription")
+           :: List.map (fun (name, descr, _, _, _, _) -> (name, descr))
+                Export.all_production) in
       IO.print_block (InOut.Div (InOut.Normal, [
           InOut.P [ InOut.Text (get_translation "exportPossibilities") ] ;
           InOut.List (false,
@@ -482,8 +484,12 @@ let main =
           Export.generic_translation = translation ;
           Export.state = final
         } in
+      let html = PSet.mem "html" parameters.chosen_productions in
       IO.print_block (InOut.Div (InOut.Normal, [
-          InOut.P [ InOut.Text (get_translation "exportList") ] ;
+          InOut.P
+            (InOut.Text (get_translation "exportList")
+             :: if html then [ InOut.Text (get_translation "exportedAsHTML") ]
+                else []) ;
           InOut.List (true,
           List.map (fun (name, descr, mime, ext, native, f) ->
             let fileName = "murder" ^ if ext = "" then "" else ("." ^ ext) in
@@ -496,6 +502,7 @@ let main =
                        PSet.mem name parameters.chosen_productions)
                      Export.all_production))
         ])) ;
+      if html then IO.print_block (Export.to_block estate) ;
       IO.stopLoading () ;%lwt
       IO.print_block (InOut.P [
         InOut.Text (get_translation "underConstruction") ;

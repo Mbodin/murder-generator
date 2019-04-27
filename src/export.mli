@@ -23,6 +23,9 @@ val to_graphviz : state -> string
 (** Produce a JSON representation of the state. **)
 val to_json : state -> string
 
+(** Produce a printable representation of the state. **)
+val to_block : state -> 'node InOut.block
+
 (** Revert [to_json] back to a list of names and a state.
  * The first argument is the file name (to report errors), and the second one
  * its actual content. **)

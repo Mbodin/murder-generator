@@ -55,72 +55,28 @@ let languages =
 
 type node = Dom_html.element Js.t
 
-type layout =
-  | Normal
-  | Centered
-  | Inlined
-
-type block =
-  | Div of layout * block list
-  | P of block list
-  | List of bool * block list
-  | Space
-  | Text of string
-  | Link of string * string
-  | LinkContinuation of bool * string * (unit -> unit)
-  | LinkFile of string * string * string * bool * (unit -> string)
-  | Table of block list * block list list
-  | Node of node
-
-let rec add_spaces =
-  let need_space = function
-    | Div _ -> false
-    | P _ -> false
-    | List _ -> false
-    | Space -> false
-    | Text _ -> true
-    | Link _ -> true
-    | LinkContinuation _ -> true
-    | LinkFile _ -> true
-    | Table _ -> false
-    | Node _ -> false in
-  let rec aux = function
-    | [] -> []
-    | a :: [] -> a :: []
-    | a :: b :: l ->
-      if need_space a && need_space b then
-        a :: Text " " :: aux (b :: l)
-      else a :: aux (b :: l) in
-  let aux l = aux (List.map add_spaces l) in function
-    | Div (layout, l) -> Div (layout, aux l)
-    | P l -> P (aux l)
-    | List (visible, l) -> List (visible, List.map add_spaces l)
-    | Table (h, l) ->
-      Table (List.map add_spaces h, List.map (List.map add_spaces) l)
-    | e -> e
-
 let document = Dom_html.window##.document
 
 let rec block_node =
   let appendChilds f e =
     List.iter (fun b -> ignore (Dom.appendChild e (f (block_node b)))) in
   function
-  | Div (layout, l) ->
+  | InOut.Div (layout, l) ->
     let div = Dom_html.createDiv document in
     let _ =
       match layout with
-      | Normal -> ()
-      | Centered ->
+      | InOut.Normal -> ()
+      | InOut.Centered ->
         div##.className := Js.string "center"
       | Inlined ->
         div##.className := Js.string "inlined" in
     appendChilds Utils.id div l ;
     (div :> Dom_html.element Js.t)
-  | P l ->
+  | InOut.P l ->
     let p = Dom_html.createP document in
     appendChilds Utils.id p l ;
     (p :> Dom_html.element Js.t)
-  | List (visible, l) ->
+  | InOut.List (visible, l) ->
     let ul = Dom_html.createUl document in
     ul##.className := Js.string (if visible then "bullet" else "bulletless") ;
     appendChilds (fun n ->
@@ -128,35 +84,56 @@ let rec block_node =
       ignore (Dom.appendChild li n) ;
       li) ul l ;
     (ul :> Dom_html.element Js.t)
-  | Space ->
+  | InOut.Space ->
     let span = Dom_html.createSpan document in
     ignore (span##setAttribute (Js.string "class") (Js.string "space")) ;
     (span :> Dom_html.element Js.t)
-  | Text text ->
+  | InOut.Text text ->
     let span = Dom_html.createSpan document in
     Dom.appendChild span (Dom_html.document##createTextNode (Js.string text)) ;
     (span :> Dom_html.element Js.t)
-  | Link (text, link) ->
+  | InOut.FoldableBlock (visible, title, node) ->
+    let div = Dom_html.createDiv document in
+    ignore (div##setAttribute (Js.string "class") (Js.string "foldable")) ;
+    let text = Dom_html.document##createTextNode (Js.string title) in
+    let title = Dom_html.createH3 document in
+    ignore (Dom.appendChild title text) ;
+    ignore (Dom.appendChild div title) ;
+    let inner = Dom_html.createDiv document in
+    let visible = ref visible in
+    let set _ =
+      ignore (title##setAttribute (Js.string "class")
+               (Js.string (if !visible then "unfolded" else "folded"))) in
+    set () ;
+    Lwt.async (fun _ ->
+      Lwt_js_events.clicks title (fun _ _ ->
+        visible := not !visible ;
+        set () ;
+        Lwt.return ())) ;
+    ignore (Dom.appendChild div inner) ;
+    ignore (Dom.appendChild inner (block_node node)) ;
+    (div :> Dom_html.element Js.t)
+  | InOut.Link (text, link) ->
     let a = Dom_html.createA document in
     let text = Dom_html.document##createTextNode (Js.string text) in
     ignore (Dom.appendChild a text) ;
     a##.href := Js.string link ;
     (a :> Dom_html.element Js.t)
-  | LinkContinuation (forwards, text, cont) ->
+  | InOut.LinkContinuation (forwards, text, cont) ->
     let a = block_node (Link (text, "javascript:void(42)")) in
     if not forwards then
       ignore (a##setAttribute (Js.string "class") (Js.string "previous")) ;
     Lwt.async (fun _ ->
       Lwt_js_events.clicks a (fun _ _ -> Lwt.return (cont ()))) ;
     a
-  | LinkFile (text, fileName, mime, native, cont) ->
+  | InOut.LinkFile (text, fileName, mime, native, cont) ->
     let endings = if native then `Native else `Transparent in
     let blob = File.blob_from_string ~contentType:mime ~endings:endings (cont ()) in
     let url = Dom_html.window##._URL##createObjectURL (blob) in
     let a = block_node (Link (text, Js.to_string url)) in
     ignore (a##setAttribute (Js.string "download") (Js.string fileName)) ;
     a
-  | Table (headers, content) ->
+  | InOut.Table (headers, content) ->
     let table = Dom_html.createTable document in
     let header = Dom_html.createTr document in
     ignore (Dom.appendChild table header) ;
@@ -172,7 +149,7 @@ let rec block_node =
         ignore (Dom.appendChild td n) ;
         td) line l) content ;
     (table :> Dom_html.element Js.t)
-  | Node n -> n
+  | InOut.Node n -> n
 
 (** Returns the [response] div from the main webpage. **)
 let get_response _ =
@@ -195,7 +172,7 @@ let print_node ?(error = false) n =
   ignore (Dom.appendChild response div)
 
 let print_block ?(error = false) =
-  Utils.compose (print_node ~error) (Utils.compose block_node add_spaces)
+  Utils.compose (print_node ~error) (Utils.compose block_node InOut.add_spaces)
 
 
 let createNumberInput ?min:(mi = 0) ?max:(ma = max_int) d =

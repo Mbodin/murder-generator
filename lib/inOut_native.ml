@@ -59,8 +59,6 @@ module type PrintType =
     (** Fill the rest of the line with this character. **)
     val separator : char -> unit
 
-    (* TODO: Contexts are meant to start at the *next* line break,
-     * which is not what is currently happening. *)
     (** Start a context: any further newlines will start by this string
      * (in addition to the ones provided by outer contexts). **)
     val push_prefix : string -> unit
@@ -112,8 +110,6 @@ module Print : PrintType =
 
     let push_suffix str = push (Suffix str)
 
-    let push_center _ = push Center
-
     let pop _ =
       match fst !context with
       | [] -> assert false
@@ -121,7 +117,7 @@ module Print : PrintType =
         context := (l, snd !context - context_size ctx)
 
     (** Print the following string, going through all the current context. **)
-    let print_line str =
+    let print_line context str =
       let rec aux taken = function
         | [] -> str
         | ctx :: l ->
@@ -130,9 +126,9 @@ module Print : PrintType =
           | Prefix pre -> pre ^ str
           | Suffix suf -> str ^ suf
           | Center ->
-            let size = max 0 (screen_size () - taken) in
+            let size = max 0 (screen_size () - taken - String.length str) in
             String.make (size / 2) ' ' ^ str ^ String.make (size - size / 2) ' ' in
-      print_endline (aux 0 (List.rev (fst !context)))
+      print_endline (aux 0 (List.rev (fst context)))
 
     (** A type for breakpoints. **)
     type breakpoint = {
@@ -153,6 +149,8 @@ module Print : PrintType =
 
     (** A structure containing the current state of the printer. **)
     type state = {
+        state_context : context list * int (** Value of [!context] when
+                                            * the line started. **) ;
         text_before : string (** Text written in the current line,
                               * before the current breakpoint. **) ;
         breakpoint : breakpoint (** Current breakpoint. **) ;
@@ -161,24 +159,25 @@ module Print : PrintType =
       }
 
     (** The state as it is after a new line. **)
-    let empty_state = {
+    let empty_state _ = {
+        state_context = !context ;
         text_before = "" ;
         breakpoint = empty_breakpoint ;
         text_after = ""
       }
 
     (** The current state of the printer. **)
-    let state = ref empty_state
+    let state = ref (empty_state ())
 
     let separator c =
       let text =
         !state.text_before ^ !state.breakpoint.normal ^ !state.text_after in
       let text =
         let size =
-          max 0 (screen_size () - snd !context - String.length text) in
+          max 0 (screen_size () - snd !state.state_context - String.length text) in
         text ^ String.make size c in
-      print_line text ;
-      state := empty_state
+      print_line !state.state_context text ;
+      state := empty_state ()
 
     (** Indicate that we aim to print a string of the given size on the same
      * line, and break the line if needed and possible. **)
@@ -186,12 +185,14 @@ module Print : PrintType =
       if String.length !state.text_before
          + String.length !state.breakpoint.normal
          + String.length !state.text_after
-         + size >= screen_size () - snd !context
+         + size >= screen_size () - snd !state.state_context
          && (!state.text_before <> ""
              || !state.breakpoint.break_before <> ""
              || !state.breakpoint.break_after <> "") then (
-        print_line (!state.text_before ^ !state.breakpoint.break_before) ;
+        print_line !state.state_context
+          (!state.text_before ^ !state.breakpoint.break_before) ;
         state := {
+            state_context = !context ;
             text_before = "" ;
             breakpoint = empty_breakpoint ;
             text_after = !state.breakpoint.break_after ^ !state.text_after ;
@@ -210,18 +211,24 @@ module Print : PrintType =
       normalize ()
 
     let newline _ =
-      print_line
+      print_line !state.state_context
         (!state.text_before ^ !state.breakpoint.normal ^ !state.text_after) ;
-      state := empty_state
+      state := empty_state ()
 
     let clearline _ =
       if !state.text_before <> ""
          || !state.breakpoint <> empty_breakpoint
-         || !state.text_after <> "" then newline ()
+         || !state.text_after <> "" then newline () ;
+      state := { !state with state_context = !context }
+
+    let push_center _ =
+      push Center ;
+      clearline ()
 
     let breakpoint ?(normal = "") ?(break = ("", "")) _ =
       reserve_for (String.length normal) ;
       state := {
+          state_context = !state.state_context ;
           text_before =
             !state.text_before ^ !state.breakpoint.normal ^ !state.text_after ;
           breakpoint = {
@@ -246,79 +253,35 @@ module Print : PrintType =
 type node =
   ((unit -> unit) -> string) -> unit
 
-type layout =
-  | Normal
-  | Centered
-  | Inlined
-
-type block =
-  | Div of layout * block list
-  | P of block list
-  | List of bool * block list
-  | Space
-  | Text of string
-  | Link of string * string
-  | LinkContinuation of bool * string * (unit -> unit)
-  | LinkFile of string * string * string * bool * (unit -> string)
-  | Table of block list * block list list
-  | Node of node
-
-let rec add_spaces =
-  let need_space = function
-    | Div _ -> false
-    | P _ -> false
-    | List _ -> false
-    | Space -> false
-    | Text _ -> true
-    | Link _ -> true
-    | LinkContinuation _ -> true
-    | LinkFile _ -> true
-    | Table _ -> false
-    | Node _ -> false in
-  let rec aux = function
-    | [] -> []
-    | a :: [] -> a :: []
-    | a :: b :: l ->
-      if need_space a && need_space b then
-        a :: Text " " :: aux (b :: l)
-      else a :: aux (b :: l) in
-  let aux l = aux (List.map add_spaces l) in function
-    | Div (layout, l) -> Div (layout, aux l)
-    | P l -> P (aux l)
-    | List (visible, l) -> List (visible, List.map add_spaces l)
-    | Table (h, l) ->
-      Table (List.map add_spaces h, List.map (List.map add_spaces) l)
-    | e -> e
-
 let rec block_node b link =
   match b with
-  | Div (layout, l) ->
+  | InOut.Div (layout, l) ->
     if layout <> Inlined then Print.clearline () ;
     let pop =
       match layout with
-      | Normal ->
+      | InOut.Normal ->
         Print.push_prefix " " ;
         fun _ ->
           Print.pop () ;
           Print.clearline ()
-      | Centered ->
+      | InOut.Centered ->
         Print.push_prefix " " ;
         Print.push_center () ;
         fun _ ->
           Print.pop () ;
           Print.pop () ;
           Print.clearline ()
-      | Inlined -> Utils.id in
+      | InOut.Inlined -> Utils.id in
     List.iter (fun b -> block_node b link) l ;
     pop ()
-  | P l ->
+  | InOut.P l ->
     Print.clearline () ;
     Print.push_prefix " " ;
     Print.print "  " ;
     List.iter (fun b -> block_node b link) l ;
     Print.pop () ;
     Print.clearline () ;
-  | List (drawn, l) ->
+  | InOut.List (drawn, l) ->
     List.iter (fun b ->
       if drawn then (
         Print.clearline () ;
@@ -330,22 +293,34 @@ let rec block_node b link =
         Print.clearline () ;
         block_node b link
       )) l
-  | Space ->
+  | InOut.Space ->
     Print.breakpoint ~normal:"  " ()
-  | Text str ->
+  | InOut.Text str ->
     List.iteri (fun i str ->
       if i <> 0 then Print.space () ;
       Print.print str) (String.split_on_char ' ' str)
-  | Link (text, address) ->
+  | InOut.FoldableBlock (visible, title, node) ->
+    let visible = ref visible in
+    Print.clearline () ;
+    Print.print "+ " ;
+    Print.push_prefix "  " ;
+    let text_link = link (fun _ -> visible := not !visible; print_newline ()) in
+    block_node (Text (text_link ^ " " ^ title)) link ;
+    if !visible then (
+      Print.newline () ;
+      block_node node link
+    ) ;
+    Print.pop ()
+  | InOut.Link (text, address) ->
     let text_link = link (fun _ -> Print.print address) in
     block_node (Text (text ^ " " ^ text_link)) link
-  | LinkContinuation (forward, text, cont) ->
+  | InOut.LinkContinuation (forward, text, cont) ->
     let text_link = link cont in
     let str =
       if forward then text ^ " " ^ text_link
       else text_link ^ " " ^ text in
     block_node (Text str) link
-  | LinkFile (text, fileName, mime, newlines, content) ->
+  | InOut.LinkFile (text, fileName, mime, newlines, content) ->
     block_node (LinkContinuation (true, text, fun _ ->
       print_string ("[" ^ fileName ^ "] > ") ;
       flush stdout ;
@@ -355,9 +330,9 @@ let rec block_node b link =
       let channel = open_out fileName in
       output_string channel (content ()) ;
       close_out channel)) link
-  | Table (headers, content) ->
+  | InOut.Table (headers, content) ->
     block_node (Text "<table>") link (* TODO *)
-  | Node node -> node link
+  | InOut.Node node -> node link
 
 (** Actions linked to each link. **)
 let links = ref []
@@ -387,6 +362,7 @@ let clear_links _ =
 
 (** Starting the server. **)
 let _ =
+  Print.push_prefix "=" ;
   let rec aux _ =
     clear_links () ;
     (** Print all registered nodes. **)
@@ -424,7 +400,7 @@ let print_node ?(error = false) n =
   n link
 
 let print_block ?(error = false) =
-  Utils.compose (print_node ~error) (Utils.compose block_node add_spaces)
+  Utils.compose (print_node ~error) (Utils.compose block_node InOut.add_spaces)
 
 let createNumberInput ?min:(mi = 0) ?max:(ma = max_int) n =
   let v = ref n in
@@ -437,20 +413,18 @@ let createNumberInput ?min:(mi = 0) ?max:(ma = max_int) n =
 let createTextInput str =
   let txt = ref str in
   let node link =
-    Print.newline () ;
-    Print.print ("<" ^ !txt ^ "> " ^ link (fun _ ->
+    Print.print (" <" ^ !txt ^ "> " ^ link (fun _ ->
       print_string ("<" ^ !txt ^ "> -> ") ;
       flush stdout ;
       let str = input_line stdin in
-      txt := str)) in
+      txt := str) ^ " ") in
   (node, fun _ -> !txt)
 
 let createPercentageInput d =
   let d = max 0. (min 1. d) in
   let v = ref (100. *. d) in
   let node link =
-    Print.newline () ;
-    Print.print (string_of_float !v ^ "% " ^ link (fun _ ->
+    Print.print (" " ^ string_of_float !v ^ "% " ^ link (fun _ ->
       print_string (string_of_float !v ^ "% -> ") ;
       flush stdout ;
       let str = input_line stdin in
@@ -462,33 +436,31 @@ let createPercentageInput d =
       let v' =
         try float_of_string str
         with _ -> print_endline "Invalid value."; !v in
-      v := max 0. (min v' 100.))) in
+      v := max 0. (min v' 100.)) ^ " ") in
   (node, fun _ -> !v /. 100.)
 
 let createDateInput d =
   let v = ref d in
   let node link =
-    Print.newline () ;
-    Print.print (Date.iso8601 !v ^ " " ^ link (fun _ ->
+    Print.print (" " ^ Date.iso8601 !v ^ " " ^ link (fun _ ->
       print_string (Date.iso8601 !v ^ " -> ") ;
       flush stdout ;
       let str = input_line stdin in
       let v' =
         try Date.from_iso8601 str
         with _ -> print_endline "Invalid date."; !v in
-      v := v')) in
+      v := v') ^ " ") in
   (node, fun _ -> !v)
 
 let createSwitch text texton textoff b f =
   let b = ref b in
   let node link =
-    Print.newline () ;
     let text =
-      (if !b then "[X]" else "[ ]") ^ " "
+      " [" ^ (if !b then "X" else " ") ^ "] "
       ^ link (fun _ -> b := not !b ; print_newline () ; f ())
-      ^ " " ^ text
+      ^ (if text <> "" then " " ^ text else "")
       ^ Option.map_default (fun str -> " " ^ str) ""
-          (if !b then texton else textoff) in
+          (if !b then texton else textoff) ^ " " in
     block_node (Text text) link in
   (node, (fun v -> b := v), fun _ -> !b)
 
@@ -499,12 +471,11 @@ let createFileImport extensions prepare =
       String.concat "," (List.map (fun str -> "*." ^ str) extensions) in
     if text = "" then "*" else text in
   let node link =
-    Print.newline () ;
-    Print.print ("<" ^ (if !file = "" then extensions else !file) ^ "> "
+    Print.print (" <" ^ (if !file = "" then extensions else !file) ^ "> "
                  ^ link (fun _ ->
       print_string ("<" ^ extensions ^ "> -> ") ;
       flush stdout ;
-      file := input_line stdin)) in
+      file := input_line stdin) ^ " ") in
   (node, fun _ ->
     prepare () ;%lwt
     let file = !file in

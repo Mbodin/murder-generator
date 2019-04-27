@@ -86,7 +86,7 @@ let negative s v =
 
 (** Replace the characters '"' by '\"' and '\' by '\\'. **)
 let escape_quote str =
-  let replace input = Str.global_replace (Str.regexp_string input) in
+  let replace input = Re.Str.global_replace (Re.Str.regexp_string input) in
   replace "\"" "\\\"" (replace "\\" "\\\\" str)
 
 let to_graphviz s =
@@ -137,6 +137,7 @@ let to_icalendar s =
     let tr_players = translation_players s in
     let id_postfix =
       "-" ^ string_of_int (Hashtbl.hash s.names)
+      ^ "-" ^ string_of_int (Hashtbl.hash s.state)
       ^ "-" ^ string_of_int (Random.bits ())
       ^ "-" ^ string_of_float (Sys.time ())
       ^ "-" ^ Date.rfc2445 Date.now
@@ -144,8 +145,6 @@ let to_icalendar s =
     List.concat (List.map (fun e ->
       "BEGIN:VEVENT"
       :: ("UID:" ^ string_of_int (Random.bits ())
-                 ^ Date.rfc2445 e.History.event_begin
-                 ^ Date.rfc2445 e.History.event_end
                  ^ "-" ^ string_of_int (Hashtbl.hash e) ^ id_postfix)
       :: ("DTSTAMP:" ^ Date.rfc2445 Date.now)
       :: ("DTSTART:" ^ Date.rfc2445 e.History.event_begin)

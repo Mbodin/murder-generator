@@ -17,13 +17,13 @@ type state = {
     state : State.final (** The actual generated state. **)
   }
 
-(** Produces a Graphviz representation of the interactions between players. **)
+(** Produce a Graphviz representation of the interactions between players. **)
 val to_graphviz : state -> string
 
-(** Produces a JSON representation of the state. **)
+(** Produce a JSON representation of the state. **)
 val to_json : state -> string
 
-(** Reverts [to_json] back to a list of names and a state.
+(** Revert [to_json] back to a list of names and a state.
  * The first argument is the file name (to report errors), and the second one
  * its actual content. **)
 val from_json : Attribute.constructor_maps -> string -> string -> string list * State.t

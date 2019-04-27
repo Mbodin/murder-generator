@@ -130,7 +130,7 @@ fi
 # Compile to bytecode
 echo "${COLOR}Compiling to bytecode as ${TARGET}.${EXT}…${ROLOC}"
 ocamlbuild -use-ocamlfind -Is src,lib,dummy \
-           -pkgs unix,extlib,str,yojson,lwt,lwt_ppx,ppx_deriving${ADDITIONALPACKAGES} \
+           -pkgs unix,extlib,yojson,re,lwt,lwt_ppx,ppx_deriving${ADDITIONALPACKAGES} \
            -use-menhir -menhir "menhir --explain" \
            -tags "optimize(3)${DEBUGFLAG}${ADDITIONALFLAGS}" \
            $TARGET.$EXT

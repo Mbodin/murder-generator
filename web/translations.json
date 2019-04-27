@@ -46,7 +46,7 @@
     "nameStartVowels": "A,E,I,O,U",
     "nameStartConsonant": "B,D,F,G,Ĝ,J,Ĵ,K,L,M,N,P,R,S,T;H,Ŝ,C,Ĉ,V,Z;Ĥ",
     "nameMiddleVowels": "a,e,i,o,u;aŭ;io,eŭ",
-    "nameMiddleConsonant": "b,c,d,f,g,j,k,l,m,n,p,r,s,ŝ,t,v,z;h,ĉ,ĝ,lj,ĵ;ĥ,nj",
+    "nameMiddleConsonant": "b,c,d,f,g,j,k,l,m,n,p,r,s,ŝ,t,v,z;h,ĉ,ĝ,lj,ĵ;ĥ,nj;st,kv;",
     "nameEndVowels": "o,ino",
     "nameEndConsonant": "ĉjo,njo",
     "nameSize": "5",

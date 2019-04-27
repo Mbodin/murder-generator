@@ -8,7 +8,7 @@ open ExtString
 
 (** This entire file is parameterised by an interface as specified in the
  * InOut Module. **)
-module Main (InOut : InOut.T) = struct
+module Main (IO : InOut.T) = struct
 
 let webpage_link = "https://github.com/Mbodin/murder-generator"
 let webpage_issues = "https://github.com/Mbodin/murder-generator/issues"
@@ -25,13 +25,13 @@ let errorTranslations = ref errorTranslationsDefault
 let get_translations _ =
   let%lwt (translation, languages) =
     let translations_file = "web/translations.json" in
-    let%lwt translations = InOut.get_file translations_file in
+    let%lwt translations = IO.get_file translations_file in
     Lwt.return (Translation.from_json translations_file translations) in
   (** Shuffling languages, but putting the user languages on top. **)
   let (matching, nonmatching) =
     List.partition (fun lg ->
       let lg = Translation.iso639 lg in
-      List.exists (fun ulg -> String.exists ulg lg) InOut.languages) languages in
+      List.exists (fun ulg -> String.exists ulg lg) IO.languages) languages in
   Lwt.return (translation, Utils.shuffle matching @ Utils.shuffle nonmatching)
 
 (** Prints a list of strings, [andw] being the word for “and”
@@ -49,7 +49,7 @@ let print_list andw = function
 let get_data _ =
   let intermediate = ref Driver.empty_intermediary in
   Lwt_list.iter_p (fun fileName ->
-      let%lwt file = InOut.get_file fileName in
+      let%lwt file = IO.get_file fileName in
       let lexbuf = Lexing.from_string file in
       let file = Driver.parse_lexbuf fileName lexbuf in
       intermediate := Driver.prepare_declarations !intermediate file ;
@@ -86,7 +86,7 @@ type parameters = {
 (** The main script. **)
 let main =
   try%lwt
-    InOut.clear_response () ;
+    IO.clear_response () ;
     let%lwt (translation, languages) = get_translations () in
     let get_translation_language lg key =
       Utils.assert_option ("No key `" ^ key ^ "' found for language `"
@@ -104,7 +104,7 @@ let main =
     let next_button ?(previousText = "previous") ?(nextText = "next")
         w p get_parameters previous next =
       let jump f _ =
-        InOut.clear_response () ;
+        IO.clear_response () ;
         Lwt.wakeup_later w (fun _ -> f (get_parameters ())) in
       let createListButton dir text f =
         match f with
@@ -113,7 +113,7 @@ let main =
           [ InOut.LinkContinuation (dir, get_translation p text, jump f) ] in
       let previous = createListButton false previousText previous in
       let next = createListButton true nextText next in
-      InOut.print_block (InOut.Div (InOut.Centered,
+      IO.print_block (InOut.Div (InOut.Centered,
         if previous = [] || next = [] then previous @ next
         else previous @ [ InOut.Space ] @ next)) in
     (** We request the data without forcing it yet. **)
@@ -123,42 +123,42 @@ let main =
       (** Showing to the user all available languages. **)
       let%lwt language =
         let (res, w) = Lwt.task () in
-        InOut.print_block (InOut.Div (InOut.Normal, List.map (fun lg ->
+        IO.print_block (InOut.Div (InOut.Normal, List.map (fun lg ->
           let get_translation = get_translation_language lg in
           InOut.Div (InOut.Centered, [
             InOut.P [ InOut.LinkContinuation (true, get_translation "name",
               fun _ ->
-                InOut.clear_response () ;
+                IO.clear_response () ;
                 errorTranslations :=
                   (get_translation "error", get_translation "report",
                    get_translation "there", get_translation "errorDetails") ;
                 Lwt.wakeup_later w lg) ]])) languages)) ;
-        InOut.stopLoading () ;%lwt
+        IO.stopLoading () ;%lwt
         res in
       load_or_create { parameters with language = Some language }
     and load_or_create parameters =
       let get_translation = get_translation parameters in
       let (cont, w) = Lwt.task () in
       (** Describing the project to the user. **)
-      InOut.print_block (InOut.P [
+      IO.print_block (InOut.P [
           InOut.Text (get_translation "description") ;
           InOut.Text (get_translation "openSource") ;
           InOut.Link (get_translation "there", webpage_link)
         ]) ;
       (** Start a new scenario. **)
-      InOut.print_block (InOut.P [
+      IO.print_block (InOut.P [
           InOut.Text (get_translation "createNewScenario") ;
           InOut.LinkContinuation (true, get_translation "startGeneration",
             fun _ ->
               Lwt.wakeup_later w (fun _ ->
-                InOut.clear_response () ;
+                IO.clear_response () ;
                 ask_for_basic parameters)) ]) ;
       (** Suggest to shortcut the generation by importing a file. **)
       let (shortcut, readShortcut) =
-        InOut.createFileImport ["json"] (fun _ ->
-          InOut.clear_response () ;
-          InOut.startLoading ()) in
-      InOut.print_block (InOut.Div (InOut.Normal, [
+        IO.createFileImport ["json"] (fun _ ->
+          IO.clear_response () ;
+          IO.startLoading ()) in
+      IO.print_block (InOut.Div (InOut.Normal, [
           InOut.P [ InOut.Text (get_translation "importFileShortcut") ] ;
           InOut.Div (InOut.Centered, [
               InOut.Node shortcut ;
@@ -167,9 +167,9 @@ let main =
                   Lwt.wakeup_later w (fun _ ->
                     let%lwt (fileName, str) = readShortcut () in
                     if fileName = "" && str = "" then (
-                      InOut.print_block ~error:true (InOut.P [
+                      IO.print_block ~error:true (InOut.P [
                         InOut.Text (get_translation "noFileSelected") ]) ;
-                      InOut.stopLoading () ;%lwt
+                      IO.stopLoading () ;%lwt
                       load_or_create parameters
                     ) else (
                       let%lwt data = data in
@@ -199,14 +199,14 @@ let main =
       let (cont, w) = Lwt.task () in
       (** Asking the first basic questions about the murder party. **)
       let (playerNumber, readPlayerNumber) =
-        InOut.createNumberInput ~min:1 parameters.player_number in
-      InOut.print_block (InOut.P [
+        IO.createNumberInput ~min:1 parameters.player_number in
+      IO.print_block (InOut.P [
           InOut.Text (get_translation "howManyPlayers") ;
           InOut.Node playerNumber
         ]) ;
       let (generalLevel, readGeneralLevel) =
-        InOut.createPercentageInput parameters.general_level in
-      InOut.print_block (InOut.Div (InOut.Normal, [
+        IO.createPercentageInput parameters.general_level in
+      IO.print_block (InOut.Div (InOut.Normal, [
           InOut.P [ InOut.Text (get_translation "experience") ] ;
           InOut.Div (InOut.Centered, [
               InOut.Text (get_translation "beginner") ;
@@ -215,8 +215,8 @@ let main =
             ])
         ])) ;
       let (generalComplexity, readGeneralComplexity) =
-        InOut.createPercentageInput parameters.general_complexity in
-      InOut.print_block (InOut.Div (InOut.Normal, [
+        IO.createPercentageInput parameters.general_complexity in
+      IO.print_block (InOut.Div (InOut.Normal, [
           InOut.P [ InOut.Text (get_translation "lengthOfCharacterSheets") ] ;
           InOut.Div (InOut.Centered, [
               InOut.Text (get_translation "shortSheets") ;
@@ -225,14 +225,14 @@ let main =
             ])
         ])) ;
       let (playDate, readPlayDate) =
-        InOut.createDateInput parameters.play_date in
-      InOut.print_block (InOut.P [
+        IO.createDateInput parameters.play_date in
+      IO.print_block (InOut.P [
           InOut.Text (get_translation "whenDoYouPlanToPlay") ;
           InOut.Node playDate
         ]) ;
       let (fastOrSlow, readFastOrSlow) =
-        InOut.createPercentageInput parameters.computation_power in
-      InOut.print_block (InOut.Div (InOut.Normal, [
+        IO.createPercentageInput parameters.computation_power in
+      IO.print_block (InOut.Div (InOut.Normal, [
           InOut.P [ InOut.Text (get_translation "fastOrSlowGeneration") ] ;
           InOut.Div (InOut.Centered, [
               InOut.Text (get_translation "fastGeneration") ;
@@ -254,10 +254,10 @@ let main =
       let (cont, w) = Lwt.task () in
       (** Forcing the data to be loaded. **)
       (if Lwt.state data = Lwt.Sleep then
-        InOut.startLoading ()
+        IO.startLoading ()
       else Lwt.return ()) ;%lwt
       let%lwt data = data in
-      InOut.stopLoading () ;%lwt
+      IO.stopLoading () ;%lwt
       (** Asking about categories. **)
       let translate_categories =
         let translate_categories =
@@ -281,7 +281,7 @@ let main =
               Some ("(" ^ get_translation "categoryDepends" ^ " "
                     ^ print_list (get_translation "and") deps ^ ")") in
           let (e, set, get) =
-            InOut.createSwitch (translate_categories c)
+            IO.createSwitch (translate_categories c)
               None dependencies (PSet.mem c selected_categories)
               (fun _ -> !onCategoryClick c) in
           PMap.add c (e, set, get, PSet.empty) m) PMap.empty all_categories in
@@ -303,7 +303,7 @@ let main =
           PSet.iter (fun c ->
             let (_, set, _, _) = PMap.find c categoriesButtons in
             set false) ideps) ;
-      InOut.print_block (InOut.Div (InOut.Normal, [
+      IO.print_block (InOut.Div (InOut.Normal, [
           InOut.P [ InOut.Text (get_translation "unselectCategories") ] ;
           InOut.Div (InOut.Centered, [
               InOut.LinkContinuation (false, get_translation "noCategories",
@@ -334,7 +334,7 @@ let main =
       let player_number = parameters.player_number in
       let categories = Utils.assert_option __LOC__ parameters.categories in
       (** Asking about individual player constraints. **)
-      InOut.print_block (InOut.Div (InOut.Normal, [
+      IO.print_block (InOut.Div (InOut.Normal, [
         InOut.P [ InOut.Text (get_translation "individualConstraints") ] ;
         InOut.P [ InOut.Text (get_translation "complexityDifficultyExplanation") ] ;
         InOut.List (true, [
@@ -378,11 +378,11 @@ let main =
         in
       let table =
         List.map (fun (name, complexity, difficulty, _) ->
-          (InOut.createTextInput name,
-           InOut.createNumberInput complexity,
-           InOut.createNumberInput difficulty,
+          (IO.createTextInput name,
+           IO.createNumberInput complexity,
+           IO.createNumberInput difficulty,
            InOut.Space)) player_information in
-      InOut.print_block (InOut.Div (InOut.Normal, [
+      IO.print_block (InOut.Div (InOut.Normal, [
         InOut.P [ InOut.Text (get_translation "changeThisTable") ] ;
         InOut.Div (InOut.Centered, [
           InOut.Table ([InOut.Text (get_translation "playerName") ;
@@ -408,7 +408,7 @@ let main =
     and generate parameters =
       (** Starts the generation! **)
       let state =
-        InOut.pause () ;%lwt
+        IO.pause () ;%lwt
         let%lwt data = data in
         let categories = Utils.assert_option __LOC__ parameters.categories in
         let global =
@@ -427,18 +427,18 @@ let main =
         let state = State.create_state parameters.player_number in
         (* TODO: Update the state according to the miscellaneous player
          * informations. *)
-        Solver.solve InOut.pause global state objectives in
+        Solver.solve IO.pause global state objectives in
       chooseFormats state parameters
     and chooseFormats state parameters =
       let get_translation = get_translation parameters in
       let (cont, w) = Lwt.task () in
       if Lwt.state state = Lwt.Sleep then
-        InOut.print_block (InOut.P [
+        IO.print_block (InOut.P [
           InOut.Text (get_translation "backgroundGeneration")]) ;
       let exportButtons =
         List.map (fun (name, descr, _, _, _, _) ->
             let (node, set, get) =
-              InOut.createSwitch (get_translation "generateAs"
+              IO.createSwitch (get_translation "generateAs"
                                   ^ " " ^ get_translation name) None None
                 (PSet.mem name parameters.chosen_productions) Utils.id in
             let node =
@@ -447,18 +447,18 @@ let main =
                 InOut.Text (get_translation descr) ]) in
             (name, node, set, get))
           Export.all_production in
-      InOut.print_block (InOut.Div (InOut.Normal, [
+      IO.print_block (InOut.Div (InOut.Normal, [
           InOut.P [ InOut.Text (get_translation "exportPossibilities") ] ;
           InOut.List (false,
             List.map (fun (_, node, _, _) -> node) exportButtons)
         ])) ;
       let check cont parameters =
         if PSet.is_empty parameters.chosen_productions then (
-          InOut.print_block ~error:true (InOut.P [
+          IO.print_block ~error:true (InOut.P [
             InOut.Text (get_translation "noProductionSelected") ]) ;
           chooseFormats state parameters
         ) else (
-          InOut.startLoading () ;%lwt
+          IO.startLoading () ;%lwt
           cont parameters
         ) in
       next_button w parameters (fun _ ->
@@ -482,7 +482,7 @@ let main =
           Export.generic_translation = translation ;
           Export.state = final
         } in
-      InOut.print_block (InOut.Div (InOut.Normal, [
+      IO.print_block (InOut.Div (InOut.Normal, [
           InOut.P [ InOut.Text (get_translation "exportList") ] ;
           InOut.List (true,
           List.map (fun (name, descr, mime, ext, native, f) ->
@@ -496,8 +496,8 @@ let main =
                        PSet.mem name parameters.chosen_productions)
                      Export.all_production))
         ])) ;
-      InOut.stopLoading () ;%lwt
-      InOut.print_block (InOut.P [
+      IO.stopLoading () ;%lwt
+      IO.print_block (InOut.P [
         InOut.Text (get_translation "underConstruction") ;
         InOut.Text (get_translation "participate") ;
         InOut.Link (get_translation "there", webpage_link) ]) ;
@@ -520,7 +520,7 @@ let main =
   with e ->
     try%lwt
       let (errorOccurred, reportIt, there, errorDetails) = !errorTranslations in
-      InOut.print_block ~error:true (InOut.Div (InOut.Normal, [
+      IO.print_block ~error:true (InOut.Div (InOut.Normal, [
           InOut.P [
               InOut.Text errorOccurred ; InOut.Text reportIt ;
               InOut.Link (there, webpage_issues)
@@ -530,14 +530,14 @@ let main =
               InOut.Text (Printexc.to_string e)
             ]
         ])) ;
-      InOut.stopLoading () ;%lwt
+      IO.stopLoading () ;%lwt
       Lwt.return ()
     with e' -> (** If there have been an error when printing the error,
                 * we failback to the console. **)
-      InOut.log "Unfortunately, a important error happened." ;
-      InOut.log ("Please report it to " ^ webpage_issues) ;
-      InOut.log ("Primary error details: " ^ Printexc.to_string e) ;
-      InOut.log ("Secondary error details: " ^ Printexc.to_string e') ;
+      IO.log "Unfortunately, a important error happened." ;
+      IO.log ("Please report it to " ^ webpage_issues) ;
+      IO.log ("Primary error details: " ^ Printexc.to_string e) ;
+      IO.log ("Secondary error details: " ^ Printexc.to_string e') ;
       Lwt.return ()
 
 end

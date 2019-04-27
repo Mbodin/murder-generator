@@ -118,6 +118,39 @@ a:hover::before {
   margin-right: 1em ;
 }
 
+.foldable h3 {
+  color: #75507b ;
+  text-decoration: none ;
+  font-size: large ;
+  cursor: pointer ;
+}
+
+.foldable h3:hover {
+  color: #5c3566 ;
+}
+
+.foldable h3.unfolded::before {
+  content: "-" ;
+}
+
+.foldable h3.folded::before {
+  content: "+" ;
+}
+
+.foldable h3::before {
+  color: #75507b ;
+  display: inline-block ;
+  width: 1em ;
+}
+
+.foldable h3.unfolded + div {
+  display: block ;
+}
+
+.foldable h3.folded + div {
+  display: none ;
+}
+
 ul {
   list-style-type: none ;
 }

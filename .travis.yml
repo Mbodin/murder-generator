@@ -29,7 +29,7 @@ install:
   - eval `${HOME}/opam config env`
   - ${HOME}/opam switch ${OCAML_VERSION}
   - eval `${HOME}/opam config env`
-  - ${HOME}/opam install ocamlfind extlib menhir yojson re
+  - ${HOME}/opam install ocamlfind extlib menhir yojson re uuseg
   - ${HOME}/opam install js_of_ocaml js_of_ocaml-ppx lwt_ppx js_of_ocaml-lwt
   - ${HOME}/opam install ppx_deriving js_of_ocaml-ppx_deriving_json
 

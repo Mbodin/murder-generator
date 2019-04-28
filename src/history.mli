@@ -53,8 +53,8 @@ val lapply : t -> character Events.t list -> t
 (** (Deeply) copies the state. **)
 val copy : t -> t
 
-(** Creates an empty history state for the given number n of characters,
- * each indexed from 0 to n - 1. **)
+(** Creates an empty history state for the given number [n] of characters,
+ * each indexed from [0] to [n - 1]. **)
 val create_state : int -> t
 
 (** Provide an actual instantiation of each event’s date and time.

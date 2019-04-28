@@ -47,7 +47,7 @@ type 'character t = {
       (** Only used when extracting the event: the list of attendees, in the
        * same order that they are declared in the event. **) ;
     event_kinds : ('character, 'character kind PSet.t) PMap.t
-      (** The set of event kinds that this event inherit from, for each
+      (** The set of event kinds that this event inherits from, for each
        * player. **) ;
     constraints_none :
       ('character, 'character kind PSet.t * 'character kind PSet.t) PMap.t

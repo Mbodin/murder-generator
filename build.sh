@@ -123,7 +123,7 @@ then
   ADDITIONALPACKAGES=",js_of_ocaml,js_of_ocaml-lwt,js_of_ocaml-ppx,js_of_ocaml-ppx.deriving,js_of_ocaml.deriving"
   ADDITIONALFLAGS=""
 else
-  ADDITIONALPACKAGES=",lwt.unix"
+  ADDITIONALPACKAGES=",uuseg.string,lwt.unix"
   ADDITIONALFLAGS=",thread"
 fi
 

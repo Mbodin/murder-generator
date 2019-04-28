@@ -1,6 +1,9 @@
 (** Module InOut_native
  * An implementation of [InOut.T] for native programs. **)
 
+(** Length of utf-8-encoded string. **)
+let unicode_length =
+  Uuseg_string.fold_utf_8 `Grapheme_cluster (fun x _ -> x + 1) 0
 
 let pause = Lwt.return
 
@@ -97,8 +100,8 @@ module Print : PrintType =
 
     (** How much space a given context takes. **)
     let context_size = function
-      | Prefix str -> String.length str
-      | Suffix str -> String.length str
+      | Prefix str -> unicode_length str
+      | Suffix str -> unicode_length str
       | Center -> 0
 
     (** Push a context. **)
@@ -121,12 +124,13 @@ module Print : PrintType =
       let rec aux taken = function
         | [] -> str
         | ctx :: l ->
-          let str = aux (taken + context_size ctx) l in
+          let taken = taken + context_size ctx in
+          let str = aux taken l in
+          let size = max 0 (screen_size () - taken - unicode_length str) in
           match ctx with
           | Prefix pre -> pre ^ str
-          | Suffix suf -> str ^ suf
+          | Suffix suf -> str ^ String.make size ' ' ^ suf
           | Center ->
-            let size = max 0 (screen_size () - taken - String.length str) in
             String.make (size / 2) ' ' ^ str ^ String.make (size - size / 2) ' ' in
       print_endline (aux 0 (List.rev (fst context)))
 
@@ -174,7 +178,7 @@ module Print : PrintType =
         !state.text_before ^ !state.breakpoint.normal ^ !state.text_after in
       let text =
         let size =
-          max 0 (screen_size () - snd !state.state_context - String.length text) in
+          max 0 (screen_size () - snd !state.state_context - unicode_length text) in
         text ^ String.make size c in
       print_line !state.state_context text ;
       state := empty_state ()
@@ -182,9 +186,9 @@ module Print : PrintType =
     (** Indicate that we aim to print a string of the given size on the same
      * line, and break the line if needed and possible. **)
     let reserve_for size =
-      if String.length !state.text_before
-         + String.length !state.breakpoint.normal
-         + String.length !state.text_after
+      if unicode_length !state.text_before
+         + unicode_length !state.breakpoint.normal
+         + unicode_length !state.text_after
          + size >= screen_size () - snd !state.state_context
          && (!state.text_before <> ""
              || !state.breakpoint.break_before <> ""
@@ -226,7 +230,7 @@ module Print : PrintType =
       clearline ()
 
     let breakpoint ?(normal = "") ?(break = ("", "")) _ =
-      reserve_for (String.length normal) ;
+      reserve_for (unicode_length normal) ;
       state := {
           state_context = !state.state_context ;
           text_before =
@@ -253,9 +257,10 @@ module Print : PrintType =
 type node =
   ((unit -> unit) -> string) -> unit
 
-let rec block_node b link =
+let rec block_node b =
   match b with
   | InOut.Div (layout, l) ->
+    let l = List.map block_node l in fun link ->
     if layout <> Inlined then Print.clearline () ;
     let pop =
       match layout with
@@ -272,55 +277,58 @@ let rec block_node b link =
           Print.pop () ;
           Print.clearline ()
       | InOut.Inlined -> Utils.id in
-    List.iter (fun b -> block_node b link) l ;
+    List.iter (fun b -> b link) l ;
     pop ()
   | InOut.P l ->
+    let l = List.map block_node l in fun link ->
     Print.clearline () ;
     Print.push_prefix " " ;
     Print.print "  " ;
-    List.iter (fun b -> block_node b link) l ;
+    List.iter (fun b -> b link) l ;
     Print.pop () ;
     Print.clearline () ;
   | InOut.List (drawn, l) ->
+    let l = List.map block_node l in fun link ->
     List.iter (fun b ->
       if drawn then (
         Print.clearline () ;
         Print.print "* " ;
         Print.push_prefix "  " ;
-        block_node b link ;
+        b link ;
         Print.pop ()
       ) else (
         Print.clearline () ;
-        block_node b link
+        b link
       )) l
-  | InOut.Space ->
+  | InOut.Space -> fun link ->
     Print.breakpoint ~normal:"  " ()
-  | InOut.Text str ->
+  | InOut.Text str -> fun link ->
     List.iteri (fun i str ->
       if i <> 0 then Print.space () ;
       Print.print str) (String.split_on_char ' ' str)
   | InOut.FoldableBlock (visible, title, node) ->
     let visible = ref visible in
+    let node = block_node  node in fun link ->
     Print.clearline () ;
-    Print.print "+ " ;
+    Print.print ((if !visible then "-" else "+") ^ " ") ;
     Print.push_prefix "  " ;
     let text_link = link (fun _ -> visible := not !visible; print_newline ()) in
     block_node (Text (text_link ^ " " ^ title)) link ;
     if !visible then (
       Print.newline () ;
-      block_node node link
+      node link
     ) ;
     Print.pop ()
-  | InOut.Link (text, address) ->
+  | InOut.Link (text, address) -> fun link ->
     let text_link = link (fun _ -> Print.print address) in
     block_node (Text (text ^ " " ^ text_link)) link
-  | InOut.LinkContinuation (forward, text, cont) ->
+  | InOut.LinkContinuation (forward, text, cont) -> fun link ->
     let text_link = link cont in
     let str =
       if forward then text ^ " " ^ text_link
       else text_link ^ " " ^ text in
     block_node (Text str) link
-  | InOut.LinkFile (text, fileName, mime, newlines, content) ->
+  | InOut.LinkFile (text, fileName, mime, newlines, content) -> fun link ->
     block_node (LinkContinuation (true, text, fun _ ->
       print_string ("[" ^ fileName ^ "] > ") ;
       flush stdout ;
@@ -330,9 +338,9 @@ let rec block_node b link =
       let channel = open_out fileName in
       output_string channel (content ()) ;
       close_out channel)) link
-  | InOut.Table (headers, content) ->
+  | InOut.Table (headers, content) -> fun link ->
     block_node (Text "<table>") link (* TODO *)
-  | InOut.Node node -> node link
+  | InOut.Node node -> node
 
 (** Actions linked to each link. **)
 let links = ref []
@@ -363,6 +371,7 @@ let clear_links _ =
 (** Starting the server. **)
 let _ =
   Print.push_prefix "=" ;
+  Print.push_suffix "=" ;
   let rec aux _ =
     clear_links () ;
     (** Print all registered nodes. **)
@@ -393,7 +402,9 @@ let print_node ?(error = false) n =
   let n link =
     header () ;
     Print.push_prefix (String.make 1 symbol ^ " ") ;
+    Print.push_suffix (String.make 1 symbol) ;
     n link ;
+    Print.pop () ;
     Print.pop () ;
     header () in
   registered_nodes := BidirectionalList.add_right !registered_nodes n ;
@@ -429,7 +440,7 @@ let createPercentageInput d =
       flush stdout ;
       let str = input_line stdin in
       let str =
-        let len = String.length str in
+        let len = unicode_length str in
         if len > 0 && str.[len - 1] = '%' then
           String.sub str 0 (len - 1)
         else str in

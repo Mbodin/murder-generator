@@ -32,7 +32,7 @@ eval `opam config env`
 To compile this project, you will need some Opam packages.
 Running the following commands should install them.
 ```bash
-opam install ocamlfind extlib menhir yojson re
+opam install ocamlfind extlib menhir yojson re uuseg
 opam install js_of_ocaml js_of_ocaml-ppx lwt_ppx js_of_ocaml-lwt
 opam install ppx_deriving js_of_ocaml-ppx_deriving_json
 eval `opam config env`

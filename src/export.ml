@@ -185,9 +185,8 @@ let to_block s =
           List.map (fun text -> InOut.Text text)
             (translate_event s tr_players e.History.event)) ;
         InOut.P [
-            InOut.Text (Date.rfc2445 e.History.event_begin) ;
-            InOut.Text "–" ;
-            InOut.Text (Date.rfc2445 e.History.event_end) ;
+            InOut.Text (Date.orgmode_range
+              e.History.event_begin e.History.event_end) ;
             InOut.Space ;
             InOut.Text ("("
               ^ String.concat ", "

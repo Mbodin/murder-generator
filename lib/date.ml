@@ -12,9 +12,6 @@ let now =
 
 let max_date = (max_int / 2, 0, 0)
 
-let add_years (y, d, m) i =
-    (y + i, d, m)
-
 let leap_year y =
   if y mod 4 <> 0 then false
   else if y mod 100 <> 0 then true
@@ -23,17 +20,24 @@ let leap_year y =
 let size_year y =
   if leap_year y then 366 else 365
 
+let add_years (y, d, m) i =
+  let y = y + i in
+  if d >= size_year y then
+    (y + 1, d - size_year y, m)
+  else (y, d, m)
+
 let rec add_days (y, d, m) i =
   if d + i < 0 then
-    add_days (add_years (y, d, m) (-1)) (i + size_year (y - 1))
+    add_days (add_years (y, 0, m) (-1)) (size_year y + d + i)
   else if d + i < size_year y then
     (y, d + i, m)
   else add_days (add_years (y, d, m) 1) (i - size_year y)
 
 let rec add_minutes (y, d, m) i =
   if m + i < 0 then
-    let mp = -((-m - i) mod (60 * 24)) in
-    add_days (y, d, mp) ((m + i) / 60 * 24 - 1)
+    let mp = Utils.positive_mod (m + i) (60 * 24) in
+    let dd = (m + i - mp) / (60 * 24) in
+    add_days (y, d, mp) dd
   else if m + i < 60 * 24 then
     (y, d, m + i)
   else add_days (y, d, (m + i) mod (60 * 24)) ((m + i) / (60 * 24))
@@ -44,7 +48,7 @@ let rec add_minutes (y, d, m) i =
  * This function effectively normalises an unnormalised date so
  * that functions that might produce non-normalised intermediate
  * dates can normalise them. **)
-let normalise d = add_days (add_minutes d 0) 0
+let normalise d = add_years (add_days (add_minutes d 0) 0) 0
 
 let compare (y1, d1, m1) (y2, d2, m2) =
   if y1 < y2 then -1
@@ -141,17 +145,20 @@ let orgmode ?(active = false) (y, d, m) =
   ^ orgmode_end active
 
 let orgmode_range ?(active = false) (y1, d1, m1) (y2, d2, m2) =
-  let (month1, day1) = month_day (y1, d1, m1) in
-  let (month2, day2) = month_day (y2, d2, m2) in
-  if (y1, month1, day1) = (y2, month2, day2) then
-    orgmode_start active
-    ^ Utils.complete_string_pre "0" (string_of_int y1) 4
-    ^ "-" ^ Utils.complete_string_pre "0" (string_of_int month1) 2
-    ^ "-" ^ Utils.complete_string_pre "0" (string_of_int day1) 2
-    ^ " _ " ^ string_of_int (m1 / 60)
-    ^ ":" ^ string_of_int (m1 mod 60)
-    ^ "-" ^ string_of_int (m2 / 60)
-    ^ ":" ^ string_of_int (m2 mod 60)
-    ^ orgmode_end active
-  else orgmode (y1, d1, m1) ^ "--" ^ orgmode (y2, d2, m2)
+  if (y1, d1, m1) = (y2, d2, m2) then
+    orgmode ~active:false (y1, d1, m1)
+  else
+    let (month1, day1) = month_day (y1, d1, m1) in
+    let (month2, day2) = month_day (y2, d2, m2) in
+    if (y1, month1, day1) = (y2, month2, day2) then
+      orgmode_start active
+      ^ Utils.complete_string_pre "0" (string_of_int y1) 4
+      ^ "-" ^ Utils.complete_string_pre "0" (string_of_int month1) 2
+      ^ "-" ^ Utils.complete_string_pre "0" (string_of_int day1) 2
+      ^ " _ " ^ string_of_int (m1 / 60)
+      ^ ":" ^ string_of_int (m1 mod 60)
+      ^ "-" ^ string_of_int (m2 / 60)
+      ^ ":" ^ string_of_int (m2 mod 60)
+      ^ orgmode_end active
+    else orgmode (y1, d1, m1) ^ "--" ^ orgmode (y2, d2, m2)
 

@@ -45,7 +45,7 @@ let compatible_events e1 e2 =
 
 type t = {
     events : character Events.t Id.map
-      (** Eventss are not stored directly in the timeline,
+      (** Events are not stored directly in the timeline,
        * but through identifiers. **) ;
     kind_map : (character Events.kind * character, Id.t PSet.t) PMap.t
       (** For each kind and character, returns a set of event identifiers
@@ -171,24 +171,26 @@ let get_full_constraints st el =
   aux constraints_before constraints_after el
 
 let lcompatible_and_progress st el =
-  let rec aux r = function
-    | [] -> Some r
-    | (sb, sa, e) :: l ->
-      if not (PSet.is_empty (PSet.inter sb sa)) then
-        None
-      else
-        aux (r || PMap.foldi (fun c ks r ->
-          r || let m =
-                 try PMap.find c st.constraints_some
-                 with Not_found -> PMap.empty in
-               PSet.fold (fun k r ->
-                   r || let (before, after) =
-                          try PMap.find k m
-                          with Not_found -> (PSet.empty, PSet.empty) in
-                        not (PSet.is_empty (PSet.inter before sb))
-                        || not (PSet.is_empty (PSet.inter after sa)))
-                 false ks) e.Events.event_kinds false) l in
-  aux false (get_full_constraints st el)
+  if List.exists (fun e -> Id.get_id st.events e <> None) el then None
+  else
+    let rec aux r = function
+      | [] -> Some r
+      | (sb, sa, e) :: l ->
+        if not (PSet.is_empty (PSet.inter sb sa)) then
+          None
+        else
+          aux (r || PMap.foldi (fun c ks r ->
+            r || let m =
+                   try PMap.find c st.constraints_some
+                   with Not_found -> PMap.empty in
+                 PSet.fold (fun k r ->
+                     r || let (before, after) =
+                            try PMap.find k m
+                            with Not_found -> (PSet.empty, PSet.empty) in
+                          not (PSet.is_empty (PSet.inter before sb))
+                          || not (PSet.is_empty (PSet.inter after sa)))
+                   false ks) e.Events.event_kinds false) l in
+    aux false (get_full_constraints st el)
 
 let compatible_and_progress st e = lcompatible_and_progress st [e]
 
@@ -199,13 +201,13 @@ let make_before st e1 e2 =
     let (before, after) =
       try PMap.find e1 graph
       with Not_found -> ([], []) in
-    let after = if List.mem e1 after then after else e1 :: after in
+    let after = if List.mem e2 after then after else e2 :: after in
     PMap.add e1 (before, after) graph in
   let graph =
     let (before, after) =
       try PMap.find e2 graph
       with Not_found -> ([], []) in
-    let before = if List.mem e2 before then before else e2 :: before in
+    let before = if List.mem e1 before then before else e1 :: before in
     PMap.add e2 (before, after) graph in
   { st with graph = graph }
 
@@ -344,7 +346,16 @@ let finalise st now =
     let rec aux acc seen next = function
       | [] ->
         if next = [] then List.rev acc
-        else aux acc seen [] next
+        else (
+          let (ready, not_ready) =
+            List.partition (fun e ->
+              let (before, after) =
+                try PMap.find e st.graph
+                with Not_found -> ([], []) in
+              List.for_all (fun e -> PSet.mem e seen) after) next in
+          assert (ready <> []) ;
+          aux acc seen not_ready ready
+        )
       | e :: l ->
         if PSet.mem e seen then aux acc seen next l
         else
@@ -353,6 +364,7 @@ let finalise st now =
             with Not_found -> ([], []) in
           aux (e :: acc) (PSet.add e seen) (before @ next) l in
     aux [] PSet.empty [] start in
+  let sorted = List.rev sorted in
   (** We then assign timetables to this list. **)
   let (l, _) =
     List.fold_left (fun (acc, state) e ->
@@ -367,20 +379,18 @@ let finalise st now =
               try PMap.find e (fst state)
               with Not_found -> now in
             Date.min t t') now after)
-          (PMap.foldi (fun c ks t ->
-            PSet.fold (fun k ->
-              let t =
-                try PMap.find (c, k) (snd state)
-                with Not_found -> now in
-              Date.min t) t ks) ev.Events.event_kinds now) in
-      let t = Date.add_minutes t (- Utils.rand 0 5) in
+          (PSet.fold (fun c ->
+            let t =
+              try PMap.find (ev.Events.event_type, c) (snd state)
+              with Not_found -> now in
+            Date.min t) now ev.Events.event_attendees) in
+      let t = Date.add_minutes t (- Utils.rand 10 30) in
       let ev = generate_event_inv t ev in
       let state =
         (PMap.add e ev.event_begin (fst state),
-         PMap.foldi (fun c ks m ->
-             PSet.fold (fun k ->
-               PMap.add (c, k) ev.event_begin) m ks)
-           ev.event.Events.event_kinds (snd state)) in
+         PSet.fold (fun c ->
+             PMap.add (ev.event.Events.event_type, c) ev.event_begin)
+           (snd state) ev.event.Events.event_attendees) in
       (ev :: acc, state)) ([], (PMap.empty, PMap.empty)) sorted in
-  List.rev l
+  l
 

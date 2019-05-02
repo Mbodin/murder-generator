@@ -15,6 +15,13 @@ type event = {
  * an actual duration. **)
 val generate_event : Date.t -> character Events.t -> event
 
+(** Same as [generate_event], but takes as argument the ending
+ * date of an event. **)
+val generate_event_inv : Date.t -> character Events.t -> event
+
+(** Infer the kind of event from its starting and ending dates. **)
+val get_event_type : Date.t -> Date.t -> Events.event_type
+
 (** States whether two events are compatible, that is that they do not overlap,
  * or that they are of different types. **)
 val compatible_events : event -> event -> bool
@@ -60,4 +67,11 @@ val create_state : int -> t
 (** Provide an actual instantiation of each event’s date and time.
  * It needs the date of the played scenario. **)
 val finalise : t -> Date.t -> final
+
+(** Inverse of [finalise].
+ * There may be additional connections in the generated timeline
+ * than in the original one.
+ * This function only recovers what is possible to recover from
+ * the type [final]. **)
+val unfinalise : final -> t
 

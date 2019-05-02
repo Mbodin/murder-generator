@@ -15,8 +15,7 @@ let generate_event beg e =
     | Events.Medium_term_event -> Date.add_days beg (Utils.rand 14 100)
     | Events.Short_term_event -> Date.add_days beg (Utils.rand 2 10)
     | Events.Very_short_term_event -> Date.add_minutes beg (Utils.rand 2 300)
-    | Events.Immediate_event -> beg
-  in {
+    | Events.Immediate_event -> beg in {
     event_begin = beg ;
     event_end = en ;
     event = e
@@ -30,12 +29,23 @@ let generate_event_inv en e =
     | Events.Medium_term_event -> Date.add_days en (- Utils.rand 14 100)
     | Events.Short_term_event -> Date.add_days en (- Utils.rand 2 10)
     | Events.Very_short_term_event -> Date.add_minutes en (- Utils.rand 2 300)
-    | Events.Immediate_event -> en
-  in {
+    | Events.Immediate_event -> en in {
     event_begin = beg ;
     event_end = en ;
     event = e
   }
+
+let get_event_type beg en =
+  let check f d r cont =
+    let begd = f beg d in
+    if Date.compare begd en <= 0 then r
+    else cont () in
+  check Date.add_years 20 Events.For_life_event (fun _ ->
+    check Date.add_years 1 Events.Long_term_event (fun _ ->
+      check Date.add_days 14 Events.Medium_term_event (fun _ ->
+        check Date.add_days 2 Events.Short_term_event (fun _ ->
+          check Date.add_minutes 2 Events.Very_short_term_event (fun _ ->
+            Events.Immediate_event)))))
 
 let compatible_events e1 e2 =
   e1.event.event_type <> e2.event.event_type
@@ -393,4 +403,47 @@ let finalise st now =
            (snd state) ev.event.Events.event_attendees) in
       (ev :: acc, state)) ([], (PMap.empty, PMap.empty)) sorted in
   l
+
+let unfinalise l =
+  let state =
+    let max_character =
+      List.fold_left (fun c e ->
+        let l =
+          List.map Id.to_array e.event.Events.event_attendees_list in
+        List.fold_left max c l) (-1) l in
+    create_state (1 + max_character) in
+  let lb =
+    List.sort (fun e1 e2 -> Date.compare e2.event_begin e1.event_begin) l in
+  let le =
+    List.sort (fun e1 e2 -> Date.compare e1.event_end e2.event_end) l in
+  let (state, l) =
+    let (events, l) =
+      List.fold_left (fun (m, l) ev ->
+        let (e, m) = Id.map_insert_t m ev.event in
+        (m, (e, ev) :: l)) (state.events, []) l in
+    ({ state with events = events }, l) in
+  let state =
+    List.fold_left (fun state (e, ev) ->
+      let rec auxb state = function
+        | [] -> state
+        | ev' :: l ->
+          if Date.compare ev.event_end ev'.event_begin <= 0 then
+            let e' =
+              Utils.assert_option __LOC__ (Id.get_id state.events ev'.event) in
+            let state = make_before state e e' in
+            auxb state l
+          else state in
+      let state = auxb state lb in
+      let rec auxe state = function
+        | [] -> state
+        | ev' :: l ->
+          if Date.compare ev'.event_end ev.event_begin <= 0 then
+            let e' =
+              Utils.assert_option __LOC__ (Id.get_id state.events ev'.event) in
+            let state = make_before state e' e in
+            auxe state l
+          else state in
+      let state = auxe state le in
+      state) state l in
+  state
 

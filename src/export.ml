@@ -133,8 +133,13 @@ let to_icalendar s =
       if String.length str < 75 then
         str :: split l
       else
-        String.sub str 0 74
-        :: split ((" " ^ String.sub str 74 (String.length str - 74)) :: l) in
+        let rec v i =
+          if int_of_char str.[i] < 128 then i
+          else if i = 1 then 1
+          else v (i - 1) in
+        let v = v 74 in
+        String.sub str 0 v
+        :: split ((" " ^ String.sub str v (String.length str - v)) :: l) in
   let events =
     let tr_players = translation_players s in
     let id_postfix =
@@ -314,6 +319,32 @@ let to_json s =
         ]) (State.get_history_final s.state))) ])
 
 let from_json m fileName fileContent =
+  let get_field_string fld l =
+    try match List.assoc fld l with
+    | `String name -> name
+    | _ -> failwith ("A field `" ^ fld ^ "' in file `" ^ fileName
+                     ^ "' is not a string.")
+    with Not_found ->
+      failwith ("Missing field `" ^ fld ^
+                "' in file `" ^ fileName ^ "'.") in
+  let get_field_int fld l =
+    try match List.assoc fld l with
+    | `Int v -> Some v
+    | _ -> failwith ("A field `" ^ fld ^ "' in file `" ^ fileName
+                     ^ "' is not an integer.")
+    with Not_found -> None in
+  let get_field_list fld l =
+    try match List.assoc fld l with
+    | `List l -> l
+    | _ -> failwith ("A field `" ^ fld ^ "' in file `" ^ fileName
+                     ^ "' is not a list.")
+    with Not_found -> [] in
+  let get_field_assoc fld l =
+    try match List.assoc fld l with
+    | `Assoc l -> l
+    | _ -> failwith ("A field `" ^ fld ^ "' in file `" ^ fileName
+                     ^ "' is not an object.")
+    with Not_found -> [] in
   match Yojson.Safe.from_string ~fname:fileName fileContent with
   | `Assoc l ->
     let events =
@@ -335,27 +366,7 @@ let from_json m fileName fileContent =
       Utils.list_fold_lefti (fun c (names, state) ->
         let c = Id.from_array c in function
         | `Assoc l ->
-          let name =
-            try match List.assoc "name" l with
-            | `String name -> name
-            | _ -> failwith ("A field `name' in file `" ^ fileName
-                             ^ "' is not a string.")
-            with Not_found ->
-              failwith ("Missing field `name' in file `" ^ fileName ^ "'.") in
-          let get_field_list fld =
-            try match List.assoc fld l with
-            | `List l -> l
-            | _ -> failwith ("A field `" ^ fld ^ "' in file `" ^ fileName
-                             ^ "' is not a list")
-            with
-            | Not_found -> [] in
-          let get_field_assoc fld =
-            try match List.assoc fld l with
-            | `Assoc l -> l
-            | _ -> failwith ("A field `" ^ fld ^ "' in file `" ^ fileName
-                             ^ "' is not an object")
-            with
-            | Not_found -> [] in
+          let name = get_field_string "name" l in
           let get_attribute en get m attribute =
             match get m attribute with
             | Some attribute -> attribute
@@ -369,7 +380,7 @@ let from_json m fileName fileContent =
               failwith ("Unknown " ^ en ^ " constructor `" ^ v ^ "' in file `"
                         ^ fileName ^ "'.") in
           let state =
-            let attributes = get_field_assoc "attributes" in
+            let attributes = get_field_assoc "attributes" l in
             List.fold_left (fun state -> function
               | (attribute, `String v) ->
                 let attribute =
@@ -387,7 +398,7 @@ let from_json m fileName fileContent =
                           ^ "' is supposed to be an attribute and thus associated"
                           ^ " to a string, which it is not.")) state attributes in
           let state =
-            let contacts = get_field_list "contacts" in
+            let contacts = get_field_list "contacts" l in
             Utils.list_fold_lefti (fun c' state ->
               let c' = Id.from_array c' in function
               | `Assoc l ->
@@ -411,7 +422,7 @@ let from_json m fileName fileContent =
               | _ -> failwith ("A contact in file `" ^ fileName
                                ^ "' is not associated an object.")) state contacts in
           let state =
-            let relations = get_field_list "relations" in
+            let relations = get_field_list "relations" l in
             Utils.list_fold_lefti (fun c' state ->
               let c' = Id.from_array c' in function
               | `String r ->
@@ -421,29 +432,52 @@ let from_json m fileName fileContent =
               | _ -> failwith ("Ill-formed `relations' field in file `"
                                ^ fileName ^ "'.")) state relations in
           let state =
-            try match List.assoc "complexity" l with
-            | `Int v ->
+            match get_field_int "complexity" l with
+            | Some v ->
               let rst = State.get_relation_state state in
               State.set_complexity rst c v ;
               state
-            | _ -> failwith ("A field `complexity' in file `" ^ fileName
-                             ^ "' is not an integer")
-            with
-            | Not_found -> state in
+            | None -> state in
           let state =
-            try match List.assoc "difficulty" l with
-            | `Int v ->
+            match get_field_int "difficulty" l with
+            | Some v ->
               let rst = State.get_relation_state state in
               State.set_difficulty rst c v ;
               state
-            | _ -> failwith ("A field `difficulty' in file `" ^ fileName
-                             ^ "' is not an integer")
-            with
-            | Not_found -> state in
+            | None -> state in
           (name :: names, state)
         | _ -> failwith ("A character in file `" ^ fileName
-                 ^ "' is not a associated an object.")) ([], state) l in
-    (* TODO: Deal with events (using Variable [events]). *)
+                         ^ "' is not associated an object.")) ([], state) l in
+    let events =
+      List.map (function
+        | `Assoc l ->
+          let be = Date.from_rfc2445 (get_field_string "begin" l) in
+          let en = Date.from_rfc2445 (get_field_string "end" l) in
+          let name = get_field_string "event" l in
+          let attendees =
+            List.map (function
+              | `Int c -> Id.from_array c
+              | _ ->
+                failwith ("An element of the attendee list of an event is "
+                          ^ "not an integer.")) (get_field_list "attendees" l) in
+          let e = {
+              Events.event_type = History.get_event_type be en ;
+              Events.event_attendees = PSet.from_list attendees ;
+              Events.event_attendees_list = attendees ;
+              Events.event_kinds =
+                PMap.empty (* LATER: Recover them through [name]. *) ;
+              Events.constraints_none = PMap.empty ;
+              Events.constraints_some = PMap.empty ;
+              Events.translation =
+                (0, Translation.sempty) (* LATER: Recover it through [name]. *)
+            } in {
+            History.event_begin = be ;
+            History.event_end = en ;
+            History.event = e
+          }
+        | _ -> failwith ("An event of file `" ^ fileName
+                         ^ "' is not an object.")) events in
+    let state = State.set_history_state state (History.unfinalise events) in
     (List.rev names, state)
   | _ -> failwith ("The file `" ^ fileName ^ "' is not an object.")
 

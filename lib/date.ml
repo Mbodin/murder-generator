@@ -97,24 +97,41 @@ let iso8601 (y, d, m) =
   ^ "-" ^ Utils.complete_string_pre "0" (string_of_int month) 2
   ^ "-" ^ Utils.complete_string_pre "0" (string_of_int day) 2
 
+(** Take a number [n] and a list [l] of strings.
+ * This function tries to read a number of size up to [n]
+ * in base [10] out of the first element of the list [l],
+ * and returns the parsed number with the rest of the list.
+ * If the first element of [l] is larger than this number,
+ * this first string is splitted to only extract the expected
+ * number of characters.
+ * The idea behind this function is that a first string has
+ * been splitted by looking for non-numerical characters.
+ * In the case that these non-numerical characters are not
+ * present, then the size is used as an indicator. **)
+let rec get_integer n = function
+  | [] -> (1, [])
+  | str :: l ->
+    try
+      if String.length str > n then
+        (int_of_string (String.sub str 0 n),
+         String.sub str n (String.length str - n) :: l)
+      else (int_of_string str, l)
+    with _ -> (1, l)
+
 let from_iso8601 str =
   if str = "" then now
   else
-    let l = String.split_on_char '-' str in
-    let rec get n = function
-      | [] -> (1, [])
-      | str :: l ->
-        try
-          if String.length str > n then
-            (int_of_string (String.sub str 0 n),
-             String.sub str n (String.length str - n) :: l)
-          else (int_of_string str, l)
-        with _ -> (1, l) in
-    let (y, l) = get 4 l in
-    let (month, l) = get 2 l in
-    let (day, l) = get 2 l in
-    let (y, d) = month_day_inv y month day in
-    normalise (y, d, 0)
+    let (year, month, day) =
+      match String.split_on_char '-' str with
+      | year :: month :: day :: [] ->
+        (int_of_string year, int_of_string month, int_of_string day)
+      | l ->
+        let (year, l) = get_integer 4 l in
+        let (month, l) = get_integer 2 l in
+        let (day, l) = get_integer 2 l in
+        (year, month, day) in
+    let (year, d) = month_day_inv year month day in
+    normalise (year, d, 0)
 
 let rfc2445 (y, d, m) =
   let (month, day) = month_day (y, d, m) in
@@ -126,6 +143,29 @@ let rfc2445 (y, d, m) =
   ^ Utils.complete_string_pre "0" (string_of_int (m / 60)) 2
   ^ Utils.complete_string_pre "0" (string_of_int (m mod 60)) 2
   ^ "00"
+
+let from_rfc2445 str =
+  if str = "" then now
+  else
+    let parse_time str =
+      match String.split_on_char '-' str with
+      | hour :: minute :: _ -> (int_of_string hour, int_of_string minute)
+      | l ->
+        let (hour, l) = get_integer 2 l in
+        let (minute, l) = get_integer 2 l in
+        (hour, minute) in
+    let (date, time) =
+      match String.split_on_char 'T' str with
+      | [] -> assert false
+      | date :: time :: [] -> (date, time)
+      | str :: [] ->
+        if String.length str >= 8 then
+          (String.sub str 0 8, String.sub str 8 (String.length str - 8))
+        else (str, "")
+      | _ -> failwith ("Unable to parse date: " ^ str ^ ".") in
+    let (y, d, _) = from_iso8601 date in
+    let (h, m) = parse_time time in
+    (y, d, 60 * h + m)
 
 (** Dates in ord-mode are encapsulated in either square or angle brackets
  * dependending on whether they are active. **)

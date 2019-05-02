@@ -4,13 +4,13 @@
 (** A moment in time. **)
 type t
 
-(** Adds a given number of years to a date. **)
+(** Add a given number of years to a date. **)
 val add_years : t -> int -> t
 
-(** Adds a given number of days to a date. **)
+(** Add a given number of days to a date. **)
 val add_days : t -> int -> t
 
-(** Adds a given number of minutes to a date. **)
+(** Add a given number of minutes to a date. **)
 val add_minutes : t -> int -> t
 
 (** The current date. **)
@@ -22,20 +22,24 @@ val max_date : t
 (** Compare dates. **)
 val compare : t -> t -> int
 
-(** Returns the date the furthest in the past of its two arguments. **)
+(** Return the date the furthest in the past of its two arguments. **)
 val min : t -> t -> t
 
-(** Returns the date the furthest in the future of its two arguments. **)
+(** Return the date the furthest in the future of its two arguments. **)
 val max : t -> t -> t
 
 (** Translate the date into an ISO 8601 date string (without the time). **)
 val iso8601 : t -> string
 
-(** Inverts the function [iso8601]. **)
+(** Invert the function [iso8601].
+ * Note that the time of the day will not be recovered. **)
 val from_iso8601 : string -> t
 
 (** Translate the date into an RFC 2445 date-time string. **)
 val rfc2445 : t -> string
+
+(** Invert the function [rfc2445]. **)
+val from_rfc2445 : string -> t
 
 (** Translate the date into an org-mode date.
  * The optionnal argument state whether the date is supposed to be active

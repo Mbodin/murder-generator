@@ -1,4 +1,12 @@
 
+let test_date _ =
+  let test d =
+    assert (Date.compare d (Date.from_rfc2445 (Date.rfc2445 d)) = 0) in
+  test Date.now ;
+  test (Date.add_years Date.now (Random.int 100 - 50)) ;
+  test (Date.add_days Date.now (Random.int 100 - 50)) ;
+  test (Date.add_minutes Date.now (Random.int 100 - 50))
+
 let test_pool _ =
   let new_id = Id.new_id_function () in
   let g = Pool.empty_global in
@@ -125,6 +133,7 @@ let test_translations _ =
     failwith "There were some missing translations."
 
 let main =
+  test_date () ;
   test_parser () ;
   test_translations ()
 

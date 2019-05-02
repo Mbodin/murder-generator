@@ -303,6 +303,8 @@ let rec block_node b =
   | InOut.Space -> fun link ->
     Print.breakpoint ~normal:"  " ()
   | InOut.Text str -> fun link ->
+    (* LATER: Use [Uuseg_string.fold_utf_8 `Line_break]
+     * instead of [split_on_char]. *)
     List.iteri (fun i str ->
       if i <> 0 then Print.space () ;
       Print.print str) (String.split_on_char ' ' str)

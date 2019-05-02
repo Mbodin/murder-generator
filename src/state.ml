@@ -233,6 +233,8 @@ let get_character_state (st, _, _) = st
 
 let get_history_state (_, _, h) = h
 
+let set_history_state (st, a, _) h = (st, a, h)
+
 let apply_event (st, a, h) ev =
   (st, a, History.apply h ev)
 

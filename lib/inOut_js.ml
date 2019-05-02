@@ -3,6 +3,7 @@
 
 
 open Js_of_ocaml
+open Js_of_ocaml_lwt
 
 
 let pause _ = Lwt_js.sleep 0.01

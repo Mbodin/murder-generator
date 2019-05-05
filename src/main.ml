@@ -482,6 +482,7 @@ let main =
             List.map (fun (name, _, _, _) -> name) parameters.player_information ;
           Export.translation = Driver.get_translations data ;
           Export.generic_translation = translation ;
+          Export.constructor_maps = Driver.get_constructor_maps data ;
           Export.state = final
         } in
       let html = PSet.mem "html" parameters.chosen_productions in

@@ -73,7 +73,8 @@ type element = {
     category : Id.t t ;
     attribute : Attribute.attribute t ;
     constructor : Attribute.constructor gt ;
-    add : (Attribute.constructor * language, tag PSet.t) PMap.t
+    add : (language,
+           (Attribute.PlayerAttribute.constructor, tag PSet.t) PMap.t) PMap.t
   }
 
 

@@ -151,8 +151,10 @@ val from_json : string -> string -> string t * language list
 type element = {
     category : Id.t t (** The translations of categories. **) ;
     attribute : Attribute.attribute t (** The translations of attributes. **) ;
-    constructor : Attribute.constructor gt (** The translations of constructors. **) ;
-    add : (Attribute.constructor * language, tag PSet.t) PMap.t
+    constructor : Attribute.constructor gt
+      (** The translations of constructors. **) ;
+    add : (language,
+           (Attribute.PlayerAttribute.constructor, tag PSet.t) PMap.t) PMap.t
       (** For each constructor and language, provides a set of added tags. **)
   }
 

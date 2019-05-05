@@ -402,7 +402,8 @@ let attribute_functions =
    (fun i state -> { i with Attribute.player = state }),
    (fun id -> Attribute.PlayerAttribute id),
    (fun id -> Attribute.PlayerConstructor id),
-   "attribute")
+   "attribute",
+   (fun _ -> Utils.id))
 let contact_functions =
   (Attribute.ContactAttribute.declare_attribute,
    Attribute.ContactAttribute.declare_constructor,
@@ -413,7 +414,8 @@ let contact_functions =
    (fun i state -> { i with Attribute.contact = state }),
    (fun id -> Attribute.ContactAttribute id),
    (fun id -> Attribute.ContactConstructor id),
-   "contact")
+   "contact",
+   (fun name _ -> raise (UnexpectedCommandInBlock (name, "add"))))
 
 (** States whether a category has been defined. **)
 let category_exists state id =
@@ -470,7 +472,7 @@ let prepare_declaration i =
   (** Declare attribute and contact instances.
    * See the declarations [attribute_functions] and [contact_functions]
    * to understand the large tuple argument. **)
-  let declare_instance (declare, _, _, _, _, extract, update, constructor, _, en)
+  let declare_instance (declare, _, _, _, _, extract, update, constructor, _, en, _)
       name block =
     let block = convert_block name [OfCategory; Translation] block in
     let (id, state) =
@@ -527,17 +529,17 @@ let prepare_declaration i =
    * [contact_functions] to understand the large tuple argument. **)
   let declare_constructor (declare, declare_constructor, _, _,
         declare_compatibility, extract, update,
-        attribute_constructor, constructor_constructor, en)
+        attribute_constructor, constructor_constructor, en, get_player_attribute)
       attribute_name constructor block =
     let block =
       convert_block attribute_name [OfCategory; Translation; Add;
                                     CompatibleWith] block in
     let (attribute, state) =
       declare (extract i.current_state.constructor_information) attribute_name in
-    let (id, state) =
+    let (idp, state) =
       declare_constructor state attribute constructor in
+    let id = constructor_constructor idp in
     let constructors_to_be_defined =
-      let id = constructor_constructor id in
       PSet.remove id i.constructors_to_be_defined in
     let (state, constructors_to_be_defined) =
       List.fold_left (fun (state, constructors_to_be_defined) constructor' ->
@@ -547,9 +549,9 @@ let prepare_declaration i =
             if PMap.mem id' i.current_state.constructor_dependencies then
               constructors_to_be_defined
             else PSet.add id' constructors_to_be_defined in
-          (declare_compatibility state attribute id id', constructors_to_be_defined))
+          (declare_compatibility state attribute idp id',
+           constructors_to_be_defined))
         (state, constructors_to_be_defined) block.compatible_with in
-    let id = constructor_constructor id in
     let attribute = attribute_constructor attribute in
     if PMap.mem id i.current_state.constructor_dependencies then
       raise (DefinedTwice (en ^ " constructor", constructor, attribute_name)) ;
@@ -596,10 +598,16 @@ let prepare_declaration i =
         (translations, i.tags_to_be_defined) block.translation in
     let add =
       List.fold_left (fun add (lg, tag) ->
+          let m =
+            try PMap.find lg add
+            with Not_found -> PMap.empty in
+          let id = get_player_attribute attribute_name idp in
           let s =
-            try PMap.find (id, lg) add
+            try PMap.find id m
             with Not_found -> PSet.empty in
-          PMap.add (id, lg) (PSet.add tag s) add)
+          let s = PSet.add tag s in
+          let m = PMap.add id s m in
+          PMap.add lg m add)
         i.current_state.translations.Translation.add block.add in
     { i with
         categories_to_be_defined = categories_to_be_defined ;
@@ -872,13 +880,14 @@ let parse_element st element_name block =
    * At this stage, it has to be defined.
    * See the declarations [attribute_functions] and [contact_functions] to
    * understand the large tuple argument.**)
-  let get_attribute_id (_, _, get_attribute, _, _, get_state, _, _ , _, en) name =
+  let get_attribute_id (_, _, get_attribute, _, _, get_state, _, _ , _, en, _)
+      name =
     match get_attribute (get_state st.constructor_information) name with
     | None -> raise (Undeclared (en, name, element_name))
     | Some id -> id in
   (** Similar to [get_attribute_id], but for constructors. **)
   let get_constructor_id (_, _, get_attribute, get_constructor, _, get_state,
-        _, _ , _, en) aid name =
+        _, _ , _, en, _) aid name =
     match get_constructor (get_state st.constructor_information) aid name with
     | None -> raise (Undeclared (en ^ " constructor", name, element_name))
     | Some id -> id in

@@ -14,6 +14,8 @@ type state = {
     generic_translation : string Translation.t
       (** Generic translations, defined in [web/translations.json]
        * instead of files in [data/]. **) ;
+    constructor_maps : Attribute.constructor_maps
+      (** Informations about constructors **) ;
     state : State.final (** The actual generated state. **)
   }
 

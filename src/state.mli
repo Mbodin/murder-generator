@@ -134,7 +134,7 @@ val force_get_attribute_character : Attribute.PlayerAttribute.constructor_map ->
 val write_attribute_character : character_state -> character -> Attribute.PlayerAttribute.attribute -> Attribute.PlayerAttribute.constructor attribute_value -> unit
 
 (** Get a contact from the character state, using the target character. **)
-val get_contact_character : character_state -> character -> Attribute.ContactAttribute.attribute -> character -> (Attribute.ContactAttribute.constructor attribute_value) option
+val get_contact_character : character_state -> character -> Attribute.ContactAttribute.attribute -> character -> Attribute.ContactAttribute.constructor attribute_value option
 
 (** Non-functionally associates the given attribute of the character to the given
  * value. **)
@@ -221,8 +221,14 @@ type final
 val finalise : t -> Date.t -> final
 
 
-(** Similar to [get_all_attributes_character_final], but for the finalised state. **)
+(** Similar to [get_attributes_character], but for the finalised state. **)
+val get_attribute_character_final : final -> character -> Attribute.PlayerAttribute.attribute -> Attribute.PlayerAttribute.constructor option
+
+(** Similar to [get_all_attributes_character], but for the finalised state. **)
 val get_all_attributes_character_final : final -> character -> (Attribute.PlayerAttribute.attribute, Attribute.PlayerAttribute.constructor) PMap.t
+
+(** Similar to [get_contact_character], but for the finalised state. **)
+val get_contact_character_final : final -> character -> Attribute.ContactAttribute.attribute -> character -> Attribute.ContactAttribute.constructor option
 
 (** Similar to [get_all_contacts_character], but for the finalised state. **)
 val get_all_contacts_character_final : final -> character -> (character, (Attribute.ContactAttribute.attribute * Attribute.ContactAttribute.constructor) list) PMap.t
@@ -238,4 +244,7 @@ val character_difficulty_final : final -> character -> int
 
 (** Get the final generated timeline. **)
 val get_history_final : final -> History.final
+
+(** Similar to [all_players], but from the finalised state. **)
+val all_players_final : final -> character list
 

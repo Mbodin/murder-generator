@@ -9,6 +9,7 @@ type state = {
     language : Translation.language ;
     translation : Translation.element ;
     generic_translation : string Translation.t ;
+    constructor_maps : Attribute.constructor_maps ;
     state : State.final
   }
 
@@ -63,14 +64,44 @@ let translate_event s trp e =
   else l
 
 (** Generate a translation object for player for [translate_event]. **)
-(* TODO: This function is actually a dummy one, waiting for a better one to come. *)
 let translation_players s =
-  let tags = PMap.empty in
+  let tags =
+    let m =
+      try PMap.find s.language s.translation.Translation.add
+      with Not_found -> PMap.empty in
+    PMap.foldi (fun c tags m ->
+      let a =
+        Utils.assert_option __LOC__
+          (Attribute.PlayerAttribute.constructor_attribute
+            s.constructor_maps.Attribute.player c) in
+      List.fold_left (fun m p ->
+        match State.get_attribute_character_final s.state p a with
+        | None -> m
+        | Some c' ->
+          if c = c' then (
+            let sp =
+              try PMap.find p m
+              with Not_found -> PSet.empty in
+            PMap.add p (PSet.merge sp tags) m
+          ) else m) m (State.all_players_final s.state)) m PMap.empty in
   let read_tags p =
     try PMap.find p tags
     with Not_found -> PSet.empty in
   let names = Array.of_list s.names in
-  (read_tags, fun c _ -> Some (names.(Id.to_array c), PSet.empty))
+  let translate c tags =
+    let tr =
+      Translation.gtranslate s.translation.Translation.constructor s.language in
+    let default = Some (names.(Id.to_array c), PSet.empty) in
+    let att = PSet.domain (State.get_all_attributes_character_final s.state c) in
+    let att = Utils.shuffle (PSet.to_list att) in
+    List.fold_left (fun default a ->
+      let v =
+        Utils.assert_option __LOC__
+          (State.get_attribute_character_final s.state c a) in
+      match tr (Attribute.PlayerConstructor v) tags with
+      | None -> default
+      | r -> r) default att in
+  (read_tags, translate)
 
 (** Return the name of a character [c]. **)
 let get_name s c =

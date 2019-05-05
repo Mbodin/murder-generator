@@ -33,6 +33,8 @@ begin
   provide compatible attribute Specy to P as God
 
   add complexity to P
+  add complexity to P
+  remove difficulty to P
 end
 
 element LonelyGod

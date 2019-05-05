@@ -267,8 +267,14 @@ let finalise (cst, rst, est) d =
     (PMap.map select_value a,
      PMap.map (PMap.map select_value) c)) cst, rst, History.finalise est d)
 
+let get_attribute_character_final (cst, _, _) =
+  get_attribute_character cst
+
 let get_all_attributes_character_final (cst, _, _) =
   get_all_attributes_character cst
+
+let get_contact_character_final (cst, _, _) =
+  get_contact_character cst
 
 let get_all_contacts_character_final (cst, _, _) =
   get_all_contacts_character cst
@@ -282,4 +288,6 @@ let character_difficulty_final (_, rst, _) =
   character_difficulty rst
 
 let get_history_final (_, _, hst) = hst
+
+let all_players_final (_, rst, _) = all_players_relation rst
 

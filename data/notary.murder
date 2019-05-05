@@ -254,7 +254,7 @@ begin
 
     sentence
     begin
-      translation fr A:+sbeg " étant tempororairement en manque de liquidités, " A:+pro " en a demandé à " B "."
+      translation fr A:+sbeg " étant temporairement en manque de liquidités, " A:+pro " en a demandé à " B "."
       translation en A:+sbeg " experiencing temporarily cash shortage, " A:+pro " asked money to " B "."
       translation eo "Pro " A " portempe mankis monerojn, " A:+pro " petis monon al " B "."
     end

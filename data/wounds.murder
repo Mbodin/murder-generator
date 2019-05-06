@@ -41,16 +41,15 @@ begin
 
     sentence
     begin
-      translation fr P:+sbeg:fem " est née aveugle."
-      translation fr P:+sbeg " est né aveugle."
+      translation fr P:+sbeg " est né" P:+agr " aveugle."
       translation en P:+sbeg " is born blind."
       translation eo P:+sbeg " naskiĝis jam blinda."
     end
 
     sentence
     begin
-      translation fr P:+sbeg:+pro " a beaucoup entendu le concept de couleur depuis, mais " P:+pro " ne l’a jamais compris."
-      translation en P:+sbeg:+pro " heard a lot about the concept of color, but " P:+pro " never grasped it."
+      translation fr P:+sbeg:+pro " a beaucoup entendu parlé du concept de couleur depuis, mais ne l’a jamais compris."
+      translation en P:+sbeg:+pro " heard a lot about colors since, but " P:+pro " never grasped it."
       translation eo P:+sbeg:+pro " multe aŭdis pri koloroj kaj ties proprecoj, sed " P:+pro " neniam komprenis ilin."
     end
   end

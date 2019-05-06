@@ -38,7 +38,7 @@ let get_translations _ =
  * in the current language.
  * This function makes use of the Oxford comma. **)
 let print_list andw = function
-  | [] -> ""
+  | [] -> "none"
   | a :: [] -> a
   | a :: b :: [] -> a ^ " " ^ andw ^ " " ^ b
   | l ->
@@ -58,13 +58,26 @@ let get_data _ =
   if not (Driver.is_intermediary_final !intermediate) then (
     let categories = Driver.categories_to_be_defined !intermediate in
     let (attributes, contacts) = Driver.attributes_to_be_defined !intermediate in
+    let (player_constructors, contact_constructors) =
+      Driver.constructors_to_be_defined !intermediate in
+    let player_constructors =
+      PSet.map (fun (a, c) -> c ^ " (" ^ a ^ ")") player_constructors in
+    let contact_constructors =
+      PSet.map (fun (a, c) -> c ^ " (" ^ a ^ ")") contact_constructors in
+    let tags = Driver.tags_to_be_defined !intermediate in
+    let tags = PSet.map (fun (lg, tag) -> lg ^ ":" ^ tag) tags in
+    let events = Driver.events_to_be_defined !intermediate in
     let missing str s =
       " Missing " ^ str ^ ": " ^ print_list "and" (PSet.to_list s) ^ "." in
     Lwt.fail (Invalid_argument
       ("Non final intermediary after parsing all files."
        ^ missing "categories" categories
        ^ missing "attributes" attributes
-       ^ missing "contacts" contacts)))
+       ^ missing "contacts" contacts
+       ^ missing "attributes constructors" player_constructors
+       ^ missing "contacts contacts" contact_constructors
+       ^ missing "events" events
+       ^ missing "language tags" tags)))
   else Lwt.return (Driver.parse !intermediate)
 
 (** A type to store what each page of the menu provides. **)

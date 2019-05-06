@@ -15,6 +15,10 @@ val generic : language
  * inflexions, noun classes, etc.). **)
 type tag
 
+(** A special tag to mean that the translation only applies for the generic
+ * object and not its instances. **)
+val base : tag
+
 (** A tag command.
  * It can be either associated to [None]: it is then a constraint.
  * It can also be associated to a boolean: and it then becomes a command.
@@ -160,4 +164,11 @@ type element = {
 
 (** A record whose fields are all empty. **)
 val empty_element : element
+
+(** Fold over the translations of a particular object and a particular language
+ * in a [gt] translation structure.
+ * The propagating function takes as argument the list of tags needed to reach
+ * this point, the current translation, the set of tag that are added by this
+ * translation, and the set of tags that are removed. **)
+val gfold : ('a -> tag list -> string -> tag PSet.t -> tag PSet.t -> 'a) -> 'a -> 'b gt -> 'b -> language -> 'a
 

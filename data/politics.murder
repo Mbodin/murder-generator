@@ -13,9 +13,9 @@ begin
   translation en "famous"
   translation eo "fama"
 
-  translation fr:adj "célèbre"
-  translation en:adj "famous"
-  translation eo:adj "fama"
+  add translation fr:adj "célèbre"
+  add translation en:adj "famous"
+  add translation eo:adj "fama"
 end
 
 attribute Famousness Unknown
@@ -24,10 +24,10 @@ begin
   translation en "unknown"
   translation eo "malfama"
 
-  translation fr:adj:mas "inconnu"
-  translation fr:adj:fem "inconnue"
-  translation en:adj "unKnown"
-  translation eo:adj "malfama"
+  add translation fr:adj:mas "inconnu"
+  add translation fr:adj:fem "inconnue"
+  add translation en:adj "unKnown"
+  add translation eo:adj "malfama"
 end
 
 attribute Famousness Hiding
@@ -100,15 +100,15 @@ begin
   translation en "monarch"
   translation eo "reĝ(in)o"
 
-  translation fr:nom:sin:fem "une reine"
-  translation fr:nom:sin:mas "un roi"
-  translation fr:nom:def:sin:fem "la reine"
-  translation fr:nom:def:sin:mas "le roi"
-  translation fr:nom:plu:fem "des reines"
-  translation fr:nom:plu:mas "des rois"
-  translation fr:nom:plu "des rois et reines"
-  translation fr:nom:def:plu:fem "les reines"
-  translation fr:nom:def:plu:mas "les rois"
+  add translation fr:nom:sin:fem "une reine"
+  add translation fr:nom:sin:mas "un roi"
+  add translation fr:nom:def:sin:fem "la reine"
+  add translation fr:nom:def:sin:mas "le roi"
+  add translation fr:nom:plu:fem "des reines"
+  add translation fr:nom:plu:mas "des rois"
+  add translation fr:nom:plu "des rois et reines"
+  add translation fr:nom:def:plu:fem "les reines"
+  add translation fr:nom:def:plu:mas "les rois"
 end
 
 element TheOneKing

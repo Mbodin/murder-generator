@@ -13,6 +13,8 @@ let from_iso639 = Utils.id
 let get_tag = Utils.id
 let print_tag = Utils.id
 
+let base = get_tag "<base>"
+
 type 'a t = ('a * language, string) PMap.t
 
 (** A decision tree for translations. **)
@@ -254,6 +256,23 @@ let smap_option f tr =
     Utils.if_option m (fun m ->
       Utils.apply_option (tree_map_option f' t) (fun t ->
         PMap.add ilg t m))) tr (Some PMap.empty)
+
+
+let gfold f acc m o lg =
+  match try Some (PMap.find (o, lg) m)
+        with Not_found -> None with
+  | None -> acc
+  | Some t ->
+    let rec tree_fold tags acc = function
+      | Leaf l ->
+        let tags = List.rev tags in
+        List.fold_left (fun acc (str, added, removed) ->
+          f acc tags str added removed) acc l
+      | Node (tag, t1, t2) ->
+        let acc = tree_fold (tag :: tags) acc t1 in
+        let acc = tree_fold tags acc t2 in
+        acc in
+    tree_fold [] acc t
 
 
 let from_json fileName fileContent =

@@ -34,7 +34,8 @@ let translate_attribute_contact s a =
  * [State.ContactConstructor]. **)
 let translate_value s f v =
   let tr = s.translation.Translation.constructor in
-  fst (Translation.gforce_translate tr s.language (f v) PSet.empty)
+  fst (Translation.gforce_translate tr s.language (f v)
+        (PSet.singleton Translation.base))
 
 (** The following two functions instantiate [translate_value]
  * to player and contact attributes. **)
@@ -58,7 +59,8 @@ let translate_event s trp e =
       tr s.language in
   let l =
     List.map (fun i ->
-      fst (tr (fst trp) (snd trp) i PSet.empty)) (Utils.seq nb_sentence) in
+        fst (tr (fst trp) (snd trp) i (PSet.singleton Translation.base)))
+      (Utils.seq nb_sentence) in
   if String.concat "" l = "" then
     ["<Empty translation for " ^ translate_event_generic s e ^ ">"]
   else l
@@ -87,20 +89,26 @@ let translation_players s =
   let read_tags p =
     try PMap.find p tags
     with Not_found -> PSet.empty in
-  let names = Array.of_list s.names in
-  let translate c tags =
-    let tr =
-      Translation.gtranslate s.translation.Translation.constructor s.language in
-    let default = Some (names.(Id.to_array c), PSet.empty) in
-    let att = PSet.domain (State.get_all_attributes_character_final s.state c) in
-    let att = Utils.shuffle (PSet.to_list att) in
-    List.fold_left (fun default a ->
-      let v =
-        Utils.assert_option __LOC__
-          (State.get_attribute_character_final s.state c a) in
-      match tr (Attribute.PlayerConstructor v) tags with
-      | None -> default
-      | r -> r) default att in
+  let tr_player =
+    Array.mapi (fun c name ->
+      let c = Id.from_array c in
+      let att = State.get_all_attributes_character_final s.state c in
+      let tr = Translation.gadd Translation.gempty s.language [] () name in
+      PMap.foldi (fun a c tr ->
+          let c = Attribute.PlayerConstructor c in
+          Translation.gfold (fun tr tags str added removed ->
+            if not (List.mem Translation.base tags) then (
+              let commands =
+                let convert b s =
+                  List.map (fun tag -> (Some b, tag)) (PSet.to_list s) in
+                List.map (fun tag -> (None, tag)) tags
+                @ convert true added
+                @ convert false removed in
+              Translation.gadd tr s.language commands () str
+            ) else tr) tr s.translation.Translation.constructor c s.language)
+        att tr) (Array.of_list s.names) in
+  let translate c =
+    Translation.gtranslate tr_player.(Id.to_array c) s.language () in
   (read_tags, translate)
 
 (** Return the name of a character [c]. **)

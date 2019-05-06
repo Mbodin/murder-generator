@@ -21,9 +21,14 @@ end
 
 attribute Born AlwaysExisted
 begin
-  translation fr "A toujours existé"
+  translation fr "a toujours existé"
   translation en "always existé"
   translation eo "ĉiam ekzistis"
+end
+
+element PlayerIsNotGod
+begin
+  let P be player with attribute Specy not as God
 end
 
 element PlayerIsGod
@@ -133,24 +138,24 @@ begin
   translation en "Priest"
   translation eo "Pastro"
 
-  translation fr:nom:sin:fem "une prêtresse"
-  translation fr:nom:sin:mas "un prêtre"
-  translation fr:nom:def:sin:fem "la prêtre"
-  translation fr:nom:def:sin:mas "le prêtre"
-  translation fr:nom:plu:-fem:+mas "des prêtres"
-  translation fr:nom:def:plu:-fem:+mas "les prêtres"
-  translation en:nom:sin "priest"
-  translation en:nom:plu "priests"
-  translation en:nom:def:sin "the priest"
-  translation en:nom:def:plu "the priests"
-  translation eo:nom:sin "pastro"
-  translation eo:nom:plu "pastroj"
-  translation eo:nom:def:sin "la pastro"
-  translation eo:nom:def:plu "la pastroj"
-  translation eo:nom:acc:sin "pastron"
-  translation eo:nom:acc:plu "pastrojn"
-  translation eo:nom:def:acc:sin "la pastron"
-  translation eo:nom:def:acc:plu "la pastrojn"
+  add translation fr:nom:sin:fem "une prêtresse"
+  add translation fr:nom:sin:mas "un prêtre"
+  add translation fr:nom:def:sin:fem "la prêtre"
+  add translation fr:nom:def:sin:mas "le prêtre"
+  add translation fr:nom:plu:-fem:+mas "des prêtres"
+  add translation fr:nom:def:plu:-fem:+mas "les prêtres"
+  add translation en:nom:sin "priest"
+  add translation en:nom:plu "priests"
+  add translation en:nom:def:sin "the priest"
+  add translation en:nom:def:plu "the priests"
+  add translation eo:nom:sin "pastro"
+  add translation eo:nom:plu "pastroj"
+  add translation eo:nom:def:sin "la pastro"
+  add translation eo:nom:def:plu "la pastroj"
+  add translation eo:nom:acc:sin "pastron"
+  add translation eo:nom:acc:plu "pastrojn"
+  add translation eo:nom:def:acc:sin "la pastron"
+  add translation eo:nom:def:acc:plu "la pastrojn"
 end
 
 element PriestSinceEarly
@@ -165,8 +170,7 @@ begin
 
     sentence
     begin
-      translation fr "Jeune, " P:fem " était fascinée par la religion."
-      translation fr "Jeune, " P " était fasciné par la religion."
+      translation fr "Jeune, " P " était fasciné" P:+agr " par la religion."
       translation en P:+sbeg " has always been fascianted by religion."
       translation eo P:+sbeg " ĉiam interesiĝis pri religio."
     end

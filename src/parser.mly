@@ -76,15 +76,20 @@ language_tags:
     tags = list (COLON; modifier = tag_modifier; tag = LIDENT
                  { (modifier, Translation.get_tag tag) })   { tags }
 
+translation_base:
+  | empty   { (None, Translation.base) :: [] }
+  | ADD     { [] }
+
 command:
   | CATEGORY; c = UIDENT
     { OfCategory c }
-  | TRANSLATION; lang = language; tags = language_tags;
+  | tb = translation_base;
+    TRANSLATION; lang = language; tags = language_tags;
     l = list ( str = STRING
                { Translation.Direct str }
              | id = UIDENT; tags = language_tags
                { Translation.variable id tags })
-    { Translation (Translation.from_iso639 lang, tags, l) }
+    { Translation (Translation.from_iso639 lang, tb @ tags, l) }
   | SENTENCE; b = block
     { Sentence b }
   | ADD; lang = language; COLON; tag = LIDENT

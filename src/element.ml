@@ -19,7 +19,7 @@ type cell = {
 
 type t = cell array * character_constraint list * int Events.t list
 
-(** Returns the list of attributes provided by this cosntraint. **)
+(** Returns the list of attributes provided by this constraint. **)
 let provided_attributes_constraint =
   let aux a = function
     | State.Fixed_value _ -> PSet.singleton a
@@ -102,7 +102,6 @@ let other_players st inst =
 let check_contact m inst st c con cha v1 =
   let cst = State.get_character_state st in
   let check cha =
-    let cha = inst.(cha) in
     match State.get_contact_character cst c con cha with
     | None -> Some false
     | Some v2 ->
@@ -110,10 +109,12 @@ let check_contact m inst st c con cha v1 =
         Attribute.ContactAttribute.is_compatible m.Attribute.contact con in
       compatible_and_progress_attribute_value compatible v1 v2 in
   match cha with
-  | Some cha -> check cha
+  | Some cha ->
+    if Utils.assert_defend then assert (cha < Array.length inst) ;
+    let cha = inst.(cha) in
+    check cha
   | None ->
     List.fold_left (fun acc cha ->
-      let cha = Id.to_array cha in
       merge_progress acc (check cha)) (Some false) (other_players st inst)
 
 (** As [respect_constraints], but takes an instanciation and thus also checks
@@ -377,6 +378,7 @@ let apply m state (e, other, events) inst =
         (state, diff) in
       match cha with
       | Some cha ->
+        if Utils.assert_defend then assert (cha < Array.length inst) ;
         let cha = inst.(cha) in
         apply_contact (state, diff) cha
       | None ->

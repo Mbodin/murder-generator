@@ -27,9 +27,9 @@ begin
   translation en "wealthy"
   translation eo "riĉa"
 
-  translation fr:adj "riche"
-  translation en:adj "wealthy"
-  translation eo:adj "riĉa"
+  add translation fr:adj "riche"
+  add translation en:adj "wealthy"
+  add translation eo:adj "riĉa"
 end
 
 attribute Richness Neutral
@@ -45,9 +45,9 @@ begin
   translation en "poor"
   translation eo "malriĉa"
 
-  translation fr:adj "pauvre"
-  translation en:adj "poor"
-  translation eo:adj "malriĉa"
+  add translation fr:adj "pauvre"
+  add translation en:adj "poor"
+  add translation eo:adj "malriĉa"
 end
 
 element Heritage
@@ -71,8 +71,8 @@ begin
 
     sentence
     begin
-      translation fr "Ils " P:+pro:+cli " laissent une importante fortune."
-      translation en "They leave " P:+pro:+cli " with an important wealth."
+      translation fr "Ils " P:+cli " laissent une importante fortune."
+      translation en "They leave " P:+cli " with an important wealth."
       translation eo "Ili forlasas " P:+pro:+acc " kun granda heredaĵo."
     end
   end
@@ -148,9 +148,9 @@ begin
   translation en "small"
   translation eo "malalta"
 
-  translation fr:adj "faible"
-  translation en:adj "small"
-  translation eo:adj "malalta"
+  add translation fr:adj "faible"
+  add translation en:adj "small"
+  add translation eo:adj "malalta"
 end
 
 contact FinancialDebt Large
@@ -159,10 +159,10 @@ begin
   translation en "large"
   translation eo "alta"
 
-  translation fr:adj:fem "importante"
-  translation fr:adj:mas "important"
-  translation en:adj "large"
-  translation eo:adj "alta"
+  add translation fr:adj:fem "importante"
+  add translation fr:adj:mas "important"
+  add translation en:adj "large"
+  add translation eo:adj "alta"
 end
 
 contact FinancialDebt Old
@@ -172,10 +172,10 @@ begin
   translation en "old"
   translation eo "malnova"
 
-  translation fr:adj:fem "vielle"
-  translation fr:adj:mas "vieux"
-  translation en:adj "old"
-  translation eo:adj "malnova"
+  add translation fr:adj:fem "vielle"
+  add translation fr:adj:mas "vieux"
+  add translation en:adj "old"
+  add translation eo:adj "malnova"
 end
 
 element CausalDebt
@@ -200,8 +200,8 @@ begin
 
     sentence
     begin
-      translation fr B:+sbeg:+pro " " A:+pro:+cli " en a donné."
-      translation en B:+sbeg:+pro " gave some to " A:+pro:+cli "."
+      translation fr B:+sbeg:+pro " " A:+cli " en a donné."
+      translation en B:+sbeg:+pro " gave some to " A:+cli "."
       translation eo B:+sbeg:+pro " al " A:+pro " donis."
     end
   end
@@ -230,8 +230,8 @@ begin
 
     sentence
     begin
-      translation fr "Vu le besoin, " B:+pro " " A:+pro:+cli " en a donné."
-      translation en "Given the circumstances, " B:+pro " gave some to " A:+pro:+cli "."
+      translation fr "Vu le besoin, " B:+pro " " A:+cli " en a donné."
+      translation en "Given the circumstances, " B:+pro " gave some to " A:+cli "."
       translation eo "Komprenante la bezonon, " B:+pro " al " A:+pro " donis."
     end
   end
@@ -268,8 +268,8 @@ begin
 
     sentence
     begin
-      translation fr B:+sbeg:+pro " " A:+pro:+cli " en a donc donné."
-      translation en B:+sbeg:+pro " thus gave some to " A:+pro:+cli "."
+      translation fr B:+sbeg:+pro " " A:+cli " en a donc donné."
+      translation en B:+sbeg:+pro " thus gave some to " A:+cli "."
       translation eo "Tial " B:+pro " al " A:+pro " donis."
     end
   end
@@ -305,8 +305,8 @@ begin
 
     sentence
     begin
-      translation fr B:+sbeg:+pro " " A:+pro:+cli " en a donné."
-      translation en B:+sbeg:+pro " gave some to " A:+pro:+cli "."
+      translation fr B:+sbeg:+pro " " A:+cli " en a donné."
+      translation en B:+sbeg:+pro " gave some to " A:+cli "."
       translation eo B:+sbeg:+pro " al " A:+pro " donis."
     end
   end
@@ -325,7 +325,7 @@ begin
     provide attribute Richness to B as Rich
 
     translation fr "Le succès du commerce de " B " l’a rendu riche."
-    translation en B:+sbeg "’s shop was quite successful and made " B:+pro:+cli " wealthy."
+    translation en B:+sbeg "’s shop was quite successful and made " B:+cli " wealthy."
     translation eo "La komerco de " B " sukcesis kaj riĉigis " B:+pro:+acc "."
   end
 
@@ -353,8 +353,8 @@ begin
 
     sentence
     begin
-      translation fr B:+sbeg:+pro " " A:+pro:+cli " en a donné."
-      translation en B:+sbeg:+pro " gave some to " A:+pro:+cli "."
+      translation fr B:+sbeg:+pro " " A:+cli " en a donné."
+      translation en B:+sbeg:+pro " gave some to " A:+cli "."
       translation eo B:+sbeg:+pro " al " A:+pro " donis."
     end
   end
@@ -368,7 +368,7 @@ begin
 
     provide attribute Richness to B as Poor
 
-    translation fr "Le commerce de " B " n’a pas tenu très longtemps et est maintenant en faillite, entrainant avec lui toutes les économies de " B "."
+    translation fr "Le commerce de " B " n’a pas tenu très longtemps et est maintenant en faillite, entrainant avec lui toutes ses économies."
     translation en B:+sbeg "’s shop went brankrupt, disappearing with all trace of wealth."
     translation eo "La komerco de " B " fiaskis, puŝante " B:+pro:+acc " malriĉecen."
   end
@@ -390,8 +390,7 @@ begin
 
     provide compatible attribute Richness to P as Rich
 
-    translation fr P:+sbeg:fem " a longuement travaillé pour devenir une marchande réputée et fortunée."
-    translation fr P:+sbeg " a longuement travaillé pour devenir un marchand réputé et fortuné."
+    translation fr P:+sbeg " a longuement travaillé pour devenir un" P:+agr " marchand" P:+agr " réputé" P:+agr " et fortuné" P:+agr "."
     translation en P:+sbeg " worked quite a long time to reach this level of wealth and reputation."
     translation eo P:+sbeg " longe laboris por atingi tiun nivelon de riĉeco kaj bonreputacio."
   end
@@ -431,10 +430,10 @@ begin
   translation en "large"
   translation eo "granda"
 
-  translation fr:adj:fem "grande"
-  translation fr:adj:mas "grand"
-  translation en:adj "large"
-  translation eo:adj "granda"
+  add translation fr:adj:fem "grande"
+  add translation fr:adj:mas "grand"
+  add translation en:adj "large"
+  add translation eo:adj "granda"
 end
 
 contact Favor Small
@@ -443,10 +442,10 @@ begin
   translation en "small"
   translation eo "malgranda"
 
-  translation fr:adj:fem "petite"
-  translation fr:adj:mas "petit"
-  translation en:adj "small"
-  translation eo:adj "malgranda"
+  add translation fr:adj:fem "petite"
+  add translation fr:adj:mas "petit"
+  add translation en:adj "small"
+  add translation eo:adj "malgranda"
 
   compatible with Large
 end

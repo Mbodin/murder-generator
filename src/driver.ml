@@ -502,7 +502,7 @@ let prepare_declaration i =
           Translation.generic id name in
       List.fold_left (fun translations tr ->
         let (lg, tags, items) = tr in
-        if tags <> [] then
+        if tags <> [(None, Translation.base)] then
           raise (TranslationError (en, name, tr)) ;
         let str =
           String.concat "" (List.map (function
@@ -589,7 +589,8 @@ let prepare_declaration i =
                 raise (TranslationError (en, constructor, tr))) items) in
           try (Translation.gadd translations lg tags id str,
                List.fold_left (fun tags_to_be_defined (_, tag) ->
-                   if PSet.mem (lg, tag) i.declared_tags then
+                   if PSet.mem (lg, tag) i.declared_tags
+                      || tag = Translation.base then
                      tags_to_be_defined
                    else PSet.add (lg, tag) tags_to_be_defined)
                  tags_to_be_defined tags)
@@ -674,7 +675,7 @@ let prepare_declaration i =
     let category_translation =
       List.fold_left (fun translation tr ->
           let (lg, tags, items) = tr in
-          if tags <> [] then
+          if tags <> [(None, Translation.base)] then
             raise (TranslationError ("category", name, tr)) ;
           let str =
             String.concat "" (List.map (function
@@ -1014,36 +1015,26 @@ let parse_element st element_name block =
         let consider_constraints add_constraint =
           List.fold_left (fun deps -> function
               | Ast.HasAttribute (a, n, c) ->
-                let aid = get_attribute_id attribute_functions a in
-                let cid = List.map (get_constructor_id attribute_functions aid) c in
-                let cid =
-                  if n then (
-                    let total =
-                      Utils.assert_option __LOC__
-                        (Attribute.PlayerAttribute.constructors
-                          st.constructor_information.player aid) in
-                    List.filter (fun c -> not (List.mem c cid)) total
-                  ) else cid in
-                add_constraint (Element.Attribute (aid, State.One_value_of cid)) ;
-                intersect_with_constructor_dependencies_list deps
-                  (List.map (fun id -> Attribute.PlayerConstructor id) cid)
+                if n then deps
+                else (
+                  let aid = get_attribute_id attribute_functions a in
+                  let cid =
+                    List.map (get_constructor_id attribute_functions aid) c in
+                  add_constraint (Element.Attribute (aid, State.One_value_of cid)) ;
+                  intersect_with_constructor_dependencies_list deps
+                    (List.map (fun id -> Attribute.PlayerConstructor id) cid)
+                )
               | Ast.HasContact (a, p', n, c) ->
-                let aid = get_attribute_id contact_functions a in
-                let cid = List.map (get_constructor_id contact_functions aid) c in
-                let cid =
-                  if n then (
-                    let total =
-                      Utils.assert_option __LOC__
-                        (Attribute.ContactAttribute.constructors
-                          st.constructor_information.contact aid) in
-                    List.filter (fun c -> not (List.mem c cid)) total
-                  ) else cid in
-                add_constraint
-                  (Element.Contact (aid, Some (get_player_array p'),
-                    State.One_value_of cid)) ;
-                intersect_with_constructor_dependencies_list deps
-                  (List.map (fun id -> Attribute.ContactConstructor id) cid))
-            deps pc in
+                if n then deps
+                else (
+                  let aid = get_attribute_id contact_functions a in
+                  let cid = List.map (get_constructor_id contact_functions aid) c in
+                  add_constraint
+                    (Element.Contact (aid, Some (get_player_array p'),
+                      State.One_value_of cid)) ;
+                  intersect_with_constructor_dependencies_list deps
+                    (List.map (fun id -> Attribute.ContactConstructor id) cid)
+                )) deps pc in
         match p with
         | None -> consider_constraints add_constraint_other
         | Some p ->

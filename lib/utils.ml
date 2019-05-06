@@ -1,7 +1,7 @@
 
 let _ = Random.self_init ()
 
-let assert_defend = false
+let assert_defend = true
 
 
 let id x = x

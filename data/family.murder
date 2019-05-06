@@ -38,8 +38,6 @@ end
 
 declare contact FamilyMember
 begin
-  category Family
-
   translation fr "Relation familiale"
   translation en "Family link"
   translation eo "Familia ligo"
@@ -54,6 +52,8 @@ end
 
 contact FamilyMember Sibling
 begin
+  category Family
+
   translation fr "frère ou sœur"
   translation en "sibling"
   translation eo "frat(in)o"
@@ -61,6 +61,8 @@ end
 
 contact FamilyMember Parent
 begin
+  category Family
+
   translation fr "parent de"
   translation en "parent of"
   translation eo "patr(in)o de"
@@ -68,6 +70,8 @@ end
 
 contact FamilyMember Child
 begin
+  category Family
+
   translation fr "enfant de"
   translation en "child of"
   translation eo "fil(in)o de"
@@ -198,6 +202,13 @@ begin
   let B be player
 
   provide compatible contact FamilyMember between A and B as None
+end
+
+element FromNobodysFamily
+begin
+  let P be player
+
+  provide compatible contact FamilyMember between P and any other player as None
 end
 
 element HumanFamily

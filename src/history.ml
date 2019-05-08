@@ -207,17 +207,18 @@ let compatible_and_progress st e = lcompatible_and_progress st [e]
 (** Returns a new state [st] where [e1] is assured to be before [e2]. **)
 let make_before st e1 e2 =
   let graph = st.graph in
+  let add l e = if List.mem e l then l else e :: l in
   let graph =
     let (before, after) =
       try PMap.find e1 graph
       with Not_found -> ([], []) in
-    let after = if List.mem e2 after then after else e2 :: after in
+    let after = add after e2 in
     PMap.add e1 (before, after) graph in
   let graph =
     let (before, after) =
       try PMap.find e2 graph
       with Not_found -> ([], []) in
-    let before = if List.mem e1 before then before else e1 :: before in
+    let before = add before e1 in
     PMap.add e2 (before, after) graph in
   { st with graph = graph }
 
@@ -363,7 +364,8 @@ let finalise st now =
                 try PMap.find e st.graph
                 with Not_found -> ([], []) in
               List.for_all (fun e -> PSet.mem e seen) after) next in
-          assert (ready <> []) ;
+          if ready = [] then
+            failwith "Cyclic event dependency." ;
           aux acc seen not_ready ready
         )
       | e :: l ->
@@ -417,32 +419,36 @@ let unfinalise l =
   let le =
     List.sort (fun e1 e2 -> Date.compare e1.event_end e2.event_end) l in
   let (state, l) =
-    let (events, l) =
-      List.fold_left (fun (m, l) ev ->
+    let (events, graph, l) =
+      List.fold_left (fun (m, g, l) ev ->
+        if Id.get_id m ev.event <> None then
+          failwith "Duplicated events" ;
         let (e, m) = Id.map_insert_t m ev.event in
-        (m, (e, ev) :: l)) (state.events, []) l in
-    ({ state with events = events }, l) in
+        let g = PMap.add e ([], []) g in
+        (m, g, (e, ev) :: l)) (state.events, state.graph, []) l in
+    ({ state with events = events ;
+                  graph = graph }, l) in
   let state =
     List.fold_left (fun state (e, ev) ->
       let rec auxb state = function
         | [] -> state
         | ev' :: l ->
-          if Date.compare ev.event_end ev'.event_begin <= 0 then
+          if Date.compare ev.event_end ev'.event_begin < 0 then (
             let e' =
               Utils.assert_option __LOC__ (Id.get_id state.events ev'.event) in
             let state = make_before state e e' in
             auxb state l
-          else state in
+          ) else state in
       let state = auxb state lb in
       let rec auxe state = function
         | [] -> state
         | ev' :: l ->
-          if Date.compare ev'.event_end ev.event_begin <= 0 then
+          if Date.compare ev'.event_end ev.event_begin < 0 then (
             let e' =
               Utils.assert_option __LOC__ (Id.get_id state.events ev'.event) in
             let state = make_before state e' e in
             auxe state l
-          else state in
+          ) else state in
       let state = auxe state le in
       state) state l in
   state

@@ -67,6 +67,8 @@ begin
   compatible with NonBinary
 
   add fr:mas
+  add en:mas
+  add eo:mas
 end
 
 attribute Gender Female
@@ -88,6 +90,8 @@ begin
   compatible with NonBinary
 
   add fr:fem
+  add en:fem
+  add eo:fem
 end
 
 attribute Gender NonBinary
@@ -129,16 +133,12 @@ begin
   add translation fr:adj:sin:fem "humaine"
   add translation fr:adj:plu:mas "humains"
   add translation fr:adj:plu:fem "humaines"
-  add translation fr:nom:sin:-mas:+fem "une personne"
   add translation fr:nom:sin:mas "un homme"
   add translation fr:nom:sin:fem "une femme"
-  add translation fr:nom:plu:-mas:+fem "des personnes"
   add translation fr:nom:plu:mas "des hommes"
   add translation fr:nom:plu:fem "des femmes"
-  add translation fr:nom:def:sin:-mas:+fem "la personne"
-  add translation fr:nom:def:sin:mas "l'homme"
+  add translation fr:nom:def:sin:mas "l’homme"
   add translation fr:nom:def:sin:fem "la femme"
-  add translation fr:nom:def:plu:-mas:+fem "les personnes"
   add translation fr:nom:def:plu:mas "les hommes"
   add translation fr:nom:def:plu:fem "les femmes"
   add translation en:adj:sin "human"
@@ -221,9 +221,9 @@ begin
   translation en "robot"
   translation eo "roboto"
 
-  add translation fr:nom:sin:+mas "robot"
-  add translation fr:nom:plu:+mas "robots"
-  add translation en:nom:sin "robot"
+  add translation fr:nom:sin:-fem:+mas "un robot"
+  add translation fr:nom:plu:-fem:+mas "des robots"
+  add translation en:nom:sin "a robot"
   add translation en:nom:plu "robots"
   add translation eo:nom:sin "roboto"
   add translation eo:nom:plu "robotoj"

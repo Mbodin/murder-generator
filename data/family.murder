@@ -141,7 +141,8 @@ begin
   let A be player
   let B be player
 
-  provide relation between A and B as asymmetrical trust hate
+  provide relation from A to B as trust
+  provide relation from B to A as hate
   provide strict contact FamilyMember between A and B as Sibling
 
   (* TODO: provide event to A *)

@@ -86,7 +86,7 @@ begin
 
   provide contact Know from C to B as True
   provide compatible contact Favor from B to A as Small
-  provide relation between A and B as asymmetrical neutral trust
+  provide relation from B to A as trust
 
   (* provide event to A TODO: Speak about B to C. *)
   (* provide event to B TODO: Spoke about B to C. *)

@@ -219,6 +219,15 @@ let stranslate m lg tgv trv o tags =
                  let tags = apply_patch (tgv x) added removed in
                  Utils.if_option (trv x tags) (fun (tr, tags) ->
                    if PSet.incl constrs tags then
+                     (* LATER: We are here just checking whether the added
+                      * constraints are compatible with the previous ones.
+                      * In some ways, this means that the “added” constraints
+                      * actually behaves as normal ones.
+                      * This is not what we want: we would like these added
+                      * constraints to overwrite the ones traditionally
+                      * associated to [x] (think of the French “une personne”
+                      * which may represent a male person, but whose gender
+                      * will grammatically overwrite the person’s gender). *)
                      Some tr
                    else None)) l with
         | Some l ->

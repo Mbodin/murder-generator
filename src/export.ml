@@ -499,6 +499,12 @@ let from_json m fileName fileContent =
               | _ ->
                 failwith ("An element of the attendee list of an event is "
                           ^ "not an integer.")) (get_field_list "attendees" l) in
+          let translation =
+            (* LATER: Recover it through [name]. *)
+            let tr =
+              Translation.sadd Translation.sempty Translation.generic
+                [] (-1) [Translation.Direct name] in
+            (0, tr) in
           let e = {
               Events.event_type = History.get_event_type be en ;
               Events.event_attendees = PSet.from_list attendees ;
@@ -507,8 +513,7 @@ let from_json m fileName fileContent =
                 PMap.empty (* LATER: Recover them through [name]. *) ;
               Events.constraints_none = PMap.empty ;
               Events.constraints_some = PMap.empty ;
-              Events.translation =
-                (0, Translation.sempty) (* LATER: Recover it through [name]. *)
+              Events.translation = translation
             } in {
             History.event_begin = be ;
             History.event_end = en ;

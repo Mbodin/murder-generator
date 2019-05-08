@@ -206,7 +206,7 @@ begin
     end
   end
 
-  provide relation between A and B as asymmetrical trust neutral
+  provide relation from A to B as trust
 end
 
 element SmallDebtNeutralPoor
@@ -236,7 +236,8 @@ begin
     end
   end
 
-  provide relation between A and B as asymmetrical avoidance undetermined
+  provide relation from A to B as avoidance
+  provide relation from B to A as undetermined
   provide compatible contact Know from A to B as True
 end
 
@@ -281,7 +282,7 @@ begin
     translation eo A:+sbeg " neniam redonis la monon: rememorigo necesiĝas."
   end
 
-  provide relation between A and B as asymmetrical neutral undetermined
+  provide relation between A and B as undetermined
   provide compatible contact Know from B to A as True
 end
 
@@ -329,7 +330,8 @@ begin
     translation eo "La komerco de " B " sukcesis kaj riĉigis " B:+pro:+acc "."
   end
 
-  provide relation between B and A as asymmetrical trust undetermined
+  provide relation from B to A as trust
+  provide relation from A to B as undetermined
   provide compatible contact Know between B and A as True
 end
 
@@ -373,7 +375,8 @@ begin
     translation eo "La komerco de " B " fiaskis, puŝante " B:+pro:+acc " malriĉecen."
   end
 
-  provide relation between B and A as asymmetrical avoidance hate
+  provide relation from B to A as avoidance
+  provide relation from A to B as hate
   provide compatible contact Know between B and A as True
 end
 
@@ -399,6 +402,7 @@ end
 element DecidedToDisappearAfterLotsOfDebts
 begin
   let A be player with contact FinancialDebt to B as Large
+                  with attribute Richness not as Rich
   let B be player
 
   provide short event to A

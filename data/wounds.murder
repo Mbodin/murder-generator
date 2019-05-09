@@ -31,7 +31,7 @@ end
 
 element BornBlind
 begin
-  let P be player
+  let P be player with attribute Born as True
 
   provide immediate event to P
   begin

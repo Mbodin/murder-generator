@@ -29,7 +29,6 @@ begin
   provide immediate event to P
   begin
     event Birth
-    event Personal
     assume no event Personal to P before
 
     provide strict attribute Born to P as True

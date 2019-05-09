@@ -44,25 +44,19 @@ let translate_value_player s =
 let translate_value_contact s =
   translate_value s (fun v -> Attribute.ContactConstructor v)
 
-(** Provides a recoverable identifier for an event. **)
-let translate_event_generic s e =
-  let (nb_sentence, tr) = e.Events.translation in
-  let tr = Translation.sforce_translate tr Translation.generic in
-  fst (tr (fun _ -> PSet.empty) (fun _ _ -> None) (-1) PSet.empty)
-
 (** Translates an event from a translation object [trp] for player. **)
 let translate_event s trp e =
   let (nb_sentence, tr) = e.Events.translation in
   let tr =
     Translation.sforce_translate ~debug:(fun i ->
-        Some (string_of_int i ^ " of " ^ translate_event_generic s e))
+        Some (string_of_int i ^ " of " ^ Driver.translate_event e))
       tr s.language in
   let l =
     List.map (fun i ->
         fst (tr (fst trp) (snd trp) i (PSet.singleton Translation.base)))
       (Utils.seq nb_sentence) in
   if String.concat "" l = "" then
-    ["<Empty translation for " ^ translate_event_generic s e ^ ">"]
+    ["<Empty translation for " ^ Driver.translate_event e ^ ">"]
   else l
 
 (** Generate a translation object for player for [translate_event]. **)
@@ -325,6 +319,7 @@ let to_org s =
 let to_json s =
   let s = generic s in
   Yojson.Safe.to_string ~std:true (`Assoc [
+    ("version", `String Version.version) ;
     ("characters", `List (List.mapi (fun c name ->
        let c = Id.from_array c in `Assoc [
            ("name", `String name) ;
@@ -351,13 +346,16 @@ let to_json s =
       `Assoc [
           ("begin", `String (Date.rfc2445 e.History.event_begin)) ;
           ("end", `String (Date.rfc2445 e.History.event_end)) ;
-          ("event", `String (translate_event_generic s e.History.event)) ;
+          ("event", `String (Driver.translate_event e.History.event)) ;
           ("attendees",
             `List (List.map (fun c -> `Int (Id.to_array c))
-                    (e.History.event.Events.event_attendees_list)))
+                     (e.History.event.Events.event_attendees_list))) ;
+          ("all",
+            `List (List.map (fun c -> `Int (Id.to_array c))
+                    (e.History.event.Events.all_attendees)))
         ]) (State.get_history_final s.state))) ])
 
-let from_json m fileName fileContent =
+let from_json i fileName fileContent =
   let get_field_string fld l =
     try match List.assoc fld l with
     | `String name -> name
@@ -424,11 +422,11 @@ let from_json m fileName fileContent =
               | (attribute, `String v) ->
                 let attribute =
                   get_attribute "attribute" Attribute.PlayerAttribute.get_attribute
-                    m.Attribute.player attribute in
+                    i.Driver.constructor_maps.Attribute.player attribute in
                 let v =
                   get_constructor "attribute"
                     Attribute.PlayerAttribute.get_constructor
-                    m.Attribute.player attribute v in
+                    i.Driver.constructor_maps.Attribute.player attribute v in
                 State.write_attribute_character (State.get_character_state state) c
                   attribute (Fixed_value ([v], Strict)) ;
                 state
@@ -446,11 +444,11 @@ let from_json m fileName fileContent =
                     let attribute =
                       get_attribute "contact"
                         Attribute.ContactAttribute.get_attribute
-                        m.Attribute.contact attribute in
+                        i.Driver.constructor_maps.Attribute.contact attribute in
                     let v =
                       get_constructor "contact"
                         Attribute.ContactAttribute.get_constructor
-                        m.Attribute.contact attribute v in
+                        i.Driver.constructor_maps.Attribute.contact attribute v in
                     State.write_contact_character (State.get_character_state state)
                       c attribute c' (Fixed_value ([v], Strict)) ;
                     state
@@ -493,24 +491,49 @@ let from_json m fileName fileContent =
           let be = Date.from_rfc2445 (get_field_string "begin" l) in
           let en = Date.from_rfc2445 (get_field_string "end" l) in
           let name = get_field_string "event" l in
+          let all =
+            List.map (function
+              | `Int c -> Id.from_array c
+              | _ ->
+                failwith ("An element of the full attendee list of an event is "
+                          ^ "not an integer.")) (get_field_list "all" l) in
           let attendees =
             List.map (function
               | `Int c -> Id.from_array c
               | _ ->
                 failwith ("An element of the attendee list of an event is "
                           ^ "not an integer.")) (get_field_list "attendees" l) in
+          if not (List.for_all (fun c -> List.mem c all) attendees) then
+            failwith ("Event `" ^ name ^ "' has an invalid list of attendees.") ;
+          let convert = List.nth_opt all in
           let translation =
-            (* LATER: Recover it through [name]. *)
-            let tr =
-              Translation.sadd Translation.sempty Translation.generic
-                [] (-1) [Translation.Direct name] in
-            (0, tr) in
+            let (n, tr) =
+              try PMap.find name i.event_translations
+              with Not_found ->
+                failwith ("No translation associated for event `" ^ name ^ "'.") in
+            match Translation.smap_option convert tr with
+            | Some tr -> (n, tr)
+            | None ->
+              failwith ("Non-matching translation for event `" ^ name ^ "'.") in
+          let kinds =
+            let k =
+              try PMap.find name i.event_kinds
+              with Not_found ->
+                failwith ("No kinds associated for event `" ^ name ^ "'.") in
+            match PMap.foldi (fun c k m ->
+                    Utils.if_option m (fun m ->
+                      Utils.if_option (convert c) (fun c ->
+                        Utils.apply_option
+                          (PSet.map_option (Events.kind_convert convert) k) (fun k ->
+                            PMap.add c k m)))) k (Some PMap.empty) with
+            | Some k -> k
+            | None -> failwith ("Non-matching kinds for event `" ^ name ^ "'.") in
           let e = {
               Events.event_type = History.get_event_type be en ;
               Events.event_attendees = PSet.from_list attendees ;
               Events.event_attendees_list = attendees ;
-              Events.event_kinds =
-                PMap.empty (* LATER: Recover them through [name]. *) ;
+              Events.all_attendees = all ;
+              Events.event_kinds = kinds ;
               Events.constraints_none = PMap.empty ;
               Events.constraints_some = PMap.empty ;
               Events.translation = translation

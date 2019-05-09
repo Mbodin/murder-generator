@@ -186,8 +186,9 @@ let main =
                       load_or_create parameters
                     ) else (
                       let%lwt data = data in
-                      let m = Driver.get_constructor_maps data in
-                      let (names, state) = Export.from_json m fileName str in
+                      let (names, state) =
+                        Export.from_json (Driver.get_import_information data)
+                          fileName str in
                       let informations =
                         List.mapi (fun c name ->
                           let c = Id.from_array c in

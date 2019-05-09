@@ -48,6 +48,12 @@ This will replace the committed file [murderFiles.ml](./src/murderFiles.ml).
 Please do not commit it after generation (I will reject any pull request with this file committed).
 The `check` argument of `./build.sh` checks that this file was clean before the generation; it can be removed at your own risks.
 
+Similarly, the current Git version of the repository is not easily available in compilation options.
+```bash
+./build.sh check version.ml
+```
+This will replace the committed file [version.ml](./src/version.ml): take care not to commit it.
+
 To compile the project into JavaScript, type the following commands.
 ```bash
 ./build.sh check main.js

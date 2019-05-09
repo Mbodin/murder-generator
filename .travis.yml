@@ -36,6 +36,7 @@ install:
 before_script:
   - ./build.sh check murderFiles.ml
   - ./build.sh check usedTranslations.ml
+  - ./build.sh check version.ml
 
 script:
   - ./build.sh tests.byte && ./tests.byte

@@ -322,7 +322,7 @@ let rec block_node b =
     ) ;
     Print.pop ()
   | InOut.Link (text, address) -> fun link ->
-    let text_link = link (fun _ -> Print.print address) in
+    let text_link = link (fun _ -> print_endline address) in
     block_node (Text (text ^ " " ^ text_link)) link
   | InOut.LinkContinuation (forward, text, cont) -> fun link ->
     let text_link = link cont in

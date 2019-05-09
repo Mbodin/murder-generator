@@ -211,9 +211,9 @@ begin
 
   provide immediate event to G
   begin
-    translation fr P:+sbeg " apparaissait comme " P:+nom " intéressant" P:+agr " pour " G "."
-    translation en P:+sbeg " appeared like an interesting " P:+nom " to " G "."
-    translation eo P:+sbeg " ŝajnis al " G " esti interesa " P:+nom "."
+    translation fr P:+sbeg " apparaissait comme " P:+nom:-def " intéressant" P:+agr " pour " G "."
+    translation en P:+sbeg " appeared like an interesting " P:+nom:-def " to " G "."
+    translation eo P:+sbeg " ŝajnis al " G " esti interesa " P:+nom:-def "."
   end
 
   provide very short event to P and G
@@ -244,7 +244,7 @@ begin
     end
   end
 
-  provide very short event to P
+  provide long event to P
   begin
     sentence
     begin

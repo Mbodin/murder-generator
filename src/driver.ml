@@ -68,12 +68,18 @@ let empty_block = {
     event_constraint = []
   }
 
+type import_information = {
+    constructor_maps : Attribute.constructor_maps ;
+    event_translations : (string, int Events.translation) PMap.t ;
+    event_kinds : (string, (int, int Events.kind PSet.t) PMap.t) PMap.t
+  }
+
 type state = {
     category_names : string Id.map (** All declared category names. **) ;
     event_names : string Id.map (** All declared event names. **) ;
     elements_names : string Id.map (** All declared element names. **) ;
-    constructor_information : Attribute.constructor_maps
-      (** The constructor maps. **) ;
+    import_information : import_information
+      (** Some generic information, mostly important for importation. **) ;
     (* LATER: There may be a way to factorise these dependency structures *)
     category_dependencies : (Id.t, Id.t PSet.t) PMap.t
       (** For each category, associates its set of category dependencies.
@@ -91,8 +97,8 @@ type state = {
       (** Events introduce a second level of graphs, as events also
        * depend on other events.
        * This is what this map stores. **) ;
-    elements : (Id.t, Element.t) PMap.t ;
-    translations : Translation.element
+    elements : (Id.t, Element.t) PMap.t (** All declared elements. **) ;
+    translations : Translation.element (** Global variables for translations. **)
   }
 
 type intermediary = {
@@ -125,11 +131,19 @@ type intermediary = {
       (** An element, waiting to be treated. **)
   }
 
+(** A useful shortcut. **)
+let intermediary_constructor_maps i =
+  i.current_state.import_information.constructor_maps
+
 let empty_state = {
     category_names = Id.map_create () ;
     event_names = Id.map_create () ;
     elements_names = Id.map_create () ;
-    constructor_information = Attribute.empty_constructor_maps ;
+    import_information = {
+        constructor_maps = Attribute.empty_constructor_maps ;
+        event_translations = PMap.empty ;
+        event_kinds = PMap.empty
+      } ;
     category_dependencies = PMap.empty ;
     attribute_dependencies = PMap.empty ;
     constructor_dependencies = PMap.empty ;
@@ -168,17 +182,17 @@ let attributes_to_be_defined i =
       | Attribute.PlayerAttribute id ->
         Utils.Left (Utils.assert_option __LOC__
           (Attribute.PlayerAttribute.attribute_name
-            i.current_state.constructor_information.Attribute.player id))
+            (intermediary_constructor_maps i).Attribute.player id))
       | Attribute.ContactAttribute id ->
         Utils.Right (Utils.assert_option __LOC__
           (Attribute.ContactAttribute.attribute_name
-            i.current_state.constructor_information.Attribute.contact id)))
+            (intermediary_constructor_maps i).Attribute.contact id)))
     (PSet.domain i.attributes_to_be_defined)
 
 let constructors_to_be_defined i =
   PSet.partition_map (function
       | Attribute.PlayerConstructor c ->
-        let i = i.current_state.constructor_information.Attribute.player in
+        let i = (intermediary_constructor_maps i).Attribute.player in
         let a =
           Utils.assert_option __LOC__
             (Attribute.PlayerAttribute.constructor_attribute i c) in
@@ -190,7 +204,7 @@ let constructors_to_be_defined i =
             (Attribute.PlayerAttribute.constructor_name i c) in
         Utils.Left (a, c)
       | Attribute.ContactConstructor c ->
-        let i = i.current_state.constructor_information.Attribute.contact in
+        let i = (intermediary_constructor_maps i).Attribute.contact in
         let a =
           Utils.assert_option __LOC__
             (Attribute.ContactAttribute.constructor_attribute i c) in
@@ -476,7 +490,7 @@ let prepare_declaration i =
       name block =
     let block = convert_block name [OfCategory; Translation] block in
     let (id, state) =
-      declare (extract i.current_state.constructor_information) name in
+      declare (extract (intermediary_constructor_maps i)) name in
     let id = constructor id in
     if attribute_exists i.current_state id then
       raise (DefinedTwice (en, name, "")) ;
@@ -515,8 +529,10 @@ let prepare_declaration i =
         attributes_to_be_defined = PMap.remove id i.attributes_to_be_defined ;
         current_state =
           { i.current_state with
-              constructor_information =
-                update i.current_state.constructor_information state ;
+              import_information =
+                { i.current_state.import_information with
+                    constructor_maps =
+                      update (intermediary_constructor_maps i) state } ;
               category_names = category_names ;
               constructor_dependencies = constructor_dependencies ;
               attribute_dependencies =
@@ -535,7 +551,7 @@ let prepare_declaration i =
       convert_block attribute_name [OfCategory; Translation; Add;
                                     CompatibleWith] block in
     let (attribute, state) =
-      declare (extract i.current_state.constructor_information) attribute_name in
+      declare (extract (intermediary_constructor_maps i)) attribute_name in
     let (idp, state) =
       declare_constructor state attribute constructor in
     let id = constructor_constructor idp in
@@ -617,8 +633,10 @@ let prepare_declaration i =
         tags_to_be_defined = tags_to_be_defined ;
         current_state =
           { i.current_state with
-              constructor_information =
-                update i.current_state.constructor_information state ;
+              import_information =
+                { i.current_state.import_information with
+                    constructor_maps =
+                      update (intermediary_constructor_maps i) state } ;
               constructor_dependencies =
                 PMap.add id deps i.current_state.constructor_dependencies ;
               translations =
@@ -777,7 +795,7 @@ let get_attribute_dependencies s id =
 let get_constructor_dependencies s id =
   PMap.find id s.constructor_dependencies
 
-(** Parses generates an element from a [state] and a [block]. **)
+(** Generates an element from a [state] and a [block]. **)
 let parse_element st element_name block =
   let get_constructor_dependencies cid =
     try get_constructor_dependencies st cid
@@ -883,13 +901,14 @@ let parse_element st element_name block =
    * understand the large tuple argument.**)
   let get_attribute_id (_, _, get_attribute, _, _, get_state, _, _ , _, en, _)
       name =
-    match get_attribute (get_state st.constructor_information) name with
+    match get_attribute (get_state st.import_information.constructor_maps) name with
     | None -> raise (Undeclared (en, name, element_name))
     | Some id -> id in
   (** Similar to [get_attribute_id], but for constructors. **)
   let get_constructor_id (_, _, get_attribute, get_constructor, _, get_state,
         _, _ , _, en, _) aid name =
-    match get_constructor (get_state st.constructor_information) aid name with
+    match get_constructor
+            (get_state st.import_information.constructor_maps) aid name with
     | None -> raise (Undeclared (en ^ " constructor", name, element_name))
     | Some id -> id in
   (** Merges the current dependencies with the ones of the given constructor.
@@ -1015,26 +1034,38 @@ let parse_element st element_name block =
         let consider_constraints add_constraint =
           List.fold_left (fun deps -> function
               | Ast.HasAttribute (a, n, c) ->
-                if n then deps
-                else (
-                  let aid = get_attribute_id attribute_functions a in
-                  let cid =
-                    List.map (get_constructor_id attribute_functions aid) c in
-                  add_constraint (Element.Attribute (aid, State.One_value_of cid)) ;
-                  intersect_with_constructor_dependencies_list deps
-                    (List.map (fun id -> Attribute.PlayerConstructor id) cid)
-                )
+                let aid = get_attribute_id attribute_functions a in
+                let cid = List.map (get_constructor_id attribute_functions aid) c in
+                let cid =
+                  if n then (
+                    (** At this stage, all the constructors have been defined. **)
+                    let all =
+                      Utils.assert_option __LOC__
+                        (Attribute.PlayerAttribute.constructors
+                          st.import_information.constructor_maps.player aid) in
+                    List.filter (fun c -> not (List.mem c cid)) all
+                  ) else cid in
+                add_constraint (Element.Attribute (aid, State.One_value_of cid)) ;
+                intersect_with_constructor_dependencies_list deps
+                  (List.map (fun id -> Attribute.PlayerConstructor id) cid)
               | Ast.HasContact (a, p', n, c) ->
-                if n then deps
-                else (
-                  let aid = get_attribute_id contact_functions a in
-                  let cid = List.map (get_constructor_id contact_functions aid) c in
-                  add_constraint
-                    (Element.Contact (aid, Some (get_player_array p'),
-                      State.One_value_of cid)) ;
-                  intersect_with_constructor_dependencies_list deps
-                    (List.map (fun id -> Attribute.ContactConstructor id) cid)
-                )) deps pc in
+                let aid = get_attribute_id contact_functions a in
+                let cid = List.map (get_constructor_id contact_functions aid) c in
+                let cid =
+                  if n then (
+                    (** At this stage, all the constructors have been defined. **)
+                    let all =
+                      Utils.assert_option __LOC__
+                        (Attribute.ContactAttribute.constructors
+                          st.import_information.constructor_maps.contact aid) in
+                    List.filter (fun c -> not (List.mem c cid)) all
+                  ) else cid in
+                add_constraint
+                  (Element.Contact (aid, Some (get_player_array p'),
+                    State.One_value_of cid)) ;
+                intersect_with_constructor_dependencies_list deps
+                  (List.map (fun id ->
+                    Attribute.ContactConstructor id) cid)) deps pc in
         match p with
         | None -> consider_constraints add_constraint_other
         | Some p ->
@@ -1127,10 +1158,14 @@ let parse_element st element_name block =
             let k =
               match c.Ast.event_kind with
               | Ast.Kind k ->
-                PSet.singleton (match Id.get_id st.event_names k with
-                                | None ->
-                                  raise (Undeclared ("event kind", k, element_name))
-                                | Some id -> Events.kind_of_id id)
+                let k =
+                  match Id.get_id st.event_names k with
+                  | None -> raise (Undeclared ("event kind", k, element_name))
+                  | Some id -> id in
+                let other =
+                  try PMap.find k st.event_event_dependencies
+                  with Not_found -> PSet.empty in
+                PSet.map Events.kind_of_id (PSet.add k other)
               | Ast.KindAttribute a ->
                 PSet.singleton (Events.kind_of_attribute
                   (get_attribute_id attribute_functions a))
@@ -1151,6 +1186,7 @@ let parse_element st element_name block =
         Events.event_type = t ;
         Events.event_attendees = PSet.from_list attendees ;
         Events.event_attendees_list = attendees ;
+        Events.all_attendees = Utils.seq n ;
         Events.event_kinds = kinds ;
         Events.constraints_none = constraints_none ;
         Events.constraints_some = constraints_some ;
@@ -1179,20 +1215,44 @@ let parse_element st element_name block =
     raise (UnsatisfyableEventSequence element_name) ;
   ((elementBase, !otherPlayers, evs), deps)
 
+let translate_event e =
+  let (nb_sentence, tr) = e.Events.translation in
+  let tr = Translation.sforce_translate tr Translation.generic in
+  fst (tr (fun _ -> PSet.empty) (fun _ _ -> None) (-1) PSet.empty)
+
 let parse i =
-  let (elements, elements_dependencies) =
-    List.fold_left (fun (elements, elements_dependencies) (id, name, block) ->
-        let (element, deps) = parse_element i.current_state name block in
-        (PMap.add id element elements, PMap.add id deps elements_dependencies))
-      (i.current_state.elements, i.current_state.elements_dependencies)
-      i.waiting_elements in
+  let (elements, elements_dependencies, import_information) =
+    List.fold_left (fun (elements, elements_dependencies, import_information)
+        (id, name, block) ->
+          let (element, deps) = parse_element i.current_state name block in
+          let (_, _, evs) = element in
+          let import_information =
+            List.fold_left (fun import_information ev ->
+                let name = translate_event ev in
+                { import_information with
+                    event_translations =
+                      PMap.add name ev.Events.translation
+                        import_information.event_translations ;
+                    event_kinds =
+                      PMap.add name ev.Events.event_kinds
+                        import_information.event_kinds })
+              import_information evs in
+          (PMap.add id element elements,
+           PMap.add id deps elements_dependencies,
+           import_information))
+      (i.current_state.elements,
+       i.current_state.elements_dependencies,
+       i.current_state.import_information) i.waiting_elements in
   { i.current_state with
       elements_dependencies = elements_dependencies ;
-      elements = elements }
+      elements = elements ;
+      import_information = import_information }
 
 let get_translations s = s.translations
 
-let get_constructor_maps s = s.constructor_information
+let get_import_information s = s.import_information
+
+let get_constructor_maps s = s.import_information.constructor_maps
 
 let elements s = s.elements
 

@@ -31,7 +31,7 @@ val to_block : state -> 'node InOut.block
 (** Revert [to_json] back to a list of names and a state.
  * The first argument is the file name (to report errors), and the second one
  * its actual content. **)
-val from_json : Attribute.constructor_maps -> string -> string -> string list * State.t
+val from_json : Driver.import_information -> string -> string -> string list * State.t
 
 (** All the functions of this file are resumed in the following list.
  * Each function is associated two identifiers in [web/translations.json]

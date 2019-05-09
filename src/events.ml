@@ -36,16 +36,19 @@ let all_event_type = [
     Immediate_event
   ]
 
+type 'character translation = (int * (int, 'character) Translation.st)
+
 type 'character t = {
     event_type : event_type ;
     event_attendees : 'character PSet.t ;
     event_attendees_list : 'character list ;
+    all_attendees : 'character list ;
     event_kinds : ('character, 'character kind PSet.t) PMap.t ;
     constraints_none :
       ('character, 'character kind PSet.t * 'character kind PSet.t) PMap.t ;
     constraints_some :
       ('character, 'character kind PSet.t * 'character kind PSet.t) PMap.t ;
-    translation : (int * (int, 'character) Translation.st)
+    translation : 'character translation
   }
 
 let partially_instantiate a b e =
@@ -61,6 +64,7 @@ let partially_instantiate a b e =
       event_type = e.event_type ;
       event_attendees = PSet.singleton b ;
       event_attendees_list = [] ;
+      all_attendees = [] ;
       event_kinds =
         PMap.add b (
           let k =
@@ -83,22 +87,24 @@ let instantiate f e =
               (fun after -> PMap.add c (before, after) m))))) m (Some PMap.empty) in
   Utils.if_option (PSet.map_option f e.event_attendees) (fun attendees ->
     Utils.if_option (Utils.list_map_option f e.event_attendees_list) (fun attl ->
-      Utils.if_option
-        (PMap.foldi (fun c k m ->
-          Utils.if_option m (fun m ->
-            Utils.if_option (f c) (fun c ->
-              Utils.apply_option (PSet.map_option (kind_convert f) k) (fun k ->
-                PMap.add c k m)))) e.event_kinds (Some PMap.empty)) (fun kinds ->
-        Utils.if_option (convert e.constraints_none) (fun none ->
-          Utils.if_option (convert e.constraints_some) (fun some ->
-            let (nbtr, mtr) = e.translation in
-            Utils.apply_option (Translation.smap_option f mtr) (fun mtr -> {
-                event_type = e.event_type ;
-                event_attendees = attendees ;
-                event_attendees_list = attl ;
-                event_kinds = kinds ;
-                constraints_none = none ;
-                constraints_some = some ;
-                translation = (nbtr, mtr)
-              }))))))
+      Utils.if_option (Utils.list_map_option f e.all_attendees) (fun all ->
+        Utils.if_option
+          (PMap.foldi (fun c k m ->
+            Utils.if_option m (fun m ->
+              Utils.if_option (f c) (fun c ->
+                Utils.apply_option (PSet.map_option (kind_convert f) k) (fun k ->
+                  PMap.add c k m)))) e.event_kinds (Some PMap.empty)) (fun kinds ->
+          Utils.if_option (convert e.constraints_none) (fun none ->
+            Utils.if_option (convert e.constraints_some) (fun some ->
+              let (nbtr, mtr) = e.translation in
+              Utils.apply_option (Translation.smap_option f mtr) (fun mtr -> {
+                  event_type = e.event_type ;
+                  event_attendees = attendees ;
+                  event_attendees_list = attl ;
+                  all_attendees = all ;
+                  event_kinds = kinds ;
+                  constraints_none = none ;
+                  constraints_some = some ;
+                  translation = (nbtr, mtr)
+                })))))))
 

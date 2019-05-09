@@ -52,7 +52,7 @@ end
 
 element Heritage
 begin
-  let P be player
+  let P be player with attribute Born as True
   let any other player be with contact FamilyMember to P not as Parent or Sibling
 
   provide short event to P
@@ -81,7 +81,9 @@ end
 element SharedHeritage
 begin
   let A be player with contact FamilyMember to B as Sibling
+                  with attribute Born as True
   let B be player with contact FamilyMember to A as Sibling
+                  with attribute Born as True
   let any other player be with contact FamilyMember to A not as Parent or Sibling
                           with contact FamilyMember to B not as Parent or Sibling
 
@@ -289,7 +291,7 @@ end
 element TookMoneyToBuildAShopAndIsNowRich
 begin
   let A be player with attribute Richness as Neutral
-  let B be player
+  let B be player with attribute Specy not as God
 
   provide very short event to A and B
   begin
@@ -338,7 +340,7 @@ end
 element TookMoneyToBuildAShopButGotBankrupt
 begin
   let A be player with attribute Richness as Neutral
-  let B be player
+  let B be player with attribute Specy not as God
 
   provide very short event to A and B
   begin
@@ -348,16 +350,16 @@ begin
 
     sentence
     begin
-      translation fr A:+sbeg " a demandé de l’argent à " B " pour monter son entreprise."
-      translation en A:+sbeg " asked money to " B " to set up a shop."
-      translation eo A:+sbeg " petis monon al " B " por komenci ties komercon."
+      translation fr B:+sbeg " a demandé de l’argent à " A " pour monter son entreprise."
+      translation en B:+sbeg " asked money to " A " to set up a shop."
+      translation eo B:+sbeg " petis monon al " A " por komenci ties komercon."
     end
 
     sentence
     begin
-      translation fr B:+sbeg:+pro " " A:+cli " en a donné."
-      translation en B:+sbeg:+pro " gave some to " A:+cli "."
-      translation eo B:+sbeg:+pro " al " A:+pro " donis."
+      translation fr A:+sbeg:+pro " " B:+cli " en a donné."
+      translation en A:+sbeg:+pro " gave some to " B:+cli "."
+      translation eo A:+sbeg:+pro " al " B:+pro " donis."
     end
   end
 
@@ -382,7 +384,7 @@ end
 
 element ImportantSeller
 begin
-  let P be player
+  let P be player with attribute Specy not as God
 
   (* TODO: Same than above *)
   provide compatible attribute Job to P as Seller
@@ -409,11 +411,12 @@ begin
   begin
     event Work
     assume event providing contact FinancialDebt from A to B before
+    assume no event providing contact FinancialDebt from A to B after
 
     provide attribute Famousness to A as Hiding
 
     translation fr "Vu l’importance des ses dettes, " A " decidait de disparaître définitivement."
-    translation en "Given the reach of debts, " A " decided to definitively disappear from the sight of others."
+    translation en "Given the importance of " A:+pos " debts, " A " decided to definitively disappear from the sight of others."
     translation eo "Pro ties grandegaj ŝuldoj, " A " decidis por ĉiam malaperi."
   end
 

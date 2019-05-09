@@ -33,6 +33,12 @@ val kind_of_contact : Attribute.ContactAttribute.attribute -> 'character -> 'cha
 (** Change each representation of characters in a kind. **)
 val kind_convert : ('a -> 'b option) -> 'a kind -> 'b kind option
 
+(** The translations associated to an event. **)
+type 'character translation =
+  (int * (** Number of sentence in the event. **)
+   (int, 'character) Translation.st
+   (** For each sentence number (counting from [0]), how to translate it. **))
+
 (** The structure of an event.
  * This structure stores all the needed information to describe the event,
  * but lacks any mention of its date and dependencies.
@@ -46,6 +52,9 @@ type 'character t = {
     event_attendees_list : 'character list
       (** Only used when extracting the event: the list of attendees, in the
        * same order that they are declared in the event. **) ;
+    all_attendees : 'character list
+      (** Only used when importing the event: the list of attendees declared
+       * in the full event. **) ;
     event_kinds : ('character, 'character kind PSet.t) PMap.t
       (** The set of event kinds that this event inherits from, for each
        * player. **) ;
@@ -60,10 +69,8 @@ type 'character t = {
       (** Same as [constraints_none], but instead of requiring no such events,
        * it requires that at least one of this kind and character combination
        * appear before or after for each element of these sets. **) ;
-    translation :
-      (int * (** Number of sentence in the event. **)
-       (int, 'character) Translation.st
-       (** For each sentence number (counting from [0]), how to translate it. **))
+    translation : 'character translation
+      (** How this event can be worded. **)
   }
 
 (** Given an instantiation of characters, instantiate an event. **)

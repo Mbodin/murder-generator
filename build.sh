@@ -21,7 +21,7 @@ else
     # It is generally a good thing to do it before committing.
     if [ $1 = "checkout" ]
     then
-      git checkout dummy/murderFiles.ml dummy/usedTranslations.ml web/main.js
+      git checkout dummy/murderFiles.ml dummy/usedTranslations.ml dummy/version.ml web/main.js
       exit 0
     else
       CHECK="false"
@@ -50,7 +50,7 @@ else
 
     # Overwriting the dummy file [dummy/murderFiles.ml] with the actual real content.
     # As this overwrites a committed file, please only do that on deployment.
-    echo "let files = [\n`ls data/*.murder | sed -e 's/\\(.*\\)/    \"\\1\" ;/'`\n  ]" > dummy/murderFiles.ml
+    echo "let files = [\n`ls data/*.murder | sed -e 's/\\(.*\\)/    \"\\1\" ;/'`\n  ]\n" > dummy/murderFiles.ml
 
     echo "${COLOR}Done.${ROLOC}"
     exit 0
@@ -68,7 +68,24 @@ else
     # Overwriting the dummy file [dummy/usedTranslations.ml] with the actually
     # used translations.
     # As this overwrites a committed file, please only do that on deployment.
-    echo "let used = [\n`grep -o 'get_translation \"[^\"]*\"' src/main.ml | sed -e 's/get_translation \\(\"[^\"]*\"\\)/    \\1 ;/'`\n  ]" > dummy/usedTranslations.ml
+    echo "let used = [\n`grep -o 'get_translation \"[^\"]*\"' src/main.ml | sed -e 's/get_translation \\(\"[^\"]*\"\\)/    \\1 ;/'`\n  ]\n" > dummy/usedTranslations.ml
+
+    echo "${COLOR}Done.${ROLOC}"
+    exit 0
+  fi
+
+  if [ $1 = "version.ml" ]
+  then
+    if [ $CHECK = "true" ]
+    then
+      grep '^let version = "<dummy>"$' dummy/version.ml && echo "${COLOR}File $1 was safe.${ROLOC}" || (echo "${COLOR}Unsafe file $1.${ROLOC}"; exit 1)
+    fi
+
+    echo "${COLOR}Creating $1 from actual content…${ROLOC}"
+
+    # Overwriting the dummy file [dummy/version.ml] with the current version.
+    # As this overwrites a committed file, please only do that on deployment.
+    echo "let version = \"`git rev-parse HEAD`\"\n" > dummy/version.ml
 
     echo "${COLOR}Done.${ROLOC}"
     exit 0

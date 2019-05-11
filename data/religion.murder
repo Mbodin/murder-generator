@@ -162,7 +162,7 @@ element PriestSinceEarly
 begin
   let P be player with attribute Specy not as God or Robot
 
-  provide long event to P
+  provide event lasting years to P
   begin
     event Personal
 
@@ -190,7 +190,7 @@ begin
   let P be player with attribute Specy not as God
   let G be player with attribute Specy as God
 
-  provide medium event to G
+  provide event lasting weeks to G
   begin
     event Personal
 
@@ -209,14 +209,14 @@ begin
     end
   end
 
-  provide immediate event to G
+  provide event lasting seconds to G
   begin
     translation fr P:+sbeg " apparaissait comme " P:+nom:-def " intéressant" P:+agr " pour " G "."
     translation en P:+sbeg " appeared like an interesting " P:+nom:-def " to " G "."
     translation eo P:+sbeg " ŝajnis al " G " esti interesa " P:+nom:-def "."
   end
 
-  provide very short event to P and G
+  provide event lasting minutes to P and G
   begin
     event Personal
 
@@ -244,7 +244,7 @@ begin
     end
   end
 
-  provide long event to P
+  provide event lasting years to P
   begin
     sentence
     begin

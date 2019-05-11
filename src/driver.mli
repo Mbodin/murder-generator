@@ -134,9 +134,11 @@ val translate_event : 'a Events.t -> string
 type import_information = {
     constructor_maps : Attribute.constructor_maps
       (** Information about constructors. **) ;
-    event_translations : (string, int Events.translation) PMap.t
+    event_id : (string, Id.t) PMap.t
+      (** A unique identifier for each event. **) ;
+    event_translations : (Id.t, int Events.translation) PMap.t
       (** How each event is translated, organised over event names. **) ;
-    event_kinds : (string, (int, int Events.kind PSet.t) PMap.t) PMap.t
+    event_kinds : (Id.t, (int, int Events.kind PSet.t) PMap.t) PMap.t
       (** The kind associated to each event, organised over event names. **)
   }
 

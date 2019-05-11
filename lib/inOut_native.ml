@@ -380,7 +380,7 @@ let _ =
     List.iter (fun b -> b link) (BidirectionalList.to_list !registered_nodes) ;
     (** Wait for user input. **)
     match%lwt Lwt_io.read_line_opt Lwt_io.stdin with
-    | None -> Lwt.return ()
+    | None -> exit 0
     | Some str ->
       let i =
         try int_of_string str

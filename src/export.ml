@@ -10,7 +10,8 @@ type state = {
     translation : Translation.element ;
     generic_translation : string Translation.t ;
     constructor_maps : Attribute.constructor_maps ;
-    state : State.final
+    state : State.final ;
+    unfinalised_state : State.t
   }
 
 (** As the state [s], but there the translation language has moved to
@@ -124,7 +125,7 @@ let escape_quote str =
   let replace input = Re.Str.global_replace (Re.Str.regexp_string input) in
   replace "\"" "\\\"" (replace "\\" "\\\\" str)
 
-let to_graphviz s =
+let to_graphviz_relation s =
   let player_node c = "player" ^ string_of_int (Id.to_array c) in
   let get_color s =
     let n = float_of_int (Hashtbl.hash s mod 1000) /. 1000. in
@@ -158,6 +159,32 @@ let to_graphviz s =
           (State.get_all_contacts_character_final s.state c) []) s.names)) ;
       "}" ; ""
     ]
+
+let to_graphviz_event s =
+  let event_node id = "event" ^ string_of_int (Id.to_array id) in
+  let tr_players = translation_players s in
+  let end_file = ["}" ; ""] in
+  let graph =
+    History.fold_graph (fun l ev id (before, after) ->
+      let color =
+        let v =
+          let v = List.length after in
+          if v > 8 then 0.8
+          else float_of_int (v - 1) /. 10. in
+        "0 0 " ^ string_of_float v in
+      ("  " ^ event_node id ^ " [label=\""
+       ^ String.concat "|" (translate_event s tr_players ev)
+       ^ "\"]")
+      :: List.map (fun id' ->
+        "  " ^ event_node id ^ " -> " ^ event_node id'
+        ^ " [color=\"" ^ color ^ "\"];") after
+      @ "" :: l) end_file (State.get_history_state s.unfinalised_state) in
+  String.concat "\n" (
+      "digraph {" :: ""
+      :: ("  // Generated from " ^ webpage_address) :: ""
+      :: "  node [shape=record]" :: ""
+      :: "  rankdir = LR ;" :: ""
+      :: graph)
 
 let to_icalendar s =
   let rec split = function
@@ -349,7 +376,7 @@ let to_json s =
           ("event", `String (Driver.translate_event e.History.event)) ;
           ("attendees",
             `List (List.map (fun c -> `Int (Id.to_array c))
-                     (e.History.event.Events.event_attendees_list))) ;
+                     (Events.get_attendees_list e.History.event))) ;
           ("all",
             `List (List.map (fun c -> `Int (Id.to_array c))
                     (e.History.event.Events.all_attendees)))
@@ -491,6 +518,9 @@ let from_json i fileName fileContent =
           let be = Date.from_rfc2445 (get_field_string "begin" l) in
           let en = Date.from_rfc2445 (get_field_string "end" l) in
           let name = get_field_string "event" l in
+          let id =
+            try PMap.find name i.Driver.event_id
+            with Not_found -> failwith ("No event `" ^ name ^ "' found.") in
           let all =
             List.map (function
               | `Int c -> Id.from_array c
@@ -508,18 +538,16 @@ let from_json i fileName fileContent =
           let convert = List.nth_opt all in
           let translation =
             let (n, tr) =
-              try PMap.find name i.event_translations
-              with Not_found ->
-                failwith ("No translation associated for event `" ^ name ^ "'.") in
+              try PMap.find id i.Driver.event_translations
+              with Not_found -> assert false in
             match Translation.smap_option convert tr with
             | Some tr -> (n, tr)
             | None ->
               failwith ("Non-matching translation for event `" ^ name ^ "'.") in
           let kinds =
             let k =
-              try PMap.find name i.event_kinds
-              with Not_found ->
-                failwith ("No kinds associated for event `" ^ name ^ "'.") in
+              try PMap.find id i.Driver.event_kinds
+              with Not_found -> assert false in
             match PMap.foldi (fun c k m ->
                     Utils.if_option m (fun m ->
                       Utils.if_option (convert c) (fun c ->
@@ -529,9 +557,9 @@ let from_json i fileName fileContent =
             | Some k -> k
             | None -> failwith ("Non-matching kinds for event `" ^ name ^ "'.") in
           let e = {
+              Events.event_id = id ;
               Events.event_type = History.get_event_type be en ;
               Events.event_attendees = PSet.from_list attendees ;
-              Events.event_attendees_list = attendees ;
               Events.all_attendees = all ;
               Events.event_kinds = kinds ;
               Events.constraints_none = PMap.empty ;
@@ -551,8 +579,10 @@ let from_json i fileName fileContent =
 let all_production = [
     ("json", "jsonDescription", "application/json", "json", true, to_json) ;
     ("orgmode", "orgDescription", "text/x-org", "org", true, to_org) ;
-    ("graphviz", "graphvizDescription", "text/vnd.graphviz", "dot", true,
-      to_graphviz) ;
+    ("graphvizRel", "graphvizRelDescription",
+     "text/vnd.graphviz", "dot", true, to_graphviz_relation) ;
+    ("graphvizEv", "graphvizEvDescription",
+     "text/vnd.graphviz", "dot", true, to_graphviz_event) ;
     ("iCalendar", "icalDescription", "text/calendar", "ics", false, to_icalendar)
   ]
 

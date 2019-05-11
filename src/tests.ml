@@ -109,9 +109,13 @@ let test_translations _ =
       print_endline ("Missing translation of `" ^ key ^ "' for language "
                      ^ Translation.iso639 lg ^ ".") ;
       ok := false ; "" in
+  let used =
+    List.concat (List.map (fun (id, descr, _, _, _, _) ->
+      id :: descr :: []) Export.all_production)
+    @ UsedTranslations.used in
   List.iter (fun lg ->
     List.iter (fun key ->
-      ignore (translate key lg)) UsedTranslations.used) languages ;
+      ignore (translate key lg)) used) languages ;
   let _test_name_generation _ =
     List.iter (fun lg ->
       print_endline ("Testing name generation for languages "

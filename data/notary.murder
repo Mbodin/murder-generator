@@ -53,9 +53,10 @@ end
 element Heritage
 begin
   let P be player with attribute Born as True
+                  with attribute Specy not as God or Robot
   let any other player be with contact FamilyMember to P not as Parent or Sibling
 
-  provide short event to P
+  provide event lasting days to P
   begin
     event ParentDeath
     assume no event ParentDeath to P before
@@ -82,12 +83,14 @@ element SharedHeritage
 begin
   let A be player with contact FamilyMember to B as Sibling
                   with attribute Born as True
+                  with attribute Specy not as God or Robot
   let B be player with contact FamilyMember to A as Sibling
                   with attribute Born as True
+                  with attribute Specy not as God or Robot
   let any other player be with contact FamilyMember to A not as Parent or Sibling
                           with contact FamilyMember to B not as Parent or Sibling
 
-  provide short event to A and B
+  provide event lasting days to A and B
   begin
     event ParentDeath
     assume no event ParentDeath to A or B before
@@ -115,7 +118,7 @@ element DwarfFocusedTheirLifeAtAccumulatingGold
 begin
   let P be player with attribute Specy as Dwarf
 
-  provide long event to P
+  provide event lasting years to P
   begin
     event Work
 
@@ -187,7 +190,7 @@ begin
   let B be player with attribute Richness as Neutral
                   with contact Know to A as True
 
-  provide very short event to A and B
+  provide event lasting minutes to A and B
   begin
     event MoneyExchange
 
@@ -217,7 +220,7 @@ begin
   let B be player with attribute Richness as Neutral
                   with contact Know to A as True
 
-  provide very short event to A and B
+  provide event lasting minutes to A and B
   begin
     event MoneyExchange
 
@@ -249,7 +252,7 @@ begin
                   with contact Know to B as True
   let B be player
 
-  provide very short event to A and B
+  provide event lasting minutes to A and B
   begin
     event MoneyExchange
 
@@ -277,7 +280,7 @@ begin
     end
   end
 
-  provide very short event to B
+  provide event lasting minutes to B
   begin
     translation fr A:+sbeg " n’a toujours pas rendu son emprunt : il serait temps de le lui rappeller."
     translation en A:+sbeg " never gave the money back: a recall is now needed."
@@ -293,7 +296,7 @@ begin
   let A be player with attribute Richness as Neutral
   let B be player with attribute Specy not as God
 
-  provide very short event to A and B
+  provide event lasting minutes to A and B
   begin
     event MoneyExchange
 
@@ -320,7 +323,7 @@ begin
      the Job attribute (and that the first event was before). *)
   provide attribute Job to B as Seller
 
-  provide long event to B
+  provide event lasting years to B
   begin
     event Personal
     assume no event providing attribute Richness to B before
@@ -342,7 +345,7 @@ begin
   let A be player with attribute Richness as Neutral
   let B be player with attribute Specy not as God
 
-  provide very short event to A and B
+  provide event lasting minutes to A and B
   begin
     event MoneyExchange
 
@@ -366,7 +369,7 @@ begin
   (* TODO: Same as above: put this as an assumption and set up the chronology of events. *)
   provide attribute Job to B as Seller
 
-  provide long event to B
+  provide event lasting weeks to B
   begin
     event Personal
 
@@ -389,7 +392,7 @@ begin
   (* TODO: Same than above *)
   provide compatible attribute Job to P as Seller
 
-  provide long event to P
+  provide event lasting decades to P
   begin
     event Work
 
@@ -407,7 +410,7 @@ begin
                   with attribute Richness not as Rich
   let B be player
 
-  provide short event to A
+  provide event lasting days to A
   begin
     event Work
     assume event providing contact FinancialDebt from A to B before

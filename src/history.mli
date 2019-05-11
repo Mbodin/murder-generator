@@ -75,3 +75,9 @@ val finalise : t -> Date.t -> final
  * the type [final]. **)
 val unfinalise : final -> t
 
+(** Fold over the event graph.
+ * At each step, we are given an event, its identifier, and two lists
+ * of identifiers, corresponding to the events before and after the
+ * current event. **)
+val fold_graph : ('a -> character Events.t -> Id.t -> Id.t list * Id.t list -> 'a) -> 'a -> t -> 'a
+

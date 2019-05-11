@@ -66,6 +66,13 @@ let uniq l =
     | [] -> [] in
   aux (List.sort compare l)
 
+let is_uniq l =
+  let rec aux = function
+    | a :: b :: l when a = b -> false
+    | a :: l -> aux l
+    | [] -> true in
+  aux (List.sort compare l)
+
 let rec repeat i e =
   if i = 0 then []
   else e :: repeat (i - 1) e

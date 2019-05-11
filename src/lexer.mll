@@ -88,6 +88,13 @@ rule read = parse
   | "after"                 { AFTER }
   | "providing"             { PROVIDING }
 
+  | "lasting"               { LASTING }
+  | "seconds"               { SECONDS }
+  | "minutes"               { MINUTES }
+  | "days"                  { DAYS }
+  | "weeks"                 { WEEKS }
+  | "years"                 { YEARS }
+  | "decades"               { DECADES }
   | "immediate"             { IMMEDIATE }
   | "very"                  { VERY }
   | "short"                 { SHORT }

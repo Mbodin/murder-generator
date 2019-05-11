@@ -16,11 +16,10 @@ type state = {
        * instead of files in [data/]. **) ;
     constructor_maps : Attribute.constructor_maps
       (** Informations about constructors **) ;
-    state : State.final (** The actual generated state. **)
+    state : State.final (** The actual generated state. **) ;
+    unfinalised_state : State.t
+      (** A few exports are meant to only export the non-final state. **)
   }
-
-(** Produce a Graphviz representation of the interactions between players. **)
-val to_graphviz : state -> string
 
 (** Produce a JSON representation of the state. **)
 val to_json : state -> string

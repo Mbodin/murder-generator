@@ -78,14 +78,18 @@ type t = {
        * - the set for which no event of this kind can be after the given event.
        * These sets are kept to a minimum: if an event is before another,
        * and that both prevents any event of a given kind to be placed after them,
-       * then only the latter really have to prevent any such event to
-       * happen. **) ;
+       * then only the latter really have to prevent any such event to happen. **) ;
     constraints_some :
       (character, (character Events.kind, Id.t PSet.t * Id.t PSet.t) PMap.t) PMap.t
       (** Same as [constraints_none], but enforce that there is at least one event
        * of the given kind before/after them.
        * Elements of these sets are naturally removed when their constraints have
-       * been met. **)
+       * been met. **) ;
+    already_declared_events : (Id.t * character) PSet.t
+      (** A given event can’t be reused twice for the same character.
+       * As a consequence, we store the event identifiers (from the field
+       * [Events.event_id], not from the history identifier) for each character:
+       * they are not allowed to appear twice for a given character. **)
   }
 
 (** As the type is pure, one can safely return it. **)
@@ -157,21 +161,17 @@ let get_full_constraints st el =
   (** The before list is parsed from left to right, but the after
    * list is parsed from right to left. **)
   let constraints = List.map (get_constraints st) el in
-  (** Unfortunately, high order polymorphism is not accepted in OCaml,
-   * and we have to pass through an intermediary object. **)
-  let rec full (f : < f : 'a. 'a * 'a -> 'a >) sacc acc = function
+  let rec full f f' sacc acc = function
     | [] -> acc
     | s :: l ->
-      let s = f#f s in
-      let s = all_successors_set f#f st s in
+      let s = f s in
+      let s = all_successors_set f' st s in
       let sacc = PSet.merge s sacc in
-      full f sacc (sacc :: acc) l in
+      full f f' sacc (sacc :: acc) l in
   let constraints_before =
-    let o = object method f : 'a. 'a * 'a -> 'a = fst end in
-    List.rev (full o PSet.empty [] constraints) in
+    List.rev (full fst fst PSet.empty [] constraints) in
   let constraints_after =
-    let o = object method f : 'a. 'a * 'a -> 'a = snd end in
-    full o PSet.empty [] (List.rev constraints) in
+    full snd snd PSet.empty [] (List.rev constraints) in
   let rec aux lb la el =
     match lb, la, el with
     | [], [], [] -> []
@@ -181,14 +181,24 @@ let get_full_constraints st el =
   aux constraints_before constraints_after el
 
 let lcompatible_and_progress st el =
-  if List.exists (fun e -> Id.get_id st.events e <> None) el then None
+  if Utils.assert_defend then
+    assert (Utils.is_uniq (List.map (fun e -> e.Events.event_id) el)) ;
+  if List.exists (fun e ->
+       PSet.fold (fun c b ->
+           b || PSet.mem (e.Events.event_id, c) st.already_declared_events)
+         false e.Events.event_attendees) el then
+    (** An instantiated event can only be declared once. **)
+    None
   else
     let rec aux r = function
       | [] -> Some r
       | (sb, sa, e) :: l ->
         if not (PSet.is_empty (PSet.inter sb sa)) then
+          (** Adding this event would create a loop in the graph. **)
           None
         else
+          (** There is no conflict for this event: we can check whether
+           * it would make things progress. **)
           aux (r || PMap.foldi (fun c ks r ->
             r || let m =
                    try PMap.find c st.constraints_some
@@ -224,19 +234,21 @@ let make_before st e1 e2 =
 
 let lapply st el =
   (* LATER: This function could be factorised. *)
+  (** Registering the new events. **)
   let (events, idl) =
     List.fold_left (fun (events, idl) e ->
       let (id, events) = Id.map_insert_t events e in
-      (events, id :: idl)) (st.events, []) el in
+      (events, (id, e) :: idl)) (st.events, []) el in
   let idl = List.rev idl in
   let st =
     { st with events = events ;
               graph =
-                List.fold_left (fun graph id ->
+                List.fold_left (fun graph (id, _) ->
+                  if Utils.assert_defend then
+                    assert (not (PMap.mem id graph)) ;
                   PMap.add id ([], []) graph) st.graph idl ;
               kind_map =
-                List.fold_left (fun map id ->
-                  let e = Utils.assert_option __LOC__ (Id.map_inverse events id) in
+                List.fold_left (fun map (id, e) ->
                   PSet.fold (fun c map ->
                       let k =
                         try PMap.find c e.Events.event_kinds
@@ -246,20 +258,27 @@ let lapply st el =
                           try PMap.find (k, c) map
                           with Not_found -> PSet.empty in
                         PMap.add (k, c) (PSet.add id ids) map) map k)
-                    map e.Events.event_attendees) st.kind_map idl } in
+                    map e.Events.event_attendees) st.kind_map idl ;
+              already_declared_events =
+                List.fold_left (fun set (_, e) ->
+                    PSet.fold (fun c set -> PSet.add (e.Events.event_id, c) set)
+                      set e.Events.event_attendees)
+                  st.already_declared_events idl } in
+  (** Registering the new constraints. **)
   let rec intermediate_constraints st = function
     | [] | _ :: [] -> st
-    | e1 :: e2 :: l -> intermediate_constraints (make_before st e1 e2) (e2 :: l) in
+    | (e1, _) :: (e2, ev2) :: l ->
+      intermediate_constraints (make_before st e1 e2) ((e2, ev2) :: l) in
   let st = intermediate_constraints st idl in
   let constraints = List.map (get_constraints st) el in
   let st =
-    List.fold_left2 (fun st (before, after) e ->
+    List.fold_left2 (fun st (before, after) (e, _) ->
       let st = PSet.fold (fun e' st -> make_before st e' e) st before in
-      let st = PSet.fold (fun e' st -> make_before st e e') st before in
+      let st = PSet.fold (fun e' st -> make_before st e e') st after in
       st) st constraints idl in
+  (** Optimizing [st.constraints_none] by removing useless elements. **)
   let constraints_none =
-    List.fold_left (fun constraints_none id ->
-      let e = Utils.assert_option __LOC__ (Id.map_inverse events id) in
+    List.fold_left (fun constraints_none (id, e) ->
       let (eb, ea) =
         try PMap.find id st.graph
         with Not_found -> ([], []) in
@@ -296,12 +315,14 @@ let lapply st el =
           PMap.add c none constraints_none)
         st.constraints_none e.Events.event_attendees) st.constraints_none idl in
   let st = { st with constraints_none = constraints_none } in
+  (** Trying to match as many requirements of [st.constraints_some] as possible. **)
   let st =
     let rec aux st added_before = function
       | [] -> st
-      | e :: l ->
+      | (e, ev) :: l ->
+        (* FIXME: Some links from an event to itself have been emitted, and I
+         * suspect that this part of the code is responsible for this. *)
         let (before, after) = (all_successors fst st e, all_successors snd st e) in
-        let ev = Utils.assert_option __LOC__ (Id.map_inverse events e) in
         let (st, added_before) =
           PMap.foldi (fun c ks (st, added_before) ->
               let m =
@@ -313,9 +334,11 @@ let lapply st el =
                     try PMap.find k m
                     with Not_found -> (PSet.empty, PSet.empty) in
                   let do_before = PSet.diff yes_before before in
+                  let do_before = PSet.remove e do_before in
                   let st =
                     PSet.fold (fun e' st -> make_before st e e') st do_before in
                   let do_after = PSet.diff yes_after after in
+                  let do_after = PSet.remove e do_after in
                   let (st, added_before) =
                     PSet.fold (fun e' (st, added_before) ->
                         (make_before st e' e, all_successors fst st e'))
@@ -327,6 +350,8 @@ let lapply st el =
               let st =
                 { st with constraints_some = PMap.add c m st.constraints_some } in
               (st, added_before)) ev.Events.event_kinds (st, added_before) in
+        (* TODO: In addition to the already present constraints, one could
+         * try to solve the [constraints_some] constraints of the event [e]. *)
         aux st added_before l in
     aux st PSet.empty idl in
   st
@@ -334,6 +359,7 @@ let lapply st el =
 let apply st e = lapply st [e]
 
 let create_state _ = {
+    already_declared_events = PSet.empty ;
     events = Id.map_create () ;
     kind_map = PMap.empty ;
     graph = PMap.empty ;
@@ -411,7 +437,7 @@ let unfinalise l =
     let max_character =
       List.fold_left (fun c e ->
         let l =
-          List.map Id.to_array e.event.Events.event_attendees_list in
+          List.map Id.to_array (Events.get_attendees_list e.event) in
         List.fold_left max c l) (-1) l in
     create_state (1 + max_character) in
   let lb =
@@ -452,4 +478,10 @@ let unfinalise l =
       let state = auxe state le in
       state) state l in
   state
+
+let fold_graph f acc st =
+  PMap.foldi (fun id edges acc ->
+    let ev =
+      Utils.assert_option __LOC__ (Id.map_inverse st.events id) in
+    f acc ev id edges) st.graph acc
 

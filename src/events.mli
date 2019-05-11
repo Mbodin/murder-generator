@@ -45,13 +45,17 @@ type 'character translation =
  * See the History module for a richer type.
  * Events are parameterised by the kind of characters. **)
 type 'character t = {
+    event_id : Id.t
+      (** A unique identifier for a particular event.
+       * Note that this identifier is only used in this structure.
+       * In particular, the event identifiers used in the History module
+       * are not the same ones.
+       * In particular, each event instantiation shares the same identifier,
+       * but will be associated different identifiers in the History module. **) ;
     event_type : event_type
       (** Two events with the same event type can not happen simultaneously. **) ;
     event_attendees : 'character PSet.t
       (** Characters involved in this event. **) ;
-    event_attendees_list : 'character list
-      (** Only used when extracting the event: the list of attendees, in the
-       * same order that they are declared in the event. **) ;
     all_attendees : 'character list
       (** Only used when importing the event: the list of attendees declared
        * in the full event. **) ;
@@ -63,15 +67,18 @@ type 'character t = {
       (** For each character, provides two sets of kinds:
        * one for before and one for after this event.
        * None of these combinations of kinds and characters should appear
-       * after or before this event. **) ;
+       * before (respectively after) this event. **) ;
     constraints_some :
       ('character, 'character kind PSet.t * 'character kind PSet.t) PMap.t
       (** Same as [constraints_none], but instead of requiring no such events,
        * it requires that at least one of this kind and character combination
-       * appear before or after for each element of these sets. **) ;
+       * appear before (respectively after) for each element of these sets. **) ;
     translation : 'character translation
       (** How this event can be worded. **)
   }
+
+(** Given an event, return its list of attendees. **)
+val get_attendees_list : 'character t -> 'character list
 
 (** Given an instantiation of characters, instantiate an event. **)
 val instantiate : ('a -> 'b option) -> 'a t -> 'b t option

@@ -25,6 +25,7 @@ open Ast
 %token          SENTENCE TRANSLATION COLON PLUS MINUS
 %token          PROVIDING BEFORE AFTER
 %token          IMMEDIATE VERY SHORT MEDIUM LONG LIFE
+%token          LASTING SECONDS MINUTES DAYS WEEKS YEARS DECADES
 
 %start<Ast.declaration list> main
 %start<Relation.t> relation
@@ -136,6 +137,10 @@ command:
     TO; targets = separated_list (AND, UIDENT);
     b = block
     { ProvideEvent (t, targets, b) }
+  | PROVIDE; EVENT; LASTING; t = duration;
+    TO; targets = separated_list (AND, UIDENT);
+    b = block
+    { ProvideEvent (t, targets, b) }
   | e = event_constraint (empty, AND)
     { e true }
   | e = event_constraint (NO, OR)
@@ -188,9 +193,13 @@ strictness:
   | empty       { State.LowStrict }
   | STRICT      { State.Strict }
 
+event_direction:
+  | AFTER   { true }
+  | BEFORE  { false }
+
 event_constraint (N, O):
     ASSUME; N; EVENT; kp = kind_players (O);
-    d = direction
+    d = event_direction
     { fun any ->
         EventConstraint {
           event_kind = fst kp ;
@@ -217,9 +226,13 @@ time:
   | VERY; SHORT { Events.Very_short_term_event }
   | IMMEDIATE   { Events.Immediate_event }
 
-direction:
-  | AFTER   { true }
-  | BEFORE  { false }
+duration:
+  | DECADES     { Events.For_life_event }
+  | YEARS       { Events.Long_term_event }
+  | WEEKS       { Events.Medium_term_event }
+  | DAYS        { Events.Short_term_event }
+  | MINUTES     { Events.Very_short_term_event }
+  | SECONDS     { Events.Immediate_event }
 
 %inline empty: { () }
 

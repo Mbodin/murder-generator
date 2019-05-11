@@ -70,8 +70,9 @@ let empty_block = {
 
 type import_information = {
     constructor_maps : Attribute.constructor_maps ;
-    event_translations : (string, int Events.translation) PMap.t ;
-    event_kinds : (string, (int, int Events.kind PSet.t) PMap.t) PMap.t
+    event_id : (string, Id.t) PMap.t ;
+    event_translations : (Id.t, int Events.translation) PMap.t ;
+    event_kinds : (Id.t, (int, int Events.kind PSet.t) PMap.t) PMap.t
   }
 
 type state = {
@@ -141,6 +142,7 @@ let empty_state = {
     elements_names = Id.map_create () ;
     import_information = {
         constructor_maps = Attribute.empty_constructor_maps ;
+        event_id = PMap.empty ;
         event_translations = PMap.empty ;
         event_kinds = PMap.empty
       } ;
@@ -795,6 +797,9 @@ let get_attribute_dependencies s id =
 let get_constructor_dependencies s id =
   PMap.find id s.constructor_dependencies
 
+(** Fill the [event_id] identifier. **)
+let event_id = Id.new_id_function ()
+
 (** Generates an element from a [state] and a [block]. **)
 let parse_element st element_name block =
   let get_constructor_dependencies cid =
@@ -821,6 +826,7 @@ let parse_element st element_name block =
        convert_block element_name
          [Translation; Sentence; ProvideAttribute; ProvideContact;
           EventKind; EventConstraint] b)) block.provide_event in
+  let events = List.rev events in
   (** We first consider relations. **)
   let relations =
     (** We create this triangle of relations.
@@ -1183,9 +1189,9 @@ let parse_element st element_name block =
                   c.Ast.event_players)) (PMap.empty, PMap.empty)
           b.event_constraint in
       let attendees = List.map Id.to_array attendees in {
+        Events.event_id = event_id () ;
         Events.event_type = t ;
         Events.event_attendees = PSet.from_list attendees ;
-        Events.event_attendees_list = attendees ;
         Events.all_attendees = Utils.seq n ;
         Events.event_kinds = kinds ;
         Events.constraints_none = constraints_none ;
@@ -1229,12 +1235,14 @@ let parse i =
           let import_information =
             List.fold_left (fun import_information ev ->
                 let name = translate_event ev in
+                let id = ev.Events.event_id in
                 { import_information with
+                    event_id = PMap.add name id import_information.event_id ;
                     event_translations =
-                      PMap.add name ev.Events.translation
+                      PMap.add id ev.Events.translation
                         import_information.event_translations ;
                     event_kinds =
-                      PMap.add name ev.Events.event_kinds
+                      PMap.add id ev.Events.event_kinds
                         import_information.event_kinds })
               import_information evs in
           (PMap.add id element elements,

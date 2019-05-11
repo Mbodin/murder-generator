@@ -94,8 +94,12 @@ val list_partition_map : ('a -> ('b, 'c) plus) -> 'a list -> 'b list * 'c list
  * element of the list (or [None] if the list is empty). **)
 val argmax : ('a -> 'a -> int) -> 'a list -> 'a option
 
-(** Sorts and remove all duplicated element from the given list. **)
+(** Sort and remove all duplicated element from the given list. **)
 val uniq : 'a list -> 'a list
+
+(** Return [true] if and only if [uniq] behaves as the identity function
+  * on the given list. **)
+val is_uniq : 'a list -> bool
 
 (** Shuffle a list. **)
 val shuffle : 'a list -> 'a list

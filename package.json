@@ -1,0 +1,32 @@
+{
+  "name": "murder-generator",
+  "version": "1.0",
+  "description": "A program to generate random murder parties",
+  "license": "GPL-3.0",
+  "esy": {
+    "build": "./build.sh",
+    "buildsInSource": "_build"
+  },
+  "scripts": {
+    "test": "./build.sh tests",
+    "js": "./build.sh check move main.js",
+    "native": "./build.sh main.native",
+    "local": "./build.sh local",
+    "checkout": "./build.sh checkout"
+  },
+  "dependencies": {
+    "@opam/ocamlfind": "*",
+    "@opam/extlib": "*",
+    "@opam/menhir": "*",
+    "@opam/yojson": "*",
+    "@opam/re": "*",
+    "@opam/uuseg": "*",
+    "@opam/ppx_deriving": "*",
+    "@opam/lwt_ppx": "*",
+    "@opam/js_of_ocaml": "*",
+    "@opam/js_of_ocaml-lwt": "*",
+    "@opam/js_of_ocaml-ppx": "*",
+    "@opam/js_of_ocaml-ppx_deriving_json": "*",
+    "ocaml": "~4.7.0"
+  }
+}

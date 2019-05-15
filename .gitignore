@@ -4,6 +4,7 @@
 *.swp
 
 _build
+_esy
 *.byte
 *.native
 *.js

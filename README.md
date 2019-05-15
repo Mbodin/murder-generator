@@ -16,74 +16,47 @@ The generator is available online at [this adress](https://mbodin.github.io/murd
 You do not need to compile the program to use it, as it is already available [online](https://mbodin.github.io/murder-generator/).
 Compiling the program yourself however provides an additional native version of the program, which is sensibly faster (but not as pretty as the online interface).
 
-To compile the program, you will need an OCaml environment.
-The simplest way to set it up is by using Opam.
+To compile the program, you will need to install npm and esy.
 On Debian, this would look like that:
 ```bash
-sudo apt install opam m4
-opam init
+sudo apt install npm
+npm install --global esy@0.5.6
 ```
 
-You may want to add the following line to your `.bashrc` file:
+To compile this project, you will need some dependencies.
+The following line will fetch and compile all dependencies.  This might take some time.
 ```bash
-eval `opam config env`
+esy install
 ```
 
-To compile this project, you will need some Opam packages.
-Running the following commands should install them.
+The [dummy](./dummy) folder contains OCaml files meant to be instantiated some actual usage of files in the repository.  The following command will update them.
 ```bash
-opam install ocamlfind extlib menhir yojson re uuseg
-opam install js_of_ocaml js_of_ocaml-ppx lwt_ppx js_of_ocaml-lwt
-opam install ppx_deriving js_of_ocaml-ppx_deriving_json
-eval `opam config env`
+esy local
 ```
 
-Accessing the content of a folder in JavaScript under the http protocol is not easily possible.
-To circumvent this issue, the list of data files is determined during compilation.
-To generate it, use the following command.
+To compile the project into JavaScript and update the file [main.js](./web/main.js), do the following.
 ```bash
-./build.sh check murderFiles.ml
+esy js
 ```
-This will replace the committed file [murderFiles.ml](./src/murderFiles.ml).
-Please do not commit it after generation (I will reject any pull request with this file committed).
-The `check` argument of `./build.sh` checks that this file was clean before the generation; it can be removed at your own risks.
 
-Similarly, the current Git version of the repository is not easily available in compilation options.
-```bash
-./build.sh check version.ml
-```
-This will replace the committed file [version.ml](./src/version.ml): take care not to commit it.
-
-To compile the project into JavaScript, type the following commands.
-```bash
-./build.sh check main.js
-mv -f main.js web/
-```
-Similarly, these commands will change the committed file [main.js](./web/main.js), which should not be committed as-is.
-
-At this stage, one can open the file `index.html` through a browser and enjoy the generator.
-Note that this requires to set up a server.
+At this stage, one can open the file `index.html` through a browser and enjoy the generator.  Note that this requires to set up a server.
 This README does not aim at explaining how to set it up; if you are using Github, you can push these changes online and access the corresponding [github.io](https://github.io) address.
 Alternatively, Firefox seems to accept to locally execute JavaScript files: it seems that just openning the file with Firefox does the trick.
 
 The JavaScript webpage is pretty, but its generation is significantly slower than a native version.
 Such a native version can be built and run through the following commands.
 ```bash
-./build.sh check main.native
-./main.native
+esy native
 ```
 
-Optionnally, one can perform some tests using the following commands.
-Again, these commands will change the committed file [usedTranslations.ml](./src/usedTranslations.ml): take care not to commit it.
+Optionnally, one can perform some tests using the following command.
 ```bash
-./build.sh check usedTranslations.ml
-./build.sh tests.byte
-./tests.byte
+esy test
 ```
 
-In order to avoid messing up with the repository, the following command calls Git to checkout each file described above as results of the compilation that should not be committed.
+Note that the `esy local` and `esy js` commands above are updating committed files!  To revert them, type the following command.  Please do it before committing anything.
 ```bash
-./build.sh checkout
+esy checkout # To be done before any commit.
 ```
 
 

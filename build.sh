@@ -5,11 +5,11 @@ COLOR="" # "\e[35m"
 ROLOC="" # "\e[0m"
 
 DEBUG="false"
+MOVE="false"
+CHECK="false"
 
-if [ -z $1 ]
+if [ -n $1 ]
 then
-  CHECK="false"
-else
   # The “check” command checks that the given file was not committed before use.
   if [ $1 = "check" ]
   then
@@ -29,6 +29,12 @@ else
   fi
 fi
 
+if [ $1 = "move" ]
+then
+  MOVE="true"
+  shift
+fi
+
 if [ -z $1 ]
 then
   echo "${COLOR}No argument given: compiling main.js as a default.${ROLOC}"
@@ -36,8 +42,30 @@ then
   JS="true"
   NATIVE="false"
   REALTARGET="main.js"
+  MOVE="true"
 else
   REALTARGET=$1
+
+  if [ $1 = "tests" ]
+  then
+    echo "${COLOR}Building testing file…${ROLOC}"
+    ./build.sh tests.byte
+    echo "${COLOR}Done.${ROLOC}"
+    echo "${COLOR}Running testing file…${ROLOC}"
+    ./tests.byte
+    echo "${COLOR}Done.${ROLOC}"
+    exit 0
+  fi
+
+  if [ $1 = "local" ]
+  then
+    echo "${COLOR}Building local files…${ROLOC}"
+    ./build.sh check murderFiles.ml
+    ./build.sh check usedTranslations.ml
+    ./build.sh check version.ml
+    echo "${COLOR}Done.${ROLOC}"
+    exit 0
+  fi
 
   if [ $1 = "murderFiles.ml" ]
   then
@@ -191,5 +219,12 @@ then
   echo "//# sourceURL=main.js" >> $TARGET.js
 
   echo "${COLOR}Done.${ROLOC}"
+
+  if [ $MOVE = "true" ]
+  then
+    echo "${COLOR}Moving ${TARGET}.js to web/…${ROLOC}"
+    mv -f ${TARGET}.js web/
+    echo "${COLOR}Done.${ROLOC}"
+  fi
 fi
 

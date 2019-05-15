@@ -1,47 +1,27 @@
 
-language: c
+language: node_js
+
+node_js:
+  - 8
 
 os:
   - linux
 
-env:
-  global:
-    - OPAMYES=true
-    - OPAMJOBS=2
-    # - OPAMVERBOSE=true
-    - OCAML_VERSION=4.07.0
-
-addons:
-  apt:
-    packages:
-      - m4
-      # - opam
-
 cache:
   directories:
-    - ${HOME}/.opam
+    - ${HOME}/.esy
 
 install:
-  # Download and use opam2
-  - wget -O ${HOME}/opam https://github.com/ocaml/opam/releases/download/2.0.0-beta6/opam-2.0.0-beta6-x86_64-linux
-  - chmod +x ${HOME}/opam
-  - ${HOME}/opam init --compiler=${OCAML_VERSION}
-  - eval `${HOME}/opam config env`
-  - ${HOME}/opam switch ${OCAML_VERSION}
-  - eval `${HOME}/opam config env`
-  - ${HOME}/opam install ocamlfind extlib menhir yojson re uuseg
-  - ${HOME}/opam install js_of_ocaml js_of_ocaml-ppx lwt_ppx js_of_ocaml-lwt
-  - ${HOME}/opam install ppx_deriving js_of_ocaml-ppx_deriving_json
+  - npm install --global esy@0.5.6
+  - esy install
 
 before_script:
-  - ./build.sh check murderFiles.ml
-  - ./build.sh check usedTranslations.ml
-  - ./build.sh check version.ml
+  - esy local
 
 script:
-  - ./build.sh tests.byte && ./tests.byte
-  - ./build.sh check main.js && mv -f main.js web/main.js
-  - ./build.sh main.native
+  - esy js
+  - esy native
+  - esy test
 
 deploy:
   provider: pages

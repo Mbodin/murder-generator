@@ -20,6 +20,7 @@
     "@opam/menhir": "*",
     "@opam/yojson": "*",
     "@opam/re": "*",
+    "@opam/uutf": "*",
     "@opam/uuseg": "*",
     "@opam/ppx_deriving": "*",
     "@opam/lwt_ppx": "*",

@@ -64,7 +64,7 @@ type 'character t = {
        * player. **) ;
     constraints_none :
       ('character, 'character kind PSet.t * 'character kind PSet.t) PMap.t
-      (** For each character, provides two sets of kinds:
+      (** For each attendee of the event, provide two sets of kinds:
        * one for before and one for after this event.
        * None of these combinations of kinds and characters should appear
        * before (respectively after) this event. **) ;
@@ -79,6 +79,9 @@ type 'character t = {
 
 (** Given an event, return its list of attendees. **)
 val get_attendees_list : 'character t -> 'character list
+
+(** Provides a recoverable identifier for an event. **)
+val translate : 'a t -> string
 
 (** Given an instantiation of characters, instantiate an event. **)
 val instantiate : ('a -> 'b option) -> 'a t -> 'b t option

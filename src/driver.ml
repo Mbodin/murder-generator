@@ -110,12 +110,13 @@ type intermediary = {
                    * Attribute.attribute PSet.t
                    * Attribute.constructor PSet.t) PMap.t
       (** The set of categories expected to be declared.
-       * For each of these, we also put thee sets to which the category dependencies
+       * For each of these, we also put three sets to which the category dependencies
        * should be attached: they are respectively the set of category identifiers,
        * of events, of attributes, and of constructors. **) ;
     events_to_be_defined : (Id.t, Id.t PSet.t) PMap.t
       (** Similarly, the set of events to be declared.
-       * For each event, we also associate the other events depending on it. **) ;
+       * For each event to be declared, we also associate the other events
+       * depending on it. **) ;
     attributes_to_be_defined :
       (Attribute.attribute, Attribute.constructor PSet.t) PMap.t
       (** Similarly, the set of attributes expected to be declared and their
@@ -359,7 +360,7 @@ let convert_block block_name expected =
         { acc with event_constraint = p :: acc.event_constraint }) l in
   aux empty_block
 
-(** Takes a list of category names and returns a set of category identifiers,
+(** Take a list of category names and return a set of category identifiers,
  * as well as the possibly-changed [category_names] field. **)
 let category_names_to_id_set state l =
   List.fold_left (fun (category_names, s) name ->
@@ -367,10 +368,10 @@ let category_names_to_id_set state l =
       (category_names, PSet.add id s))
     (state.category_names, PSet.empty) l
 
-(** Takes a set of categories and returns a set of categories
+(** Take a set of categories and return a set of categories
  * (the original set plus their dependencies).
- * It also takes a boolean [throw] indicating whether it should
- * raise an exception if a category has not been declared yet. **)
+ * This function also takes a boolean [throw] indicating whether it
+ * should raise an exception if a category has not been declared yet. **)
 let dependencies_of_dependencies throw state s =
   PSet.merge s
    (PSet.flatten (PSet.map (fun id ->
@@ -447,7 +448,7 @@ let attribute_exists state id =
 
 (** This function parses basically everything but elements in a declaration. **)
 let prepare_declaration i =
-  (** Updates the given dependencies [dependencies] by adding the set of
+  (** Update the given dependencies [dependencies] by adding the set of
    * categories [deps] to the set [ldeps] of items.
    * Each [ldeps] have thus already been declared when calling this function,
    * just that due to missing dependencies, their dependencies need to be extended
@@ -457,33 +458,32 @@ let prepare_declaration i =
         let s =
           try PMap.find o dependencies
           with Not_found -> assert false in
-        PMap.add o (PSet.merge s deps) dependencies)
+        PMap.add o (PSet.merge deps s) dependencies)
       dependencies ldeps in
-  (** Updates the field [categories_to_be_defined] by applying a function
+  (** Update the field [categories_to_be_defined] by applying a function
     * [update] to each of the values present in [deps].
     * If the mapping doesn’t exists, it will first be initialised with
     * empty sets. **)
   let update_categories_to_be_defined deps update =
     PSet.fold (fun c categories_to_be_defined ->
-      if category_exists i.current_state c then categories_to_be_defined
-      else
-        let sets =
-          try PMap.find c categories_to_be_defined
-          with Not_found ->
-            (PSet.empty, PSet.empty,
-             PSet.empty, PSet.empty) in
-        PMap.add c (update sets) categories_to_be_defined)
+        if category_exists i.current_state c then categories_to_be_defined
+        else
+          let sets =
+            try PMap.find c categories_to_be_defined
+            with Not_found ->
+              (PSet.empty, PSet.empty, PSet.empty, PSet.empty) in
+          PMap.add c (update sets) categories_to_be_defined)
       i.categories_to_be_defined deps in
   (** Similar to [update_categories_to_be_defined], but for the event-dependency
-   * gtaph. **)
+   * graph. **)
   let update_events_to_be_defined deps update =
     PSet.fold (fun ev events_to_be_defined ->
-      if event_exists i.current_state ev then events_to_be_defined
-      else
-        let sets =
-          try PMap.find ev events_to_be_defined
-          with Not_found -> PSet.empty in
-        PMap.add ev (update sets) events_to_be_defined)
+        if event_exists i.current_state ev then events_to_be_defined
+        else
+          let sets =
+            try PMap.find ev events_to_be_defined
+            with Not_found -> PSet.empty in
+          PMap.add ev (update sets) events_to_be_defined)
       i.events_to_be_defined deps in
   (** Declare attribute and contact instances.
    * See the declarations [attribute_functions] and [contact_functions]
@@ -743,7 +743,7 @@ let prepare_declaration i =
   | Ast.DeclareEventKind (kind, block) ->
     let block =
       convert_block kind [OfCategory; EventKind] block in
-    let (category_names, deps) =
+    let (category_names, cat_deps) =
       category_names_to_dep_dep false i.current_state block.of_category in
     let (event_names, event_deps) =
       event_names_to_dep_dep false i.current_state block.event_kind in
@@ -759,18 +759,19 @@ let prepare_declaration i =
     (** We inform each relevant undefined category and event that this event
      * and its dependencies depends on them. **)
     let categories_to_be_defined =
-      update_categories_to_be_defined deps (fun (cats, events, attrs, constrs) ->
-        (cats, PSet.add id events, attrs, constrs)) in
+      update_categories_to_be_defined cat_deps
+        (fun (cats, events, attrs, constrs) ->
+          (cats, PSet.add id events, attrs, constrs)) in
     let events_to_be_defined =
       update_events_to_be_defined event_deps (fun events ->
-        PSet.add id (PSet.merge events event_dep)) in
+        PSet.add id (PSet.merge event_dep events)) in
     let events_to_be_defined =
       PMap.remove id events_to_be_defined in
     (** We propagate the local dependencies (in both graphs) to all events that
      * waited to know about them. **)
     let event_dependencies =
-      update_dependencies
-        (PMap.add id deps i.current_state.event_dependencies) event_dep deps in
+      update_dependencies (PMap.add id cat_deps i.current_state.event_dependencies)
+        event_dep cat_deps in
     let event_event_dependencies =
       update_dependencies
         (PMap.add id event_deps i.current_state.event_event_dependencies)
@@ -802,9 +803,24 @@ let event_id = Id.new_id_function ()
 
 (** Generates an element from a [state] and a [block]. **)
 let parse_element st element_name block =
+  (** A specialised function based on the state [st] (which is no longer changing
+   * once this function is called). **)
   let get_constructor_dependencies cid =
     try get_constructor_dependencies st cid
     with Not_found -> assert false in
+  (** Given an event block, return all its (transitive) dependencies. **)
+  let get_event_dependencies block =
+    try snd (event_names_to_dep_dep true st block.event_kind)
+    with Not_found ->
+      (** An event kind has not been defined.  Let us find which one. **)
+      try
+        let k =
+          List.find (fun k ->
+            match Id.get_id st.event_names k with
+            | None -> true
+            | Some id -> not (event_exists st id)) block.event_kind in
+        raise (Undeclared ("event kind", k, element_name))
+      with Not_found -> assert false in
   (** Before anything, we get the number and names of each declared players. **)
   let n = List.length block.let_player in
   let player_names =
@@ -880,7 +896,18 @@ let parse_element st element_name block =
             | Some id -> not (category_exists st id)) block.of_category in
         raise (Undeclared ("category", c, element_name))
       with Not_found -> assert false in
-  (** Now that the basic information have been gotten, we can add any constraint
+  (** We also consider dependencies due to events. **)
+  let deps =
+    let edeps =
+      List.fold_left (fun edeps (_, _, eblock) ->
+          PSet.merge (get_event_dependencies eblock) edeps)
+        PSet.empty events in
+    let edeps_cat =
+      PSet.flat_map (fun eid ->
+        try PMap.find eid st.event_dependencies
+        with Not_found -> assert false) edeps in
+    PSet.merge edeps_cat deps in
+  (** Now that we have all the basic information, we can add any constraint
    * using this function with side effects. **)
   let add_constraint p c =
     let p = Id.to_array p in
@@ -1079,23 +1106,11 @@ let parse_element st element_name block =
       deps block.let_player in
   (** We finally consider events. **)
   let evs =
-    List.mapi (fun i (t, attendees, b) ->
+    List.mapi (fun i (t, attendees, block) ->
       let event_name = element_name ^ "#" ^ string_of_int i in
       let kinds =
         let kinds =
-          let (_, deps) =
-            try event_names_to_dep_dep true st block.event_kind
-            with Not_found ->
-              (** An event kind has not been defined.  Let us find which one. **)
-              try
-                let k =
-                  List.find (fun k ->
-                    match Id.get_id st.event_names k with
-                    | None -> true
-                    | Some id -> not (event_exists st id)) block.event_kind in
-                raise (Undeclared ("event kind", k, event_name))
-              with Not_found -> assert false in
-          let deps = PSet.map Events.kind_of_id deps in
+          let deps = PSet.map Events.kind_of_id (get_event_dependencies block) in
           List.fold_left (fun kinds p -> PMap.add (Id.to_array p) deps kinds)
             PMap.empty attendees in
         let add p k kinds =
@@ -1113,7 +1128,7 @@ let parse_element st element_name block =
                          "destination of attribute")) in
              let aid = get_attribute_id attribute_functions pa.Ast.attribute_name in
              add p (Events.kind_of_attribute aid) kinds)
-           kinds b.provide_attribute in
+           kinds block.provide_attribute in
         let kinds =
           List.fold_left (fun kinds pa ->
             let aid = get_attribute_id contact_functions pa.Ast.contact_name in
@@ -1128,18 +1143,18 @@ let parse_element st element_name block =
               add p (Events.kind_of_contact aid p') in
             match pa.Ast.contact_destination with
             | Between (p1, p2) -> add p1 p2 (add p2 p1 kinds)
-            | FromTo (p1, p2) -> add p1 p2 kinds) kinds b.provide_contact in
+            | FromTo (p1, p2) -> add p1 p2 kinds) kinds block.provide_contact in
         kinds in
       let translation =
         let translations =
-          if b.translation <> [] && b.sentence <> [] then
+          if block.translation <> [] && block.sentence <> [] then
             raise (TranslationError ("translation item around sentences",
-                                     event_name, List.hd b.translation)) ;
-          if b.translation <> [] then
-            [b.translation]
+                                     event_name, List.hd block.translation)) ;
+          if block.translation <> [] then [block.translation]
           else
-            List.map (fun b ->
-              (convert_block event_name [Translation] b).translation) b.sentence in
+            List.map (fun block ->
+                (convert_block event_name [Translation] block).translation)
+              block.sentence in
         let translation =
           Translation.sadd Translation.sempty Translation.generic [] (-1)
             [Translation.Direct event_name] in
@@ -1170,7 +1185,7 @@ let parse_element st element_name block =
                   | Some id -> id in
                 let other =
                   try PMap.find k st.event_event_dependencies
-                  with Not_found -> PSet.empty in
+                  with Not_found -> assert false in
                 PSet.map Events.kind_of_id (PSet.add k other)
               | Ast.KindAttribute a ->
                 PSet.singleton (Events.kind_of_attribute
@@ -1187,7 +1202,7 @@ let parse_element st element_name block =
                       with Not_found -> (PSet.empty, PSet.empty) in
                     PMap.add p (uba ba (PSet.merge k (fba ba))) m) mns
                   c.Ast.event_players)) (PMap.empty, PMap.empty)
-          b.event_constraint in
+          block.event_constraint in
       let attendees = List.map Id.to_array attendees in {
         Events.event_id = event_id () ;
         Events.event_type = t ;
@@ -1203,28 +1218,23 @@ let parse_element st element_name block =
        | [] -> true
        | e :: l ->
          let (r, acc) =
-           PSet.fold (fun c (r, acc) ->
-             if not r then (r, acc)
-             else
-               let k =
-                 try PMap.find c e.Events.event_kinds
-                 with Not_found -> PSet.empty in
-               let c =
-                 try PMap.find c e.Events.constraints_none
-                 with Not_found -> (PSet.empty, PSet.empty) in
-               let c = f c in
-               (PSet.is_empty (PSet.inter c acc),
-                PSet.merge k acc)) (true, acc) e.Events.event_attendees in
+           PSet.fold (fun c (r, newacc) ->
+               if not r then (r, PSet.empty)
+               else
+                 let k =
+                   try PMap.find c e.Events.event_kinds
+                   with Not_found -> PSet.empty in
+                 let c =
+                   try PMap.find c e.Events.constraints_none
+                   with Not_found -> (PSet.empty, PSet.empty) in
+                 let c = f c in
+                 (PSet.is_empty (PSet.inter c acc), PSet.merge k newacc))
+             (true, acc) e.Events.event_attendees in
          r && check f acc l in
      not (check fst PSet.empty evs)
      || not (check snd PSet.empty (List.rev evs)) then
     raise (UnsatisfyableEventSequence element_name) ;
   ((elementBase, !otherPlayers, evs), deps)
-
-let translate_event e =
-  let (nb_sentence, tr) = e.Events.translation in
-  let tr = Translation.sforce_translate tr Translation.generic in
-  fst (tr (fun _ -> PSet.empty) (fun _ _ -> None) (-1) PSet.empty)
 
 let parse i =
   let (elements, elements_dependencies, import_information) =
@@ -1234,7 +1244,7 @@ let parse i =
           let (_, _, evs) = element in
           let import_information =
             List.fold_left (fun import_information ev ->
-                let name = translate_event ev in
+                let name = Events.translate ev in
                 let id = ev.Events.event_id in
                 { import_information with
                     event_id = PMap.add name id import_information.event_id ;

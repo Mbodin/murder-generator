@@ -127,9 +127,6 @@ val get_translations : state -> Translation.element
 (** Return the constructor maps generated while loading the files. **)
 val get_constructor_maps : state -> Attribute.constructor_maps
 
-(** Provides a recoverable identifier for an event. **)
-val translate_event : 'a Events.t -> string
-
 (** Necessary information to import a state. **)
 type import_information = {
     constructor_maps : Attribute.constructor_maps

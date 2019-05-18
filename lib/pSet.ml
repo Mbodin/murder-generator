@@ -21,6 +21,9 @@ let fold f i s =
 let iter f s =
   fold (fun e _ -> f e) () s
 
+let length s =
+  fold (fun _ n -> 1 + n) 0 s
+
 let merge s = fold add s
 
 let diff s = fold remove s

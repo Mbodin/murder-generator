@@ -54,6 +54,11 @@ type 'character t = {
 let get_attendees_list e =
   List.filter (fun c -> PSet.mem c e.event_attendees) e.all_attendees
 
+let translate e =
+  let (nb_sentence, tr) = e.translation in
+  let tr = Translation.sforce_translate tr Translation.generic in
+  fst (tr (fun _ -> PSet.empty) (fun _ _ -> None) (-1) PSet.empty)
+
 let partially_instantiate a b e =
   let convert a' = if a' = a then Some b else None in
   let get_constraints m =

@@ -10,6 +10,15 @@ CHECK="false"
 
 if [ -n $1 ]
 then
+  if [ $1 = "debug" ]
+  then
+    DEBUG="true"
+    shift
+  fi
+fi
+
+if [ -n $1 ]
+then
   # The “check” command checks that the given file was not committed before use.
   if [ $1 = "check" ]
   then
@@ -29,10 +38,13 @@ then
   fi
 fi
 
-if [ $1 = "move" ]
+if [ -n $1 ]
 then
-  MOVE="true"
-  shift
+  if [ $1 = "move" ]
+  then
+    MOVE="true"
+    shift
+  fi
 fi
 
 if [ -z $1 ]

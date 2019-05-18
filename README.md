@@ -23,7 +23,7 @@ sudo apt install npm
 npm install --global esy@0.5.6
 ```
 
-To compile this project, you will need some dependencies.
+To compile this project, you will need to install some dependencies.
 The following line will fetch and compile all dependencies.  This might take some time.
 ```bash
 esy install
@@ -39,11 +39,11 @@ To compile the project into JavaScript and update the file [main.js](./web/main.
 esy js
 ```
 
-At this stage, one can open the file `index.html` through a browser and enjoy the generator.  Note that this requires to set up a server.
+At this stage, you can open the file `index.html` on a browser and enjoy the generator.  Note that this requires to set up a server.
 This README does not aim at explaining how to set it up; if you are using Github, you can push these changes online and access the corresponding [github.io](https://github.io) address.
-Alternatively, Firefox seems to accept to locally execute JavaScript files: it seems that just openning the file with Firefox does the trick.
+Alternatively, Firefox seems to accept to locally execute JavaScript files: openning the file `index.html` with Firefox seems to do the trick.
 
-The JavaScript webpage is pretty, but its generation is significantly slower than a native version.
+The JavaScript webpage is (relatively) pretty, but its generation is significantly slower than a native version.
 Such a native version can be built and run through the following commands.
 ```bash
 esy native

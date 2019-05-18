@@ -74,8 +74,8 @@ type t = {
     constraints_none :
       (character, (character Events.kind, Id.t PSet.t * Id.t PSet.t) PMap.t) PMap.t
       (** For each event character and kind, provides two sets:
-       * - the set for which no event of this kind can be before the given event,
-       * - the set for which no event of this kind can be after the given event.
+       * - the set for which no event of this kind can be before the provided event,
+       * - the set for which no event of this kind can be after the provided event.
        * These sets are kept to a minimum: if an event is before another,
        * and that both prevents any event of a given kind to be placed after them,
        * then only the latter really have to prevent any such event to happen. **) ;
@@ -121,31 +121,31 @@ let all_successors_set dir st =
  * [all_successors_set] will be called afterwards. **)
 let get_constraints st e =
   PSet.fold (fun c (before, after) ->
-    let none =
-      try PMap.find c st.constraints_none
-      with Not_found -> PMap.empty in
-    let k =
-      try PMap.find c e.Events.event_kinds
-      with Not_found -> PSet.empty in
+    (** We first consider the constraints from the state. **)
     let (before, after) =
+      let none =
+        try PMap.find c st.constraints_none
+        with Not_found -> PMap.empty in
+      let k =
+        try PMap.find c e.Events.event_kinds
+        with Not_found -> PSet.empty in
       PSet.fold (fun k (before, after) ->
         let (no_before, no_after) =
           try PMap.find k none
           with Not_found -> (PSet.empty, PSet.empty) in
         (PSet.merge no_after before,
          PSet.merge no_before after)) (before, after) k in
+    (** We then consider the constraints from the event. **)
     let (before, after) =
       let (no_before, no_after) =
         try PMap.find c e.Events.constraints_none
         with Not_found -> (PSet.empty, PSet.empty) in
-      let no_before =
+      let get kind_set =
         PSet.flat_map (fun k ->
           try PMap.find (k, c) st.kind_map
-          with Not_found -> PSet.empty) no_before in
-      let no_after =
-        PSet.flat_map (fun k ->
-          try PMap.find (k, c) st.kind_map
-          with Not_found -> PSet.empty) no_after in
+          with Not_found -> PSet.empty) kind_set in
+      let no_before = get no_before in
+      let no_after = get no_after in
       (PSet.merge no_after before, PSet.merge no_before after) in
     (before, after)) (PSet.empty, PSet.empty) e.Events.event_attendees
 
@@ -216,21 +216,23 @@ let compatible_and_progress st e = lcompatible_and_progress st [e]
 
 (** Returns a new state [st] where [e1] is assured to be before [e2]. **)
 let make_before st e1 e2 =
-  let graph = st.graph in
-  let add l e = if List.mem e l then l else e :: l in
-  let graph =
-    let (before, after) =
-      try PMap.find e1 graph
-      with Not_found -> ([], []) in
-    let after = add after e2 in
-    PMap.add e1 (before, after) graph in
-  let graph =
-    let (before, after) =
-      try PMap.find e2 graph
-      with Not_found -> ([], []) in
-    let before = add before e1 in
-    PMap.add e2 (before, after) graph in
-  { st with graph = graph }
+  if e1 = e2 then st
+  else
+    let graph = st.graph in
+    let add l e = if List.mem e l then l else e :: l in
+    let graph =
+      let (before, after) =
+        try PMap.find e1 graph
+        with Not_found -> ([], []) in
+      let after = add after e2 in
+      PMap.add e1 (before, after) graph in
+    let graph =
+      let (before, after) =
+        try PMap.find e2 graph
+        with Not_found -> ([], []) in
+      let before = add before e1 in
+      PMap.add e2 (before, after) graph in
+    { st with graph = graph }
 
 let lapply st el =
   (* LATER: This function could be factorised. *)
@@ -440,10 +442,6 @@ let unfinalise l =
           List.map Id.to_array (Events.get_attendees_list e.event) in
         List.fold_left max c l) (-1) l in
     create_state (1 + max_character) in
-  let lb =
-    List.sort (fun e1 e2 -> Date.compare e2.event_begin e1.event_begin) l in
-  let le =
-    List.sort (fun e1 e2 -> Date.compare e1.event_end e2.event_end) l in
   let (state, l) =
     let (events, graph, l) =
       List.fold_left (fun (m, g, l) ev ->
@@ -454,29 +452,31 @@ let unfinalise l =
         (m, g, (e, ev) :: l)) (state.events, state.graph, []) l in
     ({ state with events = events ;
                   graph = graph }, l) in
+  let l =
+    List.sort (fun (_, e1) (_, e2) ->
+      Date.compare e1.event_begin e2.event_begin) l in
   let state =
-    List.fold_left (fun state (e, ev) ->
-      let rec auxb state = function
-        | [] -> state
-        | ev' :: l ->
-          if Date.compare ev.event_end ev'.event_begin < 0 then (
-            let e' =
-              Utils.assert_option __LOC__ (Id.get_id state.events ev'.event) in
-            let state = make_before state e e' in
-            auxb state l
-          ) else state in
-      let state = auxb state lb in
-      let rec auxe state = function
-        | [] -> state
-        | ev' :: l ->
-          if Date.compare ev'.event_end ev.event_begin < 0 then (
-            let e' =
-              Utils.assert_option __LOC__ (Id.get_id state.events ev'.event) in
-            let state = make_before state e' e in
-            auxe state l
-          ) else state in
-      let state = auxe state le in
-      state) state l in
+    let rec aux state = function
+      | [] -> state
+      | (e, ev) :: l ->
+        let rec fetch_first_after = function
+          | [] -> (ev.event_end, [])
+          | (e', ev') :: l ->
+            if Date.compare ev.event_end ev'.event_begin < 0 then
+              (ev'.event_end, (e', ev') :: l)
+            else fetch_first_after l in
+        let (max_end, l) = fetch_first_after l in
+        let rec make_after state max_end = function
+          | [] -> state
+          | (e', ev') :: l ->
+            if Date.compare ev'.event_begin max_end > 0 then
+              state
+            else if Date.compare ev.event_end ev'.event_begin < 0 then (
+              let state = make_before state e e' in
+              make_after state (Date.min max_end ev'.event_end) l
+            ) else make_after state max_end l in
+        make_after state max_end l in
+    aux state l in
   state
 
 let fold_graph f acc st =

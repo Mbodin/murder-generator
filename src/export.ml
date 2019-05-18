@@ -50,14 +50,14 @@ let translate_event s trp e =
   let (nb_sentence, tr) = e.Events.translation in
   let tr =
     Translation.sforce_translate ~debug:(fun i ->
-        Some (string_of_int i ^ " of " ^ Driver.translate_event e))
+        Some (string_of_int i ^ " of " ^ Events.translate e))
       tr s.language in
   let l =
     List.map (fun i ->
         fst (tr (fst trp) (snd trp) i (PSet.singleton Translation.base)))
       (Utils.seq nb_sentence) in
   if String.concat "" l = "" then
-    ["<Empty translation for " ^ Driver.translate_event e ^ ">"]
+    ["<Empty translation for " ^ Events.translate e ^ ">"]
   else l
 
 (** Generate a translation object for player for [translate_event]. **)
@@ -169,8 +169,8 @@ let to_graphviz_event s =
       let color =
         let v =
           let v = List.length after in
-          if v > 8 then 0.8
-          else float_of_int (v - 1) /. 10. in
+          if v > 4 then 0.8
+          else float_of_int (v - 1) /. 5. in
         "0 0 " ^ string_of_float v in
       ("  " ^ event_node id ^ " [label=\""
        ^ String.concat "|" (translate_event s tr_players ev)
@@ -373,7 +373,7 @@ let to_json s =
       `Assoc [
           ("begin", `String (Date.rfc2445 e.History.event_begin)) ;
           ("end", `String (Date.rfc2445 e.History.event_end)) ;
-          ("event", `String (Driver.translate_event e.History.event)) ;
+          ("event", `String (Events.translate e.History.event)) ;
           ("attendees",
             `List (List.map (fun c -> `Int (Id.to_array c))
                      (Events.get_attendees_list e.History.event))) ;

@@ -50,6 +50,13 @@ begin
   add translation eo:adj "malriĉa"
 end
 
+element NormalRichness
+begin
+  let P be player
+
+  provide compatible attribute Richness to P as Neutral
+end
+
 element Heritage
 begin
   let P be player with attribute Born as True

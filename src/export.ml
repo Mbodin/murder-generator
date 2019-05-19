@@ -113,12 +113,12 @@ let get_name s c =
 (** Some special constructors provides negative information
  * (that is, that something is absent instead of present).
  * This function uses heuristics to determine whether a constructor
- * represents negative information.
+ * represents information that may benefit not being displayed.
  * Some exportation functions will display these differently, but it
  * should never profundly change the behaviour of the exportation. **)
 let negative s v =
   let trv = translate_value_contact (generic s) v in
-  List.mem trv ["False"; "None"; "Absent"; "Undefined"]
+  List.mem trv ["False"; "None"; "Absent"; "Undefined"; "Neutral"; "Normal"]
 
 (** Replace the characters '"' by '\"' and '\' by '\\'. **)
 let escape_quote str =

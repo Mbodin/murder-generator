@@ -79,12 +79,7 @@ begin
   translation eo "normala"
 
   add fr:sin
-  add en:sin
-  add eo:sin
   add fr:def
-  add en:def
-  add eo:def
-
   add translation fr:pro:sin:mas "il"
   add translation fr:pro:sin:fem "elle"
   add translation fr:pro:sin "iel"
@@ -116,6 +111,8 @@ begin
   add translation fr:agr:plu:fem "es"
   add translation fr:agr:plu "·e·s"
 
+  add en:sin
+  add en:def
   add translation en:pro:sin "it"
   add translation en:pro:sin:mas "he"
   add translation en:pro:sin:fem "she"
@@ -141,6 +138,8 @@ begin
   add translation en:sbeg:pos:sin "Its"
   add translation en:sbeg:pos:plu "Their"
 
+  add eo:sin
+  add eo:def
   add translation eo:pro:sin "ĝi"
   add translation eo:pro:sin:mas "li"
   add translation eo:pro:sin:fem "ŝi"

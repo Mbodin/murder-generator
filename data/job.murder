@@ -20,9 +20,9 @@ begin
   translation eo "vendisto"
 
   add translation fr:nom:sin:fem "une commerçante"
-  add translation fr:nom:sin:mas "un commerçant"
+  add translation fr:nom:sin "un commerçant"
   add translation fr:nom:def:sin:fem "la commerçante"
-  add translation fr:nom:def:sin:mas "le commerçant"
+  add translation fr:nom:def:sin "le commerçant"
   add translation fr:nom:plu:fem "des commerçantes"
   add translation fr:nom:plu:-fem:+mas "des commerçants"
   add translation fr:nom:plu:fem "des commerçantes"
@@ -114,9 +114,9 @@ begin
   translation eo "ŝtelisto"
 
   add translation fr:nom:sin:fem "une voleuse"
-  add translation fr:nom:sin:mas "un voleur"
+  add translation fr:nom:sin "un voleur"
   add translation fr:nom:def:sin:fem "la voleuse"
-  add translation fr:nom:def:sin:mas "le voleur"
+  add translation fr:nom:def:sin "le voleur"
   add translation fr:nom:plu:fem "des voleuses"
   add translation fr:nom:plu:-fem:+mas "des voleurs"
   add translation fr:nom:def:plu:fem "les voleuses"
@@ -211,7 +211,7 @@ begin
     begin
       translation fr T:+sbeg:+pro " a alors pris une décision qui changera sa vie : dorénavant, " T:+pro " volera les riches, particulièrement " R "."
       translation en T:+sbeg:+pro " then decided once and for all that from now on, " T:+pro " would steal from the rich, and in particular from " R "."
-      translation eo T:+sbeg:+pro " tiam firme decidis ke ekde tiam, " T:+pro " ŝtelos riĉulojn, kaj pli specife " R "n."
+      translation eo T:+sbeg:+pro " tiam firme decidis ke ekde tiam, " T:+pro " ŝtelos riĉulojn, kaj pli specife " R:+acc "."
     end
 
     sentence
@@ -310,7 +310,7 @@ begin
     begin
       translation fr P:+sbeg " a pris contact avec " T:-def:+nom ", " T ", pour voler " G "."
       translation en P:+sbeg " hired " T:-def:+nom ", " T ", to steal " G "."
-      translation eo P:+sbeg " kontaktiĝis kun " T ", " T:-def:+nom ", por ŝteli " G "n."
+      translation eo P:+sbeg " kontaktiĝis kun " T ", " T:-def:+nom ", por ŝteli " G:+acc "."
     end
 
     sentence
@@ -359,9 +359,9 @@ begin
   translation eo "spionisto"
 
   add translation fr:nom:sin:fem "une espionne"
-  add translation fr:nom:sin:mas "un espion"
+  add translation fr:nom:sin "un espion"
   add translation fr:nom:def:sin:fem "l’espionne"
-  add translation fr:nom:def:sin:mas "l’espion"
+  add translation fr:nom:def:sin "l’espion"
   add translation fr:nom:plu:fem "des espionnes"
   add translation fr:nom:plu:-fem:+mas "des espions"
   add translation fr:nom:def:plu:fem "les espionnes"
@@ -416,7 +416,7 @@ begin
 
     translation fr S:+sbeg:+pro " a alors pris la décision d’enquêter sur " R " : quelque chose ne tourne pas rond avec cette personne."
     translation en S:+sbeg:+pro " then decided to spy on " R ": something is not right."
-    translation eo S:+sbeg:+pro " tiam decidis spioni " R "n: io ne taŭgas en tiu situacio."
+    translation eo S:+sbeg:+pro " tiam decidis spioni " R:+acc ": io ne taŭgas en tiu situacio."
   end
 
   provide event lasting weeks to S
@@ -462,7 +462,7 @@ begin
     begin
       translation fr P:+sbeg " aperçoit " S " dans la rue."
       translation en P:+sbeg " notices " S " in the street."
-      translation eo P:+sbeg " vidas " S "n surstrate."
+      translation eo P:+sbeg " vidas " S:+acc " surstrate."
     end
 
     sentence
@@ -476,6 +476,33 @@ begin
   add difficulty to S
 end
 
+element SpyIsHidden
+begin
+  let S be player with attribute Job as Spy
+
+  provide event lasting weeks to S
+  begin
+    event Work
+
+    provide attribute Famousness to S as Hiding
+
+    sentence
+    begin
+      translation fr S:+sbeg:fem " considère que le point central du métier d’espionne est la discrétion."
+      translation fr S:+sbeg " considère que le point central du métier d’espion est la discrétion."
+      translation en S:+sbeg " considers that the central trait of a spy is discretion."
+      translation eo S:+sbeg " konsideras ke la ĉefa kvalita de spionisto estas silentemeco."
+    end
+
+    sentence
+    begin
+      translation fr S:+sbeg:+pro " s’est donc longuement entraîné" S:+agr " pour éviter d’attirer l’attention."
+      translation en S:+sbeg:+pro " thus trained a lot to make sure never to attract attention."
+      translation eo S:+sbeg:+pro " do longe trejnis por neniam atentiĝi."
+    end
+  end
+end
+
 (* * Journalist *)
 
 attribute Job Journalist
@@ -486,8 +513,10 @@ begin
 
   add translation fr:nom:sin:fem "une journaliste"
   add translation fr:nom:sin:mas "un journaliste"
-  add translation fr:nom:def:sin "les journalistes"
+  add translation fr:nom:def:sin:fem "la journaliste"
+  add translation fr:nom:def:sin "le journaliste"
   add translation fr:nom:plu "des journalistes"
+  add translation fr:nom:def:plu "les journalistes"
   add translation en:nom:sin "a journalist"
   add translation en:nom:plu "journalists"
   add translation en:nom:def:sin "the journalist"
@@ -502,7 +531,7 @@ begin
   add translation eo:nom:def:acc:plu "la ĵurnalistojn"
 end
 
-element JournalistSinceYound
+element JournalistSinceYoung
 begin
   let P be player
 
@@ -548,5 +577,50 @@ begin
       translation eo J:+sbeg:+pro " rimarkas ke " F " estas enĉambre: tio ĉio fotindas."
     end
   end
+end
+
+element HiddenIsStrange
+begin
+  let H be player with attribute Famousness as Hiding
+  let J be player with attribute Job as Journalist
+                  with contact Know to H not as Intimate
+
+  provide event lasting minutes to J
+  begin
+    event Work
+    assume no event providing attribute Famousness to H after
+
+    translation fr "En l’observant, " J " a l’impression que " H " cache quelque chose."
+    translation en "By watching at " H ", " J " has the feeling that some is wrong with " H:+cli "."
+    translation eo "Rigardanta " H:+acc ", " J " havas la senton ke io ne taŭgas pri " H:+pro "."
+  end
+end
+
+(* * Worker *)
+
+attribute Job Worker
+begin
+  translation fr "ouvrier"
+  translation en "worker"
+  translation eo "laboristo"
+
+  add translation fr:nom:sin:fem "une ouvrière"
+  add translation fr:nom:sin "un ouvrier"
+  add translation fr:nom:def:sin:fem "l’ouvrière"
+  add translation fr:nom:def:sin "l’ouvrier"
+  add translation fr:nom:plu "des ouvriers"
+  add translation fr:nom:def:plu "les ouvriers"
+  add translation en:nom:sin "a worker"
+  add translation en:nom:plu "workers"
+  add translation en:nom:def:sin "the worker"
+  add translation en:nom:def:plu "the workers"
+  add translation eo:nom:sin "laboristo"
+  add translation eo:nom:acc:sin "laboriston"
+  add translation eo:nom:def:sin "la laboristo"
+  add translation eo:nom:def:acc:sin "la laboriston"
+  add translation eo:nom:plu "laboristoj"
+  add translation eo:nom:acc:plu "laboristojn"
+  add translation eo:nom:def:plu "la laboristoj"
+  add translation eo:nom:def:acc:plu "la laboristojn"
 end
 

@@ -133,8 +133,15 @@ let get_constraints st e =
         let (no_before, no_after) =
           try PMap.find k none
           with Not_found -> (PSet.empty, PSet.empty) in
-        (PSet.merge no_after before,
-         PSet.merge no_before after)) (before, after) k in
+        (** Note how we merge the events not meant to be before…
+         * in the [before] list.  This may seem counter-intuitive.
+         * This is due to the fact that [no_before] means that
+         * the referenced event can’t have the current event
+         * before them.  If we shift the point of view to the
+         * current event, this means that these event must be
+         * before the current event. **)
+        (PSet.merge no_before before,
+         PSet.merge no_after after)) (before, after) k in
     (** We then consider the constraints from the event. **)
     let (before, after) =
       let (no_before, no_after) =
@@ -146,6 +153,9 @@ let get_constraints st e =
           with Not_found -> PSet.empty) kind_set in
       let no_before = get no_before in
       let no_after = get no_after in
+      (** Here, [no_after] and [no_before] are defined from
+       * the point of view of the current event and there
+       * is no need for counter-intuitive inversion. **)
       (PSet.merge no_after before, PSet.merge no_before after) in
     (before, after)) (PSet.empty, PSet.empty) e.Events.event_attendees
 
@@ -280,14 +290,14 @@ let lapply st el =
       st) st constraints idl in
   (** Optimizing [st.constraints_none] by removing useless elements. **)
   let constraints_none =
-    List.fold_left (fun constraints_none (id, e) ->
+    List.fold_left (fun constraints_none (e, ev) ->
       let (eb, ea) =
-        try PMap.find id st.graph
+        try PMap.find e st.graph
         with Not_found -> ([], []) in
       let (eb, ea) = (PSet.from_list eb, PSet.from_list ea) in
       PSet.fold (fun c constraints_none ->
           let (no_before, no_after) =
-            try PMap.find c e.Events.constraints_none
+            try PMap.find c ev.Events.constraints_none
             with Not_found -> (PSet.empty, PSet.empty) in
           let none =
             try PMap.find c constraints_none
@@ -300,7 +310,7 @@ let lapply st el =
               let k_no_before = PSet.diff k_no_before eb in
               let k_no_before =
                 if PSet.is_empty (PSet.inter k_no_before ea) then
-                  PSet.add id k_no_before
+                  PSet.add e k_no_before
                 else k_no_before in
               PMap.add k (k_no_before, k_no_after) none) none no_before in
           let none =
@@ -311,51 +321,84 @@ let lapply st el =
               let k_no_after = PSet.diff k_no_after ea in
               let k_no_after =
                 if PSet.is_empty (PSet.inter k_no_after eb) then
-                  PSet.add id k_no_after
+                  PSet.add e k_no_after
                 else k_no_after in
               PMap.add k (k_no_before, k_no_after) none) none no_after in
           PMap.add c none constraints_none)
-        st.constraints_none e.Events.event_attendees) st.constraints_none idl in
+        constraints_none ev.Events.event_attendees) st.constraints_none idl in
   let st = { st with constraints_none = constraints_none } in
   (** Trying to match as many requirements of [st.constraints_some] as possible. **)
   let st =
-    let rec aux st added_before = function
-      | [] -> st
-      | (e, ev) :: l ->
-        (* FIXME: Some links from an event to itself have been emitted, and I
-         * suspect that this part of the code is responsible for this. *)
-        let (before, after) = (all_successors fst st e, all_successors snd st e) in
-        let (st, added_before) =
-          PMap.foldi (fun c ks (st, added_before) ->
-              let m =
-                try PMap.find c st.constraints_some
-                with Not_found -> PMap.empty in
-              let (st, added_before, m) =
-                PSet.fold (fun k (st, added_before, m) ->
-                  let (yes_before, yes_after) =
-                    try PMap.find k m
-                    with Not_found -> (PSet.empty, PSet.empty) in
-                  let do_before = PSet.diff yes_before before in
-                  let do_before = PSet.remove e do_before in
+    List.fold_left (fun st (e, ev) ->
+      let (before, after) = (all_successors fst st e, all_successors snd st e) in
+      let (st, before, after) =
+        (** Considering constraints of the current event. **)
+        PMap.foldi (fun c (do_before, do_after) (st, before, after) ->
+          let aux forwards st =
+            let (dir, oppdir) = if forwards then (snd, fst) else (fst, snd) in
+            let ks = dir (do_before, do_after) in
+            PSet.fold (fun k (st, added) ->
+              let candidates =
+                try PMap.find (k, c) st.kind_map
+                with Not_found -> PSet.empty in
+              let rec aux = function
+                | [] ->
+                  (** No event fitting the constraint are present in the current
+                   * history: we add it in the list of future constraints. **)
                   let st =
-                    PSet.fold (fun e' st -> make_before st e e') st do_before in
-                  let do_after = PSet.diff yes_after after in
-                  let do_after = PSet.remove e do_after in
-                  let (st, added_before) =
-                    PSet.fold (fun e' (st, added_before) ->
-                        (make_before st e' e, all_successors fst st e'))
-                      (st, added_before) do_after in
-                  let m =
-                    PMap.add k (PSet.diff yes_before do_before,
-                                PSet.diff yes_after do_after) m in
-                  (st, added_before, m)) (st, added_before, m) ks in
-              let st =
-                { st with constraints_some = PMap.add c m st.constraints_some } in
-              (st, added_before)) ev.Events.event_kinds (st, added_before) in
-        (* TODO: In addition to the already present constraints, one could
-         * try to solve the [constraints_some] constraints of the event [e]. *)
-        aux st added_before l in
-    aux st PSet.empty idl in
+                    let m =
+                      try PMap.find c st.constraints_some
+                      with Not_found -> PMap.empty in
+                    let m =
+                      let (before, after) =
+                        try PMap.find k m
+                        with Not_found -> (PSet.empty, PSet.empty) in
+                      let before = dir (PSet.add e before, before) in
+                      let after = dir (after, PSet.add e after) in
+                      PMap.add k (before, after) m in
+                    let constraints_some =
+                      PMap.add c m st.constraints_some in
+                    { st with constraints_some = constraints_some } in
+                  (st, added)
+                | e' :: l ->
+                  if PSet.mem e' (oppdir (before, after)) then aux l
+                  else
+                    (make_before st (dir (e', e)) (dir (e, e')),
+                     PSet.add e' added) in
+              aux (PSet.to_list candidates)) (st, dir (before, after)) ks in
+          let (st, after) = aux true st in
+          let (st, before) = aux false st in
+          (st, before, after)) ev.Events.constraints_some (st, before, after) in
+      let (st, before, after) =
+        (** Considering already present constraints. **)
+        PMap.foldi (fun c ks (st, before, after) ->
+          let m =
+            try PMap.find c st.constraints_some
+            with Not_found -> PMap.empty in
+          let (st, before, after, m) =
+            PSet.fold (fun k (st, before, after, m) ->
+                let (yes_before, yes_after) =
+                  try PMap.find k m
+                  with Not_found -> (PSet.empty, PSet.empty) in
+                let do_before = PSet.diff yes_before before in
+                let do_before = PSet.remove e do_before in
+                let st =
+                  PSet.fold (fun e' st -> make_before st e e') st do_before in
+                let do_after = PSet.diff yes_after after in
+                let do_after = PSet.remove e do_after in
+                let st =
+                  PSet.fold (fun e' st -> make_before st e' e) st do_after in
+                let m =
+                  PMap.add k (PSet.diff yes_before do_before,
+                              PSet.diff yes_after do_after) m in
+                let new_before = PSet.flat_map (all_successors fst st) do_after in
+                let new_after = PSet.flat_map (all_successors snd st) do_before in
+                (st, PSet.merge new_before before, PSet.merge new_after after, m))
+              (st, before, after, m) ks in
+          let st =
+            { st with constraints_some = PMap.add c m st.constraints_some } in
+          (st, before, after)) ev.Events.event_kinds (st, before, after) in
+      st) st idl in
   st
 
 let apply st e = lapply st [e]
@@ -432,7 +475,7 @@ let finalise st now =
              PMap.add (ev.event.Events.event_type, c) ev.event_begin)
            (snd state) ev.event.Events.event_attendees) in
       (ev :: acc, state)) ([], (PMap.empty, PMap.empty)) sorted in
-  l
+  List.sort (fun e1 e2 -> Date.compare e1.event_begin e2.event_begin) l
 
 let unfinalise l =
   let state =

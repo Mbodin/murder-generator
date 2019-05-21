@@ -67,6 +67,7 @@ begin
   begin
     event ParentDeath
     assume no event ParentDeath to P before
+    assume no event ParentDeath to P after
 
     provide compatible attribute Richness to P as Rich
 
@@ -101,6 +102,7 @@ begin
   begin
     event ParentDeath
     assume no event ParentDeath to A or B before
+    assume no event ParentDeath to A or B after
 
     provide compatible attribute Richness to A as Rich
     provide compatible attribute Richness to B as Rich

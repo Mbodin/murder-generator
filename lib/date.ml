@@ -196,9 +196,9 @@ let orgmode_range ?(active = false) (y1, d1, m1) (y2, d2, m2) =
       ^ "-" ^ Utils.complete_string_pre "0" (string_of_int month1) 2
       ^ "-" ^ Utils.complete_string_pre "0" (string_of_int day1) 2
       ^ " _ " ^ string_of_int (m1 / 60)
-      ^ ":" ^ string_of_int (m1 mod 60)
+      ^ ":" ^ Utils.complete_string_pre "0" (string_of_int (m1 mod 60)) 2
       ^ "-" ^ string_of_int (m2 / 60)
-      ^ ":" ^ string_of_int (m2 mod 60)
+      ^ ":" ^ Utils.complete_string_pre "0" (string_of_int (m2 mod 60)) 2
       ^ orgmode_end active
     else orgmode (y1, d1, m1) ^ "--" ^ orgmode (y2, d2, m2)
 

@@ -74,12 +74,12 @@ begin
   let S be player with attribute Job as Seller
   let P be player
 
-  provide compatible contact Know from P to S as True
-
   provide event lasting weeks to P
   begin
     event Personal
     assume event providing attribute Job to S before
+
+    provide compatible contact Know from P to S as True
 
     translation fr P:+sbeg " va souvent faire ses courses à la boutique de " S "."
     translation en P:+sbeg " frequently shops at " S "’s shop."
@@ -330,8 +330,7 @@ begin
   provide event lasting weeks to A and B
   begin
     event Work
-    assume event providing attribute Job to A before
-    assume event providing attribute Job to B before
+    assume event providing attribute Job to A and B before
 
     sentence
     begin

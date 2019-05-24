@@ -133,9 +133,10 @@ type command =
 
 (** Provide an event of this kind to these players. **)
 and provide_event =
-  bool * Events.event_type * string list * block
+  bool * bool * Events.event_type * string list * block
   (** Provides an event of the following type to a list of player.
-   * The boolean states whether the event is a phantom event.
+   * The first boolean states whether the event is blocking, the second
+   * wether it is a phantom event.
    * Accepts the following commands: [Translation], [EventKind],
    * and [EventConstraint]. **)
 
@@ -157,7 +158,7 @@ type declaration =
   | DeclareCategory of string * block
     (** Declare a category of this name.
      * Only expects commands of the form [OfCategory] and [Translation]. **)
-  | DeclareElement of Element.status * string * block
+  | DeclareElement of History.status * string * block
     (** Declare an element of this status and name.
      * Accepts the following commands: [LetPlayer], [OfCategory],
      * [ProvideRelation], [ProvideAttribute], [ProvideContact], and

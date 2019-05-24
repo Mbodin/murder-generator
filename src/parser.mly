@@ -19,7 +19,7 @@ open Ast
 %token          WITH AND OR NOT NO FROM TO BETWEEN AS ANY OTHER
 %token          STRICT COMPATIBLE
 %token          DUPLICABLE UNIQUE
-%token          PHANTOM
+%token          PHANTOM BLOCKING
 %token          DIFFICULTY COMPLEXITY
 %token          NEUTRAL HATE TRUST CHAOTIC UNDETERMINED AVOIDANCE
 %token          ASYMMETRICAL EXPLOSIVE STRONG
@@ -57,9 +57,9 @@ attribute_kind:
 block: l = loption (BEGIN; l = list (command); END { l })   { l }
 
 status:
-  | empty       { Element.Normal }
-  | DUPLICABLE  { Element.Duplicable }
-  | UNIQUE      { Element.Unique }
+  | empty       { History.Normal }
+  | DUPLICABLE  { History.Duplicable }
+  | UNIQUE      { History.Unique }
 
 language:
   | lang = LIDENT   { lang }
@@ -140,14 +140,16 @@ command:
     { AddComplexity (d, l) }
   | EVENT; event = UIDENT
     { EventKind event }
-  | PROVIDE; t = time; ph = boption (PHANTOM { }); EVENT;
+  | PROVIDE; t = time;
+    bl = boption (BLOCKING { }); ph = boption (PHANTOM { }); EVENT;
     TO; targets = separated_list (AND, UIDENT);
     b = block
-    { ProvideEvent (ph, t, targets, b) }
-  | PROVIDE; ph = boption (PHANTOM { }); EVENT; LASTING; t = duration;
+    { ProvideEvent (bl, ph, t, targets, b) }
+  | PROVIDE; bl = boption (BLOCKING { }); ph = boption (PHANTOM { }); EVENT;
+    LASTING; t = duration;
     TO; targets = separated_list (AND, UIDENT);
     b = block
-    { ProvideEvent (ph, t, targets, b) }
+    { ProvideEvent (bl, ph, t, targets, b) }
   | e = event_constraint (empty, AND)
     { e true }
   | e = event_constraint (NO, OR)

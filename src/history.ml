@@ -1,16 +1,25 @@
 
 type character = Id.t
 
+let all_players_length l =
+  assert (l >= 0) ;
+  List.map Id.from_array (Utils.seq l)
+
 type event = {
     event_begin : Date.t ;
     event_end : Date.t ;
     event : character Events.t
   }
 
+type status =
+  | Normal
+  | Duplicable
+  | Unique
+
 let generate_event beg e =
   let en =
     match e.Events.event_type with
-    | Events.For_life_event -> Date.add_years beg (Utils.rand 20 100)
+    | Events.For_life_event -> Date.add_years beg (Utils.rand 20 70)
     | Events.Long_term_event -> Date.add_years beg (Utils.rand 1 10)
     | Events.Medium_term_event -> Date.add_days beg (Utils.rand 14 100)
     | Events.Short_term_event -> Date.add_days beg (Utils.rand 2 10)
@@ -24,7 +33,7 @@ let generate_event beg e =
 let generate_event_inv en e =
   let beg =
     match e.Events.event_type with
-    | Events.For_life_event -> Date.add_years en (- Utils.rand 20 100)
+    | Events.For_life_event -> Date.add_years en (- Utils.rand 20 70)
     | Events.Long_term_event -> Date.add_years en (- Utils.rand 1 10)
     | Events.Medium_term_event -> Date.add_days en (- Utils.rand 14 100)
     | Events.Short_term_event -> Date.add_days en (- Utils.rand 2 10)
@@ -54,6 +63,7 @@ let compatible_events e1 e2 =
 
 
 type t = {
+    number_of_character : int (** The number of characters in the state. **) ;
     events : character Events.t Id.map
       (** Events are not stored directly in the timeline,
        * but through identifiers. **) ;
@@ -244,7 +254,7 @@ let make_before st e1 e2 =
       PMap.add e2 (before, after) graph in
     { st with graph = graph }
 
-let lapply st el =
+let lapply st status el =
   (* LATER: This function could be factorised. *)
   (** Registering the new events. **)
   let (events, idl) =
@@ -272,9 +282,18 @@ let lapply st el =
                         PMap.add (k, c) (PSet.add id ids) map) map k)
                     map e.Events.event_attendees) st.kind_map idl ;
               already_declared_events =
-                List.fold_left (fun set (_, e) ->
-                    PSet.fold (fun c set -> PSet.add (e.Events.event_id, c) set)
-                      set e.Events.event_attendees)
+                match status with
+                | Normal ->
+                  List.fold_left (fun set (_, e) ->
+                      PSet.fold (fun c -> PSet.add (e.Events.event_id, c))
+                        set e.Events.event_attendees)
+                  st.already_declared_events idl
+                | Duplicable -> st.already_declared_events
+                | Unique ->
+                  List.fold_left (fun set (_, e) ->
+                      List.fold_left (fun set c ->
+                          PSet.add (e.Events.event_id, c) set)
+                        set (all_players_length st.number_of_character))
                   st.already_declared_events idl } in
   (** Registering the new constraints. **)
   let rec intermediate_constraints st = function
@@ -401,9 +420,10 @@ let lapply st el =
       st) st idl in
   st
 
-let apply st e = lapply st [e]
+let apply st status e = lapply st status [e]
 
-let create_state _ = {
+let create_state n = {
+    number_of_character = n ;
     already_declared_events = PSet.empty ;
     events = Id.map_create () ;
     kind_map = PMap.empty ;
@@ -473,9 +493,14 @@ let finalise st now =
       let t = Date.add_minutes t (- Utils.rand 10 30) in
       let ev = generate_event_inv t ev in
       let state =
+        let types =
+          if ev.event.Events.event_blocking then
+            Events.all_event_type
+          else [ev.event.Events.event_type] in
         (PMap.add e ev.event_begin (fst state),
-         PSet.fold (fun c ->
-             PMap.add (ev.event.Events.event_type, c) ev.event_begin)
+         PSet.fold (fun c map ->
+             List.fold_left (fun map t ->
+               PMap.add (t, c) ev.event_begin map) map types)
            (snd state) ev.event.Events.event_attendees) in
       (ev :: acc, state)) ([], (PMap.empty, PMap.empty)) sorted in
   let l = List.filter (fun e -> not e.event.Events.event_phantom) l in

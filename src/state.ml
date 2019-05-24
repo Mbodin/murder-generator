@@ -235,25 +235,21 @@ let get_history_state (_, _, h) = h
 
 let set_history_state (st, a, _) h = (st, a, h)
 
-let apply_event (st, a, h) ev =
-  (st, a, History.apply h ev)
+let apply_event (st, a, h) status ev =
+  (st, a, History.apply h status ev)
 
-let apply_events (st, a, h) evs =
-  (st, a, History.lapply h evs)
-
-(** Creates a list of characters from the total number of characters. **)
-let all_players_length l =
-  List.map Id.from_array (Utils.seq l)
+let apply_events (st, a, h) status evs =
+  (st, a, History.lapply h status evs)
 
 let number_of_player (st, _, _) = Array.length st
 
 let all_players st =
-  all_players_length (number_of_player st)
+  History.all_players_length (number_of_player st)
 
 let number_of_player_relation_state (_, rs) = Array.length rs
 
 let all_players_relation st =
-  all_players_length (number_of_player_relation_state st)
+  History.all_players_length (number_of_player_relation_state st)
 
 type final =
   character_state_final * relation_state * History.final

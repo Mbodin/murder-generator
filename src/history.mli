@@ -35,6 +35,14 @@ type t
  * a particular moment in type. **)
 type final = event list
 
+(** Describes the status of elements with respect to their behaviours
+ * with timelines.
+ * Most elements are [Normal], but some have special behaviours. **)
+type status =
+  | Normal (** Any given player can only have this element once. **)
+  | Duplicable (** This element can be applied without any restriction. **)
+  | Unique (** This element can be applied at most once in the whole scenario. **)
+
 (** States whether an event is compatible with a timeline.
  * Its return value is the same as [Element.compatible_and_progress]:
  * [None] if incompatible, [Some false] is compatible but does not help
@@ -50,12 +58,12 @@ val lcompatible_and_progress : t -> character Events.t list -> bool option
 (** Apply an event to a timeline.
  * This function should only be called on events for which
  * [compatible_and_progress] returns [Some]. **)
-val apply : t -> character Events.t -> t
+val apply : t -> status -> character Events.t -> t
 
 (** Same as [apply], but for a list of events for which
  * [lcompatible_and_progress] returns [Some].
  * Their relative order will be conserved. **)
-val lapply : t -> character Events.t list -> t
+val lapply : t -> status -> character Events.t list -> t
 
 (** (Deeply) copies the state. **)
 val copy : t -> t
@@ -80,4 +88,10 @@ val unfinalise : final -> t
  * of identifiers, corresponding to the events before and after the
  * current event. **)
 val fold_graph : ('a -> character Events.t -> Id.t -> Id.t list * Id.t list -> 'a) -> 'a -> t -> 'a
+
+(** Given a number of player, return the associated characters identifiers.
+ * The existence of this function implies that character identifiers are
+ * fixed accross all executions and really only depends on the total number
+ * of players. **)
+val all_players_length : int -> character list
 

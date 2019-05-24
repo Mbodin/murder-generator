@@ -68,6 +68,7 @@ rule read = parse
   | "unique"                { UNIQUE }
 
   | "phantom"               { PHANTOM }
+  | "blocking"              { BLOCKING }
 
   | "difficulty"            { DIFFICULTY }
   | "complexity"            { COMPLEXITY }

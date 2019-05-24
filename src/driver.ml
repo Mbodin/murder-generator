@@ -71,7 +71,7 @@ let empty_block = {
 type import_information = {
     constructor_maps : Attribute.constructor_maps ;
     event_id : (string, Id.t) PMap.t ;
-    event_informations : (Id.t, bool * int Events.translation) PMap.t ;
+    event_informations : (Id.t, bool * bool * int Events.translation) PMap.t ;
     event_kinds : (Id.t, (int, int Events.kind PSet.t) PMap.t) PMap.t
   }
 
@@ -129,7 +129,7 @@ type intermediary = {
       (** In contrary to categories, attributes, and constructors,
        * tags are not associated any information.
        * We thus need to explicitely track which were defined. **) ;
-    waiting_elements : (Id.t * Element.status * string * block) list
+    waiting_elements : (Id.t * History.status * string * block) list
       (** An element, waiting to be treated. **)
   }
 
@@ -837,8 +837,8 @@ let parse_element st element_name status block =
   let get_player_array p = Id.to_array (get_player p) in
   (** We pre-parse the events, as they might contain declarations. **)
   let events =
-    List.map (fun (ph, t, l, b) ->
-      (ph, t, List.map get_player l,
+    List.map (fun (bl, ph, t, l, b) ->
+      (bl, ph, t, List.map get_player l,
        convert_block element_name
          [Translation; Sentence; ProvideAttribute; ProvideContact;
           EventKind; EventConstraint] b)) block.provide_event in
@@ -899,7 +899,7 @@ let parse_element st element_name status block =
   (** We also consider dependencies due to events. **)
   let deps =
     let edeps =
-      List.fold_left (fun edeps (_, _, _, eblock) ->
+      List.fold_left (fun edeps (_, _, _, _, eblock) ->
           PSet.merge (get_event_dependencies eblock) edeps)
         PSet.empty events in
     let edeps_cat =
@@ -992,7 +992,7 @@ let parse_element st element_name status block =
   let attributes =
     (** Attribute declarations may be placed inside events to mean that
      * it was a particular event that triggered this declaration. **)
-    List.fold_left (fun l (_, _, _, b) ->
+    List.fold_left (fun l (_, _, _, _, b) ->
       b.provide_attribute @ l) block.provide_attribute events in
   let deps =
     List.fold_left (fun deps pa ->
@@ -1015,7 +1015,7 @@ let parse_element st element_name status block =
   let contacts =
     (** Similarly to attributes, contact declarations may be placed
      * inside events. **)
-    List.fold_left (fun l (_, _, _, b) ->
+    List.fold_left (fun l (_, _, _, _, b) ->
       b.provide_contact @ l) block.provide_contact events in
   let deps =
     List.fold_left (fun deps pc ->
@@ -1106,7 +1106,7 @@ let parse_element st element_name status block =
       deps block.let_player in
   (** We finally consider events. **)
   let evs =
-    List.mapi (fun i (phantom, t, attendees, block) ->
+    List.mapi (fun i (blocking, phantom, t, attendees, block) ->
       let event_name = element_name ^ "#" ^ string_of_int i in
       let kinds =
         let kinds =
@@ -1214,6 +1214,7 @@ let parse_element st element_name status block =
                   c.Ast.event_players)) (PMap.empty, PMap.empty)
           block.event_constraint in
       let attendees = List.map Id.to_array attendees in {
+        Events.event_blocking = blocking ;
         Events.event_phantom = phantom ;
         Events.event_id = event_id () ;
         Events.event_type = t ;
@@ -1262,7 +1263,9 @@ let parse i =
                 { import_information with
                     event_id = PMap.add name id import_information.event_id ;
                     event_informations =
-                      PMap.add id (ev.Events.event_phantom, ev.Events.translation)
+                      PMap.add id (ev.Events.event_phantom,
+                                   ev.Events.event_blocking,
+                                   ev.Events.translation)
                         import_information.event_informations ;
                     event_kinds =
                       PMap.add id ev.Events.event_kinds

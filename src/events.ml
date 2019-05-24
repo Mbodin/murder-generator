@@ -41,6 +41,7 @@ type 'character translation = (int * (int, 'character) Translation.st)
 type 'character t = {
     event_id : Id.t ;
     event_phantom : bool ;
+    event_blocking : bool ;
     event_type : event_type ;
     event_attendees : 'character PSet.t ;
     all_attendees : 'character list ;
@@ -72,6 +73,7 @@ let partially_instantiate a b e =
     Some {
       event_id = e.event_id ;
       event_phantom = e.event_phantom ;
+      event_blocking = e.event_blocking ;
       event_type = e.event_type ;
       event_attendees = PSet.singleton b ;
       all_attendees = [] ;
@@ -109,6 +111,7 @@ let instantiate f e =
             Utils.apply_option (Translation.smap_option f mtr) (fun mtr -> {
                 event_id = e.event_id ;
                 event_phantom = e.event_phantom ;
+                event_blocking = e.event_blocking ;
                 event_type = e.event_type ;
                 event_attendees = attendees ;
                 all_attendees = all ;

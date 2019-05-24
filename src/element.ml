@@ -17,13 +17,8 @@ type cell = {
     added_objective : State.objective
   }
 
-type status =
-  | Normal
-  | Duplicable
-  | Unique
-
 type t = {
-    status : status ;
+    status : History.status ;
     players : cell array ;
     others : character_constraint list ;
     events : int Events.t list
@@ -411,7 +406,7 @@ let apply m state e inst =
       State.add_difficulty rst c ei.added_objective.State.difficulty ;
       State.add_complexity rst c ei.added_objective.State.complexity ;
       (state, diff)) (state, diff) e.players inst in
-  let state = State.apply_events state evs in
+  let state = State.apply_events state e.status evs in
   (state, diff)
 
 let safe_apply m state = apply m (State.copy state)

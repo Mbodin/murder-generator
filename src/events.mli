@@ -52,7 +52,14 @@ type 'character t = {
        * are not the same ones.
        * In particular, each event instantiation shares the same identifier,
        * but will be associated different identifiers in the History module. **) ;
-    event_phantom : bool (** Whether this element is a phantom event. **) ;
+    event_phantom : bool
+      (** Whether this element is a phantom event, that is an event with
+       * no description, which is not displayed in the event list.
+       * Such events are useful to create empty buffer areas
+       * in the life of characters. **) ;
+    event_blocking : bool
+      (** Whether this element is blocking, that is, whether it prevents
+       * other events from happening at the same time. **) ;
     event_type : event_type
       (** Two events with the same event type can not happen simultaneously. **) ;
     event_attendees : 'character PSet.t

@@ -190,10 +190,10 @@ val get_history_state : t -> History.t
 val set_history_state : t -> History.t -> t
 
 (** Call [History.apply] on an events. **)
-val apply_event : t -> character Events.t -> t
+val apply_event : t -> History.status -> character Events.t -> t
 
 (** Call [History.lapply] on a set of events. **)
-val apply_events : t -> character Events.t list -> t
+val apply_events : t -> History.status -> character Events.t list -> t
 
 (** Return the size of the state, that its number of players. **)
 val number_of_player : t -> int
@@ -201,7 +201,7 @@ val number_of_player : t -> int
 (** Similar to [number_of_player], but from a relation state. **)
 val number_of_player_relation_state : relation_state -> int
 
-(** Returns the list of all players defined in this state. **)
+(** Return the list of all players defined in this state. **)
 val all_players : t -> character list
 
 (** Similar to [all_players], but from a relation state. **)

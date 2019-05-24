@@ -540,12 +540,12 @@ let from_json i fileName fileContent =
           if not (List.for_all (fun c -> List.mem c all) attendees) then
             failwith ("Event `" ^ name ^ "' has an invalid list of attendees.") ;
           let convert = List.nth_opt all in
-          let (phantom, translation) =
-            let (phantom, (n, tr)) =
+          let (phantom, blocking, translation) =
+            let (phantom, blocking, (n, tr)) =
               try PMap.find id i.Driver.event_informations
               with Not_found -> assert false in
             match Translation.smap_option convert tr with
-            | Some tr -> (phantom, (n, tr))
+            | Some tr -> (phantom, blocking, (n, tr))
             | None ->
               failwith ("Non-matching translation for event `" ^ name ^ "'.") in
           let kinds =
@@ -563,6 +563,7 @@ let from_json i fileName fileContent =
           let e = {
               Events.event_id = id ;
               Events.event_phantom = phantom ;
+              Events.event_blocking = blocking ;
               Events.event_type = History.get_event_type be en ;
               Events.event_attendees = PSet.from_list attendees ;
               Events.all_attendees = all ;

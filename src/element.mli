@@ -33,13 +33,6 @@ type cell = {
        * to the ones naturally provided by the relations. **)
   }
 
-(** Describes the status of the element.
- * Most elements are [Normal], but some have special behaviours. **)
-type status =
-  | Normal (** Any given player can only have this element once. **)
-  | Duplicable (** This element can be applied without any restriction. **)
-  | Unique (** This element can be applied at most once in the whole scenario. **)
-
 (** Each players considered by the element are represented as a cell.
  * A list of constraints given to other players is also given
  * (it corresponds to the [let any other player] declarations.
@@ -49,7 +42,7 @@ type status =
  * constraint preventing an event of a given kind to be after this
  * event, it must not be after it in the list. **)
 type t = {
-    status : status ;
+    status : History.status ;
     players : cell array ;
     others : character_constraint list ;
     events : int Events.t list

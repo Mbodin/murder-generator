@@ -194,7 +194,7 @@ begin
     end
   end
 
-  provide event lasting days to V
+  provide blocking event lasting days to V
   begin
     event Personal
 

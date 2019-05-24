@@ -58,17 +58,17 @@ let compare (y1, d1, m1) (y2, d2, m2) =
   else compare m1 m2
 
 let min d1 d2 =
-  if compare d1 d2 = -1 then d1 else d2
+  if compare d1 d2 < 0 then d1 else d2
 
 let max d1 d2 =
-  if compare d1 d2 = -1 then d2 else d1
+  if compare d1 d2 < 0 then d2 else d1
 
-(** Returns the size of the months of a given year. **)
+(** Return the size of the months of a given year. **)
 let months y =
   [ 31 ; if leap_year y then 29 else 28 ;
     31 ; 30 ; 31 ; 30 ; 31 ; 31 ; 30 ; 31 ; 30 ; 31 ]
 
-(** Returns the month number and day of the month (starting from [1]). **)
+(** Return the month number and day of the month (starting from [1]). **)
 let month_day (y, d, _) =
   let rec aux m d = function
     | [] -> assert false
@@ -77,7 +77,7 @@ let month_day (y, d, _) =
       else aux (m + 1) (d - c) l in
   aux 1 d (months y)
 
-(** Gets the year and day of the year from a year (starting from [0]),
+(** Return the year and day of the year from a year (starting from [0]),
  * a month, and a day of the month (starting from [1]). **)
 let rec month_day_inv y m d =
   if m < 1 then
@@ -168,7 +168,8 @@ let from_rfc2445 str =
     (y, d, 60 * h + m)
 
 (** Dates in ord-mode are encapsulated in either square or angle brackets
- * dependending on whether they are active. **)
+ * dependending on whether they are active.
+ * These functions choose the right enclosing symbols accordingly. **)
 let orgmode_start active =
   if active then "<" else "["
 let orgmode_end active =

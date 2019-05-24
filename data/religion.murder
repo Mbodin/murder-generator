@@ -283,7 +283,7 @@ begin
   translation eo "Ena paco"
 end
 
-element InternalPeaceDescription
+unique element InternalPeaceDescription
 begin
   let G be player with attribute Specy as God
                   with attribute DivineAllegiance as InternalPeace
@@ -331,7 +331,7 @@ begin
   translation eo "Babilado"
 end
 
-element DialogueDescription
+unique element DialogueDescription
 begin
   let G be player with attribute Specy as God
                   with attribute DivineAllegiance as Dialogue
@@ -379,7 +379,7 @@ begin
   translation eo "Scivolemeco"
 end
 
-element InquisitivenessDescription
+unique element InquisitivenessDescription
 begin
   let G be player with attribute Specy as God
                   with attribute DivineAllegiance as Inquisitiveness
@@ -427,7 +427,7 @@ begin
   translation eo "Ĥaoso"
 end
 
-element ChaosDescription
+unique element ChaosDescription
 begin
   let G be player with attribute Specy as God
                   with attribute DivineAllegiance as Chaos
@@ -476,7 +476,7 @@ begin
   translation eo "Akordo"
 end
 
-element HarmonyDescription
+unique element HarmonyDescription
 begin
   let G be player with attribute Specy as God
                   with attribute DivineAllegiance as Harmony
@@ -524,7 +524,7 @@ begin
   translation eo "Labirintoj"
 end
 
-element MazesDescription
+unique element MazesDescription
 begin
   let G be player with attribute Specy as God
                   with attribute DivineAllegiance as Mazes
@@ -572,7 +572,7 @@ begin
   translation eo "La Nurnura"
 end
 
-element TheTrueOneDescription
+unique element TheTrueOneDescription
 begin
   let G be player with attribute Specy as God
                   with attribute DivineAllegiance as TheTrueOne

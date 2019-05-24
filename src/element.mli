@@ -22,7 +22,8 @@ type character_constraint =
 
 (** All the changes applied by an elements to players are summed up in this type. **)
 type cell = {
-    constraints : character_constraint list (** The constraints on this player. **) ;
+    constraints : character_constraint list
+      (** The constraints on this player. **) ;
     relations : Relation.t array
       (** The relations that would be added to this player,  for each characters.
        * This array can be less than the number of players  in this element
@@ -32,6 +33,13 @@ type cell = {
        * to the ones naturally provided by the relations. **)
   }
 
+(** Describes the status of the element.
+ * Most elements are [Normal], but some have special behaviours. **)
+type status =
+  | Normal (** Any given player can only have this element once. **)
+  | Duplicable (** This element can be applied without any restriction. **)
+  | Unique (** This element can be applied at most once in the whole scenario. **)
+
 (** Each players considered by the element are represented as a cell.
  * A list of constraints given to other players is also given
  * (it corresponds to the [let any other player] declarations.
@@ -40,7 +48,12 @@ type cell = {
  * Events must not be directly contradictory: if an event has a
  * constraint preventing an event of a given kind to be after this
  * event, it must not be after it in the list. **)
-type t = cell array * character_constraint list * int Events.t list
+type t = {
+    status : status ;
+    players : cell array ;
+    others : character_constraint list ;
+    events : int Events.t list
+  }
 
 (** Returns the list of attribute that an element may provide. **)
 val provided_attributes : t -> Attribute.attribute list

@@ -56,7 +56,7 @@ begin
     begin
       translation fr P:+sbeg " a toujours aimé le contact humain."
       translation en P:+sbeg " always appreciated human contact."
-      translation eo P:+sbeg " ĉiam ŝatus homan kontakton."
+      translation eo P:+sbeg " ĉiam ŝatis homan kontakton."
     end
 
     sentence
@@ -222,8 +222,9 @@ begin
     end
   end
 
+  provide relation from T to R as hate
+
   remove difficulty to P
-  add difficulty to R
 end
 
 element PoliticalThief

@@ -18,6 +18,8 @@ open Ast
 %token          DECLARE PROVIDE LET BE ASSUME ADD REMOVE
 %token          WITH AND OR NOT NO FROM TO BETWEEN AS ANY OTHER
 %token          STRICT COMPATIBLE
+%token          DUPLICABLE UNIQUE
+%token          PHANTOM
 %token          DIFFICULTY COMPLEXITY
 %token          NEUTRAL HATE TRUST CHAOTIC UNDETERMINED AVOIDANCE
 %token          ASYMMETRICAL EXPLOSIVE STRONG
@@ -41,8 +43,8 @@ declaration:
     { DeclareConstructor (k, attr, constructor, b) }
   | CATEGORY; name = UIDENT; c = block
     { DeclareCategory (name, c) }
-  | ELEMENT; name = UIDENT; c = block
-    { DeclareElement (name, c) }
+  | s = status; ELEMENT; name = UIDENT; c = block
+    { DeclareElement (s, name, c) }
   | DECLARE; TRANSLATION; lang = language; COLON; tag = LIDENT
     { DeclareCase (Translation.from_iso639 lang, Translation.get_tag tag) }
   | DECLARE; EVENT; event = UIDENT; b = block
@@ -53,6 +55,11 @@ attribute_kind:
   | CONTACT     { Contact }
 
 block: l = loption (BEGIN; l = list (command); END { l })   { l }
+
+status:
+  | empty       { Element.Normal }
+  | DUPLICABLE  { Element.Duplicable }
+  | UNIQUE      { Element.Unique }
 
 language:
   | lang = LIDENT   { lang }
@@ -133,14 +140,14 @@ command:
     { AddComplexity (d, l) }
   | EVENT; event = UIDENT
     { EventKind event }
-  | PROVIDE; t = time; EVENT;
+  | PROVIDE; t = time; ph = boption (PHANTOM { }); EVENT;
     TO; targets = separated_list (AND, UIDENT);
     b = block
-    { ProvideEvent (t, targets, b) }
-  | PROVIDE; EVENT; LASTING; t = duration;
+    { ProvideEvent (ph, t, targets, b) }
+  | PROVIDE; ph = boption (PHANTOM { }); EVENT; LASTING; t = duration;
     TO; targets = separated_list (AND, UIDENT);
     b = block
-    { ProvideEvent (t, targets, b) }
+    { ProvideEvent (ph, t, targets, b) }
   | e = event_constraint (empty, AND)
     { e true }
   | e = event_constraint (NO, OR)

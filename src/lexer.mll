@@ -64,6 +64,11 @@ rule read = parse
   | "strict"                { STRICT }
   | "compatible"            { COMPATIBLE }
 
+  | "duplicable"            { DUPLICABLE }
+  | "unique"                { UNIQUE }
+
+  | "phantom"               { PHANTOM }
+
   | "difficulty"            { DIFFICULTY }
   | "complexity"            { COMPLEXITY }
 

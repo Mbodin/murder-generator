@@ -71,7 +71,7 @@ let empty_block = {
 type import_information = {
     constructor_maps : Attribute.constructor_maps ;
     event_id : (string, Id.t) PMap.t ;
-    event_translations : (Id.t, int Events.translation) PMap.t ;
+    event_informations : (Id.t, bool * int Events.translation) PMap.t ;
     event_kinds : (Id.t, (int, int Events.kind PSet.t) PMap.t) PMap.t
   }
 
@@ -129,7 +129,7 @@ type intermediary = {
       (** In contrary to categories, attributes, and constructors,
        * tags are not associated any information.
        * We thus need to explicitely track which were defined. **) ;
-    waiting_elements : (Id.t * string * block) list
+    waiting_elements : (Id.t * Element.status * string * block) list
       (** An element, waiting to be treated. **)
   }
 
@@ -144,7 +144,7 @@ let empty_state = {
     import_information = {
         constructor_maps = Attribute.empty_constructor_maps ;
         event_id = PMap.empty ;
-        event_translations = PMap.empty ;
+        event_informations = PMap.empty ;
         event_kinds = PMap.empty
       } ;
     category_dependencies = PMap.empty ;
@@ -718,7 +718,7 @@ let prepare_declaration i =
               translations =
                 { i.current_state.translations with Translation.category =
                     category_translation } } }
-  | Ast.DeclareElement (name, block) ->
+  | Ast.DeclareElement (status, name, block) ->
     (match Id.get_id i.current_state.elements_names name with
      | None -> ()
      | Some _ -> raise (DefinedTwice ("element", name, ""))) ;
@@ -730,7 +730,7 @@ let prepare_declaration i =
                           AddDifficulty; AddComplexity;
                           ProvideEvent] block in
     { i with
-        waiting_elements = (id, name, block) :: i.waiting_elements ;
+        waiting_elements = (id, status, name, block) :: i.waiting_elements ;
         current_state =
           { i.current_state with elements_names = elements } }
   | Ast.DeclareCase (lang, tag) ->
@@ -802,7 +802,7 @@ let get_constructor_dependencies s id =
 let event_id = Id.new_id_function ()
 
 (** Generates an element from a [state] and a [block]. **)
-let parse_element st element_name block =
+let parse_element st element_name status block =
   (** A specialised function based on the state [st] (which is no longer changing
    * once this function is called). **)
   let get_constructor_dependencies cid =
@@ -837,8 +837,8 @@ let parse_element st element_name block =
   let get_player_array p = Id.to_array (get_player p) in
   (** We pre-parse the events, as they might contain declarations. **)
   let events =
-    List.map (fun (t, l, b) ->
-      (t, List.map get_player l,
+    List.map (fun (ph, t, l, b) ->
+      (ph, t, List.map get_player l,
        convert_block element_name
          [Translation; Sentence; ProvideAttribute; ProvideContact;
           EventKind; EventConstraint] b)) block.provide_event in
@@ -899,7 +899,7 @@ let parse_element st element_name block =
   (** We also consider dependencies due to events. **)
   let deps =
     let edeps =
-      List.fold_left (fun edeps (_, _, eblock) ->
+      List.fold_left (fun edeps (_, _, _, eblock) ->
           PSet.merge (get_event_dependencies eblock) edeps)
         PSet.empty events in
     let edeps_cat =
@@ -992,7 +992,7 @@ let parse_element st element_name block =
   let attributes =
     (** Attribute declarations may be placed inside events to mean that
      * it was a particular event that triggered this declaration. **)
-    List.fold_left (fun l (_, _, b) ->
+    List.fold_left (fun l (_, _, _, b) ->
       b.provide_attribute @ l) block.provide_attribute events in
   let deps =
     List.fold_left (fun deps pa ->
@@ -1015,7 +1015,7 @@ let parse_element st element_name block =
   let contacts =
     (** Similarly to attributes, contact declarations may be placed
      * inside events. **)
-    List.fold_left (fun l (_, _, b) ->
+    List.fold_left (fun l (_, _, _, b) ->
       b.provide_contact @ l) block.provide_contact events in
   let deps =
     List.fold_left (fun deps pc ->
@@ -1106,7 +1106,7 @@ let parse_element st element_name block =
       deps block.let_player in
   (** We finally consider events. **)
   let evs =
-    List.mapi (fun i (t, attendees, block) ->
+    List.mapi (fun i (phantom, t, attendees, block) ->
       let event_name = element_name ^ "#" ^ string_of_int i in
       let kinds =
         let kinds =
@@ -1150,11 +1150,21 @@ let parse_element st element_name block =
           if block.translation <> [] && block.sentence <> [] then
             raise (TranslationError ("translation item around sentences",
                                      event_name, List.hd block.translation)) ;
-          if block.translation <> [] then [block.translation]
-          else
-            List.map (fun block ->
-                (convert_block event_name [Translation] block).translation)
-              block.sentence in
+          if phantom then (
+            if block.translation <> [] then
+              raise (TranslationError ("translation in phantom event",
+                                       event_name, List.hd block.translation)) ;
+            if block.sentence <> [] then
+              raise (UnexpectedCommandInBlock (event_name,
+                                               "sentence in phantom event")) ;
+            []
+          ) else (
+            if block.translation <> [] then [block.translation]
+            else
+              List.map (fun block ->
+                  (convert_block event_name [Translation] block).translation)
+                block.sentence
+          ) in
         let translation =
           Translation.sadd Translation.sempty Translation.generic [] (-1)
             [Translation.Direct event_name] in
@@ -1204,6 +1214,7 @@ let parse_element st element_name block =
                   c.Ast.event_players)) (PMap.empty, PMap.empty)
           block.event_constraint in
       let attendees = List.map Id.to_array attendees in {
+        Events.event_phantom = phantom ;
         Events.event_id = event_id () ;
         Events.event_type = t ;
         Events.event_attendees = PSet.from_list attendees ;
@@ -1231,30 +1242,32 @@ let parse_element st element_name block =
                  (PSet.is_empty (PSet.inter c acc), PSet.merge k newacc))
              (true, acc) e.Events.event_attendees in
          r && check f acc l in
-     not (check fst PSet.empty evs)
-     || not (check snd PSet.empty (List.rev evs)) then
+     not (check snd PSet.empty evs)
+     || not (check fst PSet.empty (List.rev evs)) then
     raise (UnsatisfyableEventSequence element_name) ;
-  ((elementBase, !otherPlayers, evs), deps)
+  ({ Element.status = status ;
+     Element.players = elementBase ;
+     Element.others = !otherPlayers ;
+     Element.events = evs }, deps)
 
 let parse i =
   let (elements, elements_dependencies, import_information) =
     List.fold_left (fun (elements, elements_dependencies, import_information)
-        (id, name, block) ->
-          let (element, deps) = parse_element i.current_state name block in
-          let (_, _, evs) = element in
+        (id, status, name, block) ->
+          let (element, deps) = parse_element i.current_state name status block in
           let import_information =
             List.fold_left (fun import_information ev ->
                 let name = Events.translate ev in
                 let id = ev.Events.event_id in
                 { import_information with
                     event_id = PMap.add name id import_information.event_id ;
-                    event_translations =
-                      PMap.add id ev.Events.translation
-                        import_information.event_translations ;
+                    event_informations =
+                      PMap.add id (ev.Events.event_phantom, ev.Events.translation)
+                        import_information.event_informations ;
                     event_kinds =
                       PMap.add id ev.Events.event_kinds
                         import_information.event_kinds })
-              import_information evs in
+              import_information element.Element.events in
           (PMap.add id element elements,
            PMap.add id deps elements_dependencies,
            import_information))
@@ -1280,9 +1293,7 @@ let get_element_dependencies s e =
 let get_all_elements s cats maxPlayers =
   PMap.foldi (fun e deps el ->
     if PSet.for_all (fun c -> PSet.mem c cats) deps then (
-      let (et, _, _) = PMap.find e s.elements in
-      if Array.length et <= maxPlayers then
-        e :: el
-      else el)
+      let l = Array.length (PMap.find e s.elements).Element.players in
+      if l <= maxPlayers then e :: el else el)
     else el) s.elements_dependencies []
 

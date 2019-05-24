@@ -52,6 +52,7 @@ type 'character t = {
        * are not the same ones.
        * In particular, each event instantiation shares the same identifier,
        * but will be associated different identifiers in the History module. **) ;
+    event_phantom : bool (** Whether this element is a phantom event. **) ;
     event_type : event_type
       (** Two events with the same event type can not happen simultaneously. **) ;
     event_attendees : 'character PSet.t

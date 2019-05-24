@@ -18,9 +18,6 @@ declare event Personal (* An event personnally involving a character. *)
 declare event Description (* Simple description of a character. *)
 
 declare event Birth
-begin
-  event Personal
-end
 
 element Birth
 begin
@@ -29,13 +26,17 @@ begin
   provide immediate event to P
   begin
     event Birth
-    assume no event Personal to P before
 
     provide strict attribute Born to P as True
 
     translation fr P:+sbeg " est né" P:+agr "."
     translation en P:+sbeg " is born."
     translation eo P:+sbeg " naskiĝis."
+  end
+
+  provide phantom event lasting decades to P
+  begin
+    assume no event Personal to P before
   end
 end
 

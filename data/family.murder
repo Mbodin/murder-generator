@@ -94,7 +94,7 @@ begin
   provide contact Know between A and B as Intimate
 end
 
-element SiblingTransitive
+duplicable element SiblingTransitive
 begin
   let A be player
   let B be player with contact FamilyMember to A as Sibling
@@ -104,7 +104,7 @@ begin
   provide relation between A and C as trust
 end
 
-element SiblingSymmetric
+duplicable element SiblingSymmetric
 begin
   let A be player
   let B be player with contact FamilyMember to A as Sibling

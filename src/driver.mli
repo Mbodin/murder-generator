@@ -133,8 +133,11 @@ type import_information = {
       (** Information about constructors. **) ;
     event_id : (string, Id.t) PMap.t
       (** A unique identifier for each event. **) ;
-    event_translations : (Id.t, int Events.translation) PMap.t
-      (** How each event is translated, organised over event names. **) ;
+    event_informations : (Id.t, bool * int Events.translation) PMap.t
+      (** Information for each event, organised over event names.
+       * In particular:
+       * - whether it is a phantom event,
+       * - how it is translated. **) ;
     event_kinds : (Id.t, (int, int Events.kind PSet.t) PMap.t) PMap.t
       (** The kind associated to each event, organised over event names. **)
   }

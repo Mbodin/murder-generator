@@ -45,7 +45,7 @@ let translate_value_player s =
 let translate_value_contact s =
   translate_value s (fun v -> Attribute.ContactConstructor v)
 
-(** Translates an event from a translation object [trp] for player. **)
+(** Translate an event from a translation object [trp] for player. **)
 let translate_event s trp e =
   let (nb_sentence, tr) = e.Events.translation in
   let tr =
@@ -172,18 +172,22 @@ let to_graphviz_event s =
           if v > 4 then 0.8
           else float_of_int (v - 1) /. 5. in
         "0 0 " ^ string_of_float v in
-      ("  " ^ event_node id ^ " [label=\""
-       ^ String.concat "|" (translate_event s tr_players ev)
-       ^ "\"]")
+      ("  " ^ event_node id
+       ^ if ev.Events.event_phantom then
+           " [shape=circle, label=\"\"] ;"
+         else
+           (" [style=rounded, label=\""
+            ^ String.concat "|" (translate_event s tr_players ev)
+            ^ "\"] ;"))
       :: List.map (fun id' ->
         "  " ^ event_node id ^ " -> " ^ event_node id'
-        ^ " [color=\"" ^ color ^ "\"];") after
+        ^ " [color=\"" ^ color ^ "\"] ;") after
       @ "" :: l) end_file (State.get_history_state s.unfinalised_state) in
   String.concat "\n" (
       "digraph {" :: ""
       :: ("  // Generated from " ^ webpage_address) :: ""
-      :: "  node [shape=record]" :: ""
-      :: "  rankdir = LR ;" :: ""
+      :: "  node [shape=record] ;" :: ""
+      :: "  rankdir=LR ;" :: ""
       :: graph)
 
 let to_icalendar s =
@@ -536,12 +540,12 @@ let from_json i fileName fileContent =
           if not (List.for_all (fun c -> List.mem c all) attendees) then
             failwith ("Event `" ^ name ^ "' has an invalid list of attendees.") ;
           let convert = List.nth_opt all in
-          let translation =
-            let (n, tr) =
-              try PMap.find id i.Driver.event_translations
+          let (phantom, translation) =
+            let (phantom, (n, tr)) =
+              try PMap.find id i.Driver.event_informations
               with Not_found -> assert false in
             match Translation.smap_option convert tr with
-            | Some tr -> (n, tr)
+            | Some tr -> (phantom, (n, tr))
             | None ->
               failwith ("Non-matching translation for event `" ^ name ^ "'.") in
           let kinds =
@@ -551,13 +555,14 @@ let from_json i fileName fileContent =
             match PMap.foldi (fun c k m ->
                     Utils.if_option m (fun m ->
                       Utils.if_option (convert c) (fun c ->
-                        Utils.apply_option
-                          (PSet.map_option (Events.kind_convert convert) k) (fun k ->
+                        Utils.apply_option (PSet.map_option
+                          (Events.kind_convert convert) k) (fun k ->
                             PMap.add c k m)))) k (Some PMap.empty) with
             | Some k -> k
             | None -> failwith ("Non-matching kinds for event `" ^ name ^ "'.") in
           let e = {
               Events.event_id = id ;
+              Events.event_phantom = phantom ;
               Events.event_type = History.get_event_type be en ;
               Events.event_attendees = PSet.from_list attendees ;
               Events.all_attendees = all ;

@@ -419,11 +419,7 @@ let all_players st =
   PMap.foldi (fun c _ l -> c :: l) st []
 
 let finalise st now =
-  (** We first consider all events with no successor. **)
-  let start =
-    PMap.foldi (fun e (before, after) l ->
-      if after = [] then e :: l else l) st.graph [] in
-  (** We then perform a topological sort of all events. **)
+  (** We first perform a topological sort of all events. **)
   let sorted =
     let rec aux acc seen next = function
       | [] ->
@@ -441,13 +437,20 @@ let finalise st now =
         )
       | e :: l ->
         if PSet.mem e seen then aux acc seen next l
-        else
+        else (
           let (before, after) =
             try PMap.find e st.graph
             with Not_found -> ([], []) in
-          aux (e :: acc) (PSet.add e seen) (before @ next) l in
+          if Utils.assert_defend then
+            assert (List.for_all (fun e -> PSet.mem e seen) after) ;
+          aux (e :: acc) (PSet.add e seen) (before @ next) l) in
+    let start =
+      Id.map_fold (fun _ e l ->
+        let (before, after) =
+          try PMap.find e st.graph
+          with Not_found -> ([], []) in
+        if after = [] then e :: l else l) [] st.events in
     aux [] PSet.empty [] start in
-  let sorted = List.rev sorted in
   (** We then assign timetables to this list. **)
   let (l, _) =
     List.fold_left (fun (acc, state) e ->
@@ -460,7 +463,7 @@ let finalise st now =
           (List.fold_left (fun t e ->
             let t' =
               try PMap.find e (fst state)
-              with Not_found -> now in
+              with Not_found -> assert false in
             Date.min t t') now after)
           (PSet.fold (fun c ->
             let t =
@@ -475,6 +478,7 @@ let finalise st now =
              PMap.add (ev.event.Events.event_type, c) ev.event_begin)
            (snd state) ev.event.Events.event_attendees) in
       (ev :: acc, state)) ([], (PMap.empty, PMap.empty)) sorted in
+  let l = List.filter (fun e -> not e.event.Events.event_phantom) l in
   List.sort (fun e1 e2 -> Date.compare e1.event_begin e2.event_begin) l
 
 let unfinalise l =

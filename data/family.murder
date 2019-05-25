@@ -86,7 +86,7 @@ begin
   provide contact Know between A and B as Intimate
 end
 
-element ParentsChildsKnowEachOthers
+duplicable element ParentsChildsKnowEachOthers
 begin
   let A be player with contact FamilyMember to B as Child
   let B be player with contact FamilyMember to A as Parent
@@ -151,12 +151,43 @@ end
 
 element LostSiblings
 begin
-  let A be player
-  let B be player
+  let A be player with attribute Age as Old
+  let B be player with attribute Age as Old
 
   provide relation between A and B as strong neutral
-  provide strict contact FamilyMember between A and B as Sibling
-  provide compatible contact Know between A and B as False
+
+  provide event lasting years to A and B
+  begin
+    event Personal
+
+    assume no event providing contact Know from A to B after
+    assume no event providing contact Know from B to A after
+
+    provide strict contact FamilyMember between A and B as Sibling
+    provide compatible contact Know between A and B as True
+
+    sentence
+    begin
+      translation fr A:+sbeg:fem " et " B:+sbeg:fem " sont sœurs."
+      translation fr A:+sbeg:mas " et " B:+sbeg:mas " sont frères."
+      translation fr A:+sbeg:fem " et " B:+sbeg:mas " sont frère et sœur."
+      translation fr A:+sbeg:mas " et " B:+sbeg:fem " sont frère et sœur."
+      translation en A:+sbeg " and " B:+sbeg " are siblings."
+      translation eo A:+sbeg:fem " kaj " B:+sbeg:fem " estas fratinoj."
+      translation eo A:+sbeg:mas " kaj " B:+sbeg:mas " estas fratoj."
+      translation eo A:+sbeg:fem " kaj " B:+sbeg:mas " estas gefratoj."
+      translation eo A:+sbeg:mas " kaj " B:+sbeg:fem " estas gefratoj."
+    end
+
+    sentence
+    begin
+      translation fr "Cependant, cela fait longtemps qu’il se sont perdus de vue."
+      translation en "However, it has been a long time since they last met together."
+      translation eo "Sed ili ne vidis sin ekde longe."
+    end
+  end
+
+  provide phantom event lasting years to A and B
 end
 
 element HiddenSibling

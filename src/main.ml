@@ -444,6 +444,7 @@ let main =
         Solver.solve IO.pause global state objectives in
       chooseFormats state parameters
     and chooseFormats state parameters =
+      IO.stopLoading () ;%lwt
       let get_translation = get_translation parameters in
       let (cont, w) = Lwt.task () in
       if Lwt.state state = Lwt.Sleep then
@@ -501,23 +502,26 @@ let main =
           Export.unfinalised_state = state
         } in
       let html = PSet.mem "html" parameters.chosen_productions in
-      IO.print_block (InOut.Div (InOut.Normal, [
-          InOut.P
-            (InOut.Text (get_translation "exportList")
-             :: if html then [ InOut.Text (get_translation "exportedAsHTML") ]
-                else []) ;
-          InOut.List (true,
-          List.map (fun (name, descr, mime, ext, native, f) ->
-            let fileName = "murder" ^ if ext = "" then "" else ("." ^ ext) in
-            InOut.Div (InOut.Inlined, [
-                InOut.LinkFile (get_translation "downloadAs"
-                                ^ " " ^ get_translation name,
-                                fileName, mime, native, fun _ -> f estate) ;
-                InOut.Text (get_translation descr)
-              ])) (List.filter (fun (name, _, _, _, _, _) ->
-                       PSet.mem name parameters.chosen_productions)
-                     Export.all_production))
-        ])) ;
+      let chosen_productions =
+        List.filter (fun (name, _, _, _, _, _) ->
+            PSet.mem name parameters.chosen_productions)
+          Export.all_production in
+      if chosen_productions <> [] then
+        IO.print_block (InOut.Div (InOut.Normal, [
+            InOut.P
+              (InOut.Text (get_translation "exportList")
+               :: if html then [ InOut.Text (get_translation "exportedAsHTML") ]
+                  else []) ;
+            InOut.List (true,
+            List.map (fun (name, descr, mime, ext, native, f) ->
+              let fileName = "murder" ^ if ext = "" then "" else ("." ^ ext) in
+              InOut.Div (InOut.Inlined, [
+                  InOut.LinkFile (get_translation "downloadAs"
+                                  ^ " " ^ get_translation name,
+                                  fileName, mime, native, fun _ -> f estate) ;
+                  InOut.Text (get_translation descr)
+                ])) chosen_productions)
+          ])) ;
       if html then IO.print_block (Export.to_block estate) ;
       IO.stopLoading () ;%lwt
       IO.print_block (InOut.P [

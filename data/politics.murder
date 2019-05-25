@@ -20,7 +20,7 @@ end
 
 attribute Famousness Unknown
 begin
-  translation fr "inconnu(e)"
+  translation fr "inconnu·e"
   translation en "unknown"
   translation eo "malfama"
 
@@ -36,7 +36,7 @@ begin
     he or she tries his or her best not to be famous. *)
   category NonKids
 
-  translation fr "caché(e)"
+  translation fr "caché·e"
   translation en "hidding"
   translation eo "kaŝanta"
 end
@@ -49,7 +49,7 @@ begin
   provide attribute Famousness to A as Unknown
 end
 
-element FamousIsKnown
+duplicable element FamousIsKnown
 begin
   let A be player
   let B be player with attribute Famousness as Famous
@@ -57,7 +57,7 @@ begin
   provide compatible contact Know from A to B as True
 end
 
-element HiddenUnknown
+duplicable element HiddenUnknown
 begin
   let A be player
   let B be player with attribute Famousness as Hiding
@@ -98,7 +98,7 @@ attribute Job King
 begin
   translation fr "monarque"
   translation en "monarch"
-  translation eo "reĝ(in)o"
+  translation eo "reĝo"
 
   add translation fr:nom:sin:fem "une reine"
   add translation fr:nom:sin:mas "un roi"

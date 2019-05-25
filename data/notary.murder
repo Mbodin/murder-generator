@@ -326,6 +326,8 @@ begin
     end
   end
 
+  provide phantom event lasting years to B
+
   (* TODO: Put the as an assumption of this event, to enable another
      event to properly define it.
      Then add the assumption that the next event is after an event providing

@@ -19,7 +19,7 @@ type status =
 let generate_event beg e =
   let en =
     match e.Events.event_type with
-    | Events.For_life_event -> Date.add_years beg (Utils.rand 20 70)
+    | Events.For_life_event -> Date.add_years beg (Utils.rand 20 50)
     | Events.Long_term_event -> Date.add_years beg (Utils.rand 1 10)
     | Events.Medium_term_event -> Date.add_days beg (Utils.rand 14 100)
     | Events.Short_term_event -> Date.add_days beg (Utils.rand 2 10)
@@ -33,7 +33,7 @@ let generate_event beg e =
 let generate_event_inv en e =
   let beg =
     match e.Events.event_type with
-    | Events.For_life_event -> Date.add_years en (- Utils.rand 20 70)
+    | Events.For_life_event -> Date.add_years en (- Utils.rand 20 50)
     | Events.Long_term_event -> Date.add_years en (- Utils.rand 1 10)
     | Events.Medium_term_event -> Date.add_days en (- Utils.rand 14 100)
     | Events.Short_term_event -> Date.add_days en (- Utils.rand 2 10)

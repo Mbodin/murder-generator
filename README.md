@@ -28,8 +28,10 @@ The following line will fetch and compile all dependencies.  This might take som
 ```bash
 esy install
 ```
+All commands cited below may take a much longer time the first time that they are run.
 
 The [dummy](./dummy) folder contains OCaml files meant to be instantiated some actual usage of files in the repository.  The following command will update them.
+This command should be called everytime one updates the repository.
 ```bash
 esy local
 ```
@@ -49,6 +51,10 @@ Such a native version can be built and run through the following commands.
 esy native
 ```
 
+Once the native program has been built, you can run it using `./main.native` or on some system `esy ./main.native`.
+You get a terminal interface similar to the web interface.  The interface wait for a number input, corresponding to one of the displayed links.  For instance, if it is displayed `[3]`, then typing `3` then enter would activate this link.
+One can also change the width of the display by typing `0` and entering the new width.  To exist, emit an end-of-file message to the terminal (which is usually done by simultaneously typing the control and `d` keys).
+
 Optionnally, one can perform some tests using the following command.
 ```bash
 esy test
@@ -59,6 +65,38 @@ Note that the `esy local` and `esy js` commands above are updating committed fil
 esy checkout # To be done before any commit.
 ```
 
+# Files Description
+
+Here follows a description of the most important files.
+The project is divided into several folders:
+* [src/](./src) contains all the source of the generator.  These files are OCaml files.
+* [data/](./data) contains all the scenario elements.  The generator uses these scenario elements to combine them and create a fully-fledged scenario.
+* [dummy](./dummy) contains source files that are meant to be updated at each compilation.
+* [web](./web) contains resources for the online interface.
+
+We now describe the chain of files that reads the data to the one generating the outputs.
+* [lexer.mll](./src/lexer.mll) is the file reading the data and producing a sequence of lexemes for the parser.
+* [parser.mly](./src/parser.mly) reads the lexemes given by [lexer.mll](./src/lexer.mll) and converts them into the structure described in [ast.mli](./src/ast.mli).
+* [driver.mli](./src/driver.mli) and [driver.ml](./src/driver.ml) convert the structure of [ast.mli](./src/ast.mli) into internal structures like the ones in [element.mli](./src/element.mli) and [events.mli](./src/events.mli).
+* [solver.mli](./src/solver.mli) and [solver.ml](./src/solver.ml) use these internal structures to build a scenario.  The structure of the scenario itself is described in [state.mli](./src/state.mli).
+* [export.mli](./src/export.mli) and [export.ml](./src/export.ml) convert such scenarios into different formats.
+* [main.ml](./src/main.ml) glues all these files together.
+
+In addition to this main chain of files, additional files are used for more specific usages:
+* [attribute.mli](./src/attribute.mli) describes how attributes and contacts are manipulated by the state.
+* [history.mli](./src/history.mli) describes how events are stored and manipulated.
+* [relation.mli](./src/relation.mli) describes how character relations are defined and manipulated.
+* [pool.mli](./src/pool.mli) provides a structure for the solver to easily manipulate scenario elements.
+* [names.mli](./src/names.mli) describes how character names are generated.
+* [translation.mli](./src/translation.mli) describes how internal elements are translated into human-readable sentences.
+
+It can be difficult to understand at first read the difference between relations and contacts (and thus why the files [attribute.mli](./src/attribute.mli) and [relation.mli](./src/relation.mli) are separated).
+The difference is that relations are actually emotional relations, and contacts are story contacts.
+Both are stored in the state, but the solver only considers relations to guide its choices of elements: it first ask [element.mli](./src/element.mli) to check whether a given element is compatible with the current state, but then only considers its relations.
+So in a nutshell, [element.mli](./src/element.mli) checks about attribute and contact constraints, but [state.mli](./src/state.mli) only checks about relations.
+
+In addition to the source code of the program, it is heavily based on data files.  Each are grouped by themes.
+There is a special file though: [language.murder](./data/language.murder).  This file declares all languages to which the translation module can translate, and defines for each of these language a particular grammar.
 
 # murder-generator
 

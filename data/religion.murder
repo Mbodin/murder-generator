@@ -134,6 +134,8 @@ end
 
 attribute Job Priest
 begin
+  category Religion
+
   translation fr "prêtre"
   translation en "priest"
   translation eo "pastro"

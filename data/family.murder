@@ -197,7 +197,7 @@ begin
   provide relation between A and B as trust
 end
 
-element NotAFamilyMember
+duplicable element NotAFamilyMember
 begin
   let A be player
   let B be player

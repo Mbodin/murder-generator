@@ -15,7 +15,7 @@ end
 
 attribute Job Seller
 begin
-  translation fr "commerçant(e)"
+  translation fr "commerçant·e"
   translation en "seller"
   translation eo "vendisto"
 

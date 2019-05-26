@@ -134,7 +134,7 @@ begin
 
     sentence
     begin
-      translation fr "Ceci est clairement la venue de… choses, comme " P "."
+      translation fr "Ceci est clairement lié à la venue de… choses, comme " P "."
       translation en "This is clearly due to the newly coming of… things, like " P "."
       translation eo "Tio klare estas pro la veno de… aĵoj, kiel " P "."
     end

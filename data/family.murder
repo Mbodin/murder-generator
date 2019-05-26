@@ -56,7 +56,7 @@ begin
 
   translation fr "frère ou sœur"
   translation en "sibling"
-  translation eo "frat(in)o"
+  translation eo "frato"
 end
 
 contact FamilyMember Parent
@@ -65,7 +65,7 @@ begin
 
   translation fr "parent de"
   translation en "parent of"
-  translation eo "patr(in)o de"
+  translation eo "patro de"
 end
 
 contact FamilyMember Child
@@ -74,7 +74,7 @@ begin
 
   translation fr "enfant de"
   translation en "child of"
-  translation eo "fil(in)o de"
+  translation eo "filo de"
 end
 
 
@@ -100,7 +100,7 @@ begin
   let B be player with contact FamilyMember to A as Sibling
   let C be player with contact FamilyMember to B as Sibling
 
-  provide strict contact FamilyMember from A to C as Sibling
+  provide contact FamilyMember from A to C as Sibling
   provide relation between A and C as trust
 end
 
@@ -109,85 +109,254 @@ begin
   let A be player
   let B be player with contact FamilyMember to A as Sibling
 
-  provide strict contact FamilyMember from A to B as Sibling
+  provide contact FamilyMember from A to B as Sibling
+end
+
+element Twins
+begin
+  let A be player with attribute Born as True
+  let B be player with attribute Born as True
+
+  provide immediate event to A and B
+  begin
+    event Personal
+
+    assume event Personal to A and B after
+
+    provide contact FamilyMember between A and B as Sibling
+
+    translation fr A:+sbeg:fem " et " B:fem " sont jumelles."
+    translation fr A:+sbeg " et " B " sont jumeaux."
+    translation en A:+sbeg " and " B " are twins."
+    translation eo A:+sbeg " kaj " B " estas ĝemeloj."
+  end
 end
 
 element TrustedSiblings
 begin
-  let A be player
-  let B be player
+  let A be player with attribute Born as True
+  let B be player with attribute Born as True
+
+  provide event lasting years to A and B
+  begin
+    event Personal
+    provide contact FamilyMember between A and B as Sibling
+
+    sentence
+    begin
+      translation fr A:+sbeg:fem " et " B:fem " sont sœurs."
+      translation fr A:+sbeg:mas " et " B:mas " sont frères."
+      translation fr A:+sbeg " et " B " sont frère et sœur."
+      translation en A:+sbeg:fem " and " B:fem " are sisters."
+      translation en A:+sbeg:mas " and " B:mas " are brothers."
+      translation en A:+sbeg " and " B " are siblings."
+      translation eo A:+sbeg:fem " kaj " B:fem " estas fratinoj."
+      translation eo A:+sbeg:mas " kaj " B:mas " estas fratoj."
+      translation eo A:+sbeg " kaj " B " estas gefratoj."
+    end
+
+    sentence
+    begin
+      translation fr A:+empty:fem B:+empty:fem "Elles se sont toujours très bien entendues, et elles savent qu’elles peuvent se faire confiance l’une l’autre."
+      translation fr A:+empty B:+empty "Ils se sont toujours très bien entendus, et ils savent qu’ils peuvent se faire confiance l’un l’autre."
+      translation en "They always have trusted one another, counting on the other to help them."
+      translation eo "Ili ĉiam fidis unu la alian, kaj scias ke povos daŭre fidi sin."
+    end
+  end
 
   provide relation between A and B as trust
-  provide strict contact FamilyMember between A and B as Sibling
-
-  (* TODO: provide event to A after *)
-  (* TODO: provide event to B *)
 end
 
 element HatedSiblings
 begin
-  let A be player
-  let B be player
+  let A be player with attribute Born as True
+  let B be player with attribute Born as True
+
+  provide event lasting years to A and B
+  begin
+    event Personal
+    provide contact FamilyMember between A and B as Sibling
+
+    sentence
+    begin
+      translation fr A:+sbeg:fem " et " B:fem " sont sœurs."
+      translation fr A:+sbeg:mas " et " B:mas " sont frères."
+      translation fr A:+sbeg " et " B " sont frère et sœur."
+      translation en A:+sbeg:fem " and " B:fem " are sisters."
+      translation en A:+sbeg:mas " and " B:mas " are brothers."
+      translation en A:+sbeg " and " B " are siblings."
+      translation eo A:+sbeg:fem " kaj " B:fem " estas fratinoj."
+      translation eo A:+sbeg:mas " kaj " B:mas " estas fratoj."
+      translation eo A:+sbeg " kaj " B " estas gefratoj."
+    end
+
+    sentence
+    begin
+      translation fr A:+empty:fem B:+empty:fem "Elles ne se sont jamais entendues, toujours en conflit l’une avec l’autre."
+      translation fr A:+empty B:+empty "Ils se sont jamais entendus, toujours en conflit l’un avec l’autre."
+      translation en "They always never trusted one another, always having conflicts of diverse sorts."
+      translation eo "Ili neniam fidis unu la alian, ĉiam havante konfliktojn."
+    end
+
+    sentence
+    begin
+      translation fr "On choisit ses amis, pas sa famille."
+      translation en "One does not choose one’s family."
+      translation eo "Sian familion oni ne elektas."
+    end
+  end
 
   provide relation between A and B as explosive trust hate
-  provide strict contact FamilyMember between A and B as Sibling
-
-  (* TODO: provide event to A *)
-  (* TODO: provide event to B *)
 end
 
 element AsymmetricalSibling
 begin
-  let A be player
-  let B be player
+  let A be player with attribute Born as True
+  let B be player with attribute Born as True
+
+  provide immediate event to A and B
+  begin
+    event Personal
+
+    translation fr A:+sbeg:fem " et " B:fem " sont sœurs."
+    translation fr A:+sbeg:mas " et " B:mas " sont frères."
+    translation fr A:+sbeg " et " B " sont frère et sœur."
+    translation en A:+sbeg:fem " and " B:fem " are sisters."
+    translation en A:+sbeg:mas " and " B:mas " are brothers."
+    translation en A:+sbeg " and " B " are siblings."
+    translation eo A:+sbeg:fem " kaj " B:fem " estas fratinoj."
+    translation eo A:+sbeg:mas " kaj " B:mas " estas fratoj."
+    translation eo A:+sbeg " kaj " B " estas gefratoj."
+
+    provide contact FamilyMember between A and B as Sibling
+  end
+
+  provide immediate event to A
+  begin
+    event Personal
+
+    sentence
+    begin
+      translation fr A:+sbeg " a toujours été proche de " B "… littéralement."
+      translation en A:+sbeg " has always been closed to " B "… literally."
+      translation eo A:+sbeg " ĉiam estis proksima de " B "… laŭvorte."
+    end
+
+    sentence
+    begin
+      translation fr A:+sbeg:+pro " l’a toujours suivi, et " A:+pro " pouvait toujours compter sur " B:+empty:fem "elle pour explorer de nouvelles choses."
+      translation fr A:+sbeg:+pro " l’a toujours suivi, et " A:+pro " pouvait toujours compter sur " B:+empty "lui pour explorer de nouvelles choses."
+      translation en A:+sbeg:+pro " always followed " B:+cli ", as " A:+pro " could always count on " B:+cli " to create new adventures."
+      translation eo A:+sbeg:+pro " ĉiam sekvis " B:+pro:+acc ", kaj " A:+pro " ĉiam povis atendi je " B:+pro " por krei novajn spertojn."
+    end
+
+    sentence
+    begin
+      translation fr "Et lorsqu’" B:+pro " n’avait pas d’idée, il y avait toujours la roue de secours : les chatouilles !"
+      translation en "And when " B:+pro " had no idea, there were always a backup plan: tickling battles!"
+      translation eo "Kaj kiam " B:+pro " ne havis ideojn, ĉiam estis kromplano: tiklado!"
+    end
+
+    sentence
+    begin
+      translation fr B:+sbeg:+pro " ne supporte pas ça : une nouvelle aventure est régulièrement trouvée en quelques minutes de torture !"
+      translation en B:+sbeg:+pro " can’t stand this, and usually finds new a adventure in a matter of minutes!"
+      translation eo B:+sbeg:+pro " neniam tion eltenis kaj preskaŭ ĉiam trovis novan aventuron en kelkaj minutoj!"
+    end
+  end
+
+  provide immediate event to B
+  begin
+    event Personal
+    assume event Personal to A and B after
+
+    sentence
+    begin
+      translation fr A:+sbeg " a toujours été un boulet pour " B " : " A:+pro " est constamment au plus quelques mètres derrière."
+      translation en A:+sbeg " has always been a drag for " B ": " A:+pro " is always at most a few meters behind."
+      translation eo A:+sbeg " ĉiam pezigis " B:+acc ": " A:+pro " senĉese staras maksimume kelkaj metroj malantaŭ " B:+pro "."
+    end
+
+    sentence
+    begin
+      translation fr "Le pire, c’est quand " A:+pro " se met en tête d’attaquer par des chatouilles : c’est tellement horrible !"
+      translation en "The worst happens when " A:+pro " puts into " A:+pos " head to tickle " B:+cli ": this is so horrible!"
+      translation eo "La plej terura okazas kiam " A:+pro " volas tikli " B:+pro:+acc ": tio tiom teruras!"
+    end
+
+    sentence
+    begin
+      translation fr B:+sbeg:+pro " ne supporte pas ça : une nouvelle aventure est régulièrement trouvée en quelques minutes de torture !"
+      translation en B:+sbeg:+pro " can’t stand this, and usually finds new a adventure in a matter of minutes!"
+      translation eo B:+sbeg:+pro " neniam tion eltenis kaj preskaŭ ĉiam trovis novan aventuron en kelkaj minutoj!"
+    end
+
+    sentence
+    begin
+      translation fr "Dans ces cas là, " B:+pro " doit lui trouver quelque chose à faire pour qu’" A:+pro " cesse."
+      translation en "When this happens, into order to stop the pain, " B:+pro " must find something for " A:+pro " to do."
+      translation eo "Kiam tio okazas, " B:+pro " devas trovi ion por ke " A:+pro " faru por ke " A:+pro " ĉesu."
+    end
+
+    sentence
+    begin
+      translation fr "N’importe quoi fait l’affaire."
+      translation en "Anything will do."
+      translation eo "Io ajn funkcios."
+    end
+
+    sentence
+    begin
+      translation fr "C’est un enfer."
+      translation en "This is as bad as hell."
+      translation eo "Tio estas infero."
+    end
+  end
 
   provide relation from A to B as trust
   provide relation from B to A as hate
-  provide strict contact FamilyMember between A and B as Sibling
-
-  (* TODO: provide event to A *)
-  (* TODO: provide event to B *)
 end
 
 element LostSiblings
 begin
   let A be player with attribute Age as Old
+                  with attribute Born as True
   let B be player with attribute Age as Old
-
-  provide relation between A and B as strong neutral
+                  with attribute Born as True
 
   provide event lasting years to A and B
   begin
     event Personal
-
     assume no event providing contact Know from A to B after
     assume no event providing contact Know from B to A after
 
-    provide strict contact FamilyMember between A and B as Sibling
+    provide contact FamilyMember between A and B as Sibling
     provide compatible contact Know between A and B as True
 
     sentence
     begin
-      translation fr A:+sbeg:fem " et " B:+sbeg:fem " sont sœurs."
-      translation fr A:+sbeg:mas " et " B:+sbeg:mas " sont frères."
-      translation fr A:+sbeg:fem " et " B:+sbeg:mas " sont frère et sœur."
-      translation fr A:+sbeg:mas " et " B:+sbeg:fem " sont frère et sœur."
-      translation en A:+sbeg " and " B:+sbeg " are siblings."
-      translation eo A:+sbeg:fem " kaj " B:+sbeg:fem " estas fratinoj."
-      translation eo A:+sbeg:mas " kaj " B:+sbeg:mas " estas fratoj."
-      translation eo A:+sbeg:fem " kaj " B:+sbeg:mas " estas gefratoj."
-      translation eo A:+sbeg:mas " kaj " B:+sbeg:fem " estas gefratoj."
+      translation fr A:+sbeg:fem " et " B:fem " sont sœurs."
+      translation fr A:+sbeg:mas " et " B:mas " sont frères."
+      translation fr A:+sbeg " et " B " sont frère et sœur."
+      translation en A:+sbeg:fem " and " B:fem " are sisters."
+      translation en A:+sbeg:mas " and " B:mas " are brothers."
+      translation en A:+sbeg " and " B " are siblings."
+      translation eo A:+sbeg:fem " kaj " B:fem " estas fratinoj."
+      translation eo A:+sbeg:mas " kaj " B:mas " estas fratoj."
+      translation eo A:+sbeg " kaj " B " estas gefratoj."
     end
 
     sentence
     begin
-      translation fr "Cependant, cela fait longtemps qu’il se sont perdus de vue."
+      translation fr "Cependant, cela fait longtemps qu’" (* TODO: We here need a grouping pronoun. *) A:+pro " et " B:+pro " se sont perdus de vue."
       translation en "However, it has been a long time since they last met together."
       translation eo "Sed ili ne vidis sin ekde longe."
     end
   end
 
   provide phantom event lasting years to A and B
+
+  provide relation between A and B as strong neutral
 end
 
 element HiddenSibling
@@ -198,7 +367,7 @@ begin
   let B be player
 
   provide relation from A to B as strong undetermined
-  provide strict contact FamilyMember between A and B as Sibling
+  provide contact FamilyMember between A and B as Sibling
   provide compatible contact Know from A to B as True
   provide compatible contact Know from B to A as False
 
@@ -208,14 +377,103 @@ end
 element Parent
 begin
   let A be player
-  let B be player
+  let B be player with attribute Born as True
   let any other player be with contact FamilyMember to B not as Parent
 
-  provide relation between A and B as trust
-  provide strict contact FamilyMember from A to B as Parent
-  provide strict contact FamilyMember from B to A as Child
+  provide phantom event lasting days to A
+  begin
+    event Personal
+    assume no event Personal to B before
+  end
 
-  (* TODO: provide event to A and B *)
+  provide immediate event to A and B
+  begin
+    event Personal
+
+    provide strict contact FamilyMember from A to B as Parent
+    provide strict contact FamilyMember from B to A as Child
+
+    translation fr A:+sbeg:mas " est le père de " B "."
+    translation fr A:+sbeg:fem " est la mère de " B "."
+    translation fr A:+sbeg " est parent de " B "."
+    translation en A:+sbeg:mas " is the father of " B "."
+    translation en A:+sbeg:fem " is the mother of " B "."
+    translation en A:+sbeg " is " B "’s parent."
+    translation eo A:+sbeg " estas la patriĉo de " B "."
+    translation eo A:+sbeg:fem " estas la patrino de " B "."
+    translation eo A:+sbeg " estas la patro de " B "."
+  end
+
+  provide relation between A and B as trust
+end
+
+element Parents
+begin
+  let F be player with attribute Gender as Male
+                  with contact Know to M as Intimate
+  let M be player with attribute Gender as Female
+                  with contact Know to F as Intimate
+  let C be player with attribute Born as True
+  let any other player be with contact FamilyMember to C not as Parent
+
+  provide phantom event lasting days to F and M
+  begin
+    event Personal
+    assume no event Personal to C before
+  end
+
+  provide immediate event to F and M and C
+  begin
+    event Personal
+
+    provide strict contact FamilyMember from M to C as Parent
+    provide strict contact FamilyMember from F to C as Parent
+    provide strict contact FamilyMember from C to M as Child
+    provide strict contact FamilyMember from C to F as Child
+
+    translation fr F:+sbeg " et " M " sont les parents de " C "."
+    translation fr M:+sbeg " et " F " sont les parents de " C "."
+    translation en F:+sbeg " and " M " are " C "’s parents."
+    translation en M:+sbeg " and " F " are " C "’s parents."
+    translation eo F:+sbeg " kaj " M " estas la gepatroj de " C "."
+    translation eo M:+sbeg " kaj " F " estas la gepatroj de " C "."
+  end
+
+  provide relation between F and M as trust
+  provide relation between F and C as trust
+  provide relation between M and C as trust
+end
+
+element AdoptedParents
+begin
+  let A be player with contact Know to B as Intimate
+  let B be player with contact Know to A as Intimate
+  let C be player with attribute Born as True
+  let any other player be with contact FamilyMember to C not as Parent
+
+  provide phantom event lasting days to A and B
+  begin
+    event Personal
+    assume no event Personal to C before
+  end
+
+  provide immediate event to A and B and C
+  begin
+    event Personal
+
+    provide strict contact FamilyMember from A to C as Parent
+    provide strict contact FamilyMember from B to C as Parent
+    provide strict contact FamilyMember from C to A as Child
+    provide strict contact FamilyMember from C to B as Child
+
+    translation fr A:+sbeg " et " B " sont les parents adoptifs de " C "."
+    translation en A:+sbeg " and " B " are " C "’s adoptive parents."
+    translation eo A:+sbeg " kaj " B " estas la adoptgepatroj de " C "."
+  end
+
+  provide relation between A and B as trust
+  provide relation between A and C as trust
+  provide relation between B and C as trust
 end
 
 element SameParentSibling
@@ -224,7 +482,28 @@ begin
   let A be player with contact FamilyMember to P as Child
   let B be player with contact FamilyMember to P as Child
 
-  provide strict contact FamilyMember between A and B as Sibling
+  provide event lasting years to A and B
+  begin
+    event Personal
+    assume event providing contact FamilyMember from A and B to P before
+
+    provide compatible contact FamilyMember between A and B as Sibling
+    provide contact Know between A and B as Intimate
+
+    sentence
+    begin
+      translation fr A:+sbeg:fem " et " B:fem " sont sœurs."
+      translation fr A:+sbeg:mas " et " B:mas " sont frères."
+      translation fr A:+sbeg " et " B " sont frère et sœur."
+      translation en A:+sbeg:fem " and " B:fem " are sisters."
+      translation en A:+sbeg:mas " and " B:mas " are brothers."
+      translation en A:+sbeg " and " B " are siblings."
+      translation eo A:+sbeg:fem " kaj " B:fem " estas fratinoj."
+      translation eo A:+sbeg:mas " kaj " B:mas " estas fratoj."
+      translation eo A:+sbeg " kaj " B " estas gefratoj."
+    end
+  end
+
   provide relation between A and B as trust
 end
 
@@ -234,6 +513,17 @@ begin
   let B be player
 
   provide compatible contact FamilyMember between A and B as None
+end
+
+element NotAFamilyMemberExpect
+begin
+  let A be player
+  let B be player
+  let C be player
+
+  provide compatible contact FamilyMember between A and any other player as None
+  provide compatible contact FamilyMember between B and any other player as None
+  provide compatible contact FamilyMember between C and any other player as None
 end
 
 element FromNobodysFamily
@@ -250,5 +540,23 @@ begin
                   with attribute Specy as Human
 
   provide attribute Specy to A as Human
+end
+
+element ElfFamily
+begin
+  let A be player
+  let B be player with contact FamilyMember to A as Parent or Child or Sibling
+                  with attribute Specy as Elf
+
+  provide attribute Specy to A as Elf
+end
+
+element DwarfFamily
+begin
+  let A be player
+  let B be player with contact FamilyMember to A as Parent or Child or Sibling
+                  with attribute Specy as Dwarf
+
+  provide attribute Specy to A as Dwarf
 end
 

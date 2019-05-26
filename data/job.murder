@@ -72,7 +72,8 @@ end
 element SellerIsEasilyKnown
 begin
   let S be player with attribute Job as Seller
-  let P be player
+  let P be player with attribute Job not as Seller
+                  with attribute Specy not as God
 
   provide event lasting weeks to P
   begin
@@ -109,7 +110,7 @@ end
 
 attribute Job Thief
 begin
-  translation fr "voleur(se)"
+  translation fr "voleur ou voleuse"
   translation en "thief"
   translation eo "ŝtelisto"
 
@@ -595,6 +596,40 @@ begin
     translation en "By watching at " H ", " J " has the feeling that some is wrong with " H:+cli "."
     translation eo "Rigardanta " H:+acc ", " J " havas la senton ke io ne taŭgas pri " H:+pro "."
   end
+end
+
+element JournalistHeardSecrets
+begin
+  let P be player with attribute SecretSociety not as None
+  let J be player with attribute Job as Journalist
+
+  provide event lasting minutes to J
+  begin
+    event Work
+    assume event providing attribute SecretSociety to P before
+
+    sentence
+    begin
+      translation fr "Par hasard, " J " a entendu " P " parler d’une certaine société secrète."
+      translation en "By chance, " J " heard " P " talk about a so-called secret socierty."
+      translation eo "Hazarde, " J " aŭdis " P:+acc " paroli pri iu sekreta asocio."
+    end
+
+    sentence
+    begin
+      translation fr "Étrange.  Il est temps d’enquêter."
+      translation fr "Secrète ?  Pas pour longtemps."
+      translation fr "Il est temps de sortir le matériel de micro-trottoir."
+      translation en "This is curious, and needs investigation."
+      translation en "Secret?  Not for long."
+      translation en "Let’s go vox pop!"
+      translation eo "Strange.  Jen enketo!"
+      translation eo "Sekreta?  Ne plu por longe."
+      translation eo "Jen farinda intervjuo."
+    end
+  end
+
+  add difficulty to P
 end
 
 (* * Worker *)

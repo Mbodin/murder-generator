@@ -7,6 +7,8 @@
 
 (* ** French *)
 
+declare translation fr:empty (* A special grammatical case that prints nothing (useful to create a constraint without printing it). *)
+
 declare translation fr:sbeg (* At the beginning of a sentence. *)
 
 declare translation fr:nom (* Nouns *)
@@ -27,6 +29,8 @@ declare translation fr:agr (* Agreement *)
 
 (* ** English *)
 
+declare translation en:empty
+
 declare translation en:sbeg (* At the beginning of a sentence. *)
 
 declare translation en:nom (* Nouns *)
@@ -45,6 +49,8 @@ declare translation en:mas (* Masculine *)
 declare translation en:fem (* Feminine *)
 
 (* ** Esperanto *)
+
+declare translation eo:empty
 
 declare translation eo:sbeg (* At the beginning of a sentence. *)
 
@@ -80,6 +86,7 @@ begin
 
   add fr:sin
   add fr:def
+  add translation fr:empty ""
   add translation fr:pro:sin:mas "il"
   add translation fr:pro:sin:fem "elle"
   add translation fr:pro:sin "iel"
@@ -113,6 +120,7 @@ begin
 
   add en:sin
   add en:def
+  add translation en:empty ""
   add translation en:pro:sin "it"
   add translation en:pro:sin:mas "he"
   add translation en:pro:sin:fem "she"
@@ -140,6 +148,7 @@ begin
 
   add eo:sin
   add eo:def
+  add translation eo:empty ""
   add translation eo:pro:sin "ĝi"
   add translation eo:pro:sin:mas "li"
   add translation eo:pro:sin:fem "ŝi"

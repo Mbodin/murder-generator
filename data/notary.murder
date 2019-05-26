@@ -429,9 +429,26 @@ begin
 
     provide attribute Famousness to A as Hiding
 
-    translation fr "Vu l’importance des ses dettes, " A " decidait de disparaître définitivement."
-    translation en "Given the importance of " A:+pos " debts, " A " decided to definitively disappear from the sight of others."
-    translation eo "Pro ties grandegaj ŝuldoj, " A " decidis por ĉiam malaperi."
+    sentence
+    begin
+      translation fr "Vu l’importance des ses dettes, " A " decidait de disparaître définitivement."
+      translation en "Given the importance of " A:+pos " debts, " A " decided to definitively disappear from the sight of others."
+      translation eo "Pro ties grandegaj ŝuldoj, " A " decidis por ĉiam malaperi."
+    end
+
+    sentence
+    begin
+      translation fr "Cela ne va pas être une tâche facile."
+      translation en "This won’t be easy."
+      translation eo "Tio ne facilos."
+    end
+
+    sentence
+    begin
+      translation fr "Il faut pour cela être méthodique : se choisir un nouveau nom, se faire des faux papiers, et trouver un lieu loin de toutes ses connaissances."
+      translation en A:+sbeg:+pro " needs method: choosing another name, creating a fake ID, and finding a place aways from another that might recognise " A:+cli "."
+      translation eo "Bezonas metodon: elekti novan nomon, krei malveran identigilon, kaj trovi lokon kie neniu rekonos " A:+pro:+acc "."
+    end
   end
 
   add difficulty to A

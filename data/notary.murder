@@ -57,11 +57,16 @@ begin
   provide compatible attribute Richness to P as Neutral
 end
 
+element OnlyRich
+begin
+  let any other player be with attribute Richness as Rich
+end
+
 element Heritage
 begin
   let P be player with attribute Born as True
                   with attribute Specy not as God or Robot
-  let any other player be with contact FamilyMember to P not as Parent or Sibling
+  let any other player be with contact FamilyRelation to P not as Parent or Sibling
 
   provide event lasting days to P
   begin
@@ -89,14 +94,14 @@ end
 
 element SharedHeritage
 begin
-  let A be player with contact FamilyMember to B as Sibling
+  let A be player with contact FamilyRelation to B as Sibling
                   with attribute Born as True
                   with attribute Specy not as God or Robot
-  let B be player with contact FamilyMember to A as Sibling
+  let B be player with contact FamilyRelation to A as Sibling
                   with attribute Born as True
                   with attribute Specy not as God or Robot
-  let any other player be with contact FamilyMember to A not as Parent or Sibling
-                          with contact FamilyMember to B not as Parent or Sibling
+  let any other player be with contact FamilyRelation to A not as Parent or Sibling
+                          with contact FamilyRelation to B not as Parent or Sibling
 
   provide event lasting days to A and B
   begin
@@ -226,6 +231,7 @@ end
 element SmallDebtNeutralPoor
 begin
   let A be player with attribute Richness as Poor
+                  with contact Know to B as True
   let B be player with attribute Richness as Neutral
                   with contact Know to A as True
 
@@ -252,7 +258,6 @@ begin
 
   provide relation from A to B as avoidance
   provide relation from B to A as undetermined
-  provide compatible contact Know from A to B as True
 end
 
 element RichPaysItsDebt
@@ -303,7 +308,9 @@ end
 element TookMoneyToBuildAShopAndIsNowRich
 begin
   let A be player with attribute Richness as Neutral
+                  with contact Know to B as True
   let B be player with attribute Specy not as God
+                  with contact Know to A as True
 
   provide event lasting minutes to A and B
   begin
@@ -348,13 +355,14 @@ begin
 
   provide relation from B to A as trust
   provide relation from A to B as undetermined
-  provide compatible contact Know between B and A as True
 end
 
 element TookMoneyToBuildAShopButGotBankrupt
 begin
   let A be player with attribute Richness as Neutral
+                  with contact Know to B as True
   let B be player with attribute Specy not as God
+                  with contact Know to A as True
 
   provide event lasting minutes to A and B
   begin
@@ -383,6 +391,7 @@ begin
   provide event lasting weeks to B
   begin
     event Personal
+    assume no event Work to B after
 
     provide attribute Richness to B as Poor
 
@@ -393,7 +402,6 @@ begin
 
   provide relation from B to A as avoidance
   provide relation from A to B as hate
-  provide compatible contact Know between B and A as True
 end
 
 element ImportantSeller
@@ -427,7 +435,7 @@ begin
     assume event providing contact FinancialDebt from A to B before
     assume no event providing contact FinancialDebt from A to B after
 
-    provide attribute Famousness to A as Hiding
+    provide compatible attribute Famousness to A as Hiding
 
     sentence
     begin

@@ -62,6 +62,7 @@ begin
     assume no event Personal to P before
 
     provide strict attribute Born to P as AlwaysExisted
+    provide compatible attribute Age to P as Old
 
     sentence
     begin
@@ -639,8 +640,28 @@ begin
 
   provide relation between A and B as hate
 
-  provide strict contact Goal between A and B as Harm
+  provide immediate event to A and B
+  begin
+    assume no event Personal to A or B before
 
-  (* TODO: An event stating that A and B always fought each others. *)
+    provide strict contact Goal between A and B as Harm
+
+    sentence
+    begin
+      translation fr A:+sbeg " et " B " ont toujours été en guerre."
+      translation fr "Depuis la nuit des temps, " A " et " B " sont en guerre."
+      translation en A:+sbeg " and " B " has always been at war against each other."
+      translation en "Since the dawn of time, " A " and " B " are at war against each other."
+      translation eo A:+sbeg " kaj " B " ĉiam batalis unu la alian."
+      translation eo "Ekde ke tiu mondo ekzistas, " A " kaj " B " batalas unu la alian."
+    end
+
+    sentence
+    begin
+      translation fr "Cela fait maintenant partie de leurs identités."
+      translation en "It’s now part of their identities."
+      translation eo "Estas nun parto de iliaj identecoj."
+    end
+  end
 end
 

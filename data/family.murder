@@ -36,21 +36,21 @@ begin
   translation eo "ne"
 end
 
-declare contact FamilyMember
+declare contact FamilyRelation
 begin
   translation fr "Relation familiale"
   translation en "Family link"
   translation eo "Familia ligo"
 end
 
-contact FamilyMember None
+contact FamilyRelation None
 begin
   translation fr "aucune"
   translation en "none"
   translation eo "nenia"
 end
 
-contact FamilyMember Sibling
+contact FamilyRelation Sibling
 begin
   category Family
 
@@ -59,7 +59,7 @@ begin
   translation eo "frato"
 end
 
-contact FamilyMember Parent
+contact FamilyRelation Parent
 begin
   category Family
 
@@ -68,7 +68,7 @@ begin
   translation eo "patro de"
 end
 
-contact FamilyMember Child
+contact FamilyRelation Child
 begin
   category Family
 
@@ -77,19 +77,28 @@ begin
   translation eo "filo de"
 end
 
+contact FamilyRelation Spouse
+begin
+  category Family
+
+  translation fr "époux·se de"
+  translation en "spouse of"
+  translation eo "edzo de"
+end
+
 
 element SiblingsKnowEachOthers
 begin
-  let A be player with contact FamilyMember to B as Sibling
-  let B be player with contact FamilyMember to A as Sibling
+  let A be player with contact FamilyRelation to B as Sibling
+  let B be player with contact FamilyRelation to A as Sibling
 
   provide contact Know between A and B as Intimate
 end
 
 duplicable element ParentsChildsKnowEachOthers
 begin
-  let A be player with contact FamilyMember to B as Child
-  let B be player with contact FamilyMember to A as Parent
+  let A be player with contact FamilyRelation to B as Child
+  let B be player with contact FamilyRelation to A as Parent
 
   provide contact Know between A and B as Intimate
 end
@@ -97,19 +106,19 @@ end
 duplicable element SiblingTransitive
 begin
   let A be player
-  let B be player with contact FamilyMember to A as Sibling
-  let C be player with contact FamilyMember to B as Sibling
+  let B be player with contact FamilyRelation to A as Sibling
+  let C be player with contact FamilyRelation to B as Sibling
 
-  provide contact FamilyMember from A to C as Sibling
+  provide contact FamilyRelation from A to C as Sibling
   provide relation between A and C as trust
 end
 
 duplicable element SiblingSymmetric
 begin
   let A be player
-  let B be player with contact FamilyMember to A as Sibling
+  let B be player with contact FamilyRelation to A as Sibling
 
-  provide contact FamilyMember from A to B as Sibling
+  provide contact FamilyRelation from A to B as Sibling
 end
 
 element Twins
@@ -120,10 +129,10 @@ begin
   provide immediate event to A and B
   begin
     event Personal
+    assume event providing contact FamilyRelation from A to B after
+    assume event providing contact FamilyRelation from B to A after
 
-    assume event Personal to A and B after
-
-    provide contact FamilyMember between A and B as Sibling
+    provide compatible contact FamilyRelation between A and B as Sibling
 
     translation fr A:+sbeg:fem " et " B:fem " sont jumelles."
     translation fr A:+sbeg " et " B " sont jumeaux."
@@ -140,7 +149,7 @@ begin
   provide event lasting years to A and B
   begin
     event Personal
-    provide contact FamilyMember between A and B as Sibling
+    provide contact FamilyRelation between A and B as Sibling
 
     sentence
     begin
@@ -175,7 +184,7 @@ begin
   provide event lasting years to A and B
   begin
     event Personal
-    provide contact FamilyMember between A and B as Sibling
+    provide contact FamilyRelation between A and B as Sibling
 
     sentence
     begin
@@ -201,8 +210,14 @@ begin
     sentence
     begin
       translation fr "On choisit ses amis, pas sa famille."
+      translation fr "C’est malheureusement ainsi."
+      translation fr "Ça ne s’est jamais arrangé avec le temps."
       translation en "One does not choose one’s family."
+      translation en "It’s unfortunately how it is."
+      translation en "It never got better with time."
       translation eo "Sian familion oni ne elektas."
+      translation eo "Bedaŭrinde, estas tiel."
+      translation eo "Neniam pliboniĝis la situacio post tempo."
     end
   end
 
@@ -228,7 +243,7 @@ begin
     translation eo A:+sbeg:mas " kaj " B:mas " estas fratoj."
     translation eo A:+sbeg " kaj " B " estas gefratoj."
 
-    provide contact FamilyMember between A and B as Sibling
+    provide contact FamilyRelation between A and B as Sibling
   end
 
   provide immediate event to A
@@ -330,7 +345,7 @@ begin
     assume no event providing contact Know from A to B after
     assume no event providing contact Know from B to A after
 
-    provide contact FamilyMember between A and B as Sibling
+    provide contact FamilyRelation between A and B as Sibling
     provide compatible contact Know between A and B as True
 
     sentence
@@ -367,7 +382,7 @@ begin
   let B be player
 
   provide relation from A to B as strong undetermined
-  provide contact FamilyMember between A and B as Sibling
+  provide contact FamilyRelation between A and B as Sibling
   provide compatible contact Know from A to B as True
   provide compatible contact Know from B to A as False
 
@@ -378,7 +393,7 @@ element Parent
 begin
   let A be player
   let B be player with attribute Born as True
-  let any other player be with contact FamilyMember to B not as Parent
+  let any other player be with contact FamilyRelation to B not as Parent
 
   provide phantom event lasting days to A
   begin
@@ -390,8 +405,8 @@ begin
   begin
     event Personal
 
-    provide strict contact FamilyMember from A to B as Parent
-    provide strict contact FamilyMember from B to A as Child
+    provide strict contact FamilyRelation from A to B as Parent
+    provide strict contact FamilyRelation from B to A as Child
 
     translation fr A:+sbeg:mas " est le père de " B "."
     translation fr A:+sbeg:fem " est la mère de " B "."
@@ -411,25 +426,26 @@ element Parents
 begin
   let F be player with attribute Gender as Male
                   with contact Know to M as Intimate
+                  with contact FamilyRelation to M as None or Spouse
   let M be player with attribute Gender as Female
                   with contact Know to F as Intimate
+                  with contact FamilyRelation to F as None or Spouse
   let C be player with attribute Born as True
-  let any other player be with contact FamilyMember to C not as Parent
+                  with attribute Age not as Old
+  let any other player be with contact FamilyRelation to C not as Parent
 
   provide phantom event lasting days to F and M
   begin
     event Personal
-    assume no event Personal to C before
+    assume no event Birth to C before
   end
 
   provide immediate event to F and M and C
   begin
-    event Personal
-
-    provide strict contact FamilyMember from M to C as Parent
-    provide strict contact FamilyMember from F to C as Parent
-    provide strict contact FamilyMember from C to M as Child
-    provide strict contact FamilyMember from C to F as Child
+    provide strict contact FamilyRelation from M to C as Parent
+    provide strict contact FamilyRelation from F to C as Parent
+    provide strict contact FamilyRelation from C to M as Child
+    provide strict contact FamilyRelation from C to F as Child
 
     translation fr F:+sbeg " et " M " sont les parents de " C "."
     translation fr M:+sbeg " et " F " sont les parents de " C "."
@@ -447,29 +463,34 @@ end
 element AdoptedParents
 begin
   let A be player with contact Know to B as Intimate
+                  with contact FamilyRelation to B as None or Spouse
   let B be player with contact Know to A as Intimate
+                  with contact FamilyRelation to A as None or Spouse
   let C be player with attribute Born as True
-  let any other player be with contact FamilyMember to C not as Parent
+                  with attribute Age not as Old
+  let any other player be with contact FamilyRelation to C not as Parent
 
   provide phantom event lasting days to A and B
   begin
     event Personal
-    assume no event Personal to C before
+    assume no event Birth to C before
   end
 
   provide immediate event to A and B and C
   begin
     event Personal
 
-    provide strict contact FamilyMember from A to C as Parent
-    provide strict contact FamilyMember from B to C as Parent
-    provide strict contact FamilyMember from C to A as Child
-    provide strict contact FamilyMember from C to B as Child
+    provide strict contact FamilyRelation from A to C as Parent
+    provide strict contact FamilyRelation from B to C as Parent
+    provide strict contact FamilyRelation from C to A as Child
+    provide strict contact FamilyRelation from C to B as Child
 
     translation fr A:+sbeg " et " B " sont les parents adoptifs de " C "."
     translation en A:+sbeg " and " B " are " C "’s adoptive parents."
     translation eo A:+sbeg " kaj " B " estas la adoptgepatroj de " C "."
   end
+
+  provide phantom event lasting years to C
 
   provide relation between A and B as trust
   provide relation between A and C as trust
@@ -479,15 +500,15 @@ end
 element SameParentSibling
 begin
   let P be player
-  let A be player with contact FamilyMember to P as Child
-  let B be player with contact FamilyMember to P as Child
+  let A be player with contact FamilyRelation to P as Child
+  let B be player with contact FamilyRelation to P as Child
 
   provide event lasting years to A and B
   begin
     event Personal
-    assume event providing contact FamilyMember from A and B to P before
+    assume event providing contact FamilyRelation from A and B to P before
 
-    provide compatible contact FamilyMember between A and B as Sibling
+    provide compatible contact FamilyRelation between A and B as Sibling
     provide contact Know between A and B as Intimate
 
     sentence
@@ -507,36 +528,36 @@ begin
   provide relation between A and B as trust
 end
 
-duplicable element NotAFamilyMember
+duplicable element NotAFamilyRelation
 begin
   let A be player
   let B be player
 
-  provide compatible contact FamilyMember between A and B as None
+  provide compatible contact FamilyRelation between A and B as None
 end
 
-element NotAFamilyMemberExpect
+element NotAFamilyRelationExpect
 begin
   let A be player
   let B be player
   let C be player
 
-  provide compatible contact FamilyMember between A and any other player as None
-  provide compatible contact FamilyMember between B and any other player as None
-  provide compatible contact FamilyMember between C and any other player as None
+  provide compatible contact FamilyRelation between A and any other player as None
+  provide compatible contact FamilyRelation between B and any other player as None
+  provide compatible contact FamilyRelation between C and any other player as None
 end
 
 element FromNobodysFamily
 begin
   let P be player
 
-  provide compatible contact FamilyMember between P and any other player as None
+  provide compatible contact FamilyRelation between P and any other player as None
 end
 
 element HumanFamily
 begin
   let A be player
-  let B be player with contact FamilyMember to A as Parent or Child or Sibling
+  let B be player with contact FamilyRelation to A as Parent or Child or Sibling
                   with attribute Specy as Human
 
   provide attribute Specy to A as Human
@@ -545,7 +566,7 @@ end
 element ElfFamily
 begin
   let A be player
-  let B be player with contact FamilyMember to A as Parent or Child or Sibling
+  let B be player with contact FamilyRelation to A as Parent or Child or Sibling
                   with attribute Specy as Elf
 
   provide attribute Specy to A as Elf
@@ -554,7 +575,7 @@ end
 element DwarfFamily
 begin
   let A be player
-  let B be player with contact FamilyMember to A as Parent or Child or Sibling
+  let B be player with contact FamilyRelation to A as Parent or Child or Sibling
                   with attribute Specy as Dwarf
 
   provide attribute Specy to A as Dwarf

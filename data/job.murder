@@ -78,6 +78,7 @@ begin
   provide event lasting weeks to P
   begin
     event Personal
+    event Work
     assume event providing attribute Job to S before
 
     provide compatible contact Know from P to S as True

@@ -449,7 +449,8 @@ let main =
       let (cont, w) = Lwt.task () in
       if Lwt.state state = Lwt.Sleep then
         IO.print_block (InOut.P [
-          InOut.Text (get_translation "backgroundGeneration")]) ;
+          InOut.Text (get_translation "backgroundGeneration") ;
+          InOut.Link (get_translation "there", webpage_link) ]) ;
       let exportButtons =
         List.map (fun (name, descr) ->
             let (node, set, get) =

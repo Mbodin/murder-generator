@@ -204,9 +204,10 @@ let lcompatible_and_progress st el =
   if Utils.assert_defend then
     assert (Utils.is_uniq (List.map (fun e -> e.Events.event_id) el)) ;
   if List.exists (fun e ->
-       PSet.fold (fun c b ->
-           b || PSet.mem (e.Events.event_id, c) st.already_declared_events)
-         false e.Events.event_attendees) el then
+       Id.get_id st.events e <> None
+       || PSet.fold (fun c b ->
+              b || PSet.mem (e.Events.event_id, c) st.already_declared_events)
+            false e.Events.event_attendees) el then
     (** An instantiated event can only be declared once. **)
     None
   else
@@ -452,7 +453,11 @@ let finalise st now =
                 with Not_found -> ([], []) in
               List.for_all (fun e -> PSet.mem e seen) after) next in
           if ready = [] then
-            failwith "Cyclic event dependency." ;
+            failwith ("Cyclic event dependency with conflicting events: "
+                      ^ String.concat ", " (List.map (fun e ->
+                            Events.translate (Utils.assert_option __LOC__
+                              (Id.map_inverse st.events e)))
+                          not_ready)) ;
           aux acc seen not_ready ready
         )
       | e :: l ->

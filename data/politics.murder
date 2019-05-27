@@ -230,7 +230,7 @@ begin
     translation en K:+sbeg " is the king."
     translation eo K:+sbeg:fem " estas la reĝino."
     translation eo K:+sbeg:mas " estas la reĝiĉo."
-    translation eo K:+sbeg " estas reĝo."
+    translation eo K:+sbeg " estas la reĝo."
   end
 end
 

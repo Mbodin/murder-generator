@@ -243,7 +243,7 @@ begin
     begin
       translation fr "Lorsqu’" P:+pro " se réveilla, une marque noire se trouvait sur son front à l’endroit où " G " l’avait touché."
       translation en "When " P:+pro " wake up, a dark spot was at the location where " G " touched " P:+cli "."
-      translation en "Kiam " P:+pro " vekiĝis, nigra makulo troviĝis en la loko kie " G " tuŝis " P:+pro:+acc "."
+      translation eo "Kiam " P:+pro " vekiĝis, nigra makulo troviĝis en la loko kie " G " tuŝis " P:+pro:+acc "."
     end
   end
 

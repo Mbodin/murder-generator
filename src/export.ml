@@ -125,11 +125,18 @@ let escape_quote str =
   let replace input = Re.Str.global_replace (Re.Str.regexp_string input) in
   replace "\"" "\\\"" (replace "\\" "\\\\" str)
 
+(** Replace the characters '<' and '{' by ']' and '>' and '}' by ']'. **)
+let escape_angle_brackets str =
+  let replace2 in1 in2 =
+    Re.Str.global_replace (Re.Str.regexp (in1 ^ "\\|" ^ in2)) in
+  replace2 "{" "<" "[" (replace2 "}" ">" "]" str)
+
 let to_graphviz_relation s =
   let player_node c = "player" ^ string_of_int (Id.to_array c) in
   let get_color s =
     let n = float_of_int (Hashtbl.hash s mod 1000) /. 1000. in
     string_of_float n ^ " 1 0.7" in
+  let escape str = escape_angle_brackets (escape_quote str) in
   String.concat "\n" [
       "digraph {" ; "" ;
       "  // Generated from " ^ webpage_address ; "" ;
@@ -138,11 +145,11 @@ let to_graphviz_relation s =
       String.concat "\n" (List.mapi (fun c name ->
         let c = Id.from_array c in
         "  " ^ player_node c ^ " [label=\"{"
-        ^ escape_quote name ^ "|"
+        ^ escape name ^ "|"
         ^ String.concat "|" (PMap.foldi (fun a v l ->
               let tra = translate_attribute_player s a in
               let trv = translate_value_player s v in
-              ("{" ^ escape_quote tra ^ "|" ^ escape_quote trv ^ "}") :: l)
+              ("{" ^ escape tra ^ "|" ^ escape trv ^ "}") :: l)
             (State.get_all_attributes_character_final s.state c) [])
         ^ "}\"]") s.names) ; "" ;
       (** Declaring their relations **)
@@ -154,7 +161,7 @@ let to_graphviz_relation s =
               let trv = translate_value_contact s v in
               let color = if negative s v then "transparent" else get_color tra in
               "  " ^ player_node c ^ " -> " ^ player_node c'
-              ^ " [label=\"" ^ escape_quote tra ^ ":" ^ escape_quote trv ^ "\""
+              ^ " [label=\"" ^ escape tra ^ ":" ^ escape trv ^ "\""
               ^ " color=\"" ^ color ^ "\"] ;") lv @ l)
           (State.get_all_contacts_character_final s.state c) []) s.names)) ;
       "}" ; ""
@@ -177,7 +184,8 @@ let to_graphviz_event s =
            " [shape=circle, label=\"\"] ;"
          else
            (" [style=rounded, label=\""
-            ^ String.concat "|" (translate_event s tr_players ev)
+            ^ String.concat "|"
+                (List.map escape_angle_brackets (translate_event s tr_players ev))
             ^ "\"] ;"))
       :: List.map (fun id' ->
         "  " ^ event_node id ^ " -> " ^ event_node id'
@@ -264,35 +272,47 @@ let to_block s =
               ^ ")")
           ] ;
       ]) in
+  let print_attributes c =
+    InOut.List (true,
+      PMap.foldi (fun a v l ->
+          let tra = translate_attribute_player s a in
+          let trv = translate_value_player s v in
+          InOut.Text (tra ^ ": " ^ trv) :: l)
+        (State.get_all_attributes_character_final s.state c) []) in
+  let print_contacts c =
+    InOut.List (false,
+      PMap.foldi (fun c' lv l ->
+          InOut.FoldableBlock (false,
+            get_translation "contactTo" ^ " " ^ get_name s c',
+              InOut.List (true,
+                List.map (fun (a, v) ->
+                    let tra = translate_attribute_contact s a in
+                    let trv = translate_value_contact s v in
+                    InOut.Text (tra ^ ": " ^ trv)) lv)) :: l)
+        (State.get_all_contacts_character_final s.state c) []) in
   InOut.List (false,
     InOut.FoldableBlock (false, get_translation "forTheGM",
       InOut.List (false, [
-          InOut.FoldableBlock (true, get_translation "GMEvents",
+          InOut.FoldableBlock (false, get_translation "GMCharacters",
+            InOut.List (true, List.mapi (fun c name ->
+              let c = Id.from_array c in
+              InOut.FoldableBlock (true, name, print_attributes c)) s.names)) ;
+          InOut.FoldableBlock (false, get_translation "GMContacts",
+            InOut.List (true, List.mapi (fun c name ->
+              let c = Id.from_array c in
+              InOut.FoldableBlock (true, name, print_contacts c)) s.names)) ;
+          InOut.FoldableBlock (false, get_translation "GMEvents",
             InOut.List (true,
-              List.map print_event (State.get_history_final s.state))) ;
+              List.map print_event (State.get_history_final s.state)))
         ]))
     :: List.mapi (fun c name ->
          let c = Id.from_array c in
          InOut.FoldableBlock (false, name,
            InOut.List (false, [
                InOut.FoldableBlock (true, get_translation "characterAttributes",
-                 InOut.List (true,
-                   PMap.foldi (fun a v l ->
-                       let tra = translate_attribute_player s a in
-                       let trv = translate_value_player s v in
-                       InOut.Text (tra ^ ": " ^ trv) :: l)
-                     (State.get_all_attributes_character_final s.state c) [])) ;
+                 print_attributes c) ;
                InOut.FoldableBlock (true, get_translation "characterContacts",
-                 InOut.List (false,
-                   PMap.foldi (fun c' lv l ->
-                       InOut.FoldableBlock (false,
-                         get_translation "contactTo" ^ " " ^ get_name s c',
-                           InOut.List (true,
-                             List.map (fun (a, v) ->
-                                 let tra = translate_attribute_contact s a in
-                                 let trv = translate_value_contact s v in
-                                 InOut.Text (tra ^ ": " ^ trv)) lv)) :: l)
-                     (State.get_all_contacts_character_final s.state c) [])) ;
+                 print_contacts c) ;
                InOut.FoldableBlock (true, get_translation "characterEvents",
                  InOut.List (true,
                    Utils.list_map_filter (fun e ->
@@ -318,29 +338,44 @@ let to_org s =
       :: List.map (fun c ->
            String.make (1 + n) ' ' ^ "- [X] "
            ^ get_name s c) (PSet.to_list e.History.event.Events.event_attendees)) in
+  let print_attributes n c =
+    PMap.foldi (fun a v l ->
+        let tra = translate_attribute_player s a in
+        let trv = translate_value_player s v in
+        (String.make n ' ' ^ "- " ^ tra ^ ": " ^ trv) :: l)
+      (State.get_all_attributes_character_final s.state c) [] in
+  let print_contacts n c =
+    PMap.foldi (fun c' lv l ->
+        (String.make n '*' ^ " " ^ get_translation "contactTo"
+         ^ " " ^ get_name s c')
+        :: List.map (fun (a, v) ->
+            let tra = translate_attribute_contact s a in
+            let trv = translate_value_contact s v in
+            String.make 5 ' ' ^ "- " ^ tra ^ ": " ^ trv) lv @ l)
+      (State.get_all_contacts_character_final s.state c) [] in
   String.concat "\n\n" (
     String.concat "\n" (
       ("* " ^ get_translation "forTheGM")
-      :: ("** " ^ get_translation "GMEvents")
+      :: ("** " ^ get_translation "GMCharacters")
+      :: List.concat (List.mapi (fun c name ->
+           let c = Id.from_array c in
+           ("*** " ^ name)
+           :: print_attributes 5 c) s.names)
+      @ ("** " ^ get_translation "GMContacts")
+      :: List.concat (List.mapi (fun c name ->
+           let c = Id.from_array c in
+           ("*** " ^ name)
+           :: print_contacts 4 c) s.names)
+      @ ("** " ^ get_translation "GMEvents")
       :: List.map (print_event 3) (State.get_history_final s.state))
     :: List.mapi (fun c name ->
          let c = Id.from_array c in
          String.concat "\n" (
            ("* " ^ name)
            :: ("** " ^ get_translation "characterAttributes")
-           :: PMap.foldi (fun a v l ->
-                  let tra = translate_attribute_player s a in
-                  let trv = translate_value_player s v in
-                  (String.make 4 ' ' ^ "- " ^ tra ^ ": " ^ trv) :: l)
-                (State.get_all_attributes_character_final s.state c) []
+           :: print_attributes 4 c
            @ ("** " ^ get_translation "characterContacts")
-           :: PMap.foldi (fun c' lv l ->
-                  ("*** " ^ get_translation "contactTo" ^ " " ^ get_name s c')
-                  :: List.map (fun (a, v) ->
-                      let tra = translate_attribute_contact s a in
-                      let trv = translate_value_contact s v in
-                      String.make 5 ' ' ^ "- " ^ tra ^ ": " ^ trv) lv @ l)
-                (State.get_all_contacts_character_final s.state c) []
+           :: print_contacts 3 c
            @ ("** " ^ get_translation "characterEvents")
            :: Utils.list_map_filter (fun e ->
                 if PSet.mem c e.History.event.Events.event_attendees then

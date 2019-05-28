@@ -50,8 +50,8 @@ type 'character t = {
        * Note that this identifier is only used in this structure.
        * In particular, the event identifiers used in the History module
        * are not the same ones.
-       * In particular, each event instantiation shares the same identifier,
-       * but will be associated different identifiers in the History module. **) ;
+       * This number is conserved during instantiations: each event
+       * instantiation thus shares the same identifier. **) ;
     event_phantom : bool
       (** Whether this element is a phantom event, that is an event with
        * no description, which is not displayed in the event list.
@@ -84,6 +84,12 @@ type 'character t = {
     translation : 'character translation
       (** How this event can be worded. **)
   }
+
+(** Comparing the whole structure [t] can take some time.
+ * However, in practise, only a few fields are really needed to be compared
+ * due to a lot of invariants in the program.
+ * This function only compares the relevant fields. **)
+val compare : 'a t -> 'a t -> int
 
 (** Given an event, return its list of attendees. **)
 val get_attendees_list : 'character t -> 'character list

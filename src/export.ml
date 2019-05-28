@@ -74,7 +74,7 @@ let translation_players s =
       List.fold_left (fun m p ->
         match State.get_attribute_character_final s.state p a with
         | None -> m
-        | Some c' ->
+        | Some (c', fixed) ->
           if c = c' then (
             let sp =
               try PMap.find p m
@@ -89,7 +89,7 @@ let translation_players s =
       let c = Id.from_array c in
       let att = State.get_all_attributes_character_final s.state c in
       let tr = Translation.gadd Translation.gempty s.language [] () name in
-      PMap.foldi (fun a c tr ->
+      PMap.foldi (fun a (c, fixed) tr ->
           let c = Attribute.PlayerConstructor c in
           Translation.gfold (fun tr tags str added removed ->
             if not (List.mem Translation.base tags) then (
@@ -146,7 +146,7 @@ let to_graphviz_relation s =
         let c = Id.from_array c in
         "  " ^ player_node c ^ " [label=\"{"
         ^ escape name ^ "|"
-        ^ String.concat "|" (PMap.foldi (fun a v l ->
+        ^ String.concat "|" (PMap.foldi (fun a (v, fixed) l ->
               let tra = translate_attribute_player s a in
               let trv = translate_value_player s v in
               ("{" ^ escape tra ^ "|" ^ escape trv ^ "}") :: l)
@@ -156,7 +156,7 @@ let to_graphviz_relation s =
       String.concat "\n" (List.concat (List.mapi (fun c _ ->
         let c = Id.from_array c in
         PMap.foldi (fun c' lv l ->
-            List.map (fun (a, v) ->
+            List.map (fun (a, (v, fixed)) ->
               let tra = translate_attribute_contact s a in
               let trv = translate_value_contact s v in
               let color = if negative s v then "transparent" else get_color tra in
@@ -274,7 +274,7 @@ let to_block s =
       ]) in
   let print_attributes c =
     InOut.List (true,
-      PMap.foldi (fun a v l ->
+      PMap.foldi (fun a (v, fixed) l ->
           let tra = translate_attribute_player s a in
           let trv = translate_value_player s v in
           InOut.Text (tra ^ ": " ^ trv) :: l)
@@ -285,7 +285,7 @@ let to_block s =
           InOut.FoldableBlock (false,
             get_translation "contactTo" ^ " " ^ get_name s c',
               InOut.List (true,
-                List.map (fun (a, v) ->
+                List.map (fun (a, (v, fixed)) ->
                     let tra = translate_attribute_contact s a in
                     let trv = translate_value_contact s v in
                     InOut.Text (tra ^ ": " ^ trv)) lv)) :: l)
@@ -339,7 +339,7 @@ let to_org s =
            String.make (1 + n) ' ' ^ "- [X] "
            ^ get_name s c) (PSet.to_list e.History.event.Events.event_attendees)) in
   let print_attributes n c =
-    PMap.foldi (fun a v l ->
+    PMap.foldi (fun a (v, fixed) l ->
         let tra = translate_attribute_player s a in
         let trv = translate_value_player s v in
         (String.make n ' ' ^ "- " ^ tra ^ ": " ^ trv) :: l)
@@ -348,7 +348,7 @@ let to_org s =
     PMap.foldi (fun c' lv l ->
         (String.make n '*' ^ " " ^ get_translation "contactTo"
          ^ " " ^ get_name s c')
-        :: List.map (fun (a, v) ->
+        :: List.map (fun (a, (v, fixed)) ->
             let tra = translate_attribute_contact s a in
             let trv = translate_value_contact s v in
             String.make 5 ' ' ^ "- " ^ tra ^ ": " ^ trv) lv @ l)
@@ -389,17 +389,19 @@ let to_json s =
     ("characters", `List (List.mapi (fun c name ->
        let c = Id.from_array c in `Assoc [
            ("name", `String name) ;
-           ("attributes", `Assoc (PMap.foldi (fun a v l ->
+           ("attributes", `Assoc (PMap.foldi (fun a (v, fixed) l ->
                 let tra = translate_attribute_player s a in
                 let trv = translate_value_player s v in
+                let trv = if fixed then trv else ("?" ^ trv) in
                 (tra, `String trv) :: l)
               (State.get_all_attributes_character_final s.state c) [])) ;
            ("contacts", `List (PMap.foldi (fun c' lv l ->
-             `Assoc (List.map (fun (a, v) ->
-                 let tra = translate_attribute_contact s a in
-                 let trv = translate_value_contact s v in
-                 (tra, `String trv)) lv) :: l)
-               (State.get_all_contacts_character_final s.state c) [])) ;
+              `Assoc (List.map (fun (a, (v, fixed)) ->
+                  let tra = translate_attribute_contact s a in
+                  let trv = translate_value_contact s v in
+                  let trv = if fixed then trv else ("?" ^ trv) in
+                  (tra, `String trv)) lv) :: l)
+                (State.get_all_contacts_character_final s.state c) [])) ;
            ("relations", `List (Utils.list_fold_lefti (fun c' l _ ->
              let c' = Id.from_array c' in
              let r = State.read_relation_final s.state c c' in
@@ -486,6 +488,13 @@ let from_json i fileName fileContent =
             let attributes = get_field_assoc "attributes" l in
             List.fold_left (fun state -> function
               | (attribute, `String v) ->
+                let (v, fixed) =
+                  if String.length v = 0 then
+                    failwith ("Empty attribute `" ^ attribute ^ "' in file `"
+                              ^ fileName ^ "'.")
+                  else if v.[0] = '?' then
+                    (String.sub v 1 (String.length v - 1), false)
+                  else (v, true) in
                 let attribute =
                   get_attribute "attribute" Attribute.PlayerAttribute.get_attribute
                     i.Driver.constructor_maps.Attribute.player attribute in
@@ -493,8 +502,11 @@ let from_json i fileName fileContent =
                   get_constructor "attribute"
                     Attribute.PlayerAttribute.get_constructor
                     i.Driver.constructor_maps.Attribute.player attribute v in
+                let v =
+                  if fixed then (State.Fixed_value ([v], Strict))
+                  else (State.One_value_of [v]) in
                 State.write_attribute_character (State.get_character_state state) c
-                  attribute (Fixed_value ([v], Strict)) ;
+                  attribute v ;
                 state
               | (field, _) ->
                 failwith ("Field `" ^ field ^ "' is file `" ^ fileName
@@ -507,6 +519,13 @@ let from_json i fileName fileContent =
               | `Assoc l ->
                 List.fold_left (fun state -> function
                   | (attribute, `String v) ->
+                    let (v, fixed) =
+                      if String.length v = 0 then
+                        failwith ("Empty contact `" ^ attribute ^ "' in file `"
+                                  ^ fileName ^ "'.")
+                      else if v.[0] = '?' then
+                        (String.sub v 1 (String.length v - 1), false)
+                      else (v, true) in
                     let attribute =
                       get_attribute "contact"
                         Attribute.ContactAttribute.get_attribute
@@ -515,8 +534,11 @@ let from_json i fileName fileContent =
                       get_constructor "contact"
                         Attribute.ContactAttribute.get_constructor
                         i.Driver.constructor_maps.Attribute.contact attribute v in
+                    let v =
+                      if fixed then (State.Fixed_value ([v], Strict))
+                      else (State.One_value_of [v]) in
                     State.write_contact_character (State.get_character_state state)
-                      c attribute c' (Fixed_value ([v], Strict)) ;
+                      c attribute c' v ;
                     state
                   | (field, _) ->
                     failwith ("Field `" ^ field ^ "' is file `" ^ fileName

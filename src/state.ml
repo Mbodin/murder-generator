@@ -164,10 +164,12 @@ type character_state =
   (Attribute.PlayerAttribute.constructor attribute_value,
    Attribute.ContactAttribute.constructor attribute_value) generic_character_state
 
-(** Same as [character_state], but without any doubt on the actual constructor. **)
+(** Same as [character_state], but without any doubt on the actual constructor.
+ * A boolean is however added to state whether its value is fixed ([true]), or
+ * whether is was just assigned this value by default ([false]) **)
 type character_state_final =
-  (Attribute.PlayerAttribute.constructor,
-   Attribute.ContactAttribute.constructor) generic_character_state
+  (Attribute.PlayerAttribute.constructor * bool,
+   Attribute.ContactAttribute.constructor * bool) generic_character_state
 
 let create_character_state n =
   Array.init n (fun i -> (PMap.empty, PMap.empty))
@@ -254,9 +256,11 @@ let all_players_relation st =
 type final =
   character_state_final * relation_state * History.final
 
+(** Convert a value into a final value,
+ * picking a particular possibility and marking whether the value has been fixed. **)
 let select_value = function
-  | Fixed_value (l, strict) -> Utils.select_any l
-  | One_value_of l -> Utils.select_any l
+  | Fixed_value (l, strict) -> (Utils.select_any l, true)
+  | One_value_of l -> (Utils.select_any l, false)
 
 let finalise (cst, rst, est) d =
   (Array.map (fun (a, c) ->

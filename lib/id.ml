@@ -18,8 +18,8 @@ type 'a map = {
     fresh : int (** Fresh identifier **)
   }
 
-let map_create _ = {
-    forwards = PMap.empty ;
+let map_create ?(compare = compare) _ = {
+    forwards = PMap.create compare ;
     reverse = PMap.empty ;
     fresh = 0
   }

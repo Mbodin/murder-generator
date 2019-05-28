@@ -89,8 +89,8 @@ type 'value attribute_value =
   | Fixed_value of 'value list * strictness
     (** The value has already been fixed to be any of these values.
      * It can not be changed back.
-     * The strictness flag indicates how it accepts to be redefined
-     * (with the same value). **)
+     * The strictness flag indicates how it accepts to be placed in
+     * parallel with other elements providing the same value. **)
   | One_value_of of 'value list (** The value has not been yet fixed, but it is
                                  * known to be one of these. **)
 (** Note that a [One_value_of] associated with a singleton list is not equivalent
@@ -221,17 +221,20 @@ type final
 val finalise : t -> Date.t -> final
 
 
-(** Similar to [get_attributes_character], but for the finalised state. **)
-val get_attribute_character_final : final -> character -> Attribute.PlayerAttribute.attribute -> Attribute.PlayerAttribute.constructor option
+(** Similar to [get_attributes_character], but for the finalised state.
+ * An additional boolean is returned: it states whether this constructor
+ * has been fixed by an element ([true]), or whether its value has just been
+ * assigned by default ([false]). **)
+val get_attribute_character_final : final -> character -> Attribute.PlayerAttribute.attribute -> (Attribute.PlayerAttribute.constructor * bool) option
 
 (** Similar to [get_all_attributes_character], but for the finalised state. **)
-val get_all_attributes_character_final : final -> character -> (Attribute.PlayerAttribute.attribute, Attribute.PlayerAttribute.constructor) PMap.t
+val get_all_attributes_character_final : final -> character -> (Attribute.PlayerAttribute.attribute, Attribute.PlayerAttribute.constructor * bool) PMap.t
 
 (** Similar to [get_contact_character], but for the finalised state. **)
-val get_contact_character_final : final -> character -> Attribute.ContactAttribute.attribute -> character -> Attribute.ContactAttribute.constructor option
+val get_contact_character_final : final -> character -> Attribute.ContactAttribute.attribute -> character -> (Attribute.ContactAttribute.constructor * bool) option
 
 (** Similar to [get_all_contacts_character], but for the finalised state. **)
-val get_all_contacts_character_final : final -> character -> (character, (Attribute.ContactAttribute.attribute * Attribute.ContactAttribute.constructor) list) PMap.t
+val get_all_contacts_character_final : final -> character -> (character, (Attribute.ContactAttribute.attribute * (Attribute.ContactAttribute.constructor * bool)) list) PMap.t
 
 (** Similar to [read_relation], but for the finalised state. **)
 val read_relation_final : final -> character -> character -> Relation.t

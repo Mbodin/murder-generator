@@ -271,7 +271,7 @@ end
 
 (* * God definitions *)
 
-declare attribute DivineAllegiance (* On whose side the character is. *)
+declare attribute DivineAllegiance (* On whose god the character is closest to. *)
 begin
   category Religion
   translation fr "Allégance divine"

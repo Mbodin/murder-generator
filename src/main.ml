@@ -385,11 +385,24 @@ let main =
         if len >= player_number then
           List.take player_number player_information
         else
-          player_information @
-            List.map (fun _ ->
-                (Names.generate seed, complexity, difficulty, ()))
-              (Utils.seq (player_number - len))
-        in
+          List.fold_left (fun player_information _ ->
+              let name =
+                (** Because the seed contains external data, one can hardly
+                 * assume that it can produce infinitely many different names.
+                 * We are thus stuck to just generate new ones until a really new
+                 * one appears. **)
+                let rec aux = function
+                  | 0 -> Names.generate seed
+                  | n ->
+                    let name = Names.generate seed in
+                    if List.exists (fun (name', _, _, _) ->
+                         name' = name) player_information then
+                      aux (n - 1)
+                    else name in
+                aux 100 in
+              (name, complexity, difficulty, ())
+              :: player_information)
+            player_information (Utils.seq (player_number - len)) in
       let table =
         List.map (fun (name, complexity, difficulty, _) ->
           (IO.createTextInput name,

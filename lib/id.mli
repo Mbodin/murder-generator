@@ -34,7 +34,7 @@ type 'a map
 val get_id : 'a map -> 'a -> t option
 
 (** Create a identifier map. **)
-val map_create : unit -> 'a map
+val map_create : ?compare:('a -> 'a -> int) -> unit -> 'a map
 
 (** Inserts an object to an identifier map, giving it an identifier.
  * If the object is already associated an identifier, the old one is returned. **)

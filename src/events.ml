@@ -53,6 +53,9 @@ type 'character t = {
     translation : 'character translation
   }
 
+let compare e1 e2 =
+  compare (e1.event_id, e1.all_attendees) (e2.event_id, e2.all_attendees)
+
 let get_attendees_list e =
   List.filter (fun c -> PSet.mem c e.event_attendees) e.all_attendees
 

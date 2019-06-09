@@ -282,7 +282,7 @@ let to_block s =
   let print_contacts c =
     InOut.List (false,
       PMap.foldi (fun c' lv l ->
-          InOut.FoldableBlock (false,
+          InOut.FoldableBlock (true,
             get_translation "contactTo" ^ " " ^ get_name s c',
               InOut.List (true,
                 List.map (fun (a, (v, fixed)) ->
@@ -300,7 +300,7 @@ let to_block s =
           InOut.FoldableBlock (false, get_translation "GMContacts",
             InOut.List (true, List.mapi (fun c name ->
               let c = Id.from_array c in
-              InOut.FoldableBlock (true, name, print_contacts c)) s.names)) ;
+              InOut.FoldableBlock (false, name, print_contacts c)) s.names)) ;
           InOut.FoldableBlock (false, get_translation "GMEvents",
             InOut.List (true,
               List.map print_event (State.get_history_final s.state)))

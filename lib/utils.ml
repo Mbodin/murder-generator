@@ -89,6 +89,16 @@ let rec list_remove i = function
   | _ :: l when i = 0 -> l
   | a :: l -> a :: list_remove (i - 1) l
 
+let list_split i l =
+  let rec aux i before l =
+    if i = 0 then
+      (List.rev before, l)
+    else
+      match l with
+      | [] -> (List.rev before, [])
+      | a :: l -> aux (i - 1) (a :: before) l in
+  aux i [] l
+
 let rec list_predicate_index f = function
   | [] -> None
   | a :: _ when f a -> Some 0

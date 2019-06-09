@@ -20,7 +20,7 @@ let empty_global = {
 (** Returns the list of attributes associated to an element. **)
 let get_attributes g e =
   try PMap.find e g.all_elements
-  with Not_found -> []
+  with Not_found -> assert false
 
 (** Internal function for function reading a global when being changed. **)
 let get_elements_from_element_attribute element_attribute a =
@@ -33,12 +33,12 @@ let get_elements g a =
 
 let register_element g e l =
   let l = Utils.shuffle l in {
-      all_elements = PMap.add e l g.all_elements ;
-      element_attribute =
-        List.fold_left (fun element_attribute a ->
-          let l = get_elements_from_element_attribute element_attribute a in
-          let l = if List.mem e l then l else e :: l in
-          PMap.add a l element_attribute) g.element_attribute l
+    all_elements = PMap.add e l g.all_elements ;
+    element_attribute =
+      List.fold_left (fun element_attribute a ->
+        let l = get_elements_from_element_attribute element_attribute a in
+        let l = if List.mem e l then l else e :: l in
+        PMap.add a l element_attribute) g.element_attribute l
   }
 
 let unregister_element g e =
@@ -51,6 +51,8 @@ let unregister_element g e =
         PMap.add a l element_attribute) g.element_attribute l
   }
 
+let unregister_elements = PSet.fold (fun e g -> unregister_element g e)
+
 let filter_global g f =
   PMap.foldi (fun e _ g ->
     if f e then g
@@ -62,8 +64,8 @@ type t = {
     pool : element BidirectionalList.t
       (** The pool.
        * Each element is present at most once in the pool. **) ;
-    filtered_out_attributes : Attribute.attribute PSet.t
-      (** Attributes meant to be removed from the pool. **) ;
+    filtered_out_elements : element PSet.t
+      (** Elements meant to be removed from the pool. **) ;
     global : global
       (** The associated global values. **)
   }
@@ -71,19 +73,17 @@ type t = {
 let empty g = {
     current_elements = PSet.empty ;
     pool = BidirectionalList.from_list [] ;
-    filtered_out_attributes = PSet.empty ;
+    filtered_out_elements = PSet.empty ;
     global = g
   }
 
 (** To avoid a costly iteration over the pool when removing elements relative
  * to a particular attribute, the removing is done lazily.
- * When removing an attribute, it is only stored in the set
- * [filtered_out_attributes].
+ * When removing an attribute, its associated elements are only stored in the set
+ * [filtered_out_elements].
  * This function states whether an element is meant to be ignored by this
  * mechanism. **)
-let to_be_ignored p e =
-  List.exists (fun a ->
-    PSet.mem a p.filtered_out_attributes) (get_attributes p.global e)
+let to_be_ignored p e = PSet.mem e p.filtered_out_elements
 
 (** The following operation actually performs the removal of the to-be-removed
  * elements of a pool. **)
@@ -97,7 +97,7 @@ let normalize p =
   let (s, l) = aux (BidirectionalList.to_list p.pool) in {
     current_elements = s ;
     pool = BidirectionalList.from_list l ;
-    filtered_out_attributes = PSet.empty ;
+    filtered_out_elements = PSet.empty ;
     global = p.global
   }
 
@@ -136,38 +136,52 @@ let add p e =
     if to_be_ignored p e then normalize p
     else p in
   if PSet.mem e p.current_elements then p
-  else {
-    current_elements = PSet.add e p.current_elements ;
-    pool = BidirectionalList.add_right p.pool e ;
-    filtered_out_attributes = p.filtered_out_attributes ;
-    global = p.global
-  }
+  else
+    { p with current_elements = PSet.add e p.current_elements ;
+             pool = BidirectionalList.add_right p.pool e }
 
 let rec pop p =
   match BidirectionalList.match_left p.pool with
   | None -> (None, empty p.global)
   | Some (e, l) ->
-    let p' = {
-        current_elements = PSet.remove e p.current_elements ;
-        pool = l ;
-        filtered_out_attributes = p.filtered_out_attributes ;
-        global = p.global
-      } in
+    let p' =
+      { p with current_elements = PSet.remove e p.current_elements ;
+               pool = l } in
     if to_be_ignored p e then pop p'
     else (Some e, partial_normalize p')
 
 let pick p =
   let (r, p) = pop p in
   match r with
-  | None -> (r, p)
+  | None -> (None, p)
   | Some e -> (Some e, add p e)
+
+let pick_except p s_no =
+  let rec aux l_yes p =
+    let (r, p) = pop p in
+    match r with
+    | None -> (None, p)
+    | Some e ->
+      if PSet.mem e s_no then
+        aux (e :: l_yes) p
+      else
+        let p = List.fold_left add p (List.rev l_yes) in
+        (Some e, p) in
+  aux [] p
 
 let shuffle g =
   { g with pool =
       BidirectionalList.from_list (Utils.shuffle
         (BidirectionalList.to_list g.pool)) }
 
+let shuffle_beginning ?(size = 10) g =
+  let l = BidirectionalList.to_list g.pool in
+  let (l_start, l_tail) = Utils.list_split size l in
+  let l = Utils.shuffle l_start @ l_tail in
+  { g with pool = BidirectionalList.from_list l }
+
 let filter p f =
+  let p = normalize p in
   let rec aux = function
   | [] -> empty p.global
   | e :: l -> if f e then add (aux l) e else aux l
@@ -185,10 +199,23 @@ let restrict = filter_attribute (fun a l -> List.mem a l)
 (** A naive implementation of [filter_out] could be
  * [filter_attribute (fun a l -> not (List.mem a l))].
  * We here chose to be lazy (assuming that the pool is large)
- * and simply rely on the [filtered_out_attributes] mechanism. **)
+ * and simply rely on the [filtered_out_elements] mechanism. **)
 let filter_out p a =
-  { p with filtered_out_attributes = PSet.add a p.filtered_out_attributes }
+  { p with filtered_out_elements =
+        List.fold_left (fun s e -> PSet.add e s)
+          p.filtered_out_elements (get_elements p.global a) }
+
+let remove p e =
+  { p with filtered_out_elements = PSet.add e p.filtered_out_elements }
 
 let add_attribute p a =
   List.fold_left add p (Utils.shuffle (get_elements p.global a))
+
+let definitely_remove p e =
+  let p = remove p e in
+  let p = normalize p in
+  { p with global = unregister_element p.global e }
+
+let definitely_remove_set =
+  PSet.fold (fun e p -> definitely_remove p e)
 

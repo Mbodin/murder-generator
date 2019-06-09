@@ -18,8 +18,7 @@ type 'node block =
   | Text of string (** A simple text. **)
   | FoldableBlock of bool * string * 'node block
       (** A title that can hide a node.
-       * The boolean states whether the block should be folded by
-       * default. **)
+       * The boolean states whether the block should be unfolded by default. **)
   | Link of string * string (** A link and its associated address. **)
   | LinkContinuation of bool * string * (unit -> unit)
       (** A link and its associated continuation.

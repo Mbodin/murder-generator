@@ -10,7 +10,7 @@ type global = {
       (** The list of all elements. **)
   }
 
-(** Reads the element from the register map. **)
+(** Read the element from the register map. **)
 let read_element g e =
   Utils.assert_option __LOC__ (Id.map_inverse g.element_register e)
 
@@ -35,7 +35,7 @@ let filter_elements g f =
            pool_informations =
              Pool.filter_global g.pool_informations f }
 
-(** Evaluates a character [c] in a relation state [s] compared to its objective [o].
+(** Evaluate a character [c] in a relation state [s] compared to its objective [o].
  * Complexity is difficult to compensate later on, whilst difficulty
  * is easy (it’s just applying an helping element).
  * The evaluation thus punishes more increases of complexity above its target than
@@ -53,7 +53,7 @@ let evaluate_state o s =
   evaluate o (State.get_relation_state s)
 
 (** Given an array of objectives [o], a state [s], and an element [e],
- * returns [None] if the element can’t be applied at all.
+ * return [None] if the element can’t be applied at all.
  * If it can, it returns a triple with:
  * - the instantiation that makes it so,
  * - whether the element helps progressing with the attribute values,
@@ -69,7 +69,7 @@ let grade g o s e =
         assert (ev = evaluate_state o s')) ;
       (inst, progress, ev))
 
-(** Takes a “grade” made of the progress of an element and the evaluation
+(** Take a “grade” made of the progress of an element and the evaluation
  * due to an element.
  * It takes the base evaluation [ev0] to be compared with as an argument. **)
 let compare_grade ev0 (progress1, ev1) (progress2, ev2) =
@@ -88,7 +88,7 @@ let compare_grade ev0 (progress1, ev1) (progress2, ev2) =
         test progress1 progress2 (fun _ -> 0)
       else compare dev1 dev2))
 
-(** Returns a number between [mi] and [ma] depending on the parameter
+(** Return a number between [mi] and [ma] depending on the parameter
  * [branch_exploration] of the solver. **)
 let get_branch g mi ma =
   if mi = ma then mi
@@ -112,7 +112,10 @@ let high_get_branch g d mi ma =
  *   If some apply, the best element is then applied.
  * - [greedy]: in the case where the optimistic approach did not work,
  *   the function extracts up to this number of new elements, halting
- *   on the first one that applies. **)
+ *   on the first one that applies.
+ * This function returns a triple composed of the new pool, a list of
+ * information about the applied events (event identifier, instantiatiation,
+ * and grades), as well as a set of unapplyable events. **)
 let step g o optimistic greedy (s, evs) p =
   if Utils.assert_defend then assert (evs = evaluate_state o s) ;
   (** Extracts [n] elements from the pool, filtering out the ones that don’t
@@ -120,38 +123,41 @@ let step g o optimistic greedy (s, evs) p =
    * evaluation.
    * The call to [f] is made with a callback to the recursive call of [aux]
    * if needed. **)
-  let rec aux default f p = function
-    | 0 -> (p, default)
+  let rec aux default unapplyable f p = function
+    | 0 -> (p, default, unapplyable)
     | n ->
       let (ep, p) = Pool.pop p in
       match ep with
-      | None -> (p, default)
+      | None -> (p, default, unapplyable)
       | Some ep ->
         let e = read_element g ep in
         match grade g o s e with
-        | None -> aux default f p (n - 1)
+        | None -> aux default (PSet.add ep unapplyable) f p (n - 1)
         | Some (inst, progress, ev) ->
           let p = Pool.add p ep in
           if ev < evs then
-            aux default f p (n - 1)
+            aux default unapplyable f p (n - 1)
           else
-            f (fun _ -> aux default f p (n - 1)) p e inst progress ev in
+            f (fun unapplyable -> aux default unapplyable f p (n - 1))
+              unapplyable p e inst progress ev in
   (** We first try with the optimistic pick. **)
-  let (p, l) =
-    aux [] (fun callback _ e inst progress ev ->
-      let (p, l) = callback () in
-      (p, (e, inst, (progress, ev)) :: l)) p optimistic in
+  let (p, l, unapplyable) =
+    aux [] PSet.empty (fun callback unapplyable _ e inst progress ev ->
+      let (p, l, unapplyable) = callback unapplyable in
+      (p, (e, inst, (progress, ev)) :: l, unapplyable)) p optimistic in
   match Utils.argmax (fun (e1, inst1, g1) (e2, inst2, g2) ->
           compare_grade evs g1 g2) l with
   | Some (e, inst, (progress, ev)) ->
-    (p, Some (Element.safe_apply g.constructor_informations s e inst, ev))
+    (p, Some (Element.safe_apply g.constructor_informations s e inst, ev),
+     unapplyable)
   | None ->
     (** We then move the the greedy pick. **)
-    aux None (fun _ p e inst progress ev ->
-        (p, Some (Element.safe_apply g.constructor_informations s e inst, ev)))
+    aux None unapplyable (fun _ unapplyable p e inst progress ev ->
+        (p, Some (Element.safe_apply g.constructor_informations s e inst, ev),
+         unapplyable))
       p greedy
 
-(** Calls the function [step] with heuristical arguments [optimistic] and [greedy]
+(** Call the function [step] with heuristical arguments [optimistic] and [greedy]
  * depending on a single parameter [parameter] ranging from 0 to 101.
  * This parameter is meant to indicate the need to speed-up the analysis: at low
  * values, it means that adequate elements are being found, at high values, it
@@ -165,7 +171,7 @@ let weighted_step g o parameter (s, evs) p =
           2 + get_branch g 9 18 * parameter / 100) in
   step g o optimistic greedy (s, evs) p
 
-(** Picks [optimistic] random elements and apply the best.
+(** Pick [optimistic] random elements and apply the best.
  * It assumes that [g.all_elements] has been shuffled, so that random elements
  * are just the first ones.
  * Returns the new global [g] with its [all_elements] updated. **)
@@ -193,9 +199,31 @@ let add_random g o optimistic (s, evs) =
     (g, Element.safe_apply g.constructor_informations s e inst, ev)
   | None -> (g, (s, Element.empty_difference), evs)
 
-(** Calls the functions [weighted_step] and [add_random], trying
+(** Take a set of elements and consider them in order.
+ * Any element that can be applied, that progresses, and that increase the
+ * evaluation will be applied.
+ * This function returns a couple of:
+ * - the new state and its evaluation,
+ * - the set of all elements that definitely can’t be applied. **)
+let apply_elements_and_return_the_other g o (s, evs) =
+  PSet.fold (fun ep ((s, evs), do_not_apply) ->
+    let e = read_element g ep in
+    match grade g o s e with
+    | None -> ((s, evs), PSet.add ep do_not_apply)
+    | Some (inst, progress, ev) ->
+      if progress && ev >= evs then
+        let (s, _) = Element.safe_apply g.constructor_informations s e inst in
+        ((s, ev), do_not_apply)
+      else ((s, evs), do_not_apply)) ((s, evs), PSet.empty)
+
+(** Call the functions [weighted_step] and [add_random], trying
  * to reach a step [s] whose associated attribute difference [m]
- * has been increased by [temperature]. **)
+ * has been increased by [temperature].
+ * It returns a quadruple:
+ * - the new global informations,
+ * - a couple of state and the associated evaluation,
+ * - the difference of attribute,
+ * - a set of elements that might no longer apply. **)
 let wide_step pause g o temperature (s, evs) m =
   let initial_weigth = Element.difference_weigth m in
   let objective_weigth =
@@ -209,7 +237,7 @@ let wide_step pause g o temperature (s, evs) m =
            p > 0 && Random.int p = 0) then (
       let optimistic = 7 - 6 * parameter / 100 in
       let (g, (s, m'), evs) = add_random g o optimistic (s, evs) in
-      Lwt.return (g, (s, evs), Element.merge_attribute_differences m m')
+      Lwt.return (g, (s, evs), Element.merge_attribute_differences m m', PSet.empty)
     ) else (
       (** We select an attribute and try to increase it.
        * If we fail up or get far from the objective a given number of times,
@@ -217,34 +245,37 @@ let wide_step pause g o temperature (s, evs) m =
       let a = Utils.select_any (Element.difference_attribute_in_need m) in
       let p = Pool.empty g.pool_informations in
       let p = Pool.add_attribute p a in
-      let rec aux p m (s, evs) = function
-        | 0 -> Lwt.return (g, (s, evs), m)
+      let rec aux may_be_removed p m (s, evs) = function
+        | 0 -> Lwt.return (g, (s, evs), m, may_be_removed)
         | n ->
           pause () ;%lwt
-          let (p, r) = weighted_step g o (110 * parameter / 100) (s, evs) p in
+          let (p, r, unapplyable) =
+            weighted_step g o (110 * parameter / 100) (s, evs) p in
+          let may_be_removed = PSet.merge unapplyable may_be_removed in
           match r with
-          | None -> aux p m (s, evs) (n - 1)
+          | None -> aux may_be_removed p m (s, evs) (n - 1)
           | Some ((s', m'), evs') ->
             let m = Element.merge_attribute_differences m m' in
             let n' =
               if Element.difference_weigth m' > 0
                  || evs' > evs then n else n - 1 in
-            aux p m (s', evs') n'
-      in aux p m (s, evs) (get_branch g 3 5)) in
-  let rec aux g (s, evs) m = function
-    | 0 -> Lwt.return (g, (s, evs), m)
+            aux may_be_removed p m (s', evs') n'
+      in aux PSet.empty p m (s, evs) (get_branch g 3 5)) in
+  let rec aux g (s, evs) m may_be_removed = function
+    | 0 -> Lwt.return (g, (s, evs), m, may_be_removed)
     | n ->
       pause () ;%lwt
       let current_weigth = Element.difference_weigth m in
       if current_weigth >= objective_weigth then
-        Lwt.return (g, (s, evs), m)
+        Lwt.return (g, (s, evs), m, may_be_removed)
       else
         let parameter =
           100 * (current_weigth - initial_weigth)
           / (objective_weigth - initial_weigth) in
-        let%lwt (g, (s, evs), m) = step g (s, evs) m parameter in
-        aux g (s, evs) m (n - 1) in
-  aux g (s, evs) m (get_branch g 4 10)
+        let%lwt (g, (s, evs), m, may_be_removed') = step g (s, evs) m parameter in
+        let may_be_removed = PSet.merge may_be_removed' may_be_removed in
+        aux g (s, evs) m may_be_removed (n - 1) in
+  aux g (s, evs) m PSet.empty (get_branch g 4 10)
 
 (** A last step, where every element is tried to be applied.
  * Only the ones making both progress and moving towards the objective are kept,
@@ -288,17 +319,32 @@ let wider_step pause g (s, evs) o m =
       let%lwt l =
         Lwt_list.map_s (fun _ -> wide_step pause g o temperature (s, evs) m)
           (Utils.seq (get_branch g 3 6)) in
-      match Utils.argmax (fun (_, (s1, evs1), _) (_, (s2, evs2), _) ->
+      let may_be_removed =
+        List.fold_left (fun s (_, _, _, s') -> PSet.merge s' s) PSet.empty l in
+      let update g o (s, evs) =
+        let ((s, evs), do_not_apply) =
+          apply_elements_and_return_the_other g o (s, evs) may_be_removed in
+        let g =
+          { g with pool_informations =
+                     Pool.unregister_elements g.pool_informations do_not_apply ;
+                   all_elements =
+                     BidirectionalList.filter (fun e ->
+                       not (PSet.mem e do_not_apply)) g.all_elements } in
+        ((s, evs), g) in
+      match Utils.argmax (fun (_, (s1, evs1), _, _) (_, (s2, evs2), _, _) ->
               compare evs1 evs2) l with
-      | Some (g, (s', evs'), m) ->
+      | Some (g, (s', evs'), m, _) ->
         let temperature =
           if Element.difference_weigth m > 0 || evs' > evs then
             if temperature <= 2 then
               temperature
             else get_branch g 97 99 * temperature / 100 - 1
           else get_branch g 8 9 * temperature / 10 - 1 in
+        let ((s', evs'), g) = update g o (s', evs') in
         aux temperature g (s', evs') m
-      | None -> aux (get_branch g 6 8 * temperature / 10 - 1) g (s, evs) m) in
+      | None ->
+        let ((s, evs), g) = update g o (s, evs) in
+        aux (get_branch g 6 8 * temperature / 10 - 1) g (s, evs) m) in
   let distance_to_objective =
     max 0 (int_of_float (sqrt (float_of_int (abs evs)))) in
   aux (distance_to_objective / 3 + 1) g (s, evs) m

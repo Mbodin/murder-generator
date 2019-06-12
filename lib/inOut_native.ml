@@ -341,7 +341,34 @@ let rec block_node b =
       output_string channel (content ()) ;
       close_out channel)) link
   | InOut.Table (headers, content) -> fun link ->
-    block_node (Text "<table>") link (* TODO *)
+    let print_line l =
+      Print.push_prefix ("-") ;
+      Print.push_suffix ("-") ;
+      Print.clearline () ;
+      Print.separator '-' ;
+      List.iter (fun n ->
+        Print.push_center () ;
+        block_node n link ;
+        Print.clearline () ;
+        Print.pop () ;
+        Print.separator '-') l ;
+      Print.pop () ;
+      Print.pop () in
+    Print.push_prefix (" =") ;
+    Print.push_suffix ("= ") ;
+    Print.clearline () ;
+    Print.separator '=' ;
+    print_line headers ;
+    Print.clearline () ;
+    Print.separator '=' ;
+    Print.clearline () ;
+    Print.separator '=' ;
+    List.iter (fun line ->
+      print_line line ;
+      Print.clearline () ;
+      Print.separator '=') content ;
+    Print.pop () ;
+    Print.pop ()
   | InOut.Node node -> node
 
 (** Actions linked to each link. **)

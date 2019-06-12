@@ -205,16 +205,17 @@ let add_random g o optimistic (s, evs) =
  * This function returns a couple of:
  * - the new state and its evaluation,
  * - the set of all elements that definitely can’t be applied. **)
-let apply_elements_and_return_the_other g o (s, evs) =
-  PSet.fold (fun ep ((s, evs), do_not_apply) ->
+let apply_elements_and_return_the_other g o (s, evs) m =
+  PSet.fold (fun ep ((s, evs), m, do_not_apply) ->
     let e = read_element g ep in
     match grade g o s e with
-    | None -> ((s, evs), PSet.add ep do_not_apply)
+    | None -> ((s, evs), m, PSet.add ep do_not_apply)
     | Some (inst, progress, ev) ->
       if progress && ev >= evs then
-        let (s, _) = Element.safe_apply g.constructor_informations s e inst in
-        ((s, ev), do_not_apply)
-      else ((s, evs), do_not_apply)) ((s, evs), PSet.empty)
+        let (s, m') = Element.safe_apply g.constructor_informations s e inst in
+        let m = Element.merge_attribute_differences m m' in
+        ((s, ev), m, do_not_apply)
+      else ((s, evs), m, do_not_apply)) ((s, evs), m, PSet.empty)
 
 (** Call the functions [weighted_step] and [add_random], trying
  * to reach a step [s] whose associated attribute difference [m]
@@ -295,6 +296,7 @@ let final g (s, evs) o m =
           if Element.difference_weigth m' < 0 then
             aux g (s, evs) m acc l
           else
+            let m = Element.merge_attribute_differences m m' in
             aux g (s', evs') m (e :: acc) l
         ) in
   let rec repeat g (s, evs) m l = function
@@ -316,34 +318,33 @@ let wider_step pause g (s, evs) o m =
     else (
       pause () ;%lwt
       if Utils.assert_defend then assert (evs = evaluate_state o s) ;
-      let%lwt l =
-        Lwt_list.map_s (fun _ -> wide_step pause g o temperature (s, evs) m)
-          (Utils.seq (get_branch g 3 6)) in
-      let may_be_removed =
-        List.fold_left (fun s (_, _, _, s') -> PSet.merge s' s) PSet.empty l in
-      let update g o (s, evs) =
-        let ((s, evs), do_not_apply) =
-          apply_elements_and_return_the_other g o (s, evs) may_be_removed in
-        let g =
-          { g with pool_informations =
-                     Pool.unregister_elements g.pool_informations do_not_apply ;
-                   all_elements =
-                     BidirectionalList.filter (fun e ->
-                       not (PSet.mem e do_not_apply)) g.all_elements } in
-        ((s, evs), g) in
-      match Utils.argmax (fun (_, (s1, evs1), _, _) (_, (s2, evs2), _, _) ->
+      let rec compute g (s, evs) = function
+        | 0 -> Lwt.return []
+        | i ->
+          let%lwt (g, (s', evs'), m, may_be_removed) =
+            wide_step pause g o temperature (s, evs) m in
+          let ((s, evs), m, do_not_apply) =
+            apply_elements_and_return_the_other g o (s, evs) m may_be_removed in
+          let g =
+            { g with pool_informations =
+                       Pool.unregister_elements g.pool_informations do_not_apply ;
+                     all_elements =
+                       BidirectionalList.filter (fun e ->
+                         not (PSet.mem e do_not_apply)) g.all_elements } in
+          let%lwt l = compute g (s, evs) (i - 1) in
+          Lwt.return ((g, (s', evs'), m) :: l) in
+      let%lwt l = compute g (s, evs) (get_branch g 3 6) in
+      match Utils.argmax (fun (_, (s1, evs1), _) (_, (s2, evs2), _) ->
               compare evs1 evs2) l with
-      | Some (g, (s', evs'), m, _) ->
+      | Some (g, (s', evs'), m) ->
         let temperature =
           if Element.difference_weigth m > 0 || evs' > evs then
             if temperature <= 2 then
               temperature
             else get_branch g 97 99 * temperature / 100 - 1
           else get_branch g 8 9 * temperature / 10 - 1 in
-        let ((s', evs'), g) = update g o (s', evs') in
         aux temperature g (s', evs') m
       | None ->
-        let ((s, evs), g) = update g o (s, evs) in
         aux (get_branch g 6 8 * temperature / 10 - 1) g (s, evs) m) in
   let distance_to_objective =
     max 0 (int_of_float (sqrt (float_of_int (abs evs)))) in

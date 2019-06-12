@@ -144,6 +144,7 @@ let compatible_and_progress m st e inst =
 let search_instantiation m st e =
   let all_players = State.all_players st in
   (** Players that can be placed as [e.others]. **)
+  (* TODO: This needs to be cached as this set can only shrink. *)
   let possible_other =
     PSet.from_list
       (List.filter (fun c ->
@@ -162,12 +163,13 @@ let search_instantiation m st e =
         List.partition (fun (_, d) -> d = Some true) compatible_list in
       (List.map fst progress, List.map fst no_progress)) e.players in
   let possible_players =
+    (* TODO: This needs to be cached as this set can only shrink. *)
     (** Possible players for each variable.
      * Players that make the state progress are always put forwards. **)
     Array.map (fun (p, np) ->
         Utils.shuffle p @ Utils.shuffle np) possible_players_progress_no_progress in
-  (** The following array indicates which player variable should be considered
-   * first. **)
+  (** The following array indicates which player variables should be considered
+   * first: the one with the fewest number of possibilities. **)
   let redirection_array =
     let redirection_array = Utils.seq_array (Array.length e.players) in
     Array.sort (fun i j ->
@@ -212,15 +214,24 @@ let search_instantiation m st e =
         | [] -> None (** No instantiation led to a compatible state. **)
         | j :: l ->
           match aux (j :: partial_instantiation) redirection_list with
-          | None -> aux' l
-          | Some r -> Some r in
+          | Some r -> Some r
+          | None ->
+            (* TODO: if [partial_instantiation = []], this means that we are
+             * considering the first variable, which can definitely not be [j]
+             * as all other cases fail to lead to an instantiation.
+             * This means that we can remove [j] from the cache in the possible
+             * values for the first variable.
+             * We can also do that if all the previous instanciated variables
+             * have a [possible] set of size exactly [1]: the best way is thus
+             * to simply propagate a boolean. *)
+            aux' l in
       aux' possible in
   aux [] (Array.to_list redirection_array)
 
 (* This is a failed attempty to optimise [search_instantiation].
  * I expected that the local constraint were overevaluated in the first version,
  * and that it might be better to lazily evaluate them.
- * However, in practise, this function evaluates more than 80% of the delayed
+ * However, in practice, this function evaluates more than 80% of the delayed
  * evaluation, with an additionnal cost due to the fact that we can’t prioritise
  * the evaluation of characters.
  * Overall, it is actually slower than the original version.

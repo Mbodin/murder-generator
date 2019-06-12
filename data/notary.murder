@@ -57,9 +57,14 @@ begin
   provide compatible attribute Richness to P as Neutral
 end
 
-element OnlyRich
+unique element OnlyRich
 begin
   let any other player be with attribute Richness as Rich
+end
+
+unique element OnlyNormalRichness
+begin
+  provide compatible attribute Richness to any other player as Neutral
 end
 
 element Heritage

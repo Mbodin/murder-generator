@@ -536,7 +536,7 @@ begin
   provide compatible contact FamilyRelation between A and B as None
 end
 
-element NotAFamilyRelationExpect
+unique element NotAFamilyRelationExcept
 begin
   let A be player
   let B be player

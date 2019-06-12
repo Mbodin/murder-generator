@@ -176,7 +176,7 @@ begin
   begin
     event Personal
 
-    provide attribute Job to K as King
+    provide strict attribute Job to K as King
 
     sentence
     begin

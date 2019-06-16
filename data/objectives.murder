@@ -14,3 +14,10 @@ begin
   translation eo "nenia"
 end
 
+contact Goal Protect
+begin
+  translation fr "protéger"
+  translation en "protect"
+  translation eo "protekti"
+end
+

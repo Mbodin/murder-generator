@@ -4,11 +4,19 @@
 (** Basic relations **)
 type basic =
   | Neutral (** The two characters doesn’t know each other. **)
-  | Hate (** The two characters hate each others, or have motive to specifically hinder the actions of the other one. **)
+  | Hate (** The two characters hate each others, or have motive to specifically
+          * hinder the actions of the other one. **)
   | Trust (** The two characters have reasons to trust each others. **)
-  | Chaotic (** The characters may hinder or help each other, but it will never be an end goal: their interactions will naturally just to these kinds of alliances and hindering. **)
-  | Undetermined (** The characters knows things about each others, but are not sure whether they can trust the other or whether they should stop its actions. A typical example is old friends who ceased to contact each others long ago. **)
-  | Avoidance (** Both characters try to avoid one each other, or to avoid saying a specific subject. For instance, if one hides something from the other. **)
+  | Chaotic (** The characters may hinder or help each other, but it will never
+             * be an end goal: their interactions will naturally just be these
+             * kinds of temporary alliances and hindering. **)
+  | Undetermined (** The characters knows things about each others, but are not
+                  * sure whether they can trust the other or whether they should
+                  * stop its actions. A typical example is old friends who ceased
+                  * to contact each others long ago. **)
+  | Avoidance (** Both characters try to avoid one each other, or to avoid saying
+               * a specific subject. For instance, if one hides something from the
+               * other. **)
 
 (** The type of relations between players **)
 type relation =

@@ -211,10 +211,10 @@ event_constraint (N, O):
     d = event_direction
     { fun any ->
         EventConstraint {
-          event_kind = fst kp ;
-          event_players = snd kp ;
-          event_after = d ;
-          event_any = any
+          constraint_kind = fst kp ;
+          constraint_players = snd kp ;
+          constraint_after = d ;
+          constraint_any = any
         } }
 
 kind_players (O):

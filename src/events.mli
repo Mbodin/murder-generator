@@ -30,6 +30,9 @@ val kind_of_attribute : Attribute.PlayerAttribute.attribute -> 'character kind
  * The target characters is taken as argument. **)
 val kind_of_contact : Attribute.ContactAttribute.attribute -> 'character -> 'character kind
 
+(** A function converting kind to string, for debugging purposes. **)
+val print_kind : ('character -> string) -> 'character kind -> string
+
 (** Change each representation of characters in a kind. **)
 val kind_convert : ('a -> 'b option) -> 'a kind -> 'b kind option
 
@@ -95,7 +98,7 @@ val compare : 'a t -> 'a t -> int
 val get_attendees_list : 'character t -> 'character list
 
 (** Provides a recoverable identifier for an event. **)
-val translate : 'a t -> string
+val print_event : 'a t -> string
 
 (** Given an instantiation of characters, instantiate an event. **)
 val instantiate : ('a -> 'b option) -> 'a t -> 'b t option

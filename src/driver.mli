@@ -43,8 +43,8 @@ exception VacuumElement of string
 
 (** If a sequence of event is not satisfyable in an element, report the element.
  * A sequence of event may not be satisfyable if for instance an event prevents
- * an event of a given kind to appear after it… but that one appears in the
- * event. **)
+ * an event of a given kind to appear after it, but that this precise one actually
+ * appears in the event. **)
 exception UnsatisfyableEventSequence of string
 
 (** Treating the data sent from the parser is done in two phases.

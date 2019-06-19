@@ -316,10 +316,12 @@ begin
                   with contact Know to B as True
   let B be player with attribute Specy not as God
                   with contact Know to A as True
+                  with attribute Job as Seller
 
   provide event lasting minutes to A and B
   begin
     event MoneyExchange
+    assume no event providing attribute Job to B before
 
     provide contact FinancialDebt from B to A as Old
 
@@ -340,15 +342,10 @@ begin
 
   provide phantom event lasting years to B
 
-  (* TODO: Put the as an assumption of this event, to enable another
-     event to properly define it.
-     Then add the assumption that the next event is after an event providing
-     the Job attribute (and that the first event was before). *)
-  provide attribute Job to B as Seller
-
   provide event lasting years to B
   begin
     event Personal
+    assume event providing attribute Job to B before
     assume no event providing attribute Richness to B before
 
     provide attribute Richness to B as Rich
@@ -368,10 +365,12 @@ begin
                   with contact Know to B as True
   let B be player with attribute Specy not as God
                   with contact Know to A as True
+                  with attribute Job as Seller
 
   provide event lasting minutes to A and B
   begin
     event MoneyExchange
+    assume no event providing attribute Job to B before
 
     provide contact FinancialDebt from B to A as Large
 
@@ -390,13 +389,11 @@ begin
     end
   end
 
-  (* TODO: Same as above: put this as an assumption and set up the chronology of events. *)
-  provide attribute Job to B as Seller
-
   provide event lasting weeks to B
   begin
     event Personal
     assume no event Work to B after
+    assume no event providing attribute Job to B after
 
     provide attribute Richness to B as Poor
 
@@ -412,13 +409,12 @@ end
 element ImportantSeller
 begin
   let P be player with attribute Specy not as God
-
-  (* TODO: Same than above *)
-  provide compatible attribute Job to P as Seller
+                  with attribute Job as Seller
 
   provide event lasting decades to P
   begin
     event Work
+    assume event providing attribute Job to P before
 
     provide compatible attribute Richness to P as Rich
 
@@ -465,6 +461,33 @@ begin
   end
 
   add difficulty to A
+end
+
+element HidingSellerDecidesToMove
+begin
+  let P be player with attribute Job as Seller
+                  with attribute Famousness as Hiding
+
+  provide event lasting weeks to P
+  begin
+    event Work
+    assume event providing attribute Job to P before
+    assume event providing attribute Famousness to P before
+
+    sentence
+    begin
+      translation fr "Afin de brouiller les pistes, " P " décide de déménager."
+      translation en "In order to confuse the issue, " P " decided to move."
+      translation eo "Por konfuzigi indikojn, " P " decidis translokiĝi."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " vend donc son commerce pour en acheter un autre dans une autre ville."
+      translation en P:+sbeg:+pro " thus sold " P:+pos " shop to buy another one in another town."
+      translation eo P:+sbeg:+pro " do vendis sian vendejon por aĉeti alian aliloke."
+    end
+  end
 end
 
 

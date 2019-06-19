@@ -36,12 +36,9 @@ begin
   let D be player with attribute Specy as Dwarf
   let E be player with attribute Specy as Elf
 
-  provide relation between D and E as avoidance
-
   provide immediate event to D and E
   begin
     event History
-
     assume no event Personal to D or E before
 
     sentence
@@ -72,6 +69,8 @@ begin
     translation en "Dwarves are not trustworthy."
     translation eo "Gnomoj ne fideblas."
   end
+
+  provide relation between D and E as avoidance
 end
 
 element ElvesCanBeRacist

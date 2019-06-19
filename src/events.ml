@@ -7,6 +7,11 @@ type 'character kind =
   | ProvideContactAttribute of Attribute.ContactAttribute.attribute * 'character
       (** An event that provide this contact to this character. **)
 
+let print_kind f = function
+  | Kind id -> "Kind " ^ string_of_int (Id.to_array id)
+  | ProvidePlayerAttribute _ -> "Provide attribute"
+  | ProvideContactAttribute (_, c) -> "Provide contact to " ^ f c
+
 let kind_of_id id = Kind id
 
 let kind_of_attribute a = ProvidePlayerAttribute a
@@ -59,7 +64,7 @@ let compare e1 e2 =
 let get_attendees_list e =
   List.filter (fun c -> PSet.mem c e.event_attendees) e.all_attendees
 
-let translate e =
+let print_event e =
   let (nb_sentence, tr) = e.translation in
   let tr = Translation.sforce_translate tr Translation.generic in
   fst (tr (fun _ -> PSet.empty) (fun _ _ -> None) (-1) PSet.empty)

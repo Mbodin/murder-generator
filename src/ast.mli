@@ -92,14 +92,14 @@ type event_kind =
 
 (** Declare some constraints over events. **)
 type event_constraint = {
-    event_kind : event_kind
+    constraint_kind : event_kind
       (** The constraint is about this event kind. **) ;
-    event_players : string list
+    constraint_players : string list
       (** The constraint only applies for these players **) ;
-    event_after : bool
+    constraint_after : bool
       (** If [true], the constraint is about events following this event,
        * if [false] about prior events. **) ;
-    event_any : bool
+    constraint_any : bool
       (** If [true], there should be at least one event of this kind in the
        * considered period.  If [false], there should be none. **)
   }

@@ -58,8 +58,8 @@ let get_event_type beg en =
 
 let compatible_events e1 e2 =
   e1.event.event_type <> e2.event.event_type
-  || compare e1.event_begin e2.event_end = 1
-  || compare e2.event_begin e1.event_end = 1
+  || Date.compare e1.event_begin e2.event_end = 1
+  || Date.compare e2.event_begin e1.event_end = 1
 
 
 type t = {
@@ -104,6 +104,10 @@ type t = {
 
 (** As the type is pure, one can safely return it. **)
 let copy = Utils.id
+
+(** Fetch an event from a state given its identifier. **)
+let get_event st e =
+  Utils.assert_option __LOC__ (Id.map_inverse st.events e)
 
 (** Given a function [dir] being either [fst] or [snd], get the set of all
  * successors/predecessors in this direction. **)
@@ -181,6 +185,11 @@ let get_full_constraints st el =
   (** The before list is parsed from left to right, but the after
    * list is parsed from right to left. **)
   let constraints = List.map (get_constraints st) el in
+  (** In the following function, [f] and [f'] are the same function,
+   * either [fst] or [snd].  However, these functions are polymorphic
+   * and as we are using them with a different type instantiation, we
+   * have to differentiate them for the type checker to accept this
+   * function. **)
   let rec full f f' sacc acc = function
     | [] -> acc
     | s :: l ->
@@ -192,6 +201,7 @@ let get_full_constraints st el =
     List.rev (full fst fst PSet.empty [] constraints) in
   let constraints_after =
     full snd snd PSet.empty [] (List.rev constraints) in
+  (** Once computed, these constraints are wrapped in a single list. **)
   let rec aux lb la el =
     match lb, la, el with
     | [], [], [] -> []
@@ -220,6 +230,10 @@ let lcompatible_and_progress st el =
         else
           (** There is no conflict for this event: we can check whether
            * it would make things progress. **)
+          (* TODO: This seems like a lot of computation that may just
+           * useless if an event afterwards actually doesn’t apply:
+           * the computation of whether something progresses should
+           * be done in a separate loop for performance. *)
           aux (r || PMap.foldi (fun c ks r ->
             r || let m =
                    try PMap.find c st.constraints_some
@@ -455,8 +469,7 @@ let finalise st now =
           if ready = [] then
             failwith ("Cyclic event dependency with conflicting events: "
                       ^ String.concat ", " (List.map (fun e ->
-                            Events.translate (Utils.assert_option __LOC__
-                              (Id.map_inverse st.events e)))
+                            Events.print_event (get_event st e))
                           not_ready)) ;
           aux acc seen not_ready ready
         )
@@ -479,7 +492,7 @@ let finalise st now =
   (** We then assign timetables to this list. **)
   let (l, _) =
     List.fold_left (fun (acc, state) e ->
-      let ev = Utils.assert_option __LOC__ (Id.map_inverse st.events e) in
+      let ev = get_event st e in
       let (before, after) =
         try PMap.find e st.graph
         with Not_found -> ([], []) in
@@ -558,7 +571,6 @@ let unfinalise l =
 
 let fold_graph f acc st =
   PMap.foldi (fun id edges acc ->
-    let ev =
-      Utils.assert_option __LOC__ (Id.map_inverse st.events id) in
+    let ev = get_event st id in
     f acc ev id edges) st.graph acc
 

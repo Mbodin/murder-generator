@@ -109,17 +109,15 @@ let list_index e = list_predicate_index ((=) e)
 let list_fold_lefti f i l =
   fst (List.fold_left (fun (a, i) e -> (f i a e, 1 + i)) (i, 0) l)
 
-let rec list_map_filter f = function
-  | [] -> []
-  | e :: l ->
-    let l = list_map_filter f l in
+let list_map_filter f l =
+  List.rev (List.fold_left (fun l e ->
     match f e with
     | None -> l
-    | Some v -> v :: l
+    | Some v -> v :: l) [] l)
 
-let list_map_option f =
-  List.fold_left (fun r e ->
-    if_option r (fun l -> if_option (f e) (fun v -> Some (v :: l)))) (Some [])
+let list_map_option f l =
+  Option.map List.rev (List.fold_left (fun r e ->
+    if_option r (fun l -> if_option (f e) (fun v -> Some (v :: l)))) (Some []) l)
 
 let rec list_partition_map f = function
   | [] -> ([], [])

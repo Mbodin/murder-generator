@@ -50,14 +50,14 @@ let translate_event s trp e =
   let (nb_sentence, tr) = e.Events.translation in
   let tr =
     Translation.sforce_translate ~debug:(fun i ->
-        Some (string_of_int i ^ " of " ^ Events.translate e))
+        Some (string_of_int i ^ " of " ^ Events.print_event e))
       tr s.language in
   let l =
     List.map (fun i ->
         fst (tr (fst trp) (snd trp) i (PSet.singleton Translation.base)))
       (Utils.seq nb_sentence) in
   if String.concat "" l = "" then
-    ["<Empty translation for " ^ Events.translate e ^ ">"]
+    ["<Empty translation for " ^ Events.print_event e ^ ">"]
   else l
 
 (** Generate a translation object for player for [translate_event]. **)
@@ -414,7 +414,7 @@ let to_json s =
       `Assoc [
           ("begin", `String (Date.rfc2445 e.History.event_begin)) ;
           ("end", `String (Date.rfc2445 e.History.event_end)) ;
-          ("event", `String (Events.translate e.History.event)) ;
+          ("event", `String (Events.print_event e.History.event)) ;
           ("attendees",
             `List (List.map (fun c -> `Int (Id.to_array c))
                      (Events.get_attendees_list e.History.event))) ;

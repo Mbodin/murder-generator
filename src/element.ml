@@ -85,13 +85,11 @@ let respect_constraints_events f m st conss evs c =
   let hst = State.get_history_state st in
   merge_progress
     (respect_constraints_base f m st conss c)
-    (List.fold_left (fun p e ->
-      merge_progress p
-        (History.compatible_and_progress hst e)) (Some false) evs)
+    (History.lcompatible_and_progress hst evs)
 
 (** Checks whether the constraints [conss] are locally valid for the
  * character [c] in the character state [cst].
- * Eventss are also checked to be addable to the characters’s events.
+ * Events are also checked to be addable to the characters’s events.
  * Only local constraints are considered: no constraint depending on the
  * instantiation are checked at this point. **)
 let respect_constraints =
@@ -127,6 +125,11 @@ let check_contact m inst st c con cha v1 =
 let respect_constraints_inst m inst st conss evs c =
   respect_constraints_events (check_contact m inst st c) m st conss evs c
 
+(** Returns an instantiated list of events with the given instantiation. **)
+let instantiate_events e inst =
+  Utils.assert_option __LOC__ (Utils.list_map_option
+    (Events.instantiate (fun i -> Some (inst.(i)))) e.events)
+
 let compatible_and_progress m st e inst =
   let compatible_others =
     List.fold_left (fun acc c ->
@@ -135,9 +138,7 @@ let compatible_and_progress m st e inst =
       (Some false) (other_players st inst) in
   Utils.array_fold_lefti (fun i acc c ->
     let conss = e.players.(i).constraints in
-    let evs =
-      Utils.assert_option __LOC__ (Utils.list_map_option
-        (Events.instantiate (fun i -> Some (inst.(i)))) e.events) in
+    let evs = instantiate_events e inst in
     merge_progress acc
       (respect_constraints_inst m inst st conss evs c)) compatible_others inst
 
@@ -352,9 +353,7 @@ let merge_attribute_differences (m1, s1, l1) (m2, s2, l2) =
 let apply m state e inst =
   if Utils.assert_defend then
     assert (compatible_and_progress m state e inst <> None) ;
-  let evs =
-    Utils.assert_option __LOC__ (Utils.list_map_option
-      (Events.instantiate (fun i -> Some (inst.(i)))) e.events) in
+  let evs = instantiate_events e inst in
   let diff = empty_difference in
   let other_players = other_players state inst in
   let apply_constraint c (state, diff) =

@@ -288,8 +288,7 @@ exception UnsatisfyableEventSequence of string
 (** Converts an [Ast.block] into a [block].
  * It takes a list of command types and checks that only these are present
  * in the given block: all the other kinds will thus be empty lists.
- * This function reverses the order of declaration in the block
- * (although this shouldn’t impact on anything). **)
+ * This function reverses the order of declaration in the block. **)
 let convert_block block_name expected =
   let check c =
     if not (List.mem c expected) then
@@ -835,6 +834,8 @@ let parse_element st element_name status block =
     | None -> raise (Undeclared ("player", p, element_name))
     | Some i -> i in
   let get_player_array p = Id.to_array (get_player p) in
+  let get_player_name p =
+    Utils.assert_option __LOC__ (Id.map_inverse player_names p) in
   (** We pre-parse the events, as they might contain declarations. **)
   let events =
     List.map (fun (bl, ph, t, l, b) ->
@@ -842,7 +843,6 @@ let parse_element st element_name status block =
        convert_block element_name
          [Translation; Sentence; ProvideAttribute; ProvideContact;
           EventKind; EventConstraint] b)) block.provide_event in
-  let events = List.rev events in
   (** We first consider relations. **)
   let relations =
     (** We create this triangle of relations.
@@ -853,9 +853,7 @@ let parse_element st element_name status block =
     let write i j r =
       if r <> Relation.neutral then (
         if i = j then (
-          let player_name =
-            Utils.assert_option __LOC__ (Id.map_inverse player_names i) in
-          raise (SelfRelation (player_name, element_name))) ;
+          raise (SelfRelation (get_player_name i, element_name))) ;
         let i = Id.to_array i in
         let j = Id.to_array j in
         let (i, j, r) =
@@ -1177,26 +1175,23 @@ let parse_element st element_name status block =
       let (constraints_none, constraints_some) =
         List.fold_left (fun (none, some) c ->
             let (mns, bns) =
-              if c.Ast.event_any then
+              if c.Ast.constraint_any then
                 (some, fun some -> (none, some))
               else
                 (none, fun none -> (none, some)) in
             let (fba, uba) =
-              if c.Ast.event_after then
+              if c.Ast.constraint_after then
                 (snd, fun ba after -> (fst ba, after))
               else
                 (fst, fun ba before -> (before, snd ba)) in
             let k =
-              match c.Ast.event_kind with
+              match c.Ast.constraint_kind with
               | Ast.Kind k ->
                 let k =
                   match Id.get_id st.event_names k with
                   | None -> raise (Undeclared ("event kind", k, element_name))
                   | Some id -> id in
-                let other =
-                  try PMap.find k st.event_event_dependencies
-                  with Not_found -> assert false in
-                PSet.map Events.kind_of_id (PSet.add k other)
+                PSet.singleton (Events.kind_of_id k)
               | Ast.KindAttribute a ->
                 PSet.singleton (Events.kind_of_attribute
                   (get_attribute_id attribute_functions a))
@@ -1211,7 +1206,7 @@ let parse_element st element_name status block =
                       try PMap.find p m
                       with Not_found -> (PSet.empty, PSet.empty) in
                     PMap.add p (uba ba (PSet.merge k (fba ba))) m) mns
-                  c.Ast.event_players)) (PMap.empty, PMap.empty)
+                  c.Ast.constraint_players)) (PMap.empty, PMap.empty)
           block.event_constraint in
       let attendees = List.map Id.to_array attendees in {
         Events.event_blocking = blocking ;
@@ -1226,26 +1221,36 @@ let parse_element st element_name status block =
         Events.translation = translation
       }) events in
   (** We check that there is no contradiction within these events. **)
-  if let rec check f acc = function
-       | [] -> true
-       | e :: l ->
-         let (r, acc) =
-           PSet.fold (fun c (r, newacc) ->
-               if not r then (r, PSet.empty)
-               else
-                 let k =
-                   try PMap.find c e.Events.event_kinds
-                   with Not_found -> PSet.empty in
-                 let c =
-                   try PMap.find c e.Events.constraints_none
-                   with Not_found -> (PSet.empty, PSet.empty) in
-                 let c = f c in
-                 (PSet.is_empty (PSet.inter c acc), PSet.merge k newacc))
-             (true, acc) e.Events.event_attendees in
-         r && check f acc l in
-     not (check snd PSet.empty evs)
-     || not (check fst PSet.empty (List.rev evs)) then
-    raise (UnsatisfyableEventSequence element_name) ;
+  let rec check f acc = function
+    | [] -> None
+    | e :: l ->
+      match PSet.fold (fun c -> function
+                | Utils.Left newacc ->
+                  let k =
+                    try PMap.find c e.Events.event_kinds
+                    with Not_found -> PSet.empty in
+                  let constr =
+                    try PMap.find c e.Events.constraints_none
+                    with Not_found -> (PSet.empty, PSet.empty) in
+                  let constr = f constr in
+                  let previous_kinds =
+                    try PMap.find c acc
+                    with Not_found -> PSet.empty in
+                  if PSet.is_empty (PSet.inter constr previous_kinds) then
+                    Utils.Left (PMap.add c (PSet.merge k previous_kinds) newacc)
+                  else Utils.Right c
+                | r -> r)
+              (Utils.Left acc) e.Events.event_attendees with
+      | Utils.Right c ->
+        Some (Events.print_event e ^ ", " ^ get_player_name (Id.from_array c))
+      | Utils.Left acc -> check f acc l in
+  let check direction f acc evs =
+    match check f acc evs with
+    | Some name ->
+      raise (UnsatisfyableEventSequence (name ^ ", " ^ direction))
+    | None -> () in
+  check "forward" fst PMap.empty evs ;
+  check "backward" snd PMap.empty (List.rev evs) ;
   ({ Element.status = status ;
      Element.players = elementBase ;
      Element.others = !otherPlayers ;
@@ -1258,7 +1263,7 @@ let parse i =
           let (element, deps) = parse_element i.current_state name status block in
           let import_information =
             List.fold_left (fun import_information ev ->
-                let name = Events.translate ev in
+                let name = Events.print_event ev in
                 let id = ev.Events.event_id in
                 { import_information with
                     event_id = PMap.add name id import_information.event_id ;

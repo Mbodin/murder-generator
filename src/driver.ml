@@ -488,10 +488,10 @@ let prepare_declaration i =
    * See the declarations [attribute_functions] and [contact_functions]
    * to understand the large tuple argument. **)
   let declare_instance (declare, _, _, _, _, extract, update, constructor, _, en, _)
-      name block =
+      name internal block =
     let block = convert_block name [OfCategory; Translation] block in
     let (id, state) =
-      declare (extract (intermediary_constructor_maps i)) name in
+      declare (extract (intermediary_constructor_maps i)) name internal in
     let id = constructor id in
     if attribute_exists i.current_state id then
       raise (DefinedTwice (en, name, "")) ;
@@ -547,20 +547,20 @@ let prepare_declaration i =
   let declare_constructor (declare, declare_constructor, _, _,
         declare_compatibility, extract, update,
         attribute_constructor, constructor_constructor, en, get_player_attribute)
-      attribute_name constructor block =
+      attribute_name constructor internal block =
     let block =
       convert_block attribute_name [OfCategory; Translation; Add;
                                     CompatibleWith] block in
     let (attribute, state) =
-      declare (extract (intermediary_constructor_maps i)) attribute_name in
-    let (idp, state) =
-      declare_constructor state attribute constructor in
+      declare (extract (intermediary_constructor_maps i)) attribute_name false in
+    let (idp, state) = declare_constructor state attribute constructor internal in
     let id = constructor_constructor idp in
     let constructors_to_be_defined =
       PSet.remove id i.constructors_to_be_defined in
     let (state, constructors_to_be_defined) =
       List.fold_left (fun (state, constructors_to_be_defined) constructor' ->
-          let (id', state) = declare_constructor state attribute constructor' in
+          let (id', state) =
+            declare_constructor state attribute constructor' false in
           let constructors_to_be_defined =
             let id' = constructor_constructor id' in
             if PMap.mem id' i.current_state.constructor_dependencies then
@@ -645,14 +645,15 @@ let prepare_declaration i =
                     Translation.constructor = translations ;
                     Translation.add = add } } } in
   function
-  | Ast.DeclareInstance (Ast.Attribute, attribute, block) ->
-    declare_instance attribute_functions attribute block
-  | Ast.DeclareInstance (Ast.Contact, contact, block) ->
-    declare_instance contact_functions contact block
-  | Ast.DeclareConstructor (Ast.Attribute, attribute, constructor, block) ->
-    declare_constructor attribute_functions attribute constructor block
-  | Ast.DeclareConstructor (Ast.Contact, attribute, constructor, block) ->
-    declare_constructor contact_functions attribute constructor block
+  | Ast.DeclareInstance (Ast.Attribute, attribute, internal, block) ->
+    declare_instance attribute_functions attribute internal block
+  | Ast.DeclareInstance (Ast.Contact, contact, internal, block) ->
+    declare_instance contact_functions contact internal block
+  | Ast.DeclareConstructor (Ast.Attribute, attribute, constructor, internal,
+      block) ->
+    declare_constructor attribute_functions attribute constructor internal block
+  | Ast.DeclareConstructor (Ast.Contact, attribute, constructor, internal, block) ->
+    declare_constructor contact_functions attribute constructor internal block
   | Ast.DeclareCategory (name, block) ->
     let block =
       convert_block name [OfCategory; Translation] block in

@@ -148,11 +148,13 @@ and provide_event =
 and block = command list
 
 type declaration =
-  | DeclareInstance of attribute_kind * string * block
+  | DeclareInstance of attribute_kind * string * bool * block
     (** Declare a attribute of this name.
+     * The boolean states whether the attribute is internal.
      * Only expects commands of the form [OfCategory] in its block. **)
-  | DeclareConstructor of attribute_kind * string * string * block
+  | DeclareConstructor of attribute_kind * string * string * bool * block
     (** Declare a attribute’s constructor for this attribute and of this name.
+     * The boolean states whether the constructor is internal.
      * Accepts the following commands: [OfCategory], [Translation],
      * [Add], and [CompatibleWith]. **)
   | DeclareCategory of string * block

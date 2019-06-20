@@ -1,6 +1,6 @@
 
 (* What the player ultimately wants to do with this other player. *)
-declare contact Goal
+declare internal contact Goal
 begin
   translation fr "But"
   translation en "Goal"

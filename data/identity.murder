@@ -6,7 +6,7 @@ begin
   translation eo "Naskiĝita"
 end
 
-attribute Born True
+internal attribute Born True
 begin
   translation fr "oui"
   translation en "yes"

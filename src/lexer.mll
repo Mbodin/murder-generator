@@ -40,6 +40,8 @@ rule read = parse
   | "player"                { PLAYER }
   | "event"                 { EVENT }
 
+  | "internal"              { INTERNAL }
+
   | "any"                   { ANY }
   | "other"                 { OTHER }
 

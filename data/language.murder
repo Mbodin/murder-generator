@@ -71,7 +71,7 @@ declare translation eo:fem (* Feminine *)
 
 (* * General grammatical rules *)
 
-declare attribute Grammar
+declare internal attribute Grammar
 begin
   translation fr "Grammaire"
   translation en "Grammar"

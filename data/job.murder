@@ -661,3 +661,21 @@ begin
   add translation eo:nom:def:acc:plu "la laboristojn"
 end
 
+duplicable element Colleagues
+begin
+  let A be player with attribute Job as Worker
+  let B be player with attribute Job as Worker
+
+  provide event lasting weeks to A and B
+  begin
+    event Work
+    assume event providing attribute Job to A and B before
+
+    translation fr A:+sbeg " et " B " sont collègues."
+    translation en A:+sbeg " and " B " are colleagues."
+    translation eo A:+sbeg " kaj " B " estas kunlaborantoj."
+  end
+end
+
+(* TODO: More elements for workers (as well as contacts such as “who is working for whom”). *)
+

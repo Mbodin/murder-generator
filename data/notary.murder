@@ -32,7 +32,7 @@ begin
   add translation eo:adj "riĉa"
 end
 
-attribute Richness Neutral
+internal attribute Richness Neutral
 begin
   translation fr "neutre"
   translation en "neutral"
@@ -159,7 +159,7 @@ begin
   translation eo "Ŝuldo"
 end
 
-contact FinancialDebt None
+internal contact FinancialDebt None
 begin
   translation fr "aucune"
   translation en "none"
@@ -496,6 +496,13 @@ begin
   translation fr "Faveur"
   translation en "Favor"
   translation eo "Helpŝuldo"
+end
+
+internal contact Favor None
+begin
+  translation fr "aucune"
+  translation en "none"
+  translation eo "nenia"
 end
 
 contact Favor Large

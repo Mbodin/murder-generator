@@ -16,6 +16,7 @@ open Ast
 %token          ATTRIBUTE CONTACT RELATION
 %token          PLAYER
 %token          DECLARE PROVIDE LET BE ASSUME ADD REMOVE
+%token          INTERNAL
 %token          WITH AND OR NOT NO FROM TO BETWEEN AS ANY OTHER
 %token          STRICT COMPATIBLE
 %token          DUPLICABLE UNIQUE
@@ -37,10 +38,12 @@ open Ast
 main: l = list (declaration); EOF { l }
 
 declaration:
-  | DECLARE; k = attribute_kind; id = UIDENT; b = block
-    { DeclareInstance (k, id, b) }
-  | k = attribute_kind; attr = UIDENT; constructor = UIDENT; b = block
-    { DeclareConstructor (k, attr, constructor, b) }
+  | DECLARE; internal = boption (INTERNAL);
+    k = attribute_kind; id = UIDENT; b = block
+    { DeclareInstance (k, id, internal, b) }
+  | internal = boption (INTERNAL); k = attribute_kind;
+    attr = UIDENT; constructor = UIDENT; b = block
+    { DeclareConstructor (k, attr, constructor, internal, b) }
   | CATEGORY; name = UIDENT; c = block
     { DeclareCategory (name, c) }
   | s = status; ELEMENT; name = UIDENT; c = block

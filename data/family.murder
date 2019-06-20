@@ -29,7 +29,7 @@ begin
   translation eo "intime"
 end
 
-contact Know False
+internal contact Know False
 begin
   translation fr "non"
   translation en "no"
@@ -43,7 +43,7 @@ begin
   translation eo "Familia ligo"
 end
 
-contact FamilyRelation None
+internal contact FamilyRelation None
 begin
   translation fr "aucune"
   translation en "none"

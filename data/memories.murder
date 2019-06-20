@@ -11,5 +11,5 @@ begin
   event CloseDeath
 end
 
-declare event History
+declare event History (* Historical events (that usually preceed everyone’s life) *)
 

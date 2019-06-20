@@ -18,7 +18,7 @@ begin
   add translation eo:adj "fama"
 end
 
-attribute Famousness Unknown
+internal attribute Famousness Unknown
 begin
   translation fr "inconnu·e"
   translation en "unknown"
@@ -172,7 +172,7 @@ begin
                           with contact Know to K as True
                           with contact FamilyRelation to K not as Parent
 
-  provide event lasting minutes to K
+  provide event lasting days to K
   begin
     event Personal
 

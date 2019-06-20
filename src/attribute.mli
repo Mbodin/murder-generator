@@ -21,25 +21,31 @@ module type Attribute = sig
     (** An empty constructor map. **)
     val empty_constructor_map : constructor_map
 
-    (** Returns the name of an attribute. **)
+    (** Return the name of an attribute. **)
     val attribute_name : constructor_map -> attribute -> string option
 
-    (** Returns the name of a constructor. **)
+    (** Return the name of a constructor. **)
     val constructor_name : constructor_map -> constructor -> string option
 
-    (** Returns the associated attribute of a constructor. **)
+    (** Return the associated attribute of a constructor. **)
     val constructor_attribute : constructor_map -> constructor -> attribute option
 
-    (** Returns the list of constructors associated to an attribute. **)
+    (** Return the list of constructors associated to an attribute. **)
     val constructors : constructor_map -> attribute -> constructor list option
 
-    (** Declare an attribute, returning its associated normal identifier
-     * (if already declared, its previously-set identifier is still returned). **)
-    val declare_attribute : constructor_map -> string -> attribute * constructor_map
+    (** Declare an attribute, returning its associated normal identifier.
+     * The string is the name of the attribute and the boolean states whether
+     * it is internal.
+     * If already declared, its previously-set identifier is still returned,
+     * but its internal status is updated. **)
+    val declare_attribute : constructor_map -> string -> bool -> attribute * constructor_map
 
     (** Declare a new constructor for an attribute.
-     * (if already declared, its previously-set identifier is still returned). **)
-    val declare_constructor : constructor_map -> attribute -> string -> constructor * constructor_map
+     * The string is the name of the constructor and the boolean states whether
+     * it is internal.
+     * If already declared, its previously-set identifier is still returned,
+     * but its internal status is updated. **)
+    val declare_constructor : constructor_map -> attribute -> string -> bool -> constructor * constructor_map
 
     (** Get the attribute identifier from its name. **)
     val get_attribute : constructor_map -> string -> attribute option
@@ -52,11 +58,13 @@ module type Attribute = sig
      * to an unwanted category. **)
     val remove_constructor : constructor_map -> constructor -> constructor_map
 
-    (** States that the first constructor is compatible with the second. **)
+    (** State that the first constructor is compatible with the second. **)
     val declare_compatibility : constructor_map -> attribute -> constructor -> constructor -> constructor_map
 
-    (** States whether the first constructor is compatible with the second. **)
+    (** State whether the first constructor is compatible with the second. **)
     val is_compatible : constructor_map -> attribute -> constructor -> constructor -> bool
+    (** State whether the given constructor is internal. **)
+    val is_internal : constructor_map -> attribute -> constructor -> bool
 
   end
 

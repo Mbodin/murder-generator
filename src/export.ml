@@ -18,6 +18,14 @@ type state = {
  * the “generic” language. **)
 let generic s = { s with language = Translation.generic }
 
+(** A shortcut to [is_internal] for attributes. **)
+let is_internal_attribute s a v =
+  Attribute.PlayerAttribute.is_internal s.constructor_maps.Attribute.player a v
+
+(** A shortcut to [is_internal] for contacts. **)
+let is_internal_contact s a v =
+  Attribute.ContactAttribute.is_internal s.constructor_maps.Attribute.contact a v
+
 (** Provide a human-readable version of the attribute. **)
 let translate_attribute s a =
   let tr = s.translation.Translation.attribute in
@@ -110,16 +118,6 @@ let translation_players s =
 let get_name s c =
   List.nth s.names (Id.to_array c)
 
-(** Some special constructors provides negative information
- * (that is, that something is absent instead of present).
- * This function uses heuristics to determine whether a constructor
- * represents information that may benefit not being displayed.
- * Some exportation functions will display these differently, but it
- * should never profundly change the behaviour of the exportation. **)
-let negative s v =
-  let trv = translate_value_contact (generic s) v in
-  List.mem trv ["False"; "None"; "Absent"; "Undefined"; "Neutral"; "Normal"]
-
 (** Replace the characters '"' by '\"' and '\' by '\\'. **)
 let escape_quote str =
   let replace input = Re.Str.global_replace (Re.Str.regexp_string input) in
@@ -147,22 +145,40 @@ let to_graphviz_relation s =
         "  " ^ player_node c ^ " [label=\"{"
         ^ escape name ^ "|"
         ^ String.concat "|" (PMap.foldi (fun a (v, fixed) l ->
-              let tra = translate_attribute_player s a in
-              let trv = translate_value_player s v in
-              ("{" ^ escape tra ^ "|" ^ escape trv ^ "}") :: l)
+              if is_internal_attribute s a v then l
+              else
+                let tra = translate_attribute_player s a in
+                let trv = translate_value_player s v in
+                ("{" ^ escape tra ^ "|" ^ escape trv ^ "}") :: l)
             (State.get_all_attributes_character_final s.state c) [])
         ^ "}\"]") s.names) ; "" ;
       (** Declaring their relations **)
       String.concat "\n" (List.concat (List.mapi (fun c _ ->
         let c = Id.from_array c in
         PMap.foldi (fun c' lv l ->
-            List.map (fun (a, (v, fixed)) ->
-              let tra = translate_attribute_contact s a in
-              let trv = translate_value_contact s v in
-              let color = if negative s v then "transparent" else get_color tra in
-              "  " ^ player_node c ^ " -> " ^ player_node c'
-              ^ " [label=\"" ^ escape tra ^ ":" ^ escape trv ^ "\""
-              ^ " color=\"" ^ color ^ "\"] ;") lv @ l)
+            Utils.list_map_filter (fun (a, (v, fixed)) ->
+              if is_internal_contact s a v then None
+              else
+                let converse =
+                  Utils.if_option (State.get_contact_character_final s.state c' a c)
+                    (fun (v', _) ->
+                       if is_internal_contact s a v' then None
+                       else Some v') in
+                if converse <> None && Id.to_array c < Id.to_array c' then None
+                else Some (
+                  let tra = translate_attribute_contact s a in
+                  let trv = translate_value_contact s v in
+                  let trv' =
+                    match converse with
+                    | None -> ""
+                    | Some v' ->
+                      if v = v' then ""
+                      else "\\n" ^ escape (translate_value_contact s v') in
+                  let color = get_color tra in
+                  "  " ^ player_node c ^ " -> " ^ player_node c'
+                  ^ " [label=\"" ^ escape tra ^ "\\n" ^ escape trv ^ trv' ^ "\""
+                  ^ (if converse <> None then " dir=\"both\"" else "")
+                  ^ " color=\"" ^ color ^ "\"] ;")) lv @ l)
           (State.get_all_contacts_character_final s.state c) []) s.names)) ;
       "}" ; ""
     ]
@@ -194,8 +210,7 @@ let to_graphviz_event s =
   String.concat "\n" (
       "digraph {" :: ""
       :: ("  // Generated from " ^ webpage_address) :: ""
-      :: "  node [shape=record] ;" :: ""
-      :: "  rankdir=LR ;" :: ""
+      :: "  node [shape=record] ;" :: "  rankdir=LR ;" :: ""
       :: graph)
 
 let to_icalendar s =
@@ -275,9 +290,11 @@ let to_block s =
   let print_attributes c =
     InOut.List (true,
       PMap.foldi (fun a (v, fixed) l ->
-          let tra = translate_attribute_player s a in
-          let trv = translate_value_player s v in
-          InOut.Text (tra ^ ": " ^ trv) :: l)
+          if is_internal_attribute s a v then l
+          else
+            let tra = translate_attribute_player s a in
+            let trv = translate_value_player s v in
+            InOut.Text (tra ^ ": " ^ trv) :: l)
         (State.get_all_attributes_character_final s.state c) []) in
   let print_contacts c =
     InOut.List (false,
@@ -285,10 +302,12 @@ let to_block s =
           InOut.FoldableBlock (true,
             get_translation "contactTo" ^ " " ^ get_name s c',
               InOut.List (true,
-                List.map (fun (a, (v, fixed)) ->
-                    let tra = translate_attribute_contact s a in
-                    let trv = translate_value_contact s v in
-                    InOut.Text (tra ^ ": " ^ trv)) lv)) :: l)
+                Utils.list_map_filter (fun (a, (v, fixed)) ->
+                    if is_internal_contact s a v then None
+                    else Some (
+                      let tra = translate_attribute_contact s a in
+                      let trv = translate_value_contact s v in
+                      InOut.Text (tra ^ ": " ^ trv))) lv)) :: l)
         (State.get_all_contacts_character_final s.state c) []) in
   InOut.List (false,
     InOut.FoldableBlock (false, get_translation "forTheGM",
@@ -340,18 +359,22 @@ let to_org s =
            ^ get_name s c) (PSet.to_list e.History.event.Events.event_attendees)) in
   let print_attributes n c =
     PMap.foldi (fun a (v, fixed) l ->
-        let tra = translate_attribute_player s a in
-        let trv = translate_value_player s v in
-        (String.make n ' ' ^ "- " ^ tra ^ ": " ^ trv) :: l)
+        if is_internal_attribute s a v then l
+        else
+          let tra = translate_attribute_player s a in
+          let trv = translate_value_player s v in
+          (String.make n ' ' ^ "- " ^ tra ^ ": " ^ trv) :: l)
       (State.get_all_attributes_character_final s.state c) [] in
   let print_contacts n c =
     PMap.foldi (fun c' lv l ->
         (String.make n '*' ^ " " ^ get_translation "contactTo"
          ^ " " ^ get_name s c')
-        :: List.map (fun (a, (v, fixed)) ->
-            let tra = translate_attribute_contact s a in
-            let trv = translate_value_contact s v in
-            String.make 5 ' ' ^ "- " ^ tra ^ ": " ^ trv) lv @ l)
+        :: Utils.list_map_filter (fun (a, (v, fixed)) ->
+             if is_internal_contact s a v then None
+             else Some (
+               let tra = translate_attribute_contact s a in
+               let trv = translate_value_contact s v in
+               String.make 5 ' ' ^ "- " ^ tra ^ ": " ^ trv)) lv @ l)
       (State.get_all_contacts_character_final s.state c) [] in
   String.concat "\n\n" (
     String.concat "\n" (

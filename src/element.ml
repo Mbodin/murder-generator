@@ -21,8 +21,27 @@ type t = {
     status : History.status ;
     players : cell array ;
     others : character_constraint list ;
-    events : int Events.t list
+    events : int Events.t list ;
+    id : Id.t
   }
+
+(** To avoid having to check players that can’t fit a particular role for an event,
+ * we cache the computed sets for each events.
+ * The way in which we look for instantiations guarantees that if a player doesn’t
+ * respect the constraints of an element in a state, then any further application of
+ * elements won’t change the fact that this player doesn’t respect the constraints
+ * of this element.
+ * In other words, the possible player instantiation for each role can only shrink
+ * along state applications. **)
+type cache_cell = {
+    possible_other : character list ;
+    possible_players : character list array
+  }
+
+(** For each element identifier, we store the cache sets. **)
+type cache = (Id.t, cache_cell) PMap.t
+
+let empty_cache = PMap.empty
 
 (** Returns the list of attributes provided by this constraint. **)
 let provided_attributes_constraint =
@@ -148,12 +167,21 @@ let compatible_and_progress m st e inst =
 
 let search_instantiation m st e =
   let all_players = State.all_players st in
+  let cache =
+    try PMap.find e.id (State.get_cache st)
+    with Not_found -> {
+        possible_other = all_players ;
+        possible_players = Array.map (fun _ -> all_players) e.players
+      } in
+  let cache_changed = ref false in
   (** Players that can be placed as [e.others]. **)
-  (* TODO: This needs to be cached as this set can only shrink. *)
-  let possible_other =
-    PSet.from_list
-      (List.filter (fun c ->
-        respect_constraints m st e.others [] c <> None) all_players) in
+  let possible_other_list =
+    List.filter (fun c ->
+      let b =
+        respect_constraints m st e.others [] c <> None in
+      if not b then cache_changed := true ;
+      b) cache.possible_other in
+  let possible_other = PSet.from_list possible_other_list in
   let possible_players_progress_no_progress =
     Array.mapi (fun i ei ->
       let conss = ei.constraints in
@@ -161,7 +189,9 @@ let search_instantiation m st e =
         List.map (fun c ->
           let evs =
             Utils.list_map_filter (Events.partially_instantiate i c) e.events in
-          (c, respect_constraints m st conss evs c)) all_players in
+          let d = respect_constraints m st conss evs c in
+          if d = None then cache_changed := true ;
+          (c, d)) cache.possible_players.(i) in
       let compatible_list =
         Utils.list_map_filter (fun (c, d) ->
           Option.map (fun b -> (c, Lazy.force b)) d) result_list in
@@ -169,11 +199,16 @@ let search_instantiation m st e =
         List.partition snd compatible_list in
       (List.map fst progress, List.map fst no_progress)) e.players in
   let possible_players =
-    (* TODO: This needs to be cached as this set can only shrink. *)
     (** Possible players for each variable.
      * Players that make the state progress are always put forwards. **)
     Array.map (fun (p, np) ->
-        Utils.shuffle p @ Utils.shuffle np) possible_players_progress_no_progress in
+      Utils.shuffle p @ Utils.shuffle np) possible_players_progress_no_progress in
+  if !cache_changed then (
+    let cache = {
+        possible_other = possible_other_list ;
+        possible_players = possible_players
+      } in
+    State.set_cache st (PMap.add e.id cache (State.get_cache st))) ;
   (** The following array indicates which player variables should be considered
    * first: the one with the fewest number of possibilities. **)
   let redirection_array =

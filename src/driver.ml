@@ -798,8 +798,11 @@ let get_attribute_dependencies s id =
 let get_constructor_dependencies s id =
   PMap.find id s.constructor_dependencies
 
-(** Fill the [event_id] identifier. **)
+(** Fill the [Events.event_id] identifier. **)
 let event_id = Id.new_id_function ()
+
+(** Fill the [Element.id] identifier. **)
+let element_id = Id.new_id_function ()
 
 (** Generates an element from a [state] and a [block]. **)
 let parse_element st element_name status block =
@@ -1255,7 +1258,8 @@ let parse_element st element_name status block =
   ({ Element.status = status ;
      Element.players = elementBase ;
      Element.others = !otherPlayers ;
-     Element.events = evs }, deps)
+     Element.events = evs ;
+     Element.id = element_id () }, deps)
 
 let parse i =
   let (elements, elements_dependencies, import_information) =

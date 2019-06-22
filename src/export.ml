@@ -11,7 +11,7 @@ type state = {
     generic_translation : string Translation.t ;
     constructor_maps : Attribute.constructor_maps ;
     state : State.final ;
-    unfinalised_state : State.t
+    unfinalised_state : unit State.t
   }
 
 (** As the state [s], but there the translation language has moved to
@@ -489,7 +489,7 @@ let from_json i fileName fileContent =
                          ^ "' is not a list.")
       with Not_found ->
         failwith ("Missing field `characters' in file `" ^ fileName ^ "'.") in
-    let state = State.create_state (List.length l) in
+    let state = State.create_state (List.length l) () in
     let (names, state) =
       Utils.list_fold_lefti (fun c (names, state) ->
         let c = Id.from_array c in function

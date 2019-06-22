@@ -17,7 +17,7 @@ type state = {
     constructor_maps : Attribute.constructor_maps
       (** Informations about constructors **) ;
     state : State.final (** The actual generated state. **) ;
-    unfinalised_state : State.t
+    unfinalised_state : unit State.t
       (** A few exports are meant to only export the non-final state. **)
   }
 
@@ -30,7 +30,7 @@ val to_block : state -> 'node InOut.block
 (** Revert [to_json] back to a list of names and a state.
  * The first argument is the file name (to report errors), and the second one
  * its actual content. **)
-val from_json : Driver.import_information -> string -> string -> string list * State.t
+val from_json : Driver.import_information -> string -> string -> string list * unit State.t
 
 (** All the functions of this file are resumed in the following list.
  * Each function is associated two identifiers in [web/translations.json]

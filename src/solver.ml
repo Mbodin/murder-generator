@@ -357,6 +357,7 @@ let solve pause g s o =
   let m = Element.empty_difference in
   (* TODO: Change the value of [m] to consider all the relevant elements given by
    * the constraints provided by the user. *)
+  let s = State.erase_cache s Element.empty_cache in
   let%lwt (g, (s, _), m) = wider_step pause g (s, evaluate_state o s) o m in
-  Lwt.return s
+  Lwt.return (State.erase_cache s ())
 

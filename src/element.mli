@@ -40,12 +40,14 @@ type cell = {
  * index in the cell array.
  * Events must not be directly contradictory: if an event has a
  * constraint preventing an event of a given kind to be after this
- * event, it must not be after it in the list. **)
+ * event, it must not be after it in the list.
+ * Finally, a unique identifier for each event is provided. **)
 type t = {
     status : History.status ;
     players : cell array ;
     others : character_constraint list ;
-    events : int Events.t list
+    events : int Events.t list ;
+    id : Id.t
   }
 
 (** Returns the list of attribute that an element may provide. **)
@@ -58,13 +60,20 @@ val provided_attributes : t -> Attribute.attribute list
  * progress, that is whether there exists at least one attribute value that
  * has been changed to something recognised by [State.attribute_value_progress].
  * The boolean is lazily evaluated. **)
-val compatible_and_progress : Attribute.constructor_maps -> State.t -> t -> character array -> bool Lazy.t option
+val compatible_and_progress : Attribute.constructor_maps -> 'a State.t -> t -> character array -> bool Lazy.t option
+
+(** To speed-up the search for instantiation, a cache is left in the state.
+ * This type describes this cache. **)
+type cache
+
+(** An empty cache to be used at initialisation. **)
+val empty_cache : cache
 
 (** Look for instantiations.
  * The second return value is the result of [compatible_and_progress] on this
  * instantiation.
  * It tries to return an instantiation that progresses. **)
-val search_instantiation : Attribute.constructor_maps -> State.t -> t -> (character array * bool) option
+val search_instantiation : Attribute.constructor_maps -> cache State.t -> t -> (character array * bool) option
 
 (** This type carries information about how the state have been changed
  * by the [apply] function. **)
@@ -100,10 +109,10 @@ val empty_difference : attribute_differences
  * [compatible_and_progress] returns [Some].
  * Once the total number of attribute to be defined is zero, the state can be
  * published. **)
-val apply : Attribute.constructor_maps -> State.t -> t -> character array -> State.t * attribute_differences
+val apply : Attribute.constructor_maps -> 'a State.t -> t -> character array -> 'a State.t * attribute_differences
 
 (** Same as [apply], but create a copy of the state before the application. **)
-val safe_apply : Attribute.constructor_maps -> State.t -> t -> character array -> State.t * attribute_differences
+val safe_apply : Attribute.constructor_maps -> 'a State.t -> t -> character array -> 'a State.t * attribute_differences
 
 (** Get the resulting relation state from an instantiation.
  * The input state is not modified by this function. **)

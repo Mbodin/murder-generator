@@ -165,10 +165,11 @@ let compatible_and_progress m st e inst =
         (lazy (respect_constraints_inst m inst st conss evs c)))
     compatible_others inst
 
-let search_instantiation m st e =
+let search_instantiation m stc e =
+  let st = Utils.get_value stc in
   let all_players = State.all_players st in
   let cache =
-    try PMap.find e.id (State.get_cache st)
+    try PMap.find e.id (Utils.get_cache stc)
     with Not_found -> {
         possible_other = all_players ;
         possible_players = Array.map (fun _ -> all_players) e.players
@@ -272,7 +273,7 @@ let search_instantiation m st e =
         possible_other = possible_other_list ;
         possible_players = possible_players
       } in
-    State.set_cache st (PMap.add e.id cache (State.get_cache st))) ;
+    Utils.set_cache stc (PMap.add e.id cache (Utils.get_cache stc))) ;
   r
 
 (** This type represents the difference of attributes that have been fixed with

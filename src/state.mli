@@ -154,66 +154,57 @@ val get_all_contacts_character : character_state -> character -> (character, (At
  * - a relation state,
  * - a history state.
  * It also carries some cache, which can be updated imperatively. **)
-type 'a t
+type t
 
 (** The state involves non-functional effects.
  * This function creates a copy of the current state. **)
-val copy : 'a t -> 'a t
-
-(** Get the cache of a state. **)
-val get_cache : 'a t -> 'a
-
-(** Non-functionally set the cache of a state. **)
-val set_cache : 'a t -> 'a -> unit
-
-(** Replace the cache by something completely different. **)
-val erase_cache : 'a t -> 'b -> 'b t
+val copy : t -> t
 
 (** Get the [relation_state] component of the state. **)
-val get_relation_state : 'a t -> relation_state
+val get_relation_state : t -> relation_state
 
 (** Read the relation between two different characters in a state. **)
-val read_relation : 'a t -> character -> character -> Relation.t
+val read_relation : t -> character -> character -> Relation.t
 
 (** Non-functionally update a relation in a state.
  * The two characters have to be different.
  * This function writes both directions of the relation
  * (that is, there is no need to call both [write_relation s c1 c2 r]
  * and [write_relation s c2 c1 (Relation.reverse r)] at the same time. **)
-val write_relation : 'a t -> character -> character -> Relation.t -> unit
+val write_relation : t -> character -> character -> Relation.t -> unit
 
 (** As [write_relation], but compose the new relation with the already
  * existing one. **)
-val add_relation : 'a t -> character -> character -> Relation.t -> unit
+val add_relation : t -> character -> character -> Relation.t -> unit
 
 (** Create an empty state for the given number n of characters,
  * each indexed from [0] to [n - 1].
  * An initial value for the state has to be given. **)
-val create_state : int -> 'a -> 'a t
+val create_state : int -> t
 
 (** Get the character state component of a state. **)
-val get_character_state : 'a t -> character_state
+val get_character_state : t -> character_state
 
 (** Get the history state component of a state. **)
-val get_history_state : 'a t -> History.t
+val get_history_state : t -> History.t
 
 (** Set the history state component of a state. **)
-val set_history_state : 'a t -> History.t -> 'a t
+val set_history_state : t -> History.t -> t
 
 (** Call [History.apply] on an events. **)
-val apply_event : 'a t -> History.status -> character Events.t -> 'a t
+val apply_event : t -> History.status -> character Events.t -> t
 
 (** Call [History.lapply] on a set of events. **)
-val apply_events : 'a t -> History.status -> character Events.t list -> 'a t
+val apply_events : t -> History.status -> character Events.t list -> t
 
 (** Return the size of the state, that its number of players. **)
-val number_of_player : 'a t -> int
+val number_of_player : t -> int
 
 (** Similar to [number_of_player], but from a relation state. **)
 val number_of_player_relation_state : relation_state -> int
 
 (** Return the list of all players defined in this state. **)
-val all_players : 'a t -> character list
+val all_players : t -> character list
 
 (** Similar to [all_players], but from a relation state. **)
 val all_players_relation : relation_state -> character list
@@ -229,7 +220,7 @@ type final
 
 (** Fixes a state to its final state.
  * It needs the date of the played scenario. **)
-val finalise : 'a t -> Date.t -> final
+val finalise : t -> Date.t -> final
 
 
 (** Similar to [get_attributes_character], but for the finalised state.

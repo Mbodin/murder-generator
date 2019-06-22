@@ -1,4 +1,11 @@
 
+(** Cache is used a lot in this file.
+ * We thus introduce the following shortcuts functions to manipulate it. **)
+let getv = Utils.get_value
+let getc = Utils.get_cache
+let updatec s s' =
+  Utils.cached s' (getc s)
+
 type global = {
     branch_exploration : float ;
     element_register : Element.t Id.map
@@ -62,10 +69,11 @@ let grade g o s e =
   Utils.apply_option (Element.search_instantiation g.constructor_informations s e)
     (fun (inst, progress) ->
       let new_relations =
-        Element.apply_relations (State.get_relation_state s) e inst in
+        Element.apply_relations (State.get_relation_state (getv s)) e inst in
       let ev = evaluate o new_relations in
       if Utils.assert_defend then (
-        let (s', m) = Element.safe_apply g.constructor_informations s e inst in
+        let (s', m) =
+          Element.safe_apply g.constructor_informations (getv s) e inst in
         assert (ev = evaluate_state o s')) ;
       (inst, progress, ev))
 
@@ -117,7 +125,7 @@ let high_get_branch g d mi ma =
  * information about the applied events (event identifier, instantiatiation,
  * and grades), as well as a set of unapplyable events. **)
 let step g o optimistic greedy (s, evs) p =
-  if Utils.assert_defend then assert (evs = evaluate_state o s) ;
+  if Utils.assert_defend then assert (evs = evaluate_state o (getv s)) ;
   (** Extracts [n] elements from the pool, filtering out the ones that don’t
    * apply, and calling [f] on the ones that does whilst increasing the
    * evaluation.
@@ -148,12 +156,14 @@ let step g o optimistic greedy (s, evs) p =
   match Utils.argmax (fun (e1, inst1, g1) (e2, inst2, g2) ->
           compare_grade evs g1 g2) l with
   | Some (e, inst, (progress, ev)) ->
-    (p, Some (Element.safe_apply g.constructor_informations s e inst, ev),
-     unapplyable)
+    let (s', m) = Element.safe_apply g.constructor_informations (getv s) e inst in
+    (p, Some ((updatec s s', m), ev), unapplyable)
   | None ->
     (** We then move the the greedy pick. **)
     aux None unapplyable (fun _ unapplyable p e inst progress ev ->
-        (p, Some (Element.safe_apply g.constructor_informations s e inst, ev),
+        let (s', m) =
+          Element.safe_apply g.constructor_informations (getv s) e inst in
+        (p, Some ((updatec s s', m), ev),
          unapplyable))
       p greedy
 
@@ -176,7 +186,7 @@ let weighted_step g o parameter (s, evs) p =
  * are just the first ones.
  * Returns the new global [g] with its [all_elements] updated. **)
 let add_random g o optimistic (s, evs) =
-  if Utils.assert_defend then assert (evs = evaluate_state o s) ;
+  if Utils.assert_defend then assert (evs = evaluate_state o (getv s)) ;
   let (g, l) =
     let rec aux g acc = function
       | 0 -> (g, acc)
@@ -196,7 +206,8 @@ let add_random g o optimistic (s, evs) =
   match Utils.argmax (fun (e1, inst1, g1) (e2, inst2, g2) ->
           compare_grade evs g1 g2) l with
   | Some (e, inst, (progress, ev)) ->
-    (g, Element.safe_apply g.constructor_informations s e inst, ev)
+    let (s', m) = Element.safe_apply g.constructor_informations (getv s) e inst in
+    (g, (updatec s s', m), ev)
   | None -> (g, (s, Element.empty_difference), evs)
 
 (** Take a set of elements and consider them in order.
@@ -212,9 +223,10 @@ let apply_elements_and_return_the_other g o (s, evs) m =
     | None -> ((s, evs), m, PSet.add ep do_not_apply)
     | Some (inst, progress, ev) ->
       if progress && ev >= evs then
-        let (s, m') = Element.safe_apply g.constructor_informations s e inst in
+        let (s', m') =
+          Element.safe_apply g.constructor_informations (getv s) e inst in
         let m = Element.merge_attribute_differences m m' in
-        ((s, ev), m, do_not_apply)
+        ((updatec s s', ev), m, do_not_apply)
       else ((s, evs), m, do_not_apply)) ((s, evs), m, PSet.empty)
 
 (** Call the functions [weighted_step] and [add_random], trying
@@ -292,12 +304,13 @@ let final g (s, evs) o m =
         if evs' < evs then
           aux g (s, evs) m acc l
         else (
-          let (s', m') = Element.safe_apply g.constructor_informations s e inst in
+          let (s', m') =
+            Element.safe_apply g.constructor_informations (getv s) e inst in
           if Element.difference_weigth m' < 0 then
             aux g (s, evs) m acc l
           else
             let m = Element.merge_attribute_differences m m' in
-            aux g (s', evs') m (e :: acc) l
+            aux g ((updatec s s'), evs') m (e :: acc) l
         ) in
   let rec repeat g (s, evs) m l = function
     | 0 -> (g, (s, evs), m)
@@ -317,7 +330,7 @@ let wider_step pause g (s, evs) o m =
       Lwt.return (final g (s, evs) o m)
     else (
       pause () ;%lwt
-      if Utils.assert_defend then assert (evs = evaluate_state o s) ;
+      if Utils.assert_defend then assert (evs = evaluate_state o (getv s)) ;
       let rec compute g (s, evs) = function
         | 0 -> Lwt.return []
         | i ->
@@ -357,7 +370,7 @@ let solve pause g s o =
   let m = Element.empty_difference in
   (* TODO: Change the value of [m] to consider all the relevant elements given by
    * the constraints provided by the user. *)
-  let s = State.erase_cache s Element.empty_cache in
-  let%lwt (g, (s, _), m) = wider_step pause g (s, evaluate_state o s) o m in
-  Lwt.return (State.erase_cache s ())
+  let s = Utils.cached s Element.empty_cache in
+  let%lwt (g, (s, _), m) = wider_step pause g (s, evaluate_state o (getv s)) o m in
+  Lwt.return (getv s)
 

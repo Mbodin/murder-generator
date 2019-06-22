@@ -451,7 +451,7 @@ let main =
               State.complexity = complexity ;
               State.difficulty = difficulty
             }) parameters.player_information) in
-        let state = State.create_state parameters.player_number () in
+        let state = State.create_state parameters.player_number in
         (* TODO: Update the state according to the miscellaneous player
          * informations. *)
         Solver.solve IO.pause global state objectives in
@@ -513,7 +513,7 @@ let main =
           Export.generic_translation = translation ;
           Export.constructor_maps = Driver.get_constructor_maps data ;
           Export.state = final ;
-          Export.unfinalised_state = State.erase_cache state ()
+          Export.unfinalised_state = state
         } in
       let html = PSet.mem "html" parameters.chosen_productions in
       let chosen_productions =

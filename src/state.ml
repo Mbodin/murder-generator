@@ -215,41 +215,43 @@ let get_all_contact_character st c ct =
 let get_all_contacts_character st c =
   PMap.map Utils.pmap_to_list (snd st.(Id.to_array c))
 
-type 'a t =
-  character_state * relation_state * History.t * 'a ref
+type t = {
+    characters : character_state ;
+    relations : relation_state ;
+    history : History.t
+  }
 
-let copy (st, a, h, cache) =
-  (Array.copy st, copy_relation_state a, History.copy h, ref !cache)
+let copy st = {
+    characters = Array.copy st.characters ;
+    relations = copy_relation_state st.relations ;
+    history = History.copy st.history
+  }
 
-let get_cache (_, _, _, cache) = !cache
-
-let set_cache (st, a, h, cache) v = cache := v
-
-let erase_cache (st, a, h, _) cache = (st, a, h, ref cache)
-
-let get_relation_state (_, a, _, _) = a
+let get_relation_state st = st.relations
 
 let read_relation st = read_relation_state (get_relation_state st)
 let write_relation st = write_relation_state (get_relation_state st)
 let add_relation st = add_relation_state (get_relation_state st)
 
-let create_state n cache =
-  (create_character_state n, create_relation_state n,
-   History.create_state n, ref cache)
+let create_state n = {
+    characters = create_character_state n ;
+    relations = create_relation_state n ;
+    history = History.create_state n
+  }
 
-let get_character_state (st, _, _, _) = st
+let get_character_state st = st.characters
 
-let get_history_state (_, _, h, _) = h
+let get_history_state st = st.history
 
-let set_history_state (st, a, _, cache) h = (st, a, h, cache)
+let set_history_state st h = { st with history = h }
 
-let apply_event (st, a, h, cache) status ev =
-  (st, a, History.apply h status ev, cache)
+let apply_event st status ev =
+  { st with history = History.apply st.history status ev }
 
-let apply_events (st, a, h, cache) status evs =
-  (st, a, History.lapply h status evs, cache)
+let apply_events st status evs =
+  { st with history = History.lapply st.history status evs }
 
-let number_of_player (st, _, _, _) = Array.length st
+let number_of_player st = Array.length st.characters
 
 let all_players st =
   History.all_players_length (number_of_player st)
@@ -268,10 +270,12 @@ let select_value = function
   | Fixed_value (l, strict) -> (Utils.select_any l, true)
   | One_value_of l -> (Utils.select_any l, false)
 
-let finalise (cst, rst, est, _) d =
+let finalise st d =
   (Array.map (fun (a, c) ->
     (PMap.map select_value a,
-     PMap.map (PMap.map select_value) c)) cst, rst, History.finalise est d)
+     PMap.map (PMap.map select_value) c)) st.characters,
+   st.relations,
+   History.finalise st.history d)
 
 let get_attribute_character_final (cst, _, _) =
   get_attribute_character cst

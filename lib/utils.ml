@@ -33,6 +33,17 @@ let error_monad o f =
   | Right v -> f v
 
 
+type ('value, 'cache) cached = 'value * 'cache ref
+
+let cached v c = (v, ref c)
+
+let get_value = fst
+
+let get_cache (_, c) = !c
+
+let set_cache (_, c) v = c := v
+
+
 let safe_tail = function
   | [] -> []
   | _ :: l -> l

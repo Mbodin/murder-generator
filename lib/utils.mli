@@ -31,6 +31,20 @@ type ('a, 'b) plus =
 (** The following function considers the Left-constructor to represent an error. **)
 val error_monad : ('a, 'b) plus -> ('b -> ('a, 'c) plus) -> ('a, 'c) plus
 
+(** A value associated with some cache. **)
+type ('value, 'cache) cached
+
+(** A constructor for [cached] values. **)
+val cached : 'value -> 'cache -> ('value, 'cache) cached
+
+(** Get the value without the cache. **)
+val get_value : ('value, 'cache) cached -> 'value
+
+(** Get the current cache associated with a value. **)
+val get_cache : ('value, 'cache) cached -> 'cache
+
+(** Non-functionnally update a cache. **)
+val set_cache : ('value, 'cache) cached -> 'cache -> unit
 
 (** Return the tail of the list, the empty list being associated
  * with the empty list. **)

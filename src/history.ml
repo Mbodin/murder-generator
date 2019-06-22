@@ -230,11 +230,7 @@ let lcompatible_and_progress st el =
         else
           (** There is no conflict for this event: we can check whether
            * it would make things progress. **)
-          (* TODO: This seems like a lot of computation that may just
-           * useless if an event afterwards actually doesn’t apply:
-           * the computation of whether something progresses should
-           * be done in a separate loop for performance. *)
-          aux (r || PMap.foldi (fun c ks r ->
+          aux (lazy (Lazy.force r || PMap.foldi (fun c ks r ->
             r || let m =
                    try PMap.find c st.constraints_some
                    with Not_found -> PMap.empty in
@@ -244,8 +240,8 @@ let lcompatible_and_progress st el =
                             with Not_found -> (PSet.empty, PSet.empty) in
                           not (PSet.is_empty (PSet.inter before sb))
                           || not (PSet.is_empty (PSet.inter after sa)))
-                   false ks) e.Events.event_kinds false) l in
-    aux false (get_full_constraints st el)
+                   false ks) e.Events.event_kinds false)) l in
+    aux (lazy false) (get_full_constraints st el)
 
 let compatible_and_progress st e = lcompatible_and_progress st [e]
 

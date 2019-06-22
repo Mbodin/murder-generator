@@ -56,8 +56,9 @@ val provided_attributes : t -> Attribute.attribute list
  * If not, it returns [None].
  * If the element can be applied, it states whether the element is making
  * progress, that is whether there exists at least one attribute value that
- * has been changed to something recognised by [State.attribute_value_progress]. **)
-val compatible_and_progress : Attribute.constructor_maps -> State.t -> t -> character array -> bool option
+ * has been changed to something recognised by [State.attribute_value_progress].
+ * The boolean is lazily evaluated. **)
+val compatible_and_progress : Attribute.constructor_maps -> State.t -> t -> character array -> bool Lazy.t option
 
 (** Look for instantiations.
  * The second return value is the result of [compatible_and_progress] on this

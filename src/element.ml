@@ -42,20 +42,21 @@ let provided_attributes e =
 
 (** States whether [v1] and [v2] are compatible and make some progress.
  * The return value is expressed as for [compatible_and_progress]:
- * [None] means that it is not compatible, [Some true] that it is
- * compatible and progress, and [Some false] that it is compatible
+ * [None] means that it is not compatible, [Some (lazy true)] that it is
+ * compatible and progress, and [Some (lazy false)] that it is compatible
  * but does not progress.
  * As for [State.compose_attribute_value], is takes as an argument a
  * function stating whether two base value are compatible. **)
 let compatible_and_progress_attribute_value compatible v1 v2 =
-  Option.map (State.attribute_value_progress v1)
-    (State.compose_attribute_value compatible v1 v2)
+  Utils.apply_option (State.compose_attribute_value compatible v1 v2)
+    (fun v' -> lazy (State.attribute_value_progress v1 v'))
 
-(** Merges two results of [compatible_and_progress]. **)
+(** Merges two results of [compatible_and_progress].
+ * The second argument is meant to be lazily evaluated. **)
 let merge_progress b1 b2 =
-  match b1, b2 with
-  | None, _ | _, None -> None
-  | Some b1, Some b2 -> Some (b1 || b2)
+  Utils.if_option b1 (fun b1 ->
+    Utils.apply_option (Lazy.force b2) (fun b2 ->
+      lazy (Lazy.force b1 || Lazy.force b2)))
 
 (** Checks whether the constraints [conss] are valid for the
  * character [c] in the state [st].
@@ -66,16 +67,16 @@ let respect_constraints_base f m st conss c =
   let cst = State.get_character_state st in
   List.fold_left (fun b cons ->
     merge_progress b
-     (match cons with
-     | Attribute (a, v1) ->
-       (match State.get_attribute_character cst c a with
-        | None -> Some false
-        | Some v2 ->
-          let compatible =
-            Attribute.PlayerAttribute.is_compatible m.Attribute.player a in
-          compatible_and_progress_attribute_value compatible v1 v2)
-     | Contact (con, cha, v) ->
-       f con cha v)) (Some false) conss
+     (lazy (match cons with
+      | Attribute (a, v1) ->
+        (match State.get_attribute_character cst c a with
+         | None -> Some (lazy false)
+         | Some v2 ->
+           let compatible =
+             Attribute.PlayerAttribute.is_compatible m.Attribute.player a in
+           compatible_and_progress_attribute_value compatible v1 v2)
+      | Contact (con, cha, v) ->
+        f con cha v))) (Some (lazy false)) conss
 
 (** Checks whether the constraints [conss] are valid for the
  * character [c] in the state [st].
@@ -85,7 +86,7 @@ let respect_constraints_events f m st conss evs c =
   let hst = State.get_history_state st in
   merge_progress
     (respect_constraints_base f m st conss c)
-    (History.lcompatible_and_progress hst evs)
+    (lazy (History.lcompatible_and_progress hst evs))
 
 (** Checks whether the constraints [conss] are locally valid for the
  * character [c] in the character state [cst].
@@ -93,7 +94,7 @@ let respect_constraints_events f m st conss evs c =
  * Only local constraints are considered: no constraint depending on the
  * instantiation are checked at this point. **)
 let respect_constraints =
-  respect_constraints_events (fun _ _ _ -> Some false)
+  respect_constraints_events (fun _ _ _ -> Some (lazy false))
 
 (** Returns all the players of the state [st] that are not in the
  * instantiation [inst]. **)
@@ -106,7 +107,7 @@ let check_contact m inst st c con cha v1 =
   let cst = State.get_character_state st in
   let check cha =
     match State.get_contact_character cst c con cha with
-    | None -> Some false
+    | None -> Some (lazy false)
     | Some v2 ->
       let compatible =
         Attribute.ContactAttribute.is_compatible m.Attribute.contact con in
@@ -118,7 +119,8 @@ let check_contact m inst st c con cha v1 =
     check cha
   | None ->
     List.fold_left (fun acc cha ->
-      merge_progress acc (check cha)) (Some false) (other_players st inst)
+        merge_progress acc (lazy (check cha)))
+      (Some (lazy false)) (other_players st inst)
 
 (** As [respect_constraints], but takes an instanciation and thus also checks
  * global constraints. **)
@@ -134,13 +136,15 @@ let compatible_and_progress m st e inst =
   let compatible_others =
     List.fold_left (fun acc c ->
         merge_progress acc
-          (respect_constraints_base (check_contact m inst st c) m st e.others c))
-      (Some false) (other_players st inst) in
+          (lazy (respect_constraints_base
+                  (check_contact m inst st c) m st e.others c)))
+      (Some (lazy false)) (other_players st inst) in
   Utils.array_fold_lefti (fun i acc c ->
-    let conss = e.players.(i).constraints in
-    let evs = instantiate_events e inst in
-    merge_progress acc
-      (respect_constraints_inst m inst st conss evs c)) compatible_others inst
+      let conss = e.players.(i).constraints in
+      let evs = instantiate_events e inst in
+      merge_progress acc
+        (lazy (respect_constraints_inst m inst st conss evs c)))
+    compatible_others inst
 
 let search_instantiation m st e =
   let all_players = State.all_players st in
@@ -159,9 +163,10 @@ let search_instantiation m st e =
             Utils.list_map_filter (Events.partially_instantiate i c) e.events in
           (c, respect_constraints m st conss evs c)) all_players in
       let compatible_list =
-        List.filter (fun (_, d) -> d <> None) result_list in
+        Utils.list_map_filter (fun (c, d) ->
+          Option.map (fun b -> (c, Lazy.force b)) d) result_list in
       let progress, no_progress =
-        List.partition (fun (_, d) -> d = Some true) compatible_list in
+        List.partition snd compatible_list in
       (List.map fst progress, List.map fst no_progress)) e.players in
   let possible_players =
     (* TODO: This needs to be cached as this set can only shrink. *)
@@ -190,7 +195,7 @@ let search_instantiation m st e =
         inst in
       (match compatible_and_progress m st e inst with
        | None -> None
-       | Some progress -> Some (inst, progress))
+       | Some progress -> Some (inst, Lazy.force progress))
     | i :: redirection_list ->
       let possible = possible_players.(i) in
       let partial_instantiation_set = PSet.from_list partial_instantiation in
@@ -228,92 +233,6 @@ let search_instantiation m st e =
             aux' l in
       aux' possible in
   aux [] (Array.to_list redirection_array)
-
-(* This is a failed attempty to optimise [search_instantiation].
- * I expected that the local constraint were overevaluated in the first version,
- * and that it might be better to lazily evaluate them.
- * However, in practice, this function evaluates more than 80% of the delayed
- * evaluation, with an additionnal cost due to the fact that we can’t prioritise
- * the evaluation of characters.
- * Overall, it is actually slower than the original version.
- * I’m however leaving this slower version here in case that someone would like
- * to make new optimisations and would like to have some inspiration.
-let search_instantiation m st e =
-  let all_players = State.all_players st in
-  let num_player = State.number_of_player st in
-  (** To keep local check operations to a minimum, we lazily evaluate them. **)
-  (** Players that can be placed as [e.others]. **)
-  let (tmp_respect_other, respect_other) =
-    (** This part is speed-critical.
-     * I thus decided to avoid creating avoidable closures on the fly. **)
-    let a = Array.map (fun _ -> None) (Array.of_list all_players) in (a, fun c ->
-    match a.(Id.to_array c) with
-    | None ->
-      let r = respect_constraints m st e.others [] c in
-      a.(Id.to_array c) <- Some r ;
-      r <> None
-    | Some r -> r <> None) in
-  let (tmp_respect_ith, respect_ith) =
-    let a =
-      Array.map (fun ei ->
-        Array.map (fun c -> None)
-          (Array.of_list all_players)) e.players in (a, fun i c ->
-      match a.(i).(Id.to_array c) with
-      | None ->
-        let conss = e.players.(i).constraints in
-        let evs =
-          Utils.list_map_filter (Events.partially_instantiate i c) e.events in
-        let r = respect_constraints m st conss evs c in
-        a.(i).(Id.to_array c) <- Some r ;
-        r
-      | Some r -> r) in
-  (** To avoid always picking the same players, their order is randomized. **)
-  let redirection = Utils.shuffle all_players in
-  (** The function [possible from seen i] returns a player [c] from the [from] set,
-   * such that [c] is not in the [seen] set and such that [respect_ith i c] returns
-   * [Some].
-   * It also returns prioritarily the ones for which is returns [Some true].
-   * Returns [None] if no player respect this constraint. **)
-  let possible from seen i =
-    let rec aux maybe = function
-      | [] -> maybe
-      | c :: redirection ->
-        if PSet.mem c seen then
-          aux maybe redirection
-        else
-          match respect_ith i c with
-          | None -> aux maybe redirection
-          | Some true -> Some (c, redirection)
-          | Some false ->
-            let maybe = if maybe = None then Some (c, redirection) else maybe in
-            aux maybe redirection in
-    aux None from in
-  let rec aux inst chosen = function
-    | [] ->
-      let inst = Array.of_list (List.rev inst) in
-      Utils.apply_option (compatible_and_progress m st e inst)
-        (fun progress ->
-          (inst, progress))
-    | i :: redirection_list ->
-      let rec aux' redirection chosen_and_not_working =
-        Utils.if_option (possible redirection chosen_and_not_working i)
-          (fun (p, redirection) ->
-            (** We check that further instantiations of [e.others] are still
-             * possible.  That is that there is still room for characters
-             * that can be further instanciated and thus not be placed in the
-             * [e.others] group. **)
-            let n =
-              Utils.count (fun p' ->
-                p = p'
-                || PSet.mem p' chosen
-                || respect_other p') all_players in
-            if n >= i + 1 + num_player - Array.length e.players then
-              match aux (p :: inst) (PSet.add p chosen) redirection_list with
-              | None -> aux' redirection (PSet.add p chosen_and_not_working)
-              | Some r -> Some r
-            else aux' redirection (PSet.add p chosen_and_not_working)) in
-      aux' redirection chosen in
-  aux [] PSet.empty (Utils.seq (Array.length e.players)) *)
 
 (** This type represents the difference of attributes that have been fixed with
  * the ones that have been created, as a number for each attribute.

@@ -49,11 +49,11 @@ type status =
  * with the already present constraints, and finally [Some true] means
  * that this event not only applies, but it helps the already present
  * events. **)
-val compatible_and_progress : t -> character Events.t -> bool option
+val compatible_and_progress : t -> character Events.t -> bool Lazy.t option
 
 (** States whether a list of events is compatible with a timeline,
  * assuming that each event has to be in this particular order. **)
-val lcompatible_and_progress : t -> character Events.t list -> bool option
+val lcompatible_and_progress : t -> character Events.t list -> bool Lazy.t option
 
 (** Apply an event to a timeline.
  * This function should only be called on events for which

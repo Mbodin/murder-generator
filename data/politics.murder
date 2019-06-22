@@ -197,7 +197,7 @@ begin
 
     sentence
     begin
-      translation fr K:+empty:mas "Vive la reine !"
+      translation fr K:+empty:fem "Vive la reine !"
       translation fr K:+empty "Vive le roi !"
       translation en K:+empty:fem "Long live to the queen!"
       translation en K:+empty "Long live to the king!"

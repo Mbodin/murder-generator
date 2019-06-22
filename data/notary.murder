@@ -321,7 +321,8 @@ begin
   provide event lasting minutes to A and B
   begin
     event MoneyExchange
-    assume no event providing attribute Job to B before
+    assume no event Work to B before
+    assume event providing attribute Job to B after
 
     provide contact FinancialDebt from B to A as Old
 
@@ -341,6 +342,9 @@ begin
   end
 
   provide phantom event lasting years to B
+  begin
+    assume no event providing attribute Job to B after
+  end
 
   provide event lasting years to B
   begin

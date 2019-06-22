@@ -46,11 +46,9 @@ element BecameSellerForHumanContact
 begin
   let P be player
 
-  provide event lasting weeks to P
+  provide event lasting days to P
   begin
     event Work
-
-    provide attribute Job to P as Seller
 
     sentence
     begin
@@ -65,6 +63,27 @@ begin
       translation fr P:+sbeg:+pro " a donc naturellement décidé de devenir commerçant."
       translation en "Thus, " P:+pro " naturally decided to be seller."
       translation eo P:+sbeg:+pro " do nature decidis iĝi komercanton."
+    end
+  end
+
+  provide event lasting weeks to P
+  begin
+    event Work
+
+    provide attribute Job to P as Seller
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " a maintenant ouvert une boutique."
+      translation en P:+sbeg:+pro " now opened a shop."
+      translation eo P:+sbeg:+pro " malfermis vendejon."
+    end
+
+    sentence
+    begin
+      translation fr "Espérons que le commerce tourne !"
+      translation en "Let us hope that the market will follow!"
+      translation eo "Ni esperu ke la komerco nun funkciu!"
     end
   end
 end

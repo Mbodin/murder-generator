@@ -203,12 +203,6 @@ let search_instantiation m st e =
      * Players that make the state progress are always put forwards. **)
     Array.map (fun (p, np) ->
       Utils.shuffle p @ Utils.shuffle np) possible_players_progress_no_progress in
-  if !cache_changed then (
-    let cache = {
-        possible_other = possible_other_list ;
-        possible_players = possible_players
-      } in
-    State.set_cache st (PMap.add e.id cache (State.get_cache st))) ;
   (** The following array indicates which player variables should be considered
    * first: the one with the fewest number of possibilities. **)
   let redirection_array =
@@ -220,7 +214,7 @@ let search_instantiation m st e =
       let lpj = List.length pj in
       compare lpi lpj) redirection_array ;
     redirection_array in
-  let rec aux partial_instantiation = function
+  let rec aux no_choice_yet partial_instantiation = function
     | [] ->
       let inst =
         let inst = Array.make (Array.length e.players) (Id.from_array (-1)) in
@@ -254,20 +248,32 @@ let search_instantiation m st e =
       let rec aux' = function
         | [] -> None (** No instantiation led to a compatible state. **)
         | j :: l ->
-          match aux (j :: partial_instantiation) redirection_list with
+          let no_choice_yet' =
+            (** If the tail is non-empty, we are making a choice here. **)
+            if l = [] then no_choice_yet else false in
+          match aux no_choice_yet' (j :: partial_instantiation)
+                  redirection_list with
           | Some r -> Some r
           | None ->
-            (* TODO: if [partial_instantiation = []], this means that we are
-             * considering the first variable, which can definitely not be [j]
-             * as all other cases fail to lead to an instantiation.
-             * This means that we can remove [j] from the cache in the possible
-             * values for the first variable.
-             * We can also do that if all the previous instanciated variables
-             * have a [possible] set of size exactly [1]: the best way is thus
-             * to simply propagate a boolean. *)
+            if no_choice_yet then (
+              (** In this case, we haven’t made a real choice in the previous player
+               * instantiations, and we just learnt that [j] is not a valid
+               * instantiation for the [i]th player of the element [e].
+               * This means that we can rule out [j] definitely in this position
+               * in future choices. **)
+              possible_players.(i) <- List.remove possible_players.(i) j ;
+              cache_changed := true
+            ) ;
             aux' l in
       aux' possible in
-  aux [] (Array.to_list redirection_array)
+  let r = aux true [] (Array.to_list redirection_array) in
+  if !cache_changed then (
+    let cache = {
+        possible_other = possible_other_list ;
+        possible_players = possible_players
+      } in
+    State.set_cache st (PMap.add e.id cache (State.get_cache st))) ;
+  r
 
 (** This type represents the difference of attributes that have been fixed with
  * the ones that have been created, as a number for each attribute.

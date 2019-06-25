@@ -340,13 +340,13 @@ let rec block_node b =
       let channel = open_out fileName in
       output_string channel (content ()) ;
       close_out channel)) link
-  | InOut.Table (headers, content) -> fun link ->
+  | InOut.Table (classes, headers, content) -> fun link ->
     let print_line l =
       Print.push_prefix ("-") ;
       Print.push_suffix ("-") ;
       Print.clearline () ;
       Print.separator '-' ;
-      List.iter (fun n ->
+      List.iter (fun (n, _) ->
         Print.push_center () ;
         block_node n link ;
         Print.clearline () ;
@@ -363,7 +363,7 @@ let rec block_node b =
     Print.separator '=' ;
     Print.clearline () ;
     Print.separator '=' ;
-    List.iter (fun line ->
+    List.iter (fun (classes, line) ->
       print_line line ;
       Print.clearline () ;
       Print.separator '=') content ;

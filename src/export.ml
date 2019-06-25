@@ -271,22 +271,37 @@ let to_block s =
                          ^ __LOC__ ^ ".")
       (Translation.translate s.generic_translation s.language key) in
   let tr_players = translation_players s in
-  let print_event e =
-    InOut.Div (InOut.Normal, [
-        InOut.List (false,
-          List.map (fun text -> InOut.Text text)
-            (translate_event s tr_players e.History.event)) ;
-        InOut.P [
-            InOut.Text (Date.orgmode_range
-              e.History.event_begin e.History.event_end) ;
-            InOut.Space ;
-            InOut.Text ("("
-              ^ String.concat ", "
-                  (List.map (get_name s)
-                     (PSet.to_list e.History.event.Events.event_attendees))
-              ^ ")")
-          ] ;
-      ]) in
+  let print_events l =
+    (* FIXME
+    let print_event e =
+      InOut.Div (InOut.Normal, [
+          InOut.List (false,
+            List.map (fun text -> InOut.Text text)
+              (translate_event s tr_players e.History.event)) ;
+          InOut.P [
+              InOut.Text (Date.orgmode_range
+                e.History.event_begin e.History.event_end) ;
+              InOut.Space ;
+              InOut.Text ("("
+                ^ String.concat ", "
+                    (List.map (get_name s)
+                       (PSet.to_list e.History.event.Events.event_attendees))
+                ^ ")")
+            ] ;
+        ]) in
+    InOut.List (true, List.map print_event l)*)
+    let nb_event_types = List.length Events.all_event_type in
+    let header =
+      (InOut.Text (get_translation "Year"), InOut.default)
+      :: (InOut.Text (get_translation "Month"), InOut.default)
+      :: (InOut.Text (get_translation "Day"), InOut.default)
+      :: (InOut.Text (get_translation "Time"), InOut.default)
+      :: List.map (fun name ->
+           (InOut.Text name, { InOut.default with col = nb_event_types })) s.names
+      @ [(InOut.Text (get_translation "eventDescription"), InOut.default)] in
+    let content =
+      [] (* TODO *) in
+    InOut.Table (["timeline"], header, content) in
   let print_attributes c =
     InOut.List (true,
       PMap.foldi (fun a (v, fixed) l ->
@@ -321,8 +336,7 @@ let to_block s =
               let c = Id.from_array c in
               InOut.FoldableBlock (false, name, print_contacts c)) s.names)) ;
           InOut.FoldableBlock (false, get_translation "GMEvents",
-            InOut.List (true,
-              List.map print_event (State.get_history_final s.state)))
+            print_events (State.get_history_final s.state))
         ]))
     :: List.mapi (fun c name ->
          let c = Id.from_array c in
@@ -333,11 +347,10 @@ let to_block s =
                InOut.FoldableBlock (true, get_translation "characterContacts",
                  print_contacts c) ;
                InOut.FoldableBlock (true, get_translation "characterEvents",
-                 InOut.List (true,
-                   Utils.list_map_filter (fun e ->
-                     if PSet.mem c e.History.event.Events.event_attendees then
-                       Some (print_event e)
-                     else None) (State.get_history_final s.state)))
+                 print_events (Utils.list_map_filter (fun e ->
+                   if PSet.mem c e.History.event.Events.event_attendees then
+                     Some e
+                   else None) (State.get_history_final s.state)))
              ]))) s.names)
 
 let to_org s =

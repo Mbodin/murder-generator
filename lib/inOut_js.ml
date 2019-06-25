@@ -134,20 +134,33 @@ let rec block_node =
     let a = block_node (Link (text, Js.to_string url)) in
     ignore (a##setAttribute (Js.string "download") (Js.string fileName)) ;
     a
-  | InOut.Table (headers, content) ->
+  | InOut.Table (classes, headers, content) ->
+    let apply_classes n =
+      List.iter (fun str -> n##.classList##add (Js.string str)) in
+    let apply_options o c =
+      c##.rowSpan := o.InOut.row ;
+      c##.colSpan := o.InOut.col ;
+      apply_classes c o.InOut.classes ;
+      c in
+    let appendChilds_options f e =
+      List.iter (fun (b, o) ->
+        let n = apply_options o (f (block_node b)) in
+        ignore (Dom.appendChild e n)) in
     let table = Dom_html.createTable document in
+    apply_classes table classes ;
     let header = Dom_html.createTr document in
     ignore (Dom.appendChild table header) ;
-    appendChilds (fun n ->
+    appendChilds_options (fun n ->
       let th = Dom_html.createTh document in
       ignore (Dom.appendChild th n) ;
       th) header headers ;
-    List.iter (fun l ->
+    List.iter (fun (classes, l) ->
       let line = Dom_html.createTr document in
       ignore (Dom.appendChild table line) ;
-      appendChilds (fun n ->
+      appendChilds_options (fun n ->
         let td = Dom_html.createTd document in
         ignore (Dom.appendChild td n) ;
+        apply_classes td classes ;
         td) line l) content ;
     (table :> Dom_html.element Js.t)
   | InOut.Node n -> n

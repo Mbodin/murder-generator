@@ -90,6 +90,18 @@ let rec month_day_inv y m d =
         else aux (d + c) (m - 1) l in
     aux d m (months y)
 
+let year (y, _, _) = y
+
+let month d =
+  fst (month_day d)
+
+let day d =
+  snd (month_day d)
+
+let hour (_, _, m) = m / 60
+
+let minute (_, _, m) = m mod 60
+
 let iso8601 (y, d, m) =
   let (month, day) = month_day (y, d, m) in
   let y = Utils.positive_mod y 10_000 in

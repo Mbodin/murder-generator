@@ -467,8 +467,7 @@ let finalise st now =
                       ^ String.concat ", " (List.map (fun e ->
                             Events.print_event (get_event st e))
                           not_ready)) ;
-          aux acc seen not_ready ready
-        )
+          aux acc seen not_ready ready)
       | e :: l ->
         if PSet.mem e seen then aux acc seen next l
         else (

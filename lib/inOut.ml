@@ -4,6 +4,18 @@ type layout =
   | Centered
   | Inlined
 
+type cell_option = {
+    row : int ;
+    col : int ;
+    classes : string list
+  }
+
+let default = {
+    row = 1 ;
+    col = 1 ;
+    classes = []
+  }
+
 type 'node block =
   | Div of layout * 'node block list
   | P of 'node block list
@@ -14,7 +26,9 @@ type 'node block =
   | Link of string * string
   | LinkContinuation of bool * string * (unit -> unit)
   | LinkFile of string * string * string * bool * (unit -> string)
-  | Table of 'node block list * 'node block list list
+  | Table of string list
+             * ('node block * cell_option) list
+             * (string list * ('node block * cell_option) list) list
   | Node of 'node
 
 let rec add_spaces =
@@ -41,8 +55,10 @@ let rec add_spaces =
     | Div (layout, l) -> Div (layout, aux l)
     | P l -> P (aux l)
     | List (visible, l) -> List (visible, List.map add_spaces l)
-    | Table (h, l) ->
-      Table (List.map add_spaces h, List.map (List.map add_spaces) l)
+    | Table (classes, h, l) ->
+      Table (classes, List.map (fun (b, o) -> (add_spaces b, o)) h,
+             List.map (fun (classes, l) ->
+               (classes, List.map (fun (b, o) -> (add_spaces b, o)) l)) l)
     | e -> e
 
 module type T = sig

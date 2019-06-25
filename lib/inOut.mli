@@ -7,6 +7,20 @@ type layout =
   | Centered (** Its content is centered. **)
   | Inlined (** The block is inlined. **)
 
+(** Specific options for cells in tables. **)
+type cell_option = {
+    row : int
+      (** This interger enables rows to be merged: for each cells, it indicates
+       * how many rows are merged with the current cell.  If the integer is [1],
+       * the cell is a normal cell, but if it is more than [1], the cell has
+       * been merged with cells below.**) ;
+    col : int (** Similar than [row], but merging columns instead of rows. **) ;
+    classes : string list (** Some CSS-specific classes. **)
+  }
+
+(** The options for a normal cell. **)
+val default : cell_option
+
 (** A simplified representation of DOM’s nodes. **)
 type 'node block =
   | Div of layout * 'node block list (** A div node, with its layout. **)
@@ -29,10 +43,15 @@ type 'node block =
        * the third the mime type, and the fifth its content.
        * The fourth indicates wether newlines should be adapted to the
        * host’s operating system or not. **)
-  | Table of 'node block list * 'node block list list
-    (** A table, with its headers and its content (given line by line). **)
+  | Table of string list
+             * ('node block * cell_option) list
+             * (string list * ('node block * cell_option) list) list
+    (** A table, with its headers and its content (given line by line).
+     * It is also provided with some specific cell options for each content cell.
+     * Each line is also provided with a list of CSS classes, given as string.
+     * Finally, the whole table is associated with another list of CSS classes. **)
   | Node of 'node (** For all cases where more control is needed,
-                  * we can directly send a node. **)
+                   * we can directly send a node. **)
 
 (** Adds the expected spaces between block elements. **)
 val add_spaces : 'node block -> 'node block

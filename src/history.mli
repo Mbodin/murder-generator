@@ -32,7 +32,8 @@ val compatible_events : event -> event -> bool
 type t
 
 (** The final type, where each event have actually been assigned
- * a particular moment in type. **)
+ * a particular moment in type.
+ * The events are guaranteed to be ordered along their start time. **)
 type final = event list
 
 (** Describes the status of elements with respect to their behaviours

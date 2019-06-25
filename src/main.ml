@@ -412,17 +412,19 @@ let main =
       IO.print_block (InOut.Div (InOut.Normal, [
         InOut.P [ InOut.Text (get_translation "changeThisTable") ] ;
         InOut.Div (InOut.Centered, [
-          InOut.Table ([InOut.Text (get_translation "playerName") ;
-                        InOut.Text (get_translation "complexity") ;
-                        InOut.Text (get_translation "difficulty") ;
-                        InOut.Text (get_translation "miscellaneous") ],
-                        List.map (fun ((name, _), (complexity, _),
-                                       (difficulty, _), misc) -> [
-                            InOut.Node name ;
-                            InOut.Node complexity ;
-                            InOut.Node difficulty ;
-                            (ignore categories ; misc (* TODO *))
-                          ]) table) ])])) ;
+          InOut.Table (["table"],
+                       [(InOut.Text (get_translation "playerName"), InOut.default) ;
+                        (InOut.Text (get_translation "complexity"), InOut.default) ;
+                        (InOut.Text (get_translation "difficulty"), InOut.default) ;
+                        (InOut.Text (get_translation "miscellaneous"),
+                         InOut.default)],
+                       List.map (fun ((name, _), (complexity, _),
+                                      (difficulty, _), misc) -> ([], [
+                           (InOut.Node name, InOut.default) ;
+                           (InOut.Node complexity, InOut.default) ;
+                           (InOut.Node difficulty, InOut.default) ;
+                           (ignore categories ; (misc (* TODO *), InOut.default))
+                         ])) table) ])])) ;
       next_button ~nextText:"startGeneration" w parameters (fun _ ->
         { parameters with
             player_information =

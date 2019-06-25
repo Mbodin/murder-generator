@@ -28,6 +28,21 @@ val min : t -> t -> t
 (** Return the date the furthest in the future of its two arguments. **)
 val max : t -> t -> t
 
+(** Return the year associated with this date. **)
+val year : t -> int
+
+(** Return the month associated with this date, as an integer from [0] to [11]. **)
+val month : t -> int
+
+(** Return the day of the month associated with this date, as an integer from [0] to [30]. **)
+val day : t -> int
+
+(** Return the hour of the day associated with this date, as an integer from [0] to [23]. **)
+val hour : t -> int
+
+(** Return the minute of the current hour associated with this date, as an integer from [0] to [59]. **)
+val minute : t -> int
+
 (** Translate the date into an ISO 8601 date string (without the time). **)
 val iso8601 : t -> string
 

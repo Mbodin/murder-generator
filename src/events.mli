@@ -64,7 +64,8 @@ type 'character t = {
       (** Whether this element is blocking, that is, whether it prevents
        * other events from happening at the same time. **) ;
     event_type : event_type
-      (** Two events with the same event type can not happen simultaneously. **) ;
+      (** Two events with the same event type can’t simultaneously
+       * involve the same player. **) ;
     event_attendees : 'character PSet.t
       (** Characters involved in this event. **) ;
     all_attendees : 'character list

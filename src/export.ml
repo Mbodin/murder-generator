@@ -270,6 +270,13 @@ let to_block s =
                          ^ (Translation.iso639 s.language) ^ "' at "
                          ^ __LOC__ ^ ".")
       (Translation.translate s.generic_translation s.language key) in
+  let event_type_to_class = function
+    | Events.For_life_event -> "decades"
+    | Events.Long_term_event -> "years"
+    | Events.Medium_term_event -> "weeks"
+    | Events.Short_term_event -> "days"
+    | Events.Very_short_term_event -> "minutes"
+    | Events.Immediate_event -> "seconds" in
   let tr_players = translation_players s in
   let print_events l =
     let nb_event_types = List.length Events.all_event_type in
@@ -299,14 +306,25 @@ let to_block s =
                 if Utils.assert_defend then
                   assert (f d' = f d) ;
                 aux f before (1 + num) l) in
+          let rec duration n = function
+            | [] -> n
+            | e' :: l ->
+              if Date.compare e.History.event_end e'.History.event_begin <= 0 then n
+              else duration (1 + n) l in
           ((aux Date.year (fun _ _ -> false) 0 l,
             aux Date.month (fun d' d -> Date.year d' > Date.year d) 0 l,
             aux Date.day (fun d' d ->
-              Date.year d' > Date.year d || Date.month d' > Date.month d) 0 l), e)
+              Date.year d' > Date.year d || Date.month d' > Date.month d) 0 l),
+            duration 0 l, e)
           :: get_event_sharing l in
       let evs = get_event_sharing l in
-      let (_, content) =
-        List.fold_left (fun ((y, m, d), l) ((year, month, day), e) ->
+      let initial_activity =
+        let m =
+          List.fold_left (fun m t ->
+            PMap.add t 0 m) PMap.empty Events.all_event_type in
+        Array.make (List.length s.names) m in
+      let (_, _, content) =
+        List.fold_left (fun ((y, m, d), activity, l) ((year, month, day), dur, e) ->
           (* TODO: add a list of event waiting to be ended, and add a line for
            * each of them that end before the current one. *)
           let (time, (y, m, d)) =
@@ -340,15 +358,37 @@ let to_block s =
                { InOut.default with InOut.classes = ["time"] }) in
             (ty @ tm @ td @ [hour], (y, m, d)) in
           let lines =
-            [] (* TODO: PSet.to_list e.History.event.Events.event_attendees *) in
+            List.concat (List.map (fun c ->
+              let a = activity.(Id.to_array c) in
+              let attendee = PSet.mem c e.History.event.Events.event_attendees in
+              List.map (fun t ->
+                  let n =
+                    try PMap.find t a
+                    with Not_found -> 0 in
+                  (InOut.Text "",
+                   { InOut.default with classes =
+                       "line" :: event_type_to_class t ::
+                         if attendee && t = e.History.event.Events.event_type then (
+                           assert (n = 0) ;
+                           ["active"; "event_start"]
+                         ) else if n = 0 then [] else ["active"] }))
+                Events.all_event_type) (State.all_players_final s.state)) in
+          let activity =
+            Array.mapi (fun c ->
+              let attendee =
+                PSet.mem (Id.from_array c) e.History.event.Events.event_attendees in
+              PMap.mapi (fun t n ->
+                if attendee && t = e.History.event.Events.event_type then dur
+                else max 0 (n - 1))) activity in
           let description =
             let node =
               InOut.List (false,
                 List.map (fun text -> InOut.Text text)
                   (translate_event s tr_players e.History.event)) in
-            [(node, { InOut.default with InOut.classes = ["description"] })] in
+            let t = event_type_to_class e.History.event.Events.event_type in
+            [(node, { InOut.default with InOut.classes = ["description"; t] })] in
           let tr = ([], time @ lines @ description) in
-          ((y, m, d), tr :: l)) ((0, 0, 0), []) evs in
+          ((y, m, d), activity, tr :: l)) ((0, 0, 0), initial_activity, []) evs in
       List.rev content in
     InOut.Table (["timeline"], header, content) in
   let print_attributes c =

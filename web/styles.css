@@ -299,37 +299,37 @@ table.timeline {
 }
 
 .timeline td.active.decades, .timeline td.description.decades,
-.timeline tr:hover td.line.active.event_start.decades ~ td.line {
+.timeline tr:hover td.active.event_start.decades ~ td.line {
   background-color: #fce94f ;
   border-color: #edd400 ;
 }
 
 .timeline td.active.years, .timeline td.description.years,
-.timeline tr:hover td.line.active.event_start.years ~ td.line {
+.timeline tr:hover td.active.event_start.years ~ td.line {
   background-color: #fcaf3e ;
   border-color: #f57900 ;
 }
 
 .timeline td.active.weeks, .timeline td.description.weeks,
-.timeline tr:hover td.line.active.event_start.weeks ~ td.line {
+.timeline tr:hover td.active.event_start.weeks ~ td.line {
   background-color: #e9b96e ;
   border-color: #c17d11 ;
 }
 
 .timeline td.active.days, .timeline td.description.days,
-.timeline tr:hover td.line.active.event_start.days ~ td.line {
+.timeline tr:hover td.active.event_start.days ~ td.line {
   background-color: #8ae234 ;
   border-color: #73d216 ;
 }
 
 .timeline td.active.minutes, .timeline td.description.minutes,
-.timeline tr:hover td.line.active.event_start.minutes ~ td.line {
+.timeline tr:hover td.active.event_start.minutes ~ td.line {
   background-color: #729fcf ;
   border-color: #3465a4 ;
 }
 
 .timeline td.active.seconds, .timeline td.description.seconds,
-.timeline tr:hover td.line.active.event_start.seconds ~ td.line {
+.timeline tr:hover td.active.event_start.seconds ~ td.line {
   background-color: #ad7fa8 ;
   border-color: #75507b ;
 }

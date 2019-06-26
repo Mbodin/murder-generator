@@ -31,10 +31,10 @@ val max : t -> t -> t
 (** Return the year associated with this date. **)
 val year : t -> int
 
-(** Return the month associated with this date, as an integer from [0] to [11]. **)
+(** Return the month associated with this date, as an integer from [1] to [12]. **)
 val month : t -> int
 
-(** Return the day of the month associated with this date, as an integer from [0] to [30]. **)
+(** Return the day of the month associated with this date, as an integer from [1] to [31]. **)
 val day : t -> int
 
 (** Return the hour of the day associated with this date, as an integer from [0] to [23]. **)

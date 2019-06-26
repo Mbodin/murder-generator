@@ -272,24 +272,6 @@ let to_block s =
       (Translation.translate s.generic_translation s.language key) in
   let tr_players = translation_players s in
   let print_events l =
-    (* FIXME
-    let print_event e =
-      InOut.Div (InOut.Normal, [
-          InOut.List (false,
-            List.map (fun text -> InOut.Text text)
-              (translate_event s tr_players e.History.event)) ;
-          InOut.P [
-              InOut.Text (Date.orgmode_range
-                e.History.event_begin e.History.event_end) ;
-              InOut.Space ;
-              InOut.Text ("("
-                ^ String.concat ", "
-                    (List.map (get_name s)
-                       (PSet.to_list e.History.event.Events.event_attendees))
-                ^ ")")
-            ] ;
-        ]) in
-    InOut.List (true, List.map print_event l)*)
     let nb_event_types = List.length Events.all_event_type in
     let header =
       (InOut.Text (get_translation "Year"), InOut.default)
@@ -297,10 +279,77 @@ let to_block s =
       :: (InOut.Text (get_translation "Day"), InOut.default)
       :: (InOut.Text (get_translation "Time"), InOut.default)
       :: List.map (fun name ->
-           (InOut.Text name, { InOut.default with col = nb_event_types })) s.names
+           (InOut.Text name,
+            { InOut.default with InOut.col = nb_event_types })) s.names
       @ [(InOut.Text (get_translation "eventDescription"), InOut.default)] in
     let content =
-      [] (* TODO *) in
+      (** We first determine how many “events” each event lasts,
+       * counting the number of events with the same year, month, and day. **)
+      let rec get_event_sharing = function
+        | [] -> []
+        | e :: l ->
+          let d = e.History.event_begin in
+          (* LATER: This is far from being an optimised algorithm. *)
+          let rec aux f before num = function
+            | [] -> num
+            | e' :: l ->
+              let d' = e'.History.event_begin in
+              if before d' d || f d' > f d then num
+              else (
+                if Utils.assert_defend then
+                  assert (f d' = f d) ;
+                aux f before (1 + num) l) in
+          ((aux Date.year (fun _ _ -> false) 0 l,
+            aux Date.month (fun d' d -> Date.year d' > Date.year d) 0 l,
+            aux Date.day (fun d' d ->
+              Date.year d' > Date.year d || Date.month d' > Date.month d) 0 l), e)
+          :: get_event_sharing l in
+      let evs = get_event_sharing l in
+      let (_, content) =
+        List.fold_left (fun ((y, m, d), l) ((year, month, day), e) ->
+          (* TODO: add a list of event waiting to be ended, and add a line for
+           * each of them that end before the current one. *)
+          let (time, (y, m, d)) =
+            let create_time text fusion =
+              ([(InOut.Text text, {
+                 InOut.row = 1 + fusion ;
+                 InOut.col = 1 ;
+                 InOut.classes = ["time"]
+                })], fusion) in
+            let string_of_month n =
+              if Utils.assert_defend then
+                assert (n > 0 && n <= 12) ;
+              get_translation ("Month" ^ string_of_int n) in
+            let beg = e.History.event_begin in
+            let (ty, y) =
+              if y = 0 then
+                create_time (string_of_int (Date.year beg)) year
+              else ([], y - 1) in
+            let (tm, m) =
+              if m = 0 then
+                create_time (string_of_month (Date.month beg)) month
+              else ([], m - 1) in
+            let (td, d) =
+              if d = 0 then
+                create_time (string_of_int (Date.day beg)) day
+              else ([], d - 1) in
+            let hour =
+              let complete n = Utils.complete_string_pre "0" (string_of_int n) 2 in
+              (InOut.Text (complete (Date.hour beg)
+                           ^ ":" ^ complete (Date.minute beg)),
+               { InOut.default with InOut.classes = ["time"] }) in
+            (ty @ tm @ td @ [hour], (y, m, d)) in
+          let lines =
+            [] (* TODO: PSet.to_list e.History.event.Events.event_attendees *) in
+          let description =
+            let node =
+              InOut.List (false,
+                List.map (fun text -> InOut.Text text)
+                  (translate_event s tr_players e.History.event)) in
+            [(node, { InOut.default with InOut.classes = ["description"] })] in
+          let tr = ([], time @ lines @ description) in
+          ((y, m, d), tr :: l)) ((0, 0, 0), []) evs in
+      List.rev content in
     InOut.Table (["timeline"], header, content) in
   let print_attributes c =
     InOut.List (true,

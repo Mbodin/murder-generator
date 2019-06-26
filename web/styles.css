@@ -194,6 +194,7 @@ table.table {
 .table th {
   background-color: #5c3566 ;
   color: #eeeeec ;
+  text-align: center ;
   font-weight: bold ;
   position: sticky ;
   top: 0 ;
@@ -213,14 +214,17 @@ table.timeline {
   margin-left: .3em ;
   margin-right: .3em ;
   border-collapse: separate ;
+  border-spacing: 0 ;
 }
 
 .timeline th {
   background-color: #5c3566 ;
   color: #eeeeec ;
+  text-align: center ;
   font-weight: bold ;
   position: sticky ;
   top: 0 ;
+  z-index: 2 ;
 }
 
 .timeline tr, .timeline td {
@@ -231,10 +235,26 @@ table.timeline {
 }
 
 .timeline td.time {
-  border-style: solid ;
-  border-width: 1px ;
+  border-style: none none solid solid ;
+  border-width: 2px ;
   border-color: #75507b ;
+  border-width: 2px ;
+  text-align: center ;
+  vertical-align: top ;
+}
+
+.timeline tr.time:nth-child(even) {
   background-color: #eeeeec ;
+}
+
+.timeline tr.time:nth-child(odd) {
+  background-color: #d3d7cf ;
+}
+
+.timeline td.time > .span {
+  position: sticky ;
+  top: 4em ;
+  z-index: 1 ;
 }
 
 .timeline td.active {
@@ -275,6 +295,7 @@ table.timeline {
 .timeline tr:hover td.description {
   border-style: solid solid solid none ;
   border-radius: 0px 10px 10px 0px ;
+  padding-left: 3px ;
 }
 
 .timeline td.active.decades, .timeline td.description.decades,

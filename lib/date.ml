@@ -68,7 +68,7 @@ let months y =
   [ 31 ; if leap_year y then 29 else 28 ;
     31 ; 30 ; 31 ; 30 ; 31 ; 31 ; 30 ; 31 ; 30 ; 31 ]
 
-(** Return the month number and day of the month (starting from [1]). **)
+(** Return the month number and day of the month (both starting from [1]). **)
 let month_day (y, d, _) =
   let rec aux m d = function
     | [] -> assert false

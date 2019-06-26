@@ -148,15 +148,19 @@ let rec block_node =
         ignore (Dom.appendChild e n)) in
     let table = Dom_html.createTable document in
     apply_classes table classes ;
+    let thead = Dom_html.createThead document in
+    ignore (Dom.appendChild table thead) ;
+    let tbody = Dom_html.createTbody document in
+    ignore (Dom.appendChild table tbody) ;
     let header = Dom_html.createTr document in
-    ignore (Dom.appendChild table header) ;
+    ignore (Dom.appendChild thead header) ;
     appendChilds_options (fun n ->
       let th = Dom_html.createTh document in
       ignore (Dom.appendChild th n) ;
       th) header headers ;
     List.iter (fun (classes, l) ->
       let line = Dom_html.createTr document in
-      ignore (Dom.appendChild table line) ;
+      ignore (Dom.appendChild tbody line) ;
       appendChilds_options (fun n ->
         let td = Dom_html.createTd document in
         ignore (Dom.appendChild td n) ;

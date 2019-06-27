@@ -100,6 +100,11 @@ val list_index : 'a -> 'a list -> int option
 (** Return the index of the first element matching the predicate in the list. **)
 val list_predicate_index : ('a -> bool) -> 'a list -> int option
 
+(** Given a predicate and a list, return the maximum prefix of the list
+ * such that all its elements satisfy the given predicate.
+ * This function also returns the rest of the list. **)
+val list_predicate_prefix : ('a -> bool) -> 'a list -> 'a list * 'a list
+
 (** Like [List.fold_left], but taking the current index as argument. **)
 val list_fold_lefti : (int -> 'a -> 'b -> 'a) -> 'a -> 'b list -> 'a
 

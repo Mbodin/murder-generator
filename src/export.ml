@@ -291,7 +291,8 @@ let to_block s =
       @ [(InOut.Text (get_translation "eventDescription"), InOut.default)] in
     let content =
       (** We first determine how many “events” each event lasts,
-       * counting the number of events with the same year, month, and day. **)
+       * counting the number of events with the same year, month, and day.
+       * Furthermore, we cound how many events this event overlaps. **)
       let rec get_event_sharing = function
         | [] -> []
         | e :: l ->
@@ -318,15 +319,34 @@ let to_block s =
             duration 0 l, e)
           :: get_event_sharing l in
       let evs = get_event_sharing l in
-      let initial_activity =
+      let activity =
+        (** The activity of each line in the timeline: for each player and
+         * event type, how many turns are they going to stay here. **)
         let m =
           List.fold_left (fun m t ->
             PMap.add t 0 m) PMap.empty Events.all_event_type in
         Array.make (List.length s.names) m in
-      let (_, _, content) =
-        List.fold_left (fun ((y, m, d), activity, l) ((year, month, day), dur, e) ->
-          (* TODO: add a list of event waiting to be ended, and add a line for
-           * each of them that end before the current one. *)
+      (* FIXME TODO: This doesn’t work as-is: what time do we put there?
+       * Closing events have to be considered in the precomputations above.
+      let close_active activity set =
+        (** Produce a line of the array closing all the given events. **)
+        List.concat (List.map (fun c ->
+          let a = activity.(Id.to_array c) in
+          List.map (fun t ->
+              let n =
+                try PMap.find t a
+                with Not_found -> 0 in
+              (InOut.Text "",
+               { InOut.default with classes =
+                   "line" :: event_type_to_class t ::
+                     if PSet.mem (c, t) set then (
+                       assert (n = 0) ;
+                       ["active"; "event_end"]
+                     ) else if n = 0 then [] else ["active"] }))
+            Events.all_event_type) (State.all_players_final s.state)) in *)
+      let (_, _, active, content) =
+        List.fold_left (fun ((y, m, d), activity, active, l)
+                            ((year, month, day), dur, e) ->
           let (time, (y, m, d)) =
             let create_time text fusion =
               ([(InOut.Text text, {
@@ -388,7 +408,10 @@ let to_block s =
             let t = event_type_to_class e.History.event.Events.event_type in
             [(node, { InOut.default with InOut.classes = ["description"; t] })] in
           let tr = ([], time @ lines @ description) in
-          ((y, m, d), activity, tr :: l)) ((0, 0, 0), initial_activity, []) evs in
+          let (ended, active) =
+            ([], e :: active) (* TODO *) in
+          let l = ended @ tr :: l in
+          ((y, m, d), activity, active, l)) ((0, 0, 0), activity, [], []) evs in
       List.rev content in
     InOut.Table (["timeline"], header, content) in
   let print_attributes c =

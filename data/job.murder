@@ -690,6 +690,8 @@ begin
     event Work
     assume event providing attribute Job to A and B before
 
+    provide contact Know between A and B as True
+
     translation fr A:+sbeg " et " B " sont collègues."
     translation en A:+sbeg " and " B " are colleagues."
     translation eo A:+sbeg " kaj " B " estas kunlaborantoj."

@@ -129,10 +129,14 @@ begin
   provide immediate event to A and B
   begin
     event Personal
-    assume event providing contact FamilyRelation from A to B after
-    assume event providing contact FamilyRelation from B to A after
+    assume event providing contact FamilyRelation from A to B before
+    assume event providing contact FamilyRelation from B to A before
+    assume event providing contact Know from A to B after
+    assume event providing contact Know from B to A after
+    assume no event Work to A or B before
 
     provide compatible contact FamilyRelation between A and B as Sibling
+    provide compatible contact Know between A and B as True
 
     translation fr A:+sbeg:fem " et " B:fem " sont jumelles."
     translation fr A:+sbeg " et " B " sont jumeaux."

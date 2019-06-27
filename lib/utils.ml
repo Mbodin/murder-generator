@@ -117,6 +117,13 @@ let rec list_predicate_index f = function
 
 let list_index e = list_predicate_index ((=) e)
 
+let list_predicate_prefix f =
+  let rec aux prefix = function
+    | e :: l when f e ->
+      aux (e :: prefix) l
+    | l -> (List.rev prefix, l) in
+  aux []
+
 let list_fold_lefti f i l =
   fst (List.fold_left (fun (a, i) e -> (f i a e, 1 + i)) (i, 0) l)
 

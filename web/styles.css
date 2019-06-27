@@ -243,11 +243,11 @@ table.timeline {
   vertical-align: top ;
 }
 
-.timeline tr.time:nth-child(even) {
+.timeline tr:nth-child(even) td.time {
   background-color: #eeeeec ;
 }
 
-.timeline tr.time:nth-child(odd) {
+.timeline tr:nth-child(odd) td.time {
   background-color: #d3d7cf ;
 }
 
@@ -265,14 +265,24 @@ table.timeline {
 .timeline td.active.event_start {
   border-radius: 10px 10px 0px 0px ;
   border-style: solid solid none ;
+  border-top-width: 6px ;
 }
 
 .timeline td.active.event_end {
   border-radius: 0px 0px 10px 10px ;
   border-style: none solid solid ;
+  border-bottom-width: 6px ;
 }
 
-.timeline tr:hover td.line {
+.timeline tr:hover td.active.event_start {
+  border-top-width: 2px ;
+}
+
+.timeline tr:hover td.active.event_end {
+  border-bottom-width: 2px ;
+}
+
+.timeline tr:hover td.line.active.event_start ~ td.line {
   border-style: solid none ;
   border-radius: 0px ;
 }

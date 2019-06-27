@@ -295,13 +295,12 @@ let to_block s =
        * Furthermore, we cound how many events this event overlaps. **)
       let rec get_event_sharing = function
         | [] -> []
-        | e :: l ->
-          let d = e.History.event_begin in
+        | (beg, d, e) :: l ->
+          let de = if beg then e.History.event_end else d in
           (* LATER: This is far from being an optimised algorithm. *)
           let rec aux f before num = function
             | [] -> num
-            | e' :: l ->
-              let d' = e'.History.event_begin in
+            | (_, d', _) :: l ->
               if before d' d || f d' > f d then num
               else (
                 if Utils.assert_defend then
@@ -309,16 +308,38 @@ let to_block s =
                 aux f before (1 + num) l) in
           let rec duration n = function
             | [] -> n
-            | e' :: l ->
-              if Date.compare e.History.event_end e'.History.event_begin <= 0 then n
+            | (_, d', e') :: l ->
+              if Date.compare de d' < 0
+                 || (Date.compare de d' = 0
+                     && Events.compare e.History.event e'.History.event = 0) then n
               else duration (1 + n) l in
           ((aux Date.year (fun _ _ -> false) 0 l,
             aux Date.month (fun d' d -> Date.year d' > Date.year d) 0 l,
             aux Date.day (fun d' d ->
               Date.year d' > Date.year d || Date.month d' > Date.month d) 0 l),
-            duration 0 l, e)
+            duration 0 l, beg, d, e)
           :: get_event_sharing l in
-      let evs = get_event_sharing l in
+      let evs =
+        (** This function splits the list of events into a list of event
+         * begin and ends, each with a boolean indicating whether the event
+         * starts or ends, a date, and the corresponding event. **)
+        let rec split_begin_end waiting_end = function
+          | [] -> waiting_end
+          | e :: l ->
+            let d = e.History.event_begin in
+            let (just_ended, waiting_end) =
+              Utils.list_predicate_prefix (fun (_, d', _) ->
+                Date.compare d' d <= 0) waiting_end in
+            let waiting_end =
+              let de = e.History.event_end in
+              let rec aux = function
+                | [] -> [(false, de, e)]
+                | ((_, d', _) :: _) as l when Date.compare de d' <= 0 ->
+                  (false, de, e) :: l
+                | e :: l -> e :: aux l in
+              aux waiting_end in
+            just_ended @ (true, d, e) :: split_begin_end waiting_end l in
+        get_event_sharing (split_begin_end [] l) in
       let activity =
         (** The activity of each line in the timeline: for each player and
          * event type, how many turns are they going to stay here. **)
@@ -326,92 +347,78 @@ let to_block s =
           List.fold_left (fun m t ->
             PMap.add t 0 m) PMap.empty Events.all_event_type in
         Array.make (List.length s.names) m in
-      (* FIXME TODO: This doesn’t work as-is: what time do we put there?
-       * Closing events have to be considered in the precomputations above.
-      let close_active activity set =
-        (** Produce a line of the array closing all the given events. **)
-        List.concat (List.map (fun c ->
-          let a = activity.(Id.to_array c) in
-          List.map (fun t ->
-              let n =
-                try PMap.find t a
-                with Not_found -> 0 in
-              (InOut.Text "",
-               { InOut.default with classes =
-                   "line" :: event_type_to_class t ::
-                     if PSet.mem (c, t) set then (
-                       assert (n = 0) ;
-                       ["active"; "event_end"]
-                     ) else if n = 0 then [] else ["active"] }))
-            Events.all_event_type) (State.all_players_final s.state)) in *)
       let (_, _, active, content) =
         List.fold_left (fun ((y, m, d), activity, active, l)
-                            ((year, month, day), dur, e) ->
-          let (time, (y, m, d)) =
-            let create_time text fusion =
-              ([(InOut.Text text, {
-                 InOut.row = 1 + fusion ;
-                 InOut.col = 1 ;
-                 InOut.classes = ["time"]
-                })], fusion) in
-            let string_of_month n =
-              if Utils.assert_defend then
-                assert (n > 0 && n <= 12) ;
-              get_translation ("Month" ^ string_of_int n) in
-            let beg = e.History.event_begin in
-            let (ty, y) =
-              if y = 0 then
-                create_time (string_of_int (Date.year beg)) year
-              else ([], y - 1) in
-            let (tm, m) =
-              if m = 0 then
-                create_time (string_of_month (Date.month beg)) month
-              else ([], m - 1) in
-            let (td, d) =
-              if d = 0 then
-                create_time (string_of_int (Date.day beg)) day
-              else ([], d - 1) in
-            let hour =
-              let complete n = Utils.complete_string_pre "0" (string_of_int n) 2 in
-              (InOut.Text (complete (Date.hour beg)
-                           ^ ":" ^ complete (Date.minute beg)),
-               { InOut.default with InOut.classes = ["time"] }) in
-            (ty @ tm @ td @ [hour], (y, m, d)) in
-          let lines =
-            List.concat (List.map (fun c ->
-              let a = activity.(Id.to_array c) in
-              let attendee = PSet.mem c e.History.event.Events.event_attendees in
-              List.map (fun t ->
-                  let n =
-                    try PMap.find t a
-                    with Not_found -> 0 in
-                  (InOut.Text "",
-                   { InOut.default with classes =
-                       "line" :: event_type_to_class t ::
-                         if attendee && t = e.History.event.Events.event_type then (
-                           assert (n = 0) ;
-                           ["active"; "event_start"]
-                         ) else if n = 0 then [] else ["active"] }))
-                Events.all_event_type) (State.all_players_final s.state)) in
-          let activity =
-            Array.mapi (fun c ->
-              let attendee =
-                PSet.mem (Id.from_array c) e.History.event.Events.event_attendees in
-              PMap.mapi (fun t n ->
-                if attendee && t = e.History.event.Events.event_type then dur
-                else max 0 (n - 1))) activity in
-          let description =
-            let node =
-              InOut.List (false,
-                List.map (fun text -> InOut.Text text)
-                  (translate_event s tr_players e.History.event)) in
-            let t = event_type_to_class e.History.event.Events.event_type in
-            [(node, { InOut.default with InOut.classes = ["description"; t] })] in
-          let tr = ([], time @ lines @ description) in
-          let (ended, active) =
-            ([], e :: active) (* TODO *) in
-          let l = ended @ tr :: l in
-          ((y, m, d), activity, active, l)) ((0, 0, 0), activity, [], []) evs in
+                            ((year, month, day), dur, beg, date, e) ->
+            let (time, (y, m, d)) =
+              let create_time text fusion =
+                ([(InOut.Text text, {
+                   InOut.row = 1 + fusion ;
+                   InOut.col = 1 ;
+                   InOut.classes = ["time"]
+                  })], fusion) in
+              let string_of_month n =
+                if Utils.assert_defend then
+                  assert (n > 0 && n <= 12) ;
+                get_translation ("Month" ^ string_of_int n) in
+              let (ty, y) =
+                if y = 0 then
+                  create_time (string_of_int (Date.year date)) year
+                else ([], y - 1) in
+              let (tm, m) =
+                if m = 0 then
+                  create_time (string_of_month (Date.month date)) month
+                else ([], m - 1) in
+              let (td, d) =
+                if d = 0 then
+                  create_time (string_of_int (Date.day date)) day
+                else ([], d - 1) in
+              let hour =
+                let complete n =
+                  Utils.complete_string_pre "0" (string_of_int n) 2 in
+                (InOut.Text (complete (Date.hour date)
+                             ^ ":" ^ complete (Date.minute date)),
+                 { InOut.default with InOut.classes = ["time"] }) in
+              (ty @ tm @ td @ [hour], (y, m, d)) in
+            let lines =
+              List.concat (List.map (fun c ->
+                let a = activity.(Id.to_array c) in
+                let attendee = PSet.mem c e.History.event.Events.event_attendees in
+                List.map (fun t ->
+                    let n =
+                      try PMap.find t a
+                      with Not_found -> 0 in
+                    (InOut.Text "",
+                     { InOut.default with classes =
+                         "line" :: event_type_to_class t ::
+                           if attendee
+                              && t = e.History.event.Events.event_type then (
+                                assert (n = 0) ;
+                             ["active"; if beg then "event_start" else "event_end"]
+                           ) else if n = 0 then [] else ["active"] }))
+                  Events.all_event_type) (State.all_players_final s.state)) in
+            let activity =
+              Array.mapi (fun c ->
+                let attendee =
+                  PSet.mem (Id.from_array c)
+                    e.History.event.Events.event_attendees in
+                PMap.mapi (fun t n ->
+                  if beg && attendee
+                     && t = e.History.event.Events.event_type then dur
+                  else max 0 (n - 1))) activity in
+            let description =
+              let node =
+                if beg then
+                  InOut.List (false,
+                    List.map (fun text -> InOut.Text text)
+                      (translate_event s tr_players e.History.event))
+                else InOut.Space in
+              let t = event_type_to_class e.History.event.Events.event_type in
+              [(node, { InOut.default with InOut.classes =
+                          if beg then ["description"; t] else [] })] in
+            let tr = ([], time @ lines @ description) in
+            ((y, m, d), activity, active, tr :: l))
+          ((0, 0, 0), activity, [], []) evs in
       List.rev content in
     InOut.Table (["timeline"], header, content) in
   let print_attributes c =

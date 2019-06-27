@@ -43,7 +43,7 @@ let get_file url =
   request##send Js.null ;
   res
 
-let log msg = Firebug.console##log msg
+let log msg = Firebug.console##log (Js.string msg)
 
 
 let languages =

@@ -278,10 +278,6 @@ table.timeline {
   border-top-width: 2px ;
 }
 
-.timeline tr:hover td.active.event_end {
-  border-bottom-width: 2px ;
-}
-
 .timeline tr:hover td.line.active.event_start ~ td.line {
   border-style: solid none ;
   border-radius: 0px ;

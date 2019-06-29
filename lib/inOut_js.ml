@@ -138,8 +138,12 @@ let rec block_node =
     let apply_classes n =
       List.iter (fun str -> n##.classList##add (Js.string str)) in
     let apply_options o c =
-      c##.rowSpan := o.InOut.row ;
-      c##.colSpan := o.InOut.col ;
+      assert (o.InOut.row >= 1) ;
+      if o.InOut.row > 1 then
+        c##.rowSpan := o.InOut.row ;
+      assert (o.InOut.col >= 1) ;
+      if o.InOut.col > 1 then
+        c##.colSpan := o.InOut.col ;
       apply_classes c o.InOut.classes ;
       c in
     let appendChilds_options f e =

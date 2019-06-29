@@ -281,14 +281,15 @@ let to_block s =
   let print_events l =
     let nb_event_types = List.length Events.all_event_type in
     let header =
-      (InOut.Text (get_translation "Year"), InOut.default)
-      :: (InOut.Text (get_translation "Month"), InOut.default)
-      :: (InOut.Text (get_translation "Day"), InOut.default)
-      :: (InOut.Text (get_translation "Time"), InOut.default)
+      let wrap text options =
+        (InOut.Div (InOut.Normal, [InOut.Text text]), options) in
+      let wrapt key cl =
+        wrap (get_translation key) { InOut.default with classes = [cl] } in
+      wrapt "Year" "time" :: wrapt "Month" "time"
+      :: wrapt "Day" "time" :: wrapt "Time" "time"
       :: List.map (fun name ->
-           (InOut.Text name,
-            { InOut.default with InOut.col = nb_event_types })) s.names
-      @ [(InOut.Text (get_translation "eventDescription"), InOut.default)] in
+           wrap name { InOut.default with InOut.col = nb_event_types }) s.names
+      @ [wrapt "eventDescription" "description"] in
     let content =
       (** We first determine how many “events” each event lasts,
        * counting the number of events with the same year, month, and day.
@@ -313,10 +314,13 @@ let to_block s =
                  || (Date.compare de d' = 0
                      && Events.compare e.History.event e'.History.event = 0) then n
               else duration (1 + n) l in
-          ((aux Date.year (fun _ _ -> false) 0 l,
-            aux Date.month (fun d' d -> Date.year d' > Date.year d) 0 l,
-            aux Date.day (fun d' d ->
-              Date.year d' > Date.year d || Date.month d' > Date.month d) 0 l),
+          let previous l d' d =
+            List.exists (fun f -> f d' > f d) l in
+          ((aux Date.year (previous []) 0 l,
+            aux Date.month (previous [Date.year]) 0 l,
+            aux Date.day (previous [Date.year; Date.month]) 0 l,
+            aux Date.minute (previous [Date.year; Date.month; Date.day; Date.hour])
+              0 l),
             duration 0 l, beg, d, e)
           :: get_event_sharing l in
       let evs =
@@ -348,11 +352,11 @@ let to_block s =
             PMap.add t 0 m) PMap.empty Events.all_event_type in
         Array.make (List.length s.names) m in
       let (_, _, active, content) =
-        List.fold_left (fun ((y, m, d), activity, active, l)
-                            ((year, month, day), dur, beg, date, e) ->
-            let (time, (y, m, d)) =
+        List.fold_left (fun ((y, m, d, h), activity, active, l)
+                            ((year, month, day, hour), dur, beg, date, e) ->
+            let (time, timetable) =
               let create_time text fusion =
-                ([(InOut.Text text, {
+                ([(InOut.Div (InOut.Normal, [InOut.Text text]), {
                    InOut.row = 1 + fusion ;
                    InOut.col = 1 ;
                    InOut.classes = ["time"]
@@ -373,13 +377,15 @@ let to_block s =
                 if d = 0 then
                   create_time (string_of_int (Date.day date)) day
                 else ([], d - 1) in
-              let hour =
-                let complete n =
-                  Utils.complete_string_pre "0" (string_of_int n) 2 in
-                (InOut.Text (complete (Date.hour date)
-                             ^ ":" ^ complete (Date.minute date)),
-                 { InOut.default with InOut.classes = ["time"] }) in
-              (ty @ tm @ td @ [hour], (y, m, d)) in
+              let (th, h) =
+                let string_of_time date =
+                  let complete n =
+                    Utils.complete_string_pre "0" (string_of_int n) 2 in
+                  complete (Date.hour date) ^ ":" ^ complete (Date.minute date) in
+                if h = 0 then
+                  create_time (string_of_time date) hour
+                else ([], h - 1) in
+              (ty @ tm @ td @ th, (y, m, d, h)) in
             let lines =
               List.concat (List.map (fun c ->
                 let a = activity.(Id.to_array c) in
@@ -409,16 +415,16 @@ let to_block s =
             let description =
               let node =
                 if beg then
-                  InOut.List (false,
-                    List.map (fun text -> InOut.Text text)
+                  InOut.Div (InOut.Normal,
+                    List.map (fun text -> InOut.Text (text ^ " "))
                       (translate_event s tr_players e.History.event))
                 else InOut.Space in
               let t = event_type_to_class e.History.event.Events.event_type in
               [(node, { InOut.default with InOut.classes =
                           if beg then ["description"; t] else [] })] in
             let tr = ([], time @ lines @ description) in
-            ((y, m, d), activity, active, tr :: l))
-          ((0, 0, 0), activity, [], []) evs in
+            (timetable, activity, active, tr :: l))
+          ((0, 0, 0, 0), activity, [], []) evs in
       List.rev content in
     InOut.Table (["timeline"], header, content) in
   let print_attributes c =
@@ -447,11 +453,11 @@ let to_block s =
     InOut.FoldableBlock (false, get_translation "forTheGM",
       InOut.List (false, [
           InOut.FoldableBlock (false, get_translation "GMCharacters",
-            InOut.List (true, List.mapi (fun c name ->
+            InOut.List (false, List.mapi (fun c name ->
               let c = Id.from_array c in
               InOut.FoldableBlock (true, name, print_attributes c)) s.names)) ;
           InOut.FoldableBlock (false, get_translation "GMContacts",
-            InOut.List (true, List.mapi (fun c name ->
+            InOut.List (false, List.mapi (fun c name ->
               let c = Id.from_array c in
               InOut.FoldableBlock (false, name, print_contacts c)) s.names)) ;
           InOut.FoldableBlock (false, get_translation "GMEvents",

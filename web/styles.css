@@ -159,6 +159,7 @@ a:hover::before {
 
 ul {
   list-style-type: none ;
+  padding-left: 1em ;
 }
 
 ul.bullet > li::before {
@@ -208,23 +209,71 @@ table.table {
 /* Timeline */
 
 table.timeline {
-  width: 99% ;
   border-color: transparent ;
-  margin-top: 1.5ex ;
-  margin-left: .3em ;
-  margin-right: .3em ;
+  margin-top: 60px ;
   border-collapse: separate ;
   border-spacing: 0 ;
+  position: relative ;
+  left: 50% ;
+  right: 50% ;
 }
 
-.timeline th {
-  background-color: #5c3566 ;
-  color: #eeeeec ;
-  text-align: center ;
+@media screen and (max-width: 1000px) {
+  table.timeline {
+    width: 96vw ;
+    margin-left: -50vw ;
+    margin-right: -50vw ;
+  }
+}
+
+@media screen and (min-width: 1000px) {
+  table.timeline {
+    width: 99% ;
+    margin-left: -500px ;
+    margin-right: -500px ;
+  }
+}
+
+.timeline thead {
+  background-color: #eeeeec ;
+  color: #5c3566 ;
   font-weight: bold ;
   position: sticky ;
   top: 0 ;
+  height: 60px ;
   z-index: 2 ;
+  white-space: nowrap ;
+}
+
+.timeline th > div {
+  transform: translate(14.5px, 15px) rotate(-45deg) ;
+  width: 1.5em ;
+}
+
+.timeline th > div > span {
+  border-bottom: 2px solid #75507b ;
+  padding: 0 ;
+}
+
+.timeline th.description > div {
+  transform: none ;
+  width: auto ;
+}
+
+.timeline th.description > div > span {
+  border-bottom: none ;
+  padding: 5px 1em ;
+}
+
+.timeline th.description {
+  position: static ;
+  padding-left: 3em ;
+  padding-bottom: 1ex ;
+  text-align: center ;
+}
+
+.timeline td.time > div {
+  transform: rotate(180deg) ;
 }
 
 .timeline tr, .timeline td {
@@ -251,10 +300,11 @@ table.timeline {
   background-color: #d3d7cf ;
 }
 
-.timeline td.time > .span {
+.timeline td.time > div {
   position: sticky ;
-  top: 4em ;
+  top: 62px ;
   z-index: 1 ;
+  writing-mode: vertical-rl ;
 }
 
 .timeline td.active {
@@ -296,6 +346,11 @@ table.timeline {
 .timeline td.description {
   border-style: solid ;
   border-radius: 10px ;
+}
+
+.timeline td.description > div {
+  overflow-x: auto ;
+  max-height: 4em ;
 }
 
 .timeline tr:hover td.description {

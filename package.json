@@ -8,10 +8,11 @@
     "buildsInSource": "_build"
   },
   "scripts": {
+    "local": "./build.sh local",
     "test": "./build.sh tests",
     "js": "./build.sh check move main.js",
+    "force_js": "./build.sh move main.js",
     "native": "./build.sh main.native",
-    "local": "./build.sh local",
     "checkout": "./build.sh checkout"
   },
   "dependencies": {

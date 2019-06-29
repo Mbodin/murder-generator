@@ -347,11 +347,12 @@ let rec block_node b =
       Print.clearline () ;
       Print.separator '-' ;
       List.iter (fun (n, _) ->
-        Print.push_center () ;
-        block_node n link ;
-        Print.clearline () ;
-        Print.pop () ;
-        Print.separator '-') l ;
+        if n <> InOut.Text "" then (
+          Print.push_center () ;
+          block_node n link ;
+          Print.clearline () ;
+          Print.pop () ;
+          Print.separator '-')) l ;
       Print.pop () ;
       Print.pop () in
     Print.push_prefix (" =") ;

@@ -60,7 +60,7 @@ let document = Dom_html.window##.document
 
 let rec block_node =
   let appendChilds f e =
-    List.iter (fun b -> ignore (Dom.appendChild e (f (block_node b)))) in
+    List.iter (fun b -> Dom.appendChild e (f (block_node b))) in
   function
   | InOut.Div (layout, l) ->
     let div = Dom_html.createDiv document in
@@ -82,12 +82,12 @@ let rec block_node =
     ul##.className := Js.string (if visible then "bullet" else "bulletless") ;
     appendChilds (fun n ->
       let li = Dom_html.createLi document in
-      ignore (Dom.appendChild li n) ;
+      Dom.appendChild li n ;
       li) ul l ;
     (ul :> Dom_html.element Js.t)
   | InOut.Space ->
     let span = Dom_html.createSpan document in
-    ignore (span##setAttribute (Js.string "class") (Js.string "space")) ;
+    span##.classList##add (Js.string "space") ;
     (span :> Dom_html.element Js.t)
   | InOut.Text text ->
     let span = Dom_html.createSpan document in
@@ -95,35 +95,35 @@ let rec block_node =
     (span :> Dom_html.element Js.t)
   | InOut.FoldableBlock (visible, title, node) ->
     let div = Dom_html.createDiv document in
-    ignore (div##setAttribute (Js.string "class") (Js.string "foldable")) ;
+    div##.classList##add (Js.string "foldable") ;
     let text = Dom_html.document##createTextNode (Js.string title) in
     let title = Dom_html.createH3 document in
-    ignore (Dom.appendChild title text) ;
-    ignore (Dom.appendChild div title) ;
+    Dom.appendChild title text ;
+    Dom.appendChild div title ;
     let inner = Dom_html.createDiv document in
     let visible = ref visible in
     let set _ =
-      ignore (title##setAttribute (Js.string "class")
-               (Js.string (if !visible then "unfolded" else "folded"))) in
+      title##.classList##add
+        (Js.string (if !visible then "unfolded" else "folded")) in
     set () ;
     Lwt.async (fun _ ->
       Lwt_js_events.clicks title (fun _ _ ->
         visible := not !visible ;
         set () ;
         Lwt.return ())) ;
-    ignore (Dom.appendChild div inner) ;
-    ignore (Dom.appendChild inner (block_node node)) ;
+    Dom.appendChild div inner ;
+    Dom.appendChild inner (block_node node) ;
     (div :> Dom_html.element Js.t)
   | InOut.Link (text, link) ->
     let a = Dom_html.createA document in
     let text = Dom_html.document##createTextNode (Js.string text) in
-    ignore (Dom.appendChild a text) ;
+    Dom.appendChild a text ;
     a##.href := Js.string link ;
     (a :> Dom_html.element Js.t)
   | InOut.LinkContinuation (forwards, text, cont) ->
     let a = block_node (Link (text, "javascript:void(42)")) in
     if not forwards then
-      ignore (a##setAttribute (Js.string "class") (Js.string "previous")) ;
+      a##.classList##add  (Js.string "previous") ;
     Lwt.async (fun _ ->
       Lwt_js_events.clicks a (fun _ _ -> Lwt.return (cont ()))) ;
     a
@@ -149,49 +149,52 @@ let rec block_node =
     let appendChilds_options f e =
       List.iter (fun (b, o) ->
         let n = apply_options o (f (block_node b)) in
-        ignore (Dom.appendChild e n)) in
+        Dom.appendChild e n) in
     let table = Dom_html.createTable document in
     apply_classes table classes ;
     let thead = Dom_html.createThead document in
-    ignore (Dom.appendChild table thead) ;
+    Dom.appendChild table thead ;
     let tbody = Dom_html.createTbody document in
-    ignore (Dom.appendChild table tbody) ;
+    Dom.appendChild table tbody ;
     let header = Dom_html.createTr document in
-    ignore (Dom.appendChild thead header) ;
+    Dom.appendChild thead header ;
     appendChilds_options (fun n ->
       let th = Dom_html.createTh document in
-      ignore (Dom.appendChild th n) ;
+      Dom.appendChild th n ;
       th) header headers ;
     List.iter (fun (classes, l) ->
       let line = Dom_html.createTr document in
-      ignore (Dom.appendChild tbody line) ;
+      Dom.appendChild tbody line ;
       appendChilds_options (fun n ->
         let td = Dom_html.createTd document in
-        ignore (Dom.appendChild td n) ;
+        Dom.appendChild td n ;
         apply_classes td classes ;
         td) line l) content ;
     (table :> Dom_html.element Js.t)
   | InOut.Node n -> n
 
-(** Returns the [response] div from the main webpage. **)
+(** Return the [response] div from the main webpage. **)
 let get_response _ =
   Js.Opt.get (Dom_html.document##getElementById (Js.string "response")) (fun _ ->
     failwith "The element [response] has not been found in the webpage.")
 
+(** Remove all the child of a node. **)
+let rec clear_node n =
+  match Js.Opt.to_option n##.firstChild with
+  | Some c ->
+    ignore (n##removeChild c) ;
+    clear_node n
+  | None -> ()
+
 let clear_response _ =
-  let response = get_response () in
-  let rec aux _ =
-    match Js.Opt.to_option (response##.firstChild) with
-    | Some n -> ignore (response##removeChild n) ; aux ()
-    | None -> () in
-  aux ()
+  clear_node (get_response ())
 
 let print_node ?(error = false) n =
   let response = get_response () in
   let div = Dom_html.createDiv document in
   div##.className := Js.string (if error then "error" else "block") ;
-  ignore (Dom.appendChild div n) ;
-  ignore (Dom.appendChild response div)
+  Dom.appendChild div n ;
+  Dom.appendChild response div
 
 let print_block ?(error = false) =
   Utils.compose (print_node ~error) (Utils.compose block_node InOut.add_spaces)
@@ -210,6 +213,119 @@ let createTextInput txt =
   let input = Dom_html.createInput ~_type:(Js.string "text") document in
   input##.value := Js.string txt ;
   ((input :> Dom_html.element Js.t), fun _ -> Js.to_string input##.value)
+
+let createResponsiveListInput default placeholder get =
+  let main = Dom_html.createDiv document in
+  main##.classList##add (Js.string "autocomplete") ;
+  let l = ref default in
+  let remove txt =
+    l := List.filter (fun (txt', _) -> txt <> txt') !l in
+  let ul = Dom_html.createUl document in
+  Dom.appendChild main ul ;
+  let rec update_list _ =
+    clear_node ul ;
+    List.iter (fun (str, _) ->
+      let li = Dom_html.createLi document in
+      Dom.appendChild ul li ;
+      Dom.appendChild li (block_node (Text str)) ;
+      let close = Dom_html.createButton document in
+      close##.onclick :=
+        Dom_html.handler (fun _ ->
+          remove str ;
+          update_list () ;
+          Js._true) ;
+      close##.classList##add (Js.string "autocomplete-close") ;
+      Dom.appendChild li close) !l in
+  update_list () ;
+  let form = Dom_html.createForm document in
+  ignore (form##setAttribute (Js.string "autocomplete") (Js.string "off")) ;
+  Dom.appendChild main form ;
+  let input = Dom_html.createInput ~_type:(Js.string "text") document in
+  input##.placeholder := Js.string placeholder ;
+  Dom.appendChild form input ;
+  let div = Dom_html.createDiv document in
+  div##.classList##add (Js.string "autocomplete-items") ;
+  Dom.appendChild form div ;
+  let close_all_list _ =
+    let l = document##getElementsByClassName (Js.string "autocomplete-items") in
+    let rec aux n =
+      if n = l##.length then ()
+      else (
+        match Js.Opt.to_option (l##item n) with
+        | None -> assert false
+        | Some e ->
+          clear_node e ;
+          aux (n + 1)
+      ) in
+    aux 0 in
+  let current_focus = ref None in
+  let add str v =
+    close_all_list () ;
+    remove str ;
+    l := (str, v) :: !l ;
+    update_list () in
+  let create_autocompletions _ =
+    close_all_list () ;
+    let autocompletions =
+      List.map (fun (str, v) ->
+        let item = Dom_html.createDiv document in
+        item##.onclick := Dom_html.handler (fun _ -> add str v ; Js._true) ;
+        Dom.appendChild item (block_node (Text str)) ;
+        item) (get (Js.to_string input##.value)) in
+    List.iter (Dom.appendChild div) (List.rev autocompletions) ;
+    autocompletions in
+  input##.oninput :=
+    Dom_html.handler (fun _ ->
+      current_focus := None ;
+      ignore (create_autocompletions ()) ;
+      Js._true) ;
+  input##.onfocus :=
+    Dom_html.handler (fun _ ->
+      ignore (create_autocompletions ()) ;
+      Js._true) ;
+  let update_focus l =
+    Option.may (fun i ->
+      (List.nth l i)##.classList##add
+        (Js.string "autocomplete-active")) !current_focus in
+  input##.onkeydown :=
+    Dom_html.handler (fun e ->
+      match Dom_html.Keyboard_code.of_event e with
+      | Dom_html.Keyboard_code.ArrowUp ->
+        let autocompletions = create_autocompletions () in
+        let length = List.length autocompletions in
+        current_focus :=
+          (match !current_focus with
+           | None ->
+             if length > 0 then Some 0 else None
+           | Some j ->
+             let j = j + 1 in
+             if j >= length then
+               if length > 0 then Some 0 else None
+             else Some j) ;
+        update_focus autocompletions ;
+        Js._true
+      | Dom_html.Keyboard_code.ArrowDown ->
+        let autocompletions = create_autocompletions () in
+        let length = List.length autocompletions in
+        current_focus :=
+          (match !current_focus with
+           | None | Some 0 ->
+             let i = length - 1 in
+             if i >= 0 then Some i else None
+           | Some j ->
+             if j >= length then
+               let i = length - 1 in
+               if i >= 0 then Some i else None
+             else Some (j - 1)) ;
+        update_focus autocompletions ;
+        Js._true
+      | Dom_html.Keyboard_code.Enter ->
+        let autocompletions = create_autocompletions () in
+        Option.may (fun i ->
+          (List.nth autocompletions i)##click) !current_focus ;
+        Js._false
+      | _ -> Js._true) ;
+  ((main :> Dom_html.element Js.t), fun _ -> List.map snd !l)
 
 let createPercentageInput d =
   let d = max 0. (min 1. d) in
@@ -230,19 +346,19 @@ let createDateInput d =
 
 let createSwitch text texton textoff b f =
   let label = Dom_html.createLabel document in
-  ignore (label##setAttribute (Js.string "class") (Js.string "switch")) ;
+  label##.classList##add (Js.string "switch") ;
   let input = Dom_html.createInput ~_type:(Js.string "checkbox") document in
   input##.onchange := Dom_html.handler (fun _ -> f () ; Js._true) ;
   Dom.appendChild label input ;
   let span = Dom_html.createSpan document in
-  ignore (span##setAttribute (Js.string "class") (Js.string "slider")) ;
+  span##.classList##add (Js.string "slider") ;
   Dom.appendChild label span ;
   Dom.appendChild label (block_node (Text text)) ;
   let addText textClass =
     Option.may (fun text ->
       Dom.appendChild label (block_node (Text " ")) ;
       let node = block_node (Text (text)) in
-      ignore (node##setAttribute (Js.string "class") (Js.string textClass)) ;
+      node##.classList##add (Js.string textClass) ;
       Dom.appendChild label node) in
   addText "textswitchon" texton ;
   addText "textswitchoff" textoff ;

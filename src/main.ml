@@ -92,7 +92,7 @@ type parameters = {
     player_information : (string (** Character name *)
                           * int (** Complexity **)
                           * int (** Difficulty **)
-                          * unit (** Miscellaneous **)) list ;
+                          * int (* TODO: Must be attribute values instead: [int] is just for the test. *) list (** Miscellaneous **)) list ;
     chosen_productions : string PSet.t (** The name of each chosen production. **)
   }
 
@@ -194,7 +194,8 @@ let main =
                           let c = Id.from_array c in
                           let st = State.get_relation_state state in
                           (name, State.character_complexity st c,
-                           State.character_difficulty st c, ())) names in
+                           State.character_difficulty st c,
+                           [] (* TODO: Get them from the state. *))) names in
                       let parameters =
                         { parameters with
                             player_information = informations ;
@@ -400,15 +401,17 @@ let main =
                       aux (n - 1)
                     else name in
                 aux 100 in
-              (name, complexity, difficulty, ())
-              :: player_information)
+              (name, complexity, difficulty, []) :: player_information)
             player_information (Utils.seq (player_number - len)) in
       let table =
-        List.map (fun (name, complexity, difficulty, _) ->
+        List.map (fun (name, complexity, difficulty, misc) ->
           (IO.createTextInput name,
            IO.createNumberInput complexity,
            IO.createNumberInput difficulty,
-           InOut.Space)) player_information in
+           IO.createResponsiveListInput [("testA", 1)] "test" (fun txt ->
+             (* TODO: Temporary *)
+             ignore categories ;
+             [("testA", 1) ; ("testB", 2) ; ("testC", 3)]))) player_information in
       IO.print_block (InOut.Div (InOut.Normal, [
         InOut.P [ InOut.Text (get_translation "changeThisTable") ] ;
         InOut.Div (InOut.Centered, [
@@ -419,19 +422,19 @@ let main =
                         (InOut.Text (get_translation "miscellaneous"),
                          InOut.default)],
                        List.map (fun ((name, _), (complexity, _),
-                                      (difficulty, _), misc) -> ([], [
+                                      (difficulty, _), (misc, _)) -> ([], [
                            (InOut.Node name, InOut.default) ;
                            (InOut.Node complexity, InOut.default) ;
                            (InOut.Node difficulty, InOut.default) ;
-                           (ignore categories ; (misc (* TODO *), InOut.default))
+                           (InOut.Node misc, InOut.default)
                          ])) table) ])])) ;
       next_button ~nextText:"startGeneration" w parameters (fun _ ->
         { parameters with
             player_information =
               List.map (fun ((_, get_name), (_, get_complexity),
-                             (_, get_difficulty), misc) ->
-                let misc = ignore misc (* TODO *) in
-                (get_name (), get_complexity (), get_difficulty (), misc)) table
+                             (_, get_difficulty), (_, get_misc)) ->
+                (get_name (), get_complexity (),
+                 get_difficulty (), get_misc ())) table
         }) (Some ask_for_categories) (Some generate) ;
       let%lwt cont = cont in cont ()
     and generate parameters =

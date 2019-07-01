@@ -104,6 +104,14 @@ module type T = sig
    * It also returns a function reading it. **)
   val createTextInput : string -> node * (unit -> string)
 
+  (** Create a text input meant to return a list of things.
+   * Each time that the user type a string, it is fed to its argument function.
+   * The strings of the returned list is shown to the user.  The final list can
+   * be fetched with the function returned with the node.
+   * The initial list and a placeholder string is given to the function to help
+   * the user. **)
+  val createResponsiveListInput : (string * 'a) list -> string -> (string -> (string * 'a) list) -> node * (unit -> 'a list)
+
   (** Create a range input between [0.] and [1.].
    * As of [createNumberInput], it also returns a function reading it. **)
   val createPercentageInput : float -> node * (unit -> float)

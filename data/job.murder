@@ -594,9 +594,9 @@ begin
 
     sentence
     begin
-      translation fr J:+sbeg:+pro " a remarqué que " F " est dans la salle : quelques photos sont de mises."
-      translation en J:+sbeg:+pro " noticed that " F " is in the room: it is time to use this camera."
-      translation eo J:+sbeg:+pro " rimarkas ke " F " estas enĉambre: tio ĉio fotindas."
+      translation fr J:+sbeg " a remarqué que " F " est dans la salle : quelques photos sont de mises."
+      translation en J:+sbeg " noticed that " F " is in the room: it is time to use this camera."
+      translation eo J:+sbeg " rimarkas ke " F " estas enĉambre: tio ĉio fotindas."
     end
   end
 end

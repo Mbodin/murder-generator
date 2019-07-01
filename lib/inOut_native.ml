@@ -461,6 +461,36 @@ let createTextInput str =
       txt := str) ^ " ") in
   (node, fun _ -> !txt)
 
+let createResponsiveListInput default _ get =
+  let l = ref default in
+  let remove txt =
+    l := List.filter (fun (txt', _) -> txt <> txt') !l in
+  let print _ =
+    String.concat " " (List.map (fun (txt, _) ->
+      "<" ^ txt ^ " [X]" ^ link (fun _ -> remove txt) ^ ">") !l) in
+  let rec add _ =
+    print_string ("<> -> ") ;
+    flush stdout ;
+    let str = input_line stdin in
+    let possibilities = get str in
+    print_endline "[0] -> <>" ;
+    List.iteri (fun i (txt, _) ->
+      print_endline ("[" ^ string_of_int (1 + i) ^ "] " ^ txt)) possibilities ;
+    print_string "-> " ;
+    flush stdout ;
+    let response = input_line stdin in
+    try
+      let v = int_of_string response in
+      if v = 0 then add ()
+      else
+        let (txt, e) = List.nth possibilities (v - 1) in
+        remove txt ;
+        l := (txt, e) :: !l
+    with _ -> print_endline "Invalid value." in
+  let node link =
+    Print.print (" <" ^ print () ^ "> " ^ link add ^ " ") in
+  (node, fun _ -> List.map snd !l)
+
 let createPercentageInput d =
   let d = max 0. (min 1. d) in
   let v = ref (100. *. d) in

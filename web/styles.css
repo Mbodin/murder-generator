@@ -245,6 +245,22 @@ table.timeline {
   white-space: nowrap ;
 }
 
+.timeline th {
+  position: sticky ;
+  top: 0 ;
+  min-height: 60px ;
+  z-index: 3 ;
+}
+
+.timeline th > div::before {
+  position: sticky ;
+  top: 0 ;
+  z-index: 2 ;
+  width: 1.5em ;
+  height: 60px ;
+  background-color: #eeeeec ;
+}
+
 .timeline th > div {
   transform: translate(14.5px, 15px) rotate(-45deg) ;
   width: 1.5em ;
@@ -478,5 +494,71 @@ input[type="checkbox"] ~ .textswitchoff {
 
 input[type="checkbox"]:checked ~ .textswitchoff {
   display: none ;
+}
+
+/* List input */
+
+.autocomplete {
+  position: relative ;
+  display: inline-block ;
+}
+
+.autocomplete > ul {
+  list-style-type: none ;
+  display: block ;
+}
+
+.autocomplete > ul > li {
+  display: inline-block ;
+  background-color: #ad7fa8 ;
+  border: 2px solid #75507b ;
+  border-radius: 1ex ;
+  margin-right: 1ex ;
+  padding-left: 3px ;
+}
+
+button.autocomplete-close {
+  background-color: #eeeeec ;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' width='7' height='7'><line x1='0' y1='0' x2='7' y2='7' style='stroke:%235c3566;stroke-width:2' /><line x1='0' y1='7' x2='7' y2='0' style='stroke:%235c3566;stroke-width:2' /></svg>") ;
+  background-repeat: no-repeat ;
+  background-position: center ;
+  border-radius: 50% ;
+  border: 2px solid #5c3566 ;
+  vertical-align: text-bottom ;
+  margin: 3px ;
+  width: 15px ;
+  height: 15px ;
+  padding: 5px ;
+  cursor: pointer ;
+}
+
+.autocomplete > input[type="text"] {
+  width: 100% ;
+  border: 1px solid #75507b ;
+  padding-left: 3px 1ex ;
+}
+
+.autocomplete-items {
+  position: absolute ;
+  border: none ;
+  z-index: 42 ;
+  top: 100% ;
+  left: 0 ;
+  right: 0 ;
+}
+
+.autocomplete-items > div {
+  border: 1px solid #75507b ;
+  border-top: none ;
+  background-color: #eeeeec ;
+}
+
+.autocomplete-items > div:hover {
+  background-color: #ad7fa8 ;
+}
+
+.autocomplete-items > div.autocomplete-active {
+  color: #eeeeec ;
+  background-color: #75507b ;
 }
 

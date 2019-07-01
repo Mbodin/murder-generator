@@ -82,6 +82,7 @@ module type T = sig
 
   val createNumberInput : ?min:int -> ?max:int -> int -> node * (unit -> int)
   val createTextInput : string -> node * (unit -> string)
+  val createResponsiveListInput : (string * 'a) list -> string -> (string -> (string * 'a) list) -> node * (unit -> 'a list)
   val createPercentageInput : float -> node * (unit -> float)
   val createDateInput : Date.t -> node * (unit -> Date.t)
   val createSwitch : string -> string option -> string option -> bool -> (unit -> unit) -> node * (bool -> unit) * (unit -> bool)

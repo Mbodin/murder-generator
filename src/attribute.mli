@@ -33,6 +33,9 @@ module type Attribute = sig
     (** Return the list of constructors associated to an attribute. **)
     val constructors : constructor_map -> attribute -> constructor list option
 
+    (** Returns all defined constructors. **)
+    val all_constructors : constructor_map -> constructor list
+
     (** Declare an attribute, returning its associated normal identifier.
      * The string is the name of the attribute and the boolean states whether
      * it is internal.
@@ -63,6 +66,7 @@ module type Attribute = sig
 
     (** State whether the first constructor is compatible with the second. **)
     val is_compatible : constructor_map -> attribute -> constructor -> constructor -> bool
+
     (** State whether the given constructor is internal. **)
     val is_internal : constructor_map -> attribute -> constructor -> bool
 

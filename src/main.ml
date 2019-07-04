@@ -92,7 +92,8 @@ type parameters = {
     player_information : (string (** Character name *)
                           * int (** Complexity **)
                           * int (** Difficulty **)
-                          * int (* TODO: Must be attribute values instead: [int] is just for the test. *) list (** Miscellaneous **)) list ;
+                          * Attribute.PlayerAttribute.constructor list
+                              (** Preset attributes **)) list ;
     chosen_productions : string PSet.t (** The name of each chosen production. **)
   }
 
@@ -347,7 +348,6 @@ let main =
       let%lwt data = data in
       let (cont, w) = Lwt.task () in
       let player_number = parameters.player_number in
-      let categories = Utils.assert_option __LOC__ parameters.categories in
       (** Asking about individual player constraints. **)
       IO.print_block (InOut.Div (InOut.Normal, [
         InOut.P [ InOut.Text (get_translation "individualConstraints") ] ;
@@ -403,15 +403,61 @@ let main =
                 aux 100 in
               (name, complexity, difficulty, []) :: player_information)
             player_information (Utils.seq (player_number - len)) in
+      let constructor_maps = Driver.get_constructor_maps data in
+      let constructor_name c =
+        (* TODO: This is the internal name.
+         * We should instead (or in addition?) look for the translated names. *)
+        let m = constructor_maps.Attribute.player in
+        let a =
+          Utils.assert_option __LOC__
+            (Attribute.PlayerAttribute.constructor_attribute m c) in
+        if Attribute.PlayerAttribute.is_internal m a c then None
+        else
+          let an =
+            Utils.assert_option __LOC__
+              (Attribute.PlayerAttribute.attribute_name m a) in
+          let cn =
+            Utils.assert_option __LOC__
+              (Attribute.PlayerAttribute.constructor_name m c) in
+          Some (an ^ ": " ^ cn) in
+      let all_constructors =
+        Utils.list_map_filter (fun c ->
+            Option.map (fun n -> (c, n)) (constructor_name c))
+          (Attribute.PlayerAttribute.all_constructors
+            constructor_maps.Attribute.player) in
+      if all_constructors = [] then
+        failwith ("No constructor have been declared."
+                 ^ " This is likely because “esy local” has not been invoqued"
+                 ^ " before the compilation process.") ;
+      (* LATER:
+         let categories = Utils.assert_option __LOC__ parameters.categories in *)
       let table =
         List.map (fun (name, complexity, difficulty, misc) ->
           (IO.createTextInput name,
            IO.createNumberInput complexity,
            IO.createNumberInput difficulty,
-           IO.createResponsiveListInput [("testA", 1)] "test" (fun txt ->
-             (* TODO: Temporary *)
-             ignore categories ;
-             [("testA", 1) ; ("testB", 2) ; ("testC", 3)]))) player_information in
+           let proposed = snd (Utils.select_any all_constructors) in
+           let misc =
+             Utils.list_map_filter (fun c ->
+               Option.map (fun n -> (n, c)) (constructor_name c)) misc in
+           IO.createResponsiveListInput misc proposed (fun txt ->
+             let re = Re.Str.regexp_string_case_fold txt in
+             let corresponds txt' =
+               try Some (Re.Str.search_forward re txt' 0)
+               with Not_found -> None in
+             let l =
+               Utils.list_map_filter (fun (c, n) ->
+                   (* TODO: Remove constructors from already chosen attributes. *)
+                   Option.map (fun d -> (c, n, d)) (corresponds n))
+                 all_constructors in
+             (* TODO: it would be nice to remove from the list the constructors
+              * corresponding to unwanted categories. *)
+             let l =
+               List.sort ~cmp:(fun (_, _, d1) (_, _, d2) -> compare d2 d1) l in
+             let l =
+               let l' = List.take 10 l in
+               if l' = [] then l else l' in
+             List.map (fun (c, n, _) -> (n, c)) l))) player_information in
       IO.print_block (InOut.Div (InOut.Normal, [
         InOut.P [ InOut.Text (get_translation "changeThisTable") ] ;
         InOut.Div (InOut.Centered, [
@@ -457,9 +503,18 @@ let main =
               State.difficulty = difficulty
             }) parameters.player_information) in
         let state = State.create_state parameters.player_number in
-        (* TODO: Update the state according to the miscellaneous player
-         * informations. *)
-        Solver.solve IO.pause global state objectives in
+        let (state, diff) =
+          let diff = Element.empty_difference in
+          Utils.assert_option __LOC__
+            (Utils.list_fold_lefti (fun i stdiff (_, _, _, attributes) ->
+                Utils.if_option stdiff (fun (state, diff) ->
+                  Utils.apply_option
+                    (Element.apply_constructors (Driver.get_constructor_maps data)
+                      state (Id.from_array i) attributes)
+                    (fun (state, diff') ->
+                      (state, Element.merge_attribute_differences diff diff'))))
+              (Some (state, diff)) parameters.player_information) in
+        Solver.solve_with_difference IO.pause global state diff objectives in
       chooseFormats state parameters
     and chooseFormats state parameters =
       IO.stopLoading () ;%lwt

@@ -506,6 +506,7 @@ input[type="checkbox"]:checked ~ .textswitchoff {
 .autocomplete > ul {
   list-style-type: none ;
   display: block ;
+  white-space: normal ;
 }
 
 .autocomplete > ul > li {
@@ -551,6 +552,7 @@ button.autocomplete-close {
   border: 1px solid #75507b ;
   border-top: none ;
   background-color: #eeeeec ;
+  cursor: pointer ;
 }
 
 .autocomplete-items > div:hover {

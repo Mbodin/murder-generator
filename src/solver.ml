@@ -363,14 +363,15 @@ let wider_step pause g (s, evs) o m =
     max 0 (int_of_float (sqrt (float_of_int (abs evs)))) in
   aux (distance_to_objective / 3 + 1) g (s, evs) m
 
-let solve pause g s o =
+let solve_with_difference pause g s m o =
   let g = { g with all_elements =
     BidirectionalList.from_list (Utils.shuffle
       (BidirectionalList.to_list g.all_elements)) } in
-  let m = Element.empty_difference in
-  (* TODO: Change the value of [m] to consider all the relevant elements given by
-   * the constraints provided by the user. *)
   let s = Utils.cached s Element.empty_cache in
   let%lwt (g, (s, _), m) = wider_step pause g (s, evaluate_state o (getv s)) o m in
   Lwt.return (getv s)
+
+let solve pause g o =
+  let state = State.create_state (Array.length o) in
+  solve_with_difference pause g state Element.empty_difference o
 

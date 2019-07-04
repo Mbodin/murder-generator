@@ -129,6 +129,9 @@ let check_contact m inst st c con cha v1 =
     | None -> Some (lazy false)
     | Some v2 ->
       let compatible =
+        (* TODO: No longer check compatibility of constructors there.
+         * Instead, directly replace any compatible addition of a constructor
+         * by the whole list of compatible attributes. *)
         Attribute.ContactAttribute.is_compatible m.Attribute.contact con in
       compatible_and_progress_attribute_value compatible v1 v2 in
   match cha with
@@ -311,56 +314,66 @@ let merge_attribute_differences (m1, s1, l1) (m2, s2, l2) =
        (if v1 < 0 && v1 + v2 >= 0 then a :: lo else lo))) m2 (m1, [], []) in
   (m, s1 + s2, li @ List.filter (fun a -> not (List.mem a lo)) l1)
 
+(** Applies the value [v1] for the attribute [a] for player [c] in this context. **)
+let apply_player_constructor m state diff c a v1 =
+  let cst = State.get_character_state state in
+  let compatible =
+    Attribute.PlayerAttribute.is_compatible m.Attribute.player a in
+  let diff =
+    match State.get_attribute_character cst c a with
+    | None ->
+      State.write_attribute_character cst c a v1 ;
+      update_difference diff (Attribute.PlayerAttribute a)
+        (if State.attribute_value_can_progress v1 then -1 else 0)
+    | Some v2 ->
+      let v3 =
+        Utils.assert_option __LOC__
+          (State.compose_attribute_value compatible v1 v2) in
+      State.write_attribute_character cst c a v3 ;
+      update_difference diff (Attribute.PlayerAttribute a)
+        (if State.attribute_value_progress v2 v3 then 1 else 0) in
+  (state, diff)
+
+(** Applies the value [v1] for the contact [con] from character [c] to [cha]
+ * in this context. **)
+let apply_contact_constructor m state diff c con cha v1 =
+  let cst = State.get_character_state state in
+  let compatible =
+    Attribute.ContactAttribute.is_compatible m.Attribute.contact con in
+  let diff =
+    match State.get_contact_character cst c con cha with
+    | None ->
+      State.write_contact_character cst c con cha v1 ;
+      update_difference diff (Attribute.ContactAttribute con)
+        (if State.attribute_value_can_progress v1 then -1 else 0)
+    | Some v2 ->
+      let v3 =
+        Utils.assert_option __LOC__
+          (State.compose_attribute_value compatible v1 v2) in
+      State.write_contact_character cst c con cha v3 ;
+      update_difference diff (Attribute.ContactAttribute con)
+        (if State.attribute_value_progress v2 v3 then 1 else 0) in
+  (state, diff)
+
 let apply m state e inst =
   if Utils.assert_defend then
     assert (compatible_and_progress m state e inst <> None) ;
   let evs = instantiate_events e inst in
   let diff = empty_difference in
   let other_players = other_players state inst in
-  let apply_constraint c (state, diff) =
-    let cst = State.get_character_state state in function
+  let apply_constraint c (state, diff) = function
     | Attribute (a, v1) ->
-      let compatible =
-        Attribute.PlayerAttribute.is_compatible m.Attribute.player a in
-      let diff =
-        match State.get_attribute_character cst c a with
-        | None ->
-          State.write_attribute_character cst c a v1 ;
-          update_difference diff (Attribute.PlayerAttribute a)
-            (if State.attribute_value_can_progress v1 then -1 else 0)
-        | Some v2 ->
-          let v3 =
-            Utils.assert_option __LOC__
-              (State.compose_attribute_value compatible v1 v2) in
-          State.write_attribute_character cst c a v3 ;
-          update_difference diff (Attribute.PlayerAttribute a)
-            (if State.attribute_value_progress v2 v3 then 1 else 0) in
-      (state, diff)
+      apply_player_constructor m state diff c a v1
     | Contact (con, cha, v1) ->
-      let compatible =
-        Attribute.ContactAttribute.is_compatible m.Attribute.contact con in
-      let apply_contact (state, diff) cha =
-        let diff =
-          match State.get_contact_character cst c con cha with
-          | None ->
-            State.write_contact_character cst c con cha v1 ;
-            update_difference diff (Attribute.ContactAttribute con)
-              (if State.attribute_value_can_progress v1 then -1 else 0)
-          | Some v2 ->
-            let v3 =
-              Utils.assert_option __LOC__
-                (State.compose_attribute_value compatible v1 v2) in
-            State.write_contact_character cst c con cha v3 ;
-            update_difference diff (Attribute.ContactAttribute con)
-              (if State.attribute_value_progress v2 v3 then 1 else 0) in
-        (state, diff) in
       match cha with
       | Some cha ->
         if Utils.assert_defend then assert (cha < Array.length inst) ;
         let cha = inst.(cha) in
-        apply_contact (state, diff) cha
+        apply_contact_constructor m state diff c con cha v1
       | None ->
-        List.fold_left apply_contact (state, diff) other_players in
+        List.fold_left (fun (state, diff) cha ->
+            apply_contact_constructor m state diff c con cha v1)
+          (state, diff) other_players in
   let apply_constraints state diff c =
     List.fold_left (apply_constraint c) (state, diff) in
   let (state, diff) =
@@ -393,4 +406,13 @@ let apply_relations state e inst =
       State.add_complexity result c ei.added_objective.State.complexity)
     e.players inst ;
   result
+
+let apply_constructors m state c =
+  List.fold_left (fun stm v ->
+    Utils.if_option stm (fun (state, diff) ->
+      let a =
+        Utils.assert_option __LOC__
+          (Attribute.PlayerAttribute.constructor_attribute m.Attribute.player v) in
+      try Some (apply_player_constructor m state diff c a (State.One_value_of [v]))
+      with _ -> None)) (Some (state, empty_difference))
 

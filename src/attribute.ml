@@ -9,6 +9,7 @@ module type Attribute = sig
     val constructor_name : constructor_map -> constructor -> string option
     val constructor_attribute : constructor_map -> constructor -> attribute option
     val constructors : constructor_map -> attribute -> constructor list option
+    val all_constructors : constructor_map -> constructor list
     val declare_attribute : constructor_map -> string -> bool -> attribute * constructor_map
     val declare_constructor : constructor_map -> attribute -> string -> bool -> constructor * constructor_map
     val get_attribute : constructor_map -> string -> attribute option
@@ -148,6 +149,9 @@ module AttributeInst () =
         try PMap.find c mc
         with Not_found -> [] in
       List.mem c' l
+
+    let all_constructors m =
+      List.concat (PMap.fold (fun cs l -> cs :: l) m.association [])
 
   end
 

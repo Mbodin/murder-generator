@@ -103,6 +103,8 @@ let rec block_node =
     let inner = Dom_html.createDiv document in
     let visible = ref visible in
     let set _ =
+      title##.classList##remove
+        (Js.string (if !visible then "folded" else "unfolded")) ;
       title##.classList##add
         (Js.string (if !visible then "unfolded" else "folded")) in
     set () ;
@@ -269,7 +271,11 @@ let createResponsiveListInput default placeholder get =
     let autocompletions =
       List.map (fun (str, v) ->
         let item = Dom_html.createDiv document in
-        item##.onclick := Dom_html.handler (fun _ -> add str v ; Js._true) ;
+        item##.onclick :=
+          Dom_html.handler (fun _ ->
+            input##.value := Js.string "" ;
+            add str v ;
+            Js._true) ;
         Dom.appendChild item (block_node (Text str)) ;
         item) (get (Js.to_string input##.value)) in
     List.iter (Dom.appendChild div) (List.rev autocompletions) ;

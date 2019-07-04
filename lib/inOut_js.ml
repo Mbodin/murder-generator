@@ -289,6 +289,7 @@ let createResponsiveListInput default placeholder get =
     Dom_html.handler (fun _ ->
       ignore (create_autocompletions ()) ;
       Js._true) ;
+  (* TODO: Remove the list when the focus is lost. *)
   let update_focus l =
     Option.may (fun i ->
       (List.nth l i)##.classList##add

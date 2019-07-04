@@ -1,4 +1,6 @@
 
+open ExtList
+
 let _ = Random.self_init ()
 
 let assert_defend = true
@@ -48,6 +50,10 @@ let safe_tail = function
   | [] -> []
   | _ :: l -> l
 
+let list_header n l =
+  let l' = List.take n l in
+  if l' = [] then l else l'
+
 let rec unfold f i =
   match f i with
   | None -> []
@@ -70,19 +76,19 @@ let seq_incl_array = seq_range_array 0
 
 let seq_array i = seq_incl_array (i - 1)
 
-let uniq l =
+let uniq ?(cmp = compare) l =
   let rec aux = function
     | a :: b :: l when a = b -> aux (b :: l)
     | a :: l -> a :: aux l
     | [] -> [] in
-  aux (List.sort compare l)
+  aux (List.sort ~cmp:cmp l)
 
-let is_uniq l =
+let is_uniq ?(cmp = compare) l =
   let rec aux = function
     | a :: b :: l when a = b -> false
     | a :: l -> aux l
     | [] -> true in
-  aux (List.sort compare l)
+  aux (List.sort ~cmp:cmp l)
 
 let rec repeat i e =
   if i = 0 then []
@@ -147,7 +153,7 @@ let rec list_partition_map f = function
 
 
 let shuffle l =
-  List.sort (fun _ _ -> if Random.bool () then 1 else -1) l
+  List.sort ~cmp:(fun _ _ -> if Random.bool () then 1 else -1) l
 
 let array_shuffle a =
   let a = Array.copy a in

@@ -553,6 +553,7 @@ button.autocomplete-close {
   border-top: none ;
   background-color: #eeeeec ;
   cursor: pointer ;
+  overflow-x: auto ;
 }
 
 .autocomplete-items > div:hover {

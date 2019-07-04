@@ -46,9 +46,14 @@ val get_cache : ('value, 'cache) cached -> 'cache
 (** Non-functionnally update a cache. **)
 val set_cache : ('value, 'cache) cached -> 'cache -> unit
 
+
 (** Return the tail of the list, the empty list being associated
  * with the empty list. **)
 val safe_tail : 'a list -> 'a list
+
+(** Returns the [n]th first elements of the list, in order.
+ * If the list is smaller than this number of elements, returns the list. **)
+val list_header : int -> 'a list -> 'a list
 
 (** Create a list from a function providing the optional next element and iterator.
  * The first element given is used to initialise the function and is not inserted
@@ -124,12 +129,13 @@ val list_partition_map : ('a -> ('b, 'c) plus) -> 'a list -> 'b list * 'c list
  * element of the list (or [None] if the list is empty). **)
 val argmax : ('a -> 'a -> int) -> 'a list -> 'a option
 
-(** Sort and remove all duplicated element from the given list. **)
-val uniq : 'a list -> 'a list
+(** Sort and remove all duplicated element from the given list.
+ * The comparison function is optional: if not given, it will be [compare]. **)
+val uniq : ?cmp:('a -> 'a -> int) -> 'a list -> 'a list
 
 (** Return [true] if and only if [uniq] behaves as the identity function
   * on the given list. **)
-val is_uniq : 'a list -> bool
+val is_uniq : ?cmp:('a -> 'a -> int) -> 'a list -> bool
 
 (** Shuffle a list. **)
 val shuffle : 'a list -> 'a list
@@ -155,7 +161,8 @@ val square : int -> int
 (** Return a random number between its two arguments, included. **)
 val rand : int -> int -> int
 
-(** Take a list and return a random element from it. **)
+(** Take a list and return a random element from it.
+ * Returns [EmptyList] if called on an empty list. **)
 val select_any : 'a list -> 'a
 
 (** Similar to select_any, but it removes the element from the list. **)
@@ -167,7 +174,7 @@ val select : (int * 'a) list -> 'a
 (** Similar to select, but it removes the element from the list. **)
 val take : (int * 'a) list -> 'a * (int * 'a) list
 
-(** Possible exception returned by the select function. **)
+(** Possible exception returned by the selecting functions. **)
 exception EmptyList
 exception NegativeWeigth
 exception InternalError

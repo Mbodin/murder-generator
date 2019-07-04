@@ -404,60 +404,89 @@ let main =
               (name, complexity, difficulty, []) :: player_information)
             player_information (Utils.seq (player_number - len)) in
       let constructor_maps = Driver.get_constructor_maps data in
-      let constructor_name c =
-        (* TODO: This is the internal name.
-         * We should instead (or in addition?) look for the translated names. *)
+      let translation = Driver.get_translations data in
+      let constructor_infos c =
         let m = constructor_maps.Attribute.player in
         let a =
           Utils.assert_option __LOC__
             (Attribute.PlayerAttribute.constructor_attribute m c) in
-        if Attribute.PlayerAttribute.is_internal m a c then None
-        else
+        let name =
           let an =
             Utils.assert_option __LOC__
               (Attribute.PlayerAttribute.attribute_name m a) in
           let cn =
             Utils.assert_option __LOC__
               (Attribute.PlayerAttribute.constructor_name m c) in
-          Some (an ^ ": " ^ cn) in
-      let all_constructors =
-        Utils.list_map_filter (fun c ->
-            Option.map (fun n -> (c, n)) (constructor_name c))
-          (Attribute.PlayerAttribute.all_constructors
-            constructor_maps.Attribute.player) in
-      if all_constructors = [] then
-        failwith ("No constructor have been declared."
-                 ^ " This is likely because “esy local” has not been invoqued"
-                 ^ " before the compilation process.") ;
-      (* LATER:
-         let categories = Utils.assert_option __LOC__ parameters.categories in *)
+          an ^ ": " ^ cn in
+        let translated =
+          Translation.force_translate translation.Translation.attribute
+            (get_language parameters) (Attribute.PlayerAttribute a) ^ ": "
+          ^ fst (Translation.gforce_translate translation.Translation.constructor
+                  (get_language parameters) (Attribute.PlayerConstructor c)
+                  (PSet.singleton Translation.base)) in
+        (a, Attribute.PlayerAttribute.is_internal m a c, name, translated) in
+      let (internal_cons, main_cons) =
+        let categories = Utils.assert_option __LOC__ parameters.categories in
+        let all_constructors =
+          Utils.list_map_filter (fun c ->
+            let dep =
+              Driver.get_constructor_dependencies data
+                (Attribute.PlayerConstructor c) in
+            if PSet.incl dep categories then
+              Some (c, constructor_infos c)
+            else None) (Attribute.PlayerAttribute.all_constructors
+                         constructor_maps.Attribute.player) in
+        Utils.list_partition_map (fun (c, (a, internal, n, t)) ->
+          let r = (c, a, n, t) in
+          if internal then Utils.Left r else Utils.Right r) all_constructors in
       let table =
         List.map (fun (name, complexity, difficulty, misc) ->
           (IO.createTextInput name,
            IO.createNumberInput complexity,
            IO.createNumberInput difficulty,
-           let proposed = snd (Utils.select_any all_constructors) in
-           let misc =
-             Utils.list_map_filter (fun c ->
-               Option.map (fun n -> (n, c)) (constructor_name c)) misc in
-           IO.createResponsiveListInput misc proposed (fun txt ->
-             let re = Re.Str.regexp_string_case_fold txt in
-             let corresponds txt' =
-               try Some (Re.Str.search_forward re txt' 0)
-               with Not_found -> None in
-             let l =
-               Utils.list_map_filter (fun (c, n) ->
-                   (* TODO: Remove constructors from already chosen attributes. *)
-                   Option.map (fun d -> (c, n, d)) (corresponds n))
-                 all_constructors in
-             (* TODO: it would be nice to remove from the list the constructors
-              * corresponding to unwanted categories. *)
-             let l =
-               List.sort ~cmp:(fun (_, _, d1) (_, _, d2) -> compare d2 d1) l in
-             let l =
-               let l' = List.take 10 l in
-               if l' = [] then l else l' in
-             List.map (fun (c, n, _) -> (n, c)) l))) player_information in
+           let getrec =
+             (* This reference is frustrating: I could not find another way to make
+              * the compiler accept the recursion in this case. *)
+             ref (fun _ -> assert false) in
+           let (node, get) =
+             let proposed =
+               try let (_, _, _, t) = Utils.select_any main_cons in t
+               with Utils.EmptyList -> "" in
+             let misc =
+               List.map (fun c ->
+                 let (a, _, _, t) = constructor_infos c in
+                 (t, (a, c))) misc in
+             IO.createResponsiveListInput misc proposed (fun txt ->
+               let re = Re.Str.regexp_string_case_fold txt in
+               let corresponds txt' =
+                 try Some (Re.Str.search_forward re txt' 0)
+                 with Not_found -> None in
+               let already_chosen =
+                 PSet.from_list (List.map (fun (a, _) -> a) (!getrec ())) in
+               let num_shown = 10 in
+               let get_from_list l =
+                 let l =
+                   Utils.list_map_filter (fun (c, a, n, t) ->
+                     if PSet.mem a already_chosen then None
+                     else
+                       let d =
+                         match corresponds t with
+                         | Some d -> Some (true, d)
+                         | None ->
+                           Option.map (fun d -> (false, d)) (corresponds n) in
+                       Option.map (fun d -> (c, a, d, t)) d) l in
+                 let l =
+                   List.sort ~cmp:(fun (_, _, (t1, d1), _) (_, _, (t2, d2), _) ->
+                     if t1 && not t2 then -1
+                     else if t2 && not t1 then 1
+                     else compare d1 d2) l in
+                 Utils.list_header num_shown l in
+               let l =
+                 Utils.list_header num_shown
+                   (get_from_list main_cons @ get_from_list internal_cons) in
+               List.map (fun (c, a, _, t) -> (t, (a, c))) l) in
+           getrec := get ;
+           (node, get))) player_information in
       IO.print_block (InOut.Div (InOut.Normal, [
         InOut.P [ InOut.Text (get_translation "changeThisTable") ] ;
         InOut.Div (InOut.Centered, [
@@ -480,7 +509,7 @@ let main =
               List.map (fun ((_, get_name), (_, get_complexity),
                              (_, get_difficulty), (_, get_misc)) ->
                 (get_name (), get_complexity (),
-                 get_difficulty (), get_misc ())) table
+                 get_difficulty (), List.map snd (get_misc ()))) table
         }) (Some ask_for_categories) (Some generate) ;
       let%lwt cont = cont in cont ()
     and generate parameters =

@@ -2,7 +2,7 @@
   "name": "murder-generator",
   "version": "1.0",
   "description": "A program to generate random murder parties",
-  "license": "GPL-3.0",
+  "license": "AGPL-3.0-or-later",
   "esy": {
     "build": "./build.sh",
     "buildsInSource": "_build"

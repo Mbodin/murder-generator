@@ -628,7 +628,7 @@ let main =
       if html then IO.print_block (Export.to_block estate) ;
       IO.stopLoading () ;%lwt
       IO.print_block (InOut.P [
-        InOut.Text (get_translation "underConstruction") ;
+        InOut.Text (get_translation "lookingForContribution") ;
         InOut.Text (get_translation "participate") ;
         InOut.Link (get_translation "there", webpage_link) ]) ;
       next_button w parameters (fun _ -> parameters)

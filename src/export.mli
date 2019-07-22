@@ -21,11 +21,18 @@ type state = {
       (** A few exports are meant to only export the non-final state. **)
   }
 
+(** A type storing the state as well as other informations.
+ * This type is used thorough this file. **)
+type t
+
+(** A function to create the information needed by the functions of this file. **)
+val process : state -> t
+
 (** Produce a JSON representation of the state. **)
-val to_json : state -> string
+val to_json : t -> string
 
 (** Produce a printable representation of the state. **)
-val to_block : state -> 'node InOut.block
+val to_block : t -> 'node InOut.block
 
 (** Revert [to_json] back to a list of names and a state.
  * The first argument is the file name (to report errors), and the second one
@@ -37,5 +44,5 @@ val from_json : Driver.import_information -> string -> string -> string list * S
  * (one for the name and one for the description), a mime type, a boolean,
  * and an extension.  The boolean indicates whether newlines should be
  * converted to suits the host’s operating system. **)
-val all_production : (string * string * string * string * bool * (state -> string)) list
+val all_production : (string * string * string * string * bool * (t -> string)) list
 

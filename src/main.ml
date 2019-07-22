@@ -594,7 +594,8 @@ let main =
       let%lwt state = state in
       let final = State.finalise state parameters.play_date in
       (** Exports the generated state to various formats. **)
-      let estate = {
+      let estate =
+        Export.process {
           Export.language = get_language parameters ;
           Export.names =
             List.map (fun (name, _, _, _) -> name) parameters.player_information ;

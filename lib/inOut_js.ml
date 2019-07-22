@@ -6,7 +6,7 @@ open Js_of_ocaml
 open Js_of_ocaml_lwt
 
 
-let pause _ = Lwt_js.sleep 0.01
+let pause _ = Lwt_js.sleep 0.02
 
 (** Whether the loading animation is currently running. **)
 let loading = ref true
@@ -271,14 +271,16 @@ let createResponsiveListInput default placeholder get =
     let autocompletions =
       List.map (fun (str, v) ->
         let item = Dom_html.createDiv document in
-        item##.onclick :=
+        let apply _ =
+          input##.value := Js.string "" ;
+          add str v in
+        item##.onmousedown :=
           Dom_html.handler (fun _ ->
-            input##.value := Js.string "" ;
-            add str v ;
+            apply () ;
             Js._true) ;
         Dom.appendChild item (block_node (Text str)) ;
-        item) (get (Js.to_string input##.value)) in
-    List.iter (Dom.appendChild div) (List.rev autocompletions) ;
+        (item, apply)) (get (Js.to_string input##.value)) in
+    List.iter (Dom.appendChild div) (List.rev_map fst autocompletions) ;
     autocompletions in
   input##.oninput :=
     Dom_html.handler (fun _ ->
@@ -289,10 +291,15 @@ let createResponsiveListInput default placeholder get =
     Dom_html.handler (fun _ ->
       ignore (create_autocompletions ()) ;
       Js._true) ;
-  (* TODO: Remove the list when the focus is lost. *)
+  input##.onblur :=
+    Dom_html.handler (fun _ ->
+      Lwt.async (fun _ ->
+        pause () ;%lwt
+        Lwt.return (close_all_list ())) ;
+      Js._true) ;
   let update_focus l =
     Option.may (fun i ->
-      (List.nth l i)##.classList##add
+      (fst (List.nth l i))##.classList##add
         (Js.string "autocomplete-active")) !current_focus in
   input##.onkeydown :=
     Dom_html.handler (fun e ->
@@ -328,8 +335,7 @@ let createResponsiveListInput default placeholder get =
         Js._true
       | Dom_html.Keyboard_code.Enter ->
         let autocompletions = create_autocompletions () in
-        Option.may (fun i ->
-          (List.nth autocompletions i)##click) !current_focus ;
+        Option.may (fun i -> snd (List.nth autocompletions i) ()) !current_focus ;
         Js._false
       | _ -> Js._true) ;
   ((main :> Dom_html.element Js.t), fun _ -> List.map snd !l)

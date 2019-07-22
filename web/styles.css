@@ -1,5 +1,9 @@
 /* Generic definitions */
 
+* {
+  box-sizing: border-box ;
+}
+
 html {
   margin: 0 ;
   padding: 0 ;
@@ -86,6 +90,7 @@ a::after {
   opacity: 0 ;
   padding-left: 0px ;
   padding-right: 4px ;
+  white-space: nowrap ;
 }
 
 a:hover {
@@ -110,6 +115,7 @@ a.previous::before {
   opacity: 0 ;
   padding-left: 4px ;
   padding-right: 0px ;
+  white-space: nowrap ;
 }
 
 a:hover::before {
@@ -199,6 +205,7 @@ table.table {
   font-weight: bold ;
   position: sticky ;
   top: 0 ;
+  z-index: 3 ;
 }
 
 .table td, .table th {
@@ -245,20 +252,16 @@ table.timeline {
   white-space: nowrap ;
 }
 
+.timeline thead tr {
+  height: 60px ;
+  background-color: #eeeeec ;
+}
+
 .timeline th {
   position: sticky ;
   top: 0 ;
   min-height: 60px ;
   z-index: 3 ;
-}
-
-.timeline th > div::before {
-  position: sticky ;
-  top: 0 ;
-  z-index: 2 ;
-  width: 1.5em ;
-  height: 60px ;
-  background-color: #eeeeec ;
 }
 
 .timeline th > div {
@@ -418,7 +421,7 @@ input {
 }
 
 input[type="number"] {
-  width: 3em ;
+  width: 4em ;
 }
 
 /* Boolean input */
@@ -536,19 +539,22 @@ button.autocomplete-close {
 .autocomplete > input[type="text"] {
   width: 100% ;
   border: 1px solid #75507b ;
-  padding-left: 3px 1ex ;
+  padding: 3px 1ex ;
+  margin: 0 ;
 }
 
 .autocomplete-items {
+  width: 100% ;
   position: absolute ;
   border: none ;
-  z-index: 42 ;
+  z-index: 2 ;
   top: 100% ;
   left: 0 ;
   right: 0 ;
 }
 
 .autocomplete-items > div {
+  width: 100% ;
   border: 1px solid #75507b ;
   border-top: none ;
   background-color: #eeeeec ;

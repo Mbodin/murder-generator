@@ -7,21 +7,22 @@ let webpage_address = "https://" ^ webpage_address_base
 type state = {
     names : string list ;
     language : Translation.language ;
+    date : Date.t ;
     translation : Translation.element ;
     generic_translation : string Translation.t ;
     constructor_maps : Attribute.constructor_maps ;
-    state : State.final ;
-    unfinalised_state : State.t
+    state : State.t
   }
 
 type t = {
-    state : state ;
+    given : state ;
     translated_events : (History.character Events.t, string list) PMap.t Lazy.t
       (** A map of translations for each event in [State.get_history_final st].
        * These translations are made using the current language and consist,
        * for each event, to a list of strings.
        * This list of translated events help maintaining consistency between
-       * different instances of the same event. **)
+       * different instances of the same event. **) ;
+    final : State.final Lazy.t (** The finalised state. **)
   }
 
 (** As the state [s], but there the translation language has moved to
@@ -79,7 +80,7 @@ let translate_event s trp e =
   else l
 
 (** Generate a translation object for player for [translate_event]. **)
-let translation_players s =
+let translation_players s final =
   let tags =
     let m =
       try PMap.find s.language s.translation.Translation.add
@@ -90,7 +91,7 @@ let translation_players s =
           (Attribute.PlayerAttribute.constructor_attribute
             s.constructor_maps.Attribute.player c) in
       List.fold_left (fun m p ->
-        match State.get_attribute_character_final s.state p a with
+        match State.get_attribute_character_final final p a with
         | None -> m
         | Some (c', fixed) ->
           if c = c' then (
@@ -98,14 +99,14 @@ let translation_players s =
               try PMap.find p m
               with Not_found -> PSet.empty in
             PMap.add p (PSet.merge sp tags) m
-          ) else m) m (State.all_players_final s.state)) m PMap.empty in
+          ) else m) m (State.all_players s.state)) m PMap.empty in
   let read_tags p =
     try PMap.find p tags
     with Not_found -> PSet.empty in
   let tr_player =
     Array.mapi (fun c name ->
       let c = Id.from_array c in
-      let att = State.get_all_attributes_character_final s.state c in
+      let att = State.get_all_attributes_character_final final c in
       let tr = Translation.gadd Translation.gempty s.language [] () name in
       PMap.foldi (fun a (c, fixed) tr ->
           let c = Attribute.PlayerConstructor c in
@@ -139,23 +140,26 @@ let escape_angle_brackets str =
     Re.Str.global_replace (Re.Str.regexp (in1 ^ "\\|" ^ in2)) in
   replace2 "{" "<" "[" (replace2 "}" ">" "]" str)
 
-let process s = {
-    state = s ;
+let process s =
+  let final = lazy (State.finalise s.state s.date) in {
+    given = s ;
     translated_events =
       lazy (
-        let h = State.get_history_final s.state in
-        let tr_players = translation_players s in
+        let final = Lazy.force final in
+        let h = State.get_history_state s.state in
+        let tr_players = translation_players s final in
         let empty = PMap.create Events.compare in
-        List.fold_left (fun m ev ->
-          let ev = ev.History.event in
-          PMap.add ev (translate_event s tr_players ev) m) empty h)
+        History.fold_graph (fun m ev _ _ ->
+          PMap.add ev (translate_event s tr_players ev) m) empty h) ;
+    final = final
   }
 
 (** The functions that follow are all declared in the [all_production] list. **)
 
 (** Produce a Graphviz representation of relations. **)
 let to_graphviz_relation s =
-  let s = s.state in
+  let final = Lazy.force s.final in
+  let s = s.given in
   let player_node c = "player" ^ string_of_int (Id.to_array c) in
   let get_color s =
     let n = float_of_int (Hashtbl.hash s mod 1000) /. 1000. in
@@ -176,7 +180,7 @@ let to_graphviz_relation s =
                 let tra = translate_attribute_player s a in
                 let trv = translate_value_player s v in
                 ("{" ^ escape tra ^ "|" ^ escape trv ^ "}") :: l)
-            (State.get_all_attributes_character_final s.state c) [])
+            (State.get_all_attributes_character_final final c) [])
         ^ "}\"]") s.names) ; "" ;
       (** Declaring their relations **)
       String.concat "\n" (List.concat (List.mapi (fun c _ ->
@@ -186,7 +190,7 @@ let to_graphviz_relation s =
               if is_internal_contact s a v then None
               else
                 let converse =
-                  Utils.if_option (State.get_contact_character_final s.state c' a c)
+                  Utils.if_option (State.get_contact_character_final final c' a c)
                     (fun (v', _) ->
                        if is_internal_contact s a v' then None
                        else Some v') in
@@ -205,7 +209,7 @@ let to_graphviz_relation s =
                   ^ " [label=\"" ^ escape tra ^ "\\n" ^ escape trv ^ trv' ^ "\""
                   ^ (if converse <> None then " dir=\"both\"" else "")
                   ^ " color=\"" ^ color ^ "\"] ;")) lv @ l)
-          (State.get_all_contacts_character_final s.state c) []) s.names)) ;
+          (State.get_all_contacts_character_final final c) []) s.names)) ;
       "}" ; ""
     ]
 
@@ -214,6 +218,7 @@ let to_graphviz_event s =
   let event_node id = "event" ^ string_of_int (Id.to_array id) in
   let end_file = ["}" ; ""] in
   let translated_events = Lazy.force s.translated_events in
+  let s = s.given in
   let translate_event id =
     try PMap.find id translated_events
     with Not_found -> assert false in
@@ -236,7 +241,7 @@ let to_graphviz_event s =
       :: List.map (fun id' ->
         "  " ^ event_node id ^ " -> " ^ event_node id'
         ^ " [color=\"" ^ color ^ "\"] ;") after
-      @ "" :: l) end_file (State.get_history_state s.state.unfinalised_state) in
+      @ "" :: l) end_file (State.get_history_state s.state) in
   String.concat "\n" (
       "digraph {" :: ""
       :: ("  // Generated from " ^ webpage_address) :: ""
@@ -245,6 +250,7 @@ let to_graphviz_event s =
 
 (** Produce an iCalendar file. **)
 let to_icalendar s =
+  let state = Lazy.force s.final in
   let rec split = function
     | [] -> []
     | str :: l ->
@@ -264,8 +270,8 @@ let to_icalendar s =
       try PMap.find id translated_events
       with Not_found -> assert false in
     let id_postfix =
-      "-" ^ string_of_int (Hashtbl.hash s.state.names)
-      ^ "-" ^ string_of_int (Hashtbl.hash s.state.state)
+      "-" ^ string_of_int (Hashtbl.hash s.given.names)
+      ^ "-" ^ string_of_int (Hashtbl.hash state)
       ^ "-" ^ string_of_int (Random.bits ())
       ^ "-" ^ string_of_float (Sys.time ())
       ^ "-" ^ Date.rfc2445 Date.now
@@ -278,22 +284,22 @@ let to_icalendar s =
       :: ("DTSTART:" ^ Date.rfc2445 e.History.event_begin)
       :: ("DTEND:" ^ Date.rfc2445 e.History.event_end)
       :: List.map (fun c ->
-             "ATTENDEE;CN=\"" ^ escape_quote (get_name s.state c) ^ "\""
+             "ATTENDEE;CN=\"" ^ escape_quote (get_name s.given c) ^ "\""
              ^ ":URN:tag:" ^ webpage_address_base
              ^ "," ^ Date.iso8601 Date.now
              ^ ":" ^ string_of_int (Id.to_array c)
-             ^ "," ^ String.escaped (get_name s.state c))
+             ^ "," ^ String.escaped (get_name s.given c))
            (PSet.to_list e.History.event.Events.event_attendees)
-      @ ("DESCRIPTION;LANGUAGE=" ^ Translation.iso639 s.state.language ^ ":")
+      @ ("DESCRIPTION;LANGUAGE=" ^ Translation.iso639 s.given.language ^ ":")
       :: List.map (fun str -> " " ^ str ^ "\\n")
            (translate_event e.History.event)
       @ "END:VEVENT"
-      :: []) (State.get_history_final s.state.state)) in
+      :: []) (State.get_history_final state)) in
   String.concat "\r\n" (split (
     "BEGIN:VCALENDAR"
     :: "VERSION:2.0"
     :: ("PRODID:-//Martin Constantino-Bodin//Murder Generator//"
-        ^ String.uppercase_ascii (Translation.iso639 s.state.language))
+        ^ String.uppercase_ascii (Translation.iso639 s.given.language))
     :: events
     @ "END:VCALENDAR"
     :: []))
@@ -301,15 +307,16 @@ let to_icalendar s =
 (** Produce a block, which can then be translated into either HTML
  * or printed on a terminal through the InOut module. **)
 let to_block s =
+  let state = Lazy.force s.final in
   let translated_events = Lazy.force s.translated_events in
   let translate_event id =
     try PMap.find id translated_events
     with Not_found -> assert false in
   let get_translation key =
     Utils.assert_option ("No key `" ^ key ^ "' found for language `"
-                         ^ (Translation.iso639 s.state.language) ^ "' at "
+                         ^ (Translation.iso639 s.given.language) ^ "' at "
                          ^ __LOC__ ^ ".")
-      (Translation.translate s.state.generic_translation s.state.language key) in
+      (Translation.translate s.given.generic_translation s.given.language key) in
   let event_type_to_class = function
     | Events.For_life_event -> "decades"
     | Events.Long_term_event -> "years"
@@ -328,7 +335,7 @@ let to_block s =
       :: wrapt "Day" "time" :: wrapt "Time" "time"
       :: List.map (fun name ->
              wrap name { InOut.default with InOut.col = nb_event_types })
-           s.state.names
+           s.given.names
       @ [wrapt "eventDescription" "description"] in
     let content =
       (** We first determine how many “events” each event lasts,
@@ -390,7 +397,7 @@ let to_block s =
         let m =
           List.fold_left (fun m t ->
             PMap.add t 0 m) PMap.empty Events.all_event_type in
-        Array.make (List.length s.state.names) m in
+        Array.make (List.length s.given.names) m in
       let (_, _, active, content) =
         List.fold_left (fun ((y, m, d, h), activity, active, l)
                             ((year, month, day, hour), dur, beg, date, e) ->
@@ -442,7 +449,7 @@ let to_block s =
                                 assert (n = 0) ;
                              ["active"; if beg then "event_start" else "event_end"]
                            ) else if n = 0 then [] else ["active"] }))
-                  Events.all_event_type) (State.all_players_final s.state.state)) in
+                  Events.all_event_type) (State.all_players_final state)) in
             let activity =
               Array.mapi (fun c ->
                 let attendee =
@@ -470,25 +477,25 @@ let to_block s =
   let print_attributes c =
     InOut.List (true,
       PMap.foldi (fun a (v, fixed) l ->
-          if is_internal_attribute s.state a v then l
+          if is_internal_attribute s.given a v then l
           else
-            let tra = translate_attribute_player s.state a in
-            let trv = translate_value_player s.state v in
+            let tra = translate_attribute_player s.given a in
+            let trv = translate_value_player s.given v in
             InOut.Text (tra ^ ": " ^ trv) :: l)
-        (State.get_all_attributes_character_final s.state.state c) []) in
+        (State.get_all_attributes_character_final state c) []) in
   let print_contacts c =
     InOut.List (false,
       PMap.foldi (fun c' lv l ->
           InOut.FoldableBlock (true,
-            get_translation "contactTo" ^ " " ^ get_name s.state c',
+            get_translation "contactTo" ^ " " ^ get_name s.given c',
               InOut.List (true,
                 Utils.list_map_filter (fun (a, (v, fixed)) ->
-                    if is_internal_contact s.state a v then None
+                    if is_internal_contact s.given a v then None
                     else Some (
-                      let tra = translate_attribute_contact s.state a in
-                      let trv = translate_value_contact s.state v in
+                      let tra = translate_attribute_contact s.given a in
+                      let trv = translate_value_contact s.given v in
                       InOut.Text (tra ^ ": " ^ trv))) lv)) :: l)
-        (State.get_all_contacts_character_final s.state.state c) []) in
+        (State.get_all_contacts_character_final state c) []) in
   InOut.List (false,
     InOut.FoldableBlock (false, get_translation "forTheGM",
       InOut.List (false, [
@@ -496,13 +503,13 @@ let to_block s =
             InOut.List (false, List.mapi (fun c name ->
                 let c = Id.from_array c in
                 InOut.FoldableBlock (true, name, print_attributes c))
-              s.state.names)) ;
+              s.given.names)) ;
           InOut.FoldableBlock (false, get_translation "GMContacts",
             InOut.List (false, List.mapi (fun c name ->
               let c = Id.from_array c in
-              InOut.FoldableBlock (false, name, print_contacts c)) s.state.names)) ;
+              InOut.FoldableBlock (false, name, print_contacts c)) s.given.names)) ;
           InOut.FoldableBlock (false, get_translation "GMEvents",
-            print_events (State.get_history_final s.state.state))
+            print_events (State.get_history_final state))
         ]))
     :: List.mapi (fun c name ->
          let c = Id.from_array c in
@@ -516,20 +523,21 @@ let to_block s =
                  print_events (Utils.list_map_filter (fun e ->
                    if PSet.mem c e.History.event.Events.event_attendees then
                      Some e
-                   else None) (State.get_history_final s.state.state)))
-             ]))) s.state.names)
+                   else None) (State.get_history_final state)))
+             ]))) s.given.names)
 
 (** Produce an org-mode file. **)
 let to_org s =
+  let state = Lazy.force s.final in
   let translated_events = Lazy.force s.translated_events in
   let translate_event id =
     try PMap.find id translated_events
     with Not_found -> assert false in
   let get_translation key =
     Utils.assert_option ("No key `" ^ key ^ "' found for language `"
-                         ^ (Translation.iso639 s.state.language) ^ "' at "
+                         ^ (Translation.iso639 s.given.language) ^ "' at "
                          ^ __LOC__ ^ ".")
-      (Translation.translate s.state.generic_translation s.state.language key) in
+      (Translation.translate s.given.generic_translation s.given.language key) in
   let print_event n e =
     String.concat "\n" (
       (String.make n '*' ^ " " ^
@@ -538,28 +546,27 @@ let to_org s =
       :: (String.make (1 + n) ' '
           ^ Date.orgmode_range e.History.event_begin e.History.event_end)
       :: List.map (fun c ->
-             String.make (1 + n) ' ' ^ "- [X] "
-             ^ get_name s.state c)
+             String.make (1 + n) ' ' ^ "- [X] " ^ get_name s.given c)
            (PSet.to_list e.History.event.Events.event_attendees)) in
   let print_attributes n c =
     PMap.foldi (fun a (v, fixed) l ->
-        if is_internal_attribute s.state a v then l
+        if is_internal_attribute s.given a v then l
         else
-          let tra = translate_attribute_player s.state a in
-          let trv = translate_value_player s.state v in
+          let tra = translate_attribute_player s.given a in
+          let trv = translate_value_player s.given v in
           (String.make n ' ' ^ "- " ^ tra ^ ": " ^ trv) :: l)
-      (State.get_all_attributes_character_final s.state.state c) [] in
+      (State.get_all_attributes_character_final state c) [] in
   let print_contacts n c =
     PMap.foldi (fun c' lv l ->
         (String.make n '*' ^ " " ^ get_translation "contactTo"
-         ^ " " ^ get_name s.state c')
+         ^ " " ^ get_name s.given c')
         :: Utils.list_map_filter (fun (a, (v, fixed)) ->
-             if is_internal_contact s.state a v then None
+             if is_internal_contact s.given a v then None
              else Some (
-               let tra = translate_attribute_contact s.state a in
-               let trv = translate_value_contact s.state v in
+               let tra = translate_attribute_contact s.given a in
+               let trv = translate_value_contact s.given v in
                String.make 5 ' ' ^ "- " ^ tra ^ ": " ^ trv)) lv @ l)
-      (State.get_all_contacts_character_final s.state.state c) [] in
+      (State.get_all_contacts_character_final state c) [] in
   String.concat "\n\n" (
     String.concat "\n" (
       ("* " ^ get_translation "forTheGM")
@@ -567,14 +574,14 @@ let to_org s =
       :: List.concat (List.mapi (fun c name ->
            let c = Id.from_array c in
            ("*** " ^ name)
-           :: print_attributes 5 c) s.state.names)
+           :: print_attributes 5 c) s.given.names)
       @ ("** " ^ get_translation "GMContacts")
       :: List.concat (List.mapi (fun c name ->
            let c = Id.from_array c in
            ("*** " ^ name)
-           :: print_contacts 4 c) s.state.names)
+           :: print_contacts 4 c) s.given.names)
       @ ("** " ^ get_translation "GMEvents")
-      :: List.map (print_event 3) (State.get_history_final s.state.state))
+      :: List.map (print_event 3) (State.get_history_final state))
     :: List.mapi (fun c name ->
          let c = Id.from_array c in
          String.concat "\n" (
@@ -587,11 +594,12 @@ let to_org s =
            :: Utils.list_map_filter (fun e ->
                 if PSet.mem c e.History.event.Events.event_attendees then
                   Some (print_event 3 e)
-                else None) (State.get_history_final s.state.state))) s.state.names)
+                else None) (State.get_history_final state))) s.given.names)
 
 (** Produce a JSON file. **)
 let to_json s =
-  let s = generic s.state in
+  let state = Lazy.force s.final in
+  let s = generic s.given in
   Yojson.Safe.to_string ~std:true (`Assoc [
     ("version", `String Version.version) ;
     ("characters", `List (List.mapi (fun c name ->
@@ -602,21 +610,21 @@ let to_json s =
                 let trv = translate_value_player s v in
                 let trv = if fixed then trv else ("?" ^ trv) in
                 (tra, `String trv) :: l)
-              (State.get_all_attributes_character_final s.state c) [])) ;
+              (State.get_all_attributes_character_final state c) [])) ;
            ("contacts", `List (PMap.foldi (fun c' lv l ->
               `Assoc (List.map (fun (a, (v, fixed)) ->
                   let tra = translate_attribute_contact s a in
                   let trv = translate_value_contact s v in
                   let trv = if fixed then trv else ("?" ^ trv) in
                   (tra, `String trv)) lv) :: l)
-                (State.get_all_contacts_character_final s.state c) [])) ;
+                (State.get_all_contacts_character_final state c) [])) ;
            ("relations", `List (Utils.list_fold_lefti (fun c' l _ ->
              let c' = Id.from_array c' in
-             let r = State.read_relation_final s.state c c' in
+             let r = State.read_relation_final state c c' in
              if c <= c' then l
              else `String (Relation.to_string r) :: l) [] s.names)) ;
-           ("complexity", `Int (State.character_complexity_final s.state c)) ;
-           ("difficulty", `Int (State.character_difficulty_final s.state c)) ;
+           ("complexity", `Int (State.character_complexity_final state c)) ;
+           ("difficulty", `Int (State.character_difficulty_final state c)) ;
          ]) s.names)) ;
     ("events", `List (List.map (fun e ->
       `Assoc [
@@ -629,7 +637,7 @@ let to_json s =
           ("all",
             `List (List.map (fun c -> `Int (Id.to_array c))
                     (e.History.event.Events.all_attendees)))
-        ]) (State.get_history_final s.state))) ])
+        ]) (State.get_history_final state))) ])
 
 let from_json i fileName fileContent =
   let get_field_string fld l =

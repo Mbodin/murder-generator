@@ -10,15 +10,14 @@ type state = {
        * It will be ignored in outputs that are meant to return a reusable
        * file (like a JSON file), but not for the one targetted to the final
        * user (character sheets or tools for the game master). **) ;
+    date : Date.t (** The date of the final scenario. **) ;
     translation : Translation.element (** The translation objects. **) ;
     generic_translation : string Translation.t
       (** Generic translations, defined in [web/translations.json]
        * instead of files in [data/]. **) ;
     constructor_maps : Attribute.constructor_maps
       (** Informations about constructors **) ;
-    state : State.final (** The actual generated state. **) ;
-    unfinalised_state : State.t
-      (** A few exports are meant to only export the non-final state. **)
+    state : State.t (** The generated state. **)
   }
 
 (** A type storing the state as well as other informations.

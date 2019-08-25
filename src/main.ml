@@ -592,18 +592,17 @@ let main =
       let (cont, w) = Lwt.task () in
       let%lwt data = data in
       let%lwt state = state in
-      let final = State.finalise state parameters.play_date in
       (** Exports the generated state to various formats. **)
       let estate =
         Export.process {
           Export.language = get_language parameters ;
+          Export.date = parameters.play_date ;
           Export.names =
             List.map (fun (name, _, _, _) -> name) parameters.player_information ;
           Export.translation = Driver.get_translations data ;
           Export.generic_translation = translation ;
           Export.constructor_maps = Driver.get_constructor_maps data ;
-          Export.state = final ;
-          Export.unfinalised_state = state
+          Export.state = state
         } in
       let html = PSet.mem "html" parameters.chosen_productions in
       let chosen_productions =

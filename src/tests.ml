@@ -64,38 +64,6 @@ let test_relations _ =
     print_newline ()
   done
 
-let test_parser _ =
-  print_endline ("Total number of files: " ^
-                 string_of_int (List.length MurderFiles.files)) ;
-  let read_file f =
-    print_endline ("Reading file " ^ f) ;
-    let buf = Lexing.from_channel (open_in f) in
-    Driver.parse_lexbuf f buf in
-  let asts = List.map read_file MurderFiles.files in
-  let i =
-    List.fold_left Driver.prepare_declarations Driver.empty_intermediary asts in
-  if not (Driver.is_intermediary_final i) then (
-    PSet.iter (fun c -> print_endline ("Missing category: " ^ c))
-      (Driver.categories_to_be_defined i) ;
-    PSet.iter (fun e -> print_endline ("Missing event: " ^ e))
-      (Driver.events_to_be_defined i) ;
-    let (attributes, contacts) = Driver.attributes_to_be_defined i in
-    PSet.iter (fun a -> print_endline ("Missing attribute: " ^ a)) attributes ;
-    PSet.iter (fun c -> print_endline ("Missing contact: " ^ c)) contacts ;
-    let (attributes, contacts) = Driver.constructors_to_be_defined i in
-    PSet.iter (fun (a, n) ->
-      print_endline ("Missing attribute constructor: " ^ n
-                     ^ " (for attribute: " ^ a ^ ")")) attributes ;
-    PSet.iter (fun (c, n) ->
-      print_endline ("Missing contact constructor: " ^ n
-                     ^ " (for contact: " ^ c ^ ")")) contacts ;
-    PSet.iter (fun (lg, tag) ->
-        print_endline ("Missing tag: " ^ tag ^ " for language: " ^ lg))
-      (Driver.tags_to_be_defined i) ;
-    failwith "Non final intermediary!" ) ;
-  let _s = Driver.parse i in
-  ()
-
 let test_translations _ =
   let f = "web/translations.json" in
   print_endline ("Reading file " ^ f) ;
@@ -134,10 +102,70 @@ let test_translations _ =
                 Names.generate seed) (Utils.seq 10))))
         (Utils.seq_range 3 8)) languages in
   if not !ok then
-    failwith "There were some missing translations."
+    failwith "There were some missing translations." ;
+  languages
+
+let test_parser languages =
+  print_endline ("Total number of files: " ^
+                 string_of_int (List.length MurderFiles.files)) ;
+  let read_file f =
+    print_endline ("Reading file " ^ f) ;
+    let buf = Lexing.from_channel (open_in f) in
+    Driver.parse_lexbuf f buf in
+  let asts = List.map read_file MurderFiles.files in
+  let i =
+    List.fold_left Driver.prepare_declarations Driver.empty_intermediary asts in
+  if not (Driver.is_intermediary_final i) then (
+    PSet.iter (fun c -> print_endline ("Missing category: " ^ c))
+      (Driver.categories_to_be_defined i) ;
+    PSet.iter (fun e -> print_endline ("Missing event: " ^ e))
+      (Driver.events_to_be_defined i) ;
+    let (attributes, contacts) = Driver.attributes_to_be_defined i in
+    PSet.iter (fun a -> print_endline ("Missing attribute: " ^ a)) attributes ;
+    PSet.iter (fun c -> print_endline ("Missing contact: " ^ c)) contacts ;
+    let (attributes, contacts) = Driver.constructors_to_be_defined i in
+    PSet.iter (fun (a, n) ->
+      print_endline ("Missing attribute constructor: " ^ n
+                     ^ " (for attribute: " ^ a ^ ")")) attributes ;
+    PSet.iter (fun (c, n) ->
+      print_endline ("Missing contact constructor: " ^ n
+                     ^ " (for contact: " ^ c ^ ")")) contacts ;
+    PSet.iter (fun (lg, tag) ->
+        print_endline ("Missing tag: " ^ tag ^ " for language: " ^ lg))
+      (Driver.tags_to_be_defined i) ;
+    failwith "Non final intermediary!" ) ;
+  let s = Driver.parse i in
+  let translations = Driver.get_translations s in
+  let categories = Driver.all_categories s in
+  (* TODO: attributes and constructors *)
+  let elements = Driver.elements s in
+  List.iter (fun lg ->
+    let warn =
+      let seen = ref PSet.empty in fun t name ->
+      if not (PSet.mem (t, name) !seen) then (
+        seen := PSet.add (t, name) !seen ;
+        prerr_endline ("Warning: Missing translation for language "
+                       ^ Translation.iso639 lg ^ " in " ^ t
+                       ^ " \"" ^ name ^ "\".")) in
+    List.iter (fun c ->
+      let t = translations.Translation.category in
+      if Translation.translate t lg c = None then
+        warn "category"
+          (Translation.force_translate t Translation.generic c)) categories ;
+    (* TODO: attributes and constructors *)
+    PMap.iter (fun id e ->
+      let name = Utils.assert_option __LOC__ (Driver.get_element_name s id) in
+      List.iteri (fun id e ->
+          let (n, t) = e.Events.translation in
+          List.iter (fun i ->
+            if Translation.stranslate t lg (fun _ -> PSet.empty)
+                 (fun _ _ -> Some ("", PSet.empty))
+                 i (PSet.singleton Translation.base) = None then
+              warn "element" (name ^ "#" ^ string_of_int id)) (Utils.seq n))
+        e.Element.events) elements) languages
 
 let main =
   test_date () ;
-  test_parser () ;
-  test_translations ()
+  let languages = test_translations () in
+  test_parser languages
 

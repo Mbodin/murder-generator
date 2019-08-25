@@ -93,6 +93,9 @@ val parse : intermediary -> state
 (** This map stores the identifiers of each element. **)
 val elements : state -> (Id.t, Element.t) PMap.t
 
+(** Given an element identifier, returns its name. **)
+val get_element_name : state -> Id.t -> string option
+
 (** Takes an element identifier as argument as returns the set of categories
  * that this element depends on. **)
 val get_element_dependencies : state -> Id.t -> Id.t list

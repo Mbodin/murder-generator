@@ -22,7 +22,7 @@ end
 attribute Born AlwaysExisted
 begin
   translation fr "a toujours existé"
-  translation en "always existé"
+  translation en "always existed"
   translation eo "ĉiam ekzistis"
 end
 

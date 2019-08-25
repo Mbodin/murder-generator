@@ -78,7 +78,7 @@ type import_information = {
 type state = {
     category_names : string Id.map (** All declared category names. **) ;
     event_names : string Id.map (** All declared event names. **) ;
-    elements_names : string Id.map (** All declared element names. **) ;
+    element_names : string Id.map (** All declared element names. **) ;
     import_information : import_information
       (** Some generic information, mostly important for importation. **) ;
     (* LATER: There may be a way to factorise these dependency structures *)
@@ -140,7 +140,7 @@ let intermediary_constructor_maps i =
 let empty_state = {
     category_names = Id.map_create () ;
     event_names = Id.map_create () ;
-    elements_names = Id.map_create () ;
+    element_names = Id.map_create () ;
     import_information = {
         constructor_maps = Attribute.empty_constructor_maps ;
         event_id = PMap.empty ;
@@ -719,11 +719,11 @@ let prepare_declaration i =
                 { i.current_state.translations with Translation.category =
                     category_translation } } }
   | Ast.DeclareElement (status, name, block) ->
-    (match Id.get_id i.current_state.elements_names name with
+    (match Id.get_id i.current_state.element_names name with
      | None -> ()
      | Some _ -> raise (DefinedTwice ("element", name, ""))) ;
     let (id, elements) =
-      Id.map_insert_t i.current_state.elements_names name in
+      Id.map_insert_t i.current_state.element_names name in
     let block =
       convert_block name [OfCategory; LetPlayer; ProvideRelation;
                           ProvideAttribute; ProvideContact;
@@ -732,7 +732,7 @@ let prepare_declaration i =
     { i with
         waiting_elements = (id, status, name, block) :: i.waiting_elements ;
         current_state =
-          { i.current_state with elements_names = elements } }
+          { i.current_state with element_names = elements } }
   | Ast.DeclareCase (lang, tag) ->
     if PSet.mem (lang, tag) i.declared_tags then
       raise (DefinedTwice ("tag", Translation.print_tag tag,
@@ -1299,6 +1299,9 @@ let get_import_information s = s.import_information
 let get_constructor_maps s = s.import_information.constructor_maps
 
 let elements s = s.elements
+
+let get_element_name s =
+  Id.map_inverse s.element_names
 
 let get_element_dependencies s e =
   PMap.find e s.elements_dependencies

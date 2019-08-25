@@ -81,26 +81,26 @@ let translate_event s trp e =
 
 (** Generate a translation object for player for [translate_event]. **)
 let translation_players s final =
-  let tags =
-    let m =
-      try PMap.find s.language s.translation.Translation.add
-      with Not_found -> PMap.empty in
-    PMap.foldi (fun c tags m ->
-      let a =
-        Utils.assert_option __LOC__
-          (Attribute.PlayerAttribute.constructor_attribute
-            s.constructor_maps.Attribute.player c) in
-      List.fold_left (fun m p ->
-        match State.get_attribute_character_final final p a with
-        | None -> m
-        | Some (c', fixed) ->
-          if c = c' then (
-            let sp =
-              try PMap.find p m
-              with Not_found -> PSet.empty in
-            PMap.add p (PSet.merge sp tags) m
-          ) else m) m (State.all_players s.state)) m PMap.empty in
-  let read_tags p =
+  let read_tags =
+    let tags =
+      let m =
+        try PMap.find s.language s.translation.Translation.add
+        with Not_found -> PMap.empty in
+      PMap.foldi (fun c tags m ->
+        let a =
+          Utils.assert_option __LOC__
+            (Attribute.PlayerAttribute.constructor_attribute
+              s.constructor_maps.Attribute.player c) in
+        List.fold_left (fun m p ->
+          match State.get_attribute_character_final final p a with
+          | None -> m
+          | Some (c', fixed) ->
+            if c = c' then (
+              let sp =
+                try PMap.find p m
+                with Not_found -> PSet.empty in
+              PMap.add p (PSet.merge sp tags) m
+            ) else m) m (State.all_players s.state)) m PMap.empty in fun p ->
     try PMap.find p tags
     with Not_found -> PSet.empty in
   let tr_player =

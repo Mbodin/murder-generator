@@ -13,7 +13,8 @@
     "js": "./build.sh check move main.js",
     "force_js": "./build.sh move main.js",
     "native": "./build.sh main.native",
-    "checkout": "./build.sh checkout"
+    "checkout": "./build.sh checkout",
+    "server": "python -m SimpleHTTPServer"
   },
   "dependencies": {
     "@opam/ocamlfind": "*",

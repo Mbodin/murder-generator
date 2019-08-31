@@ -169,7 +169,7 @@ begin
 
     translation fr "Étant dans le besoin, " P " a décidé de se faire voleur professionel."
     translation fr "Étant dans le besoin, " P:fem " a décidé de devenir voleuse professionnelle."
-    translation en "Due to the circumstances, " P " chose thief as " P:pos " profession."
+    translation en "Due to the circumstances, " P " chose thief as " P:+pos " profession."
     translation eo "Pro la bezono, " P " iĝis ŝtelisto."
   end
 end

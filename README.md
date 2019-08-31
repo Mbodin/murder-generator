@@ -43,7 +43,7 @@ esy js
 
 At this stage, you can open the file `index.html` on a browser and enjoy the generator.  Note that this requires to set up a server.
 This README does not aim at explaining how to set it up; if you are using Github, you can push these changes online and access the corresponding [github.io](https://github.io) address.
-Alternatively, Firefox seems to accept to locally execute JavaScript files: openning the file `index.html` with Firefox seems to do the trick.
+If you have Python 2 installed, typing `esy server` will set up a local server: accessing `localhost:8000` should then do it.
 
 The JavaScript webpage is (relatively) pretty, but its generation is significantly slower than a native version.
 Such a native version can be built and run through the following commands.

@@ -8,19 +8,19 @@ DEBUG="false"
 MOVE="false"
 CHECK="false"
 
-if [ -n $1 ]
+if [ -n "$1" ]
 then
-  if [ $1 = "debug" ]
+  if [ "$1" = "debug" ]
   then
     DEBUG="true"
     shift
   fi
 fi
 
-if [ -n $1 ]
+if [ -n "$1" ]
 then
   # The “check” command checks that the given file was not committed before use.
-  if [ $1 = "check" ]
+  if [ "$1" = "check" ]
   then
     CHECK="true"
     shift
@@ -28,7 +28,7 @@ then
     # The “checkout” command reverts back to normal any file that this script may
     # have changed, then exists.
     # It is generally a good thing to do it before committing.
-    if [ $1 = "checkout" ]
+    if [ "$1" = "checkout" ]
     then
       git checkout dummy/murderFiles.ml dummy/usedTranslations.ml dummy/version.ml web/main.js
       exit 0
@@ -38,16 +38,16 @@ then
   fi
 fi
 
-if [ -n $1 ]
+if [ -n "$1" ]
 then
-  if [ $1 = "move" ]
+  if [ "$1" = "move" ]
   then
     MOVE="true"
     shift
   fi
 fi
 
-if [ -z $1 ]
+if [ -z "$1" ]
 then
   echo "${COLOR}No argument given: compiling main.js as a default.${ROLOC}"
   TARGET=main
@@ -58,7 +58,7 @@ then
 else
   REALTARGET=$1
 
-  if [ $1 = "tests" ]
+  if [ "$1" = "tests" ]
   then
     echo "${COLOR}Building testing file…${ROLOC}"
     ./build.sh tests.byte
@@ -69,7 +69,7 @@ else
     exit 0
   fi
 
-  if [ $1 = "local" ]
+  if [ "$1" = "local" ]
   then
     echo "${COLOR}Building local files…${ROLOC}"
     ./build.sh check murderFiles.ml
@@ -79,7 +79,7 @@ else
     exit 0
   fi
 
-  if [ $1 = "murderFiles.ml" ]
+  if [ "$1" = "murderFiles.ml" ]
   then
     if [ $CHECK = "true" ]
     then
@@ -96,7 +96,7 @@ else
     exit 0
   fi
 
-  if [ $1 = "usedTranslations.ml" ]
+  if [ "$1" = "usedTranslations.ml" ]
   then
     if [ $CHECK = "true" ]
     then
@@ -114,7 +114,7 @@ else
     exit 0
   fi
 
-  if [ $1 = "version.ml" ]
+  if [ "$1" = "version.ml" ]
   then
     if [ $CHECK = "true" ]
     then

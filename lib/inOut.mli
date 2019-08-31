@@ -69,11 +69,15 @@ module type T = sig
   (** Starts the loading animation. **)
   val startLoading : unit -> unit Lwt.t
 
-  (** Fetch a file from an address and returns its content. **)
-  val get_file : string -> string Lwt.t
+  (** Set or unset the printing mode, a mode more adapted to printing. **)
+  val set_printing_mode : unit -> unit
+  val unset_printing_mode : unit -> unit
 
   (** Log the given message. **)
   val log : string -> unit
+
+  (** Fetch a file from an address and returns its content. **)
+  val get_file : string -> string Lwt.t
 
 
   (** The local set of accepted languages. **)

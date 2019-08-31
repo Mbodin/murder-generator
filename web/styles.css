@@ -17,6 +17,11 @@ body {
   padding: 0 ;
 }
 
+body.printable {
+  color: black ;
+  background-color: white ;
+}
+
 /* Specific classes. */
 
 #loadingSVG {
@@ -44,6 +49,10 @@ body {
   margin: 0 auto ;
 }
 
+body.printable #response {
+  max-width: none ;
+}
+
 /* Main classes */
 
 .block {
@@ -68,6 +77,11 @@ body {
   white-space: nowrap ;
 }
 
+body.printable .center {
+  overflow-x: visible ;
+  white-space: normal ;
+}
+
 .inlined {
   display: inline ;
 }
@@ -82,6 +96,10 @@ body {
 a {
   color: #75507b ;
   text-decoration: none ;
+}
+
+body.printable a {
+  color: #5c3566 ;
 }
 
 a::after {
@@ -135,6 +153,10 @@ a:hover::before {
   cursor: pointer ;
 }
 
+body.printable .foldable > h3 {
+  color: #5c3566 ;
+}
+
 .foldable > h3:hover {
   color: #5c3566 ;
 }
@@ -151,6 +173,10 @@ a:hover::before {
   color: #75507b ;
   display: inline-block ;
   width: 1em ;
+}
+
+body.printable .foldable > h3::before {
+  color: #5c3566 ;
 }
 
 .foldable > h3.unfolded + div {
@@ -175,6 +201,10 @@ ul.bullet > li::before {
   width: 1em ;
 }
 
+body.printable ul.bullet > li::before {
+  color: #5c3566 ;
+}
+
 /* Table */
 
 table.table {
@@ -186,16 +216,24 @@ table.table {
   margin-right: .3em ;
 }
 
-.table tr:nth-child(even) {
+body.printable .table tr {
+  background-color: white ;
+}
+
+body:not(.printable) .table tr:nth-child(even) {
   background-color: #eeeeec ;
 }
 
-.table tr:nth-child(odd) {
+body:not(.printable) .table tr:nth-child(odd) {
   background-color: #d3d7cf ;
 }
 
 .table tr:hover {
   background-color: #babdb6 ;
+}
+
+body.printable .table tr:hover {
+  background-color: #d3d7cf ;
 }
 
 .table th {
@@ -226,7 +264,7 @@ table.timeline {
 }
 
 @media screen and (max-width: 1000px) {
-  table.timeline {
+  body:not(.printable) table.timeline {
     width: 96vw ;
     margin-left: -50vw ;
     margin-right: -50vw ;
@@ -234,11 +272,19 @@ table.timeline {
 }
 
 @media screen and (min-width: 1000px) {
-  table.timeline {
+  body:not(.printable) table.timeline {
     width: 99% ;
     margin-left: -500px ;
     margin-right: -500px ;
   }
+}
+
+body.printable table.timeline {
+    width: 99% ;
+    margin-left: 0 ;
+    margin-right: 0 ;
+    left: 0 ;
+    right: 0 ;
 }
 
 .timeline thead {
@@ -252,9 +298,18 @@ table.timeline {
   white-space: nowrap ;
 }
 
+body.printable .timeline thead {
+  background-color: white ;
+  position: static ;
+}
+
 .timeline thead tr {
   height: 60px ;
   background-color: #eeeeec ;
+}
+
+body.printable .timeline thead tr {
+  background-color: white ;
 }
 
 .timeline th {
@@ -262,6 +317,10 @@ table.timeline {
   top: 0 ;
   min-height: 60px ;
   z-index: 3 ;
+}
+
+body.printable .timeline th {
+  position: static ;
 }
 
 .timeline th > div {
@@ -311,12 +370,16 @@ table.timeline {
   vertical-align: top ;
 }
 
-.timeline tr:nth-child(even) td.time {
+body:not(.printable) .timeline tr:nth-child(even) td.time {
   background-color: #eeeeec ;
 }
 
-.timeline tr:nth-child(odd) td.time {
+body:not(.printable) .timeline tr:nth-child(odd) td.time {
   background-color: #d3d7cf ;
+}
+
+body.printable .timeline tr td.time {
+  background-color: white ;
 }
 
 .timeline td.time > div {
@@ -324,6 +387,10 @@ table.timeline {
   top: 62px ;
   z-index: 1 ;
   writing-mode: vertical-rl ;
+}
+
+body.printable .timeline td.time > div {
+  position: static ;
 }
 
 .timeline td.active {
@@ -372,43 +439,60 @@ table.timeline {
   max-height: 4em ;
 }
 
+body.printable .timeline td.description > div {
+  overflow-x: visible ;
+  max-height: none ;
+}
+
 .timeline tr:hover td.description {
   border-style: solid solid solid none ;
   border-radius: 0px 10px 10px 0px ;
   padding-left: 3px ;
 }
 
-.timeline td.active.decades, .timeline td.description.decades,
+body.printable .timeline td.active,
+body.printable .timeline td.description,
+body.printable .timeline tr:hover td.active.event_start ~ td.line {
+  background-color: white ;
+}
+
+.timeline td.active.decades,
+.timeline td.description.decades,
 .timeline tr:hover td.active.event_start.decades ~ td.line {
   background-color: #fce94f ;
   border-color: #edd400 ;
 }
 
-.timeline td.active.years, .timeline td.description.years,
+.timeline td.active.years,
+.timeline td.description.years,
 .timeline tr:hover td.active.event_start.years ~ td.line {
   background-color: #fcaf3e ;
   border-color: #f57900 ;
 }
 
-.timeline td.active.weeks, .timeline td.description.weeks,
+.timeline td.active.weeks,
+.timeline td.description.weeks,
 .timeline tr:hover td.active.event_start.weeks ~ td.line {
   background-color: #e9b96e ;
   border-color: #c17d11 ;
 }
 
-.timeline td.active.days, .timeline td.description.days,
+.timeline td.active.days,
+.timeline td.description.days,
 .timeline tr:hover td.active.event_start.days ~ td.line {
   background-color: #8ae234 ;
   border-color: #73d216 ;
 }
 
-.timeline td.active.minutes, .timeline td.description.minutes,
+.timeline td.active.minutes,
+.timeline td.description.minutes,
 .timeline tr:hover td.active.event_start.minutes ~ td.line {
   background-color: #729fcf ;
   border-color: #3465a4 ;
 }
 
-.timeline td.active.seconds, .timeline td.description.seconds,
+.timeline td.active.seconds,
+.timeline td.description.seconds,
 .timeline tr:hover td.active.event_start.seconds ~ td.line {
   background-color: #ad7fa8 ;
   border-color: #75507b ;

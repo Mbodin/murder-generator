@@ -25,6 +25,26 @@ let startLoading _ =
   else Lwt_js.yield ()
 
 
+let log msg = Firebug.console##log (Js.string msg)
+
+let get_body _ =
+  let l = Dom_html.document##getElementsByTagName (Js.string "body") in
+  if l##.length = 0 then
+    failwith "No [body] element found in the webpage." ;
+  if l##.length > 1 then
+    log ("More than one [body] element found in the webpage."
+         ^ "  Taking the first one.") ;
+  match Js.Opt.to_option (l##item 0) with
+  | None -> assert false
+  | Some body -> body
+
+let set_printing_mode _ =
+  (get_body ())##.classList##add (Js.string "printable")
+
+let unset_printing_mode _ =
+  (get_body ())##.classList##remove (Js.string "printable")
+
+
 let get_file url =
   let (res, w) = Lwt.task () in
   let request = XmlHttpRequest.create () in
@@ -42,8 +62,6 @@ let get_file url =
                 ^ Js.to_string request##.statusText)))) ;
   request##send Js.null ;
   res
-
-let log msg = Firebug.console##log (Js.string msg)
 
 
 let languages =

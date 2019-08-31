@@ -67,9 +67,12 @@ module type T = sig
   val stopLoading : unit -> unit Lwt.t
   val startLoading : unit -> unit Lwt.t
 
-  val get_file : string -> string Lwt.t
+  val set_printing_mode : unit -> unit
+  val unset_printing_mode : unit -> unit
 
   val log : string -> unit
+
+  val get_file : string -> string Lwt.t
 
   val languages : string list
 

@@ -546,6 +546,7 @@ let main =
         Solver.solve_with_difference IO.pause global state diff objectives in
       chooseFormats state parameters
     and chooseFormats state parameters =
+      IO.unset_printing_mode () ;
       IO.stopLoading () ;%lwt
       let get_translation = get_translation parameters in
       let (cont, w) = Lwt.task () in
@@ -609,6 +610,17 @@ let main =
         List.filter (fun (name, _, _, _, _, _) ->
             PSet.mem name parameters.chosen_productions)
           Export.all_production in
+      let switch_printing_mode =
+        let get = ref (fun _ -> false) in
+        let (node, _, actual_get) =
+          IO.createSwitch (get_translation "changeStyles")
+            (Some (get_translation "changeStylesOff"))
+            (Some (get_translation "changeStylesOn")) false
+            (fun _ ->
+              (if !get () then IO.set_printing_mode
+               else IO.unset_printing_mode) ()) in
+        get := actual_get ;
+        node in
       if chosen_productions <> [] then
         IO.print_block (InOut.Div (InOut.Normal, [
             InOut.P
@@ -625,6 +637,9 @@ let main =
                   InOut.Text (get_translation descr)
                 ])) chosen_productions)
           ])) ;
+      if html then
+        IO.print_block (InOut.Div (InOut.Normal,
+          [ InOut.P [ InOut.Node switch_printing_mode ] ])) ;
       if html then IO.print_block (Export.to_block estate) ;
       IO.stopLoading () ;%lwt
       IO.print_block (InOut.P [
@@ -643,7 +658,7 @@ let main =
         computation_power = 0.5 ;
         categories = None ;
         player_information = [] ;
-        chosen_productions = PSet.empty
+        chosen_productions = PSet.from_list ["html" ; "json"]
       } in
     ask_for_languages parameters
   (** Reporting errors. **)

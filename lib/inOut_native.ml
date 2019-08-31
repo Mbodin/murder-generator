@@ -13,6 +13,11 @@ let startLoading _ =
   print_endline "..." ;
   pause ()
 
+
+let set_printing_mode = Utils.id
+let unset_printing_mode = Utils.id
+
+
 let get_file fileName =
   let file = open_in fileName in
   let rec aux _ =

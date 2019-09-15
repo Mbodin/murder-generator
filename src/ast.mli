@@ -17,10 +17,12 @@ type player_constraint =
      * be one of the constructors in the list (if the boolean is [false]).
      * If the boolean if [true], then the relation is opposite: the
      * attribute should not be in this list. **)
-  | HasContact of string * string * bool * string list
+  | HasContact of string * string option * bool * string list
     (** States that the contact described by the first string with the
      * player described by the second string should be one of the
      * constructors in the list (if the boolean is [false]).
+     * If the target player is [None], it means that it represents any
+     * other player.
      * If the boolean if [true], then the relation is opposite: the
      * contact should not be in this list. **)
 

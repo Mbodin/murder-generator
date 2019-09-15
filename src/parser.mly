@@ -180,7 +180,11 @@ player_constraint:
   | WITH; CONTACT; c = UIDENT;
     TO; p = UIDENT;
     n = boption (NOT { }); AS; v = separated_list (OR, UIDENT)
-    { HasContact (c, p, n, v) }
+    { HasContact (c, Some p, n, v) }
+  | WITH; CONTACT; c = UIDENT;
+    TO; ANY; OTHER; PLAYER;
+    n = boption (NOT { }); AS; v = separated_list (OR, UIDENT)
+    { HasContact (c, None, n, v) }
 
 relation: b = boption (STRONG { }); r = relation_content { (r, b) }
 

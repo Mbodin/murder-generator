@@ -28,9 +28,9 @@ end
 element TwoPeopleFallingInLove
 begin
   let A be player with contact FamilyRelation to B as None
-		  with contact LoveRelation to any other player as None
+                  with contact LoveRelation to any other player as None
   let B be player with contact FamilyRelation to A as None
-		  with contact LoveRelation to any other player as None
+                  with contact LoveRelation to any other player as None
 
   provide event lasting seconds to A and B
   begin
@@ -41,21 +41,29 @@ begin
     sentence
     begin
       translation eo "Dum trajnvojaĝo, " A " kaj " B " vidis unu la alian per fenestro."
+      translation fr "Lors d’un voyage en train, " A " et " B " se sont aperçus par la fenêtre."
+      translation en "During a train trip, " A " and " B " saw each other through a window."
     end
 
     sentence
     begin
       translation eo "En la unua fulmrigardo, ili tuj enamiĝis unu la alian."
+      translation fr "Coup de foudre immédiat !"
+      translation en "They immediately fell in love."
     end
 
     sentence
     begin
       translation eo "Bedaŭrinde, ili estis en malsamaj trajnoj kaj ne povis kontaktiĝi unu kun la alia."
+      translation fr "Malheureusement, ils était dans des trains différents et n’ont pas pu échanger."
+      translation en "Unfortunately, they were on different trains and couldn’t make contact."
     end
 
     sentence
     begin
       translation eo "Ili havos la vizaĝon de unu la alia en la kapo kun espero iam rerenkontiĝi."
+      translation fr "Ils garderons le visage de l’autre dans leurs mémoires dans l’espoir de se rencontrer à nouveau."
+      translation en "They shall keep each other’s face into their memory, hoping to meet again."
     end
 
     provide contact LoveRelation between A and B as InLove
@@ -84,12 +92,16 @@ begin
 
     sentence
     begin
-      translation eo C " decidis fari feston, kaj invitis konatulojn."
+      translation eo C:+sbeg " decidis fari feston, kaj invitis multe da konatuloj."
+      translation fr C:+sbeg " a organisé une grande fête où " C:+pro " invitait de nombreuses connaissances."
+      translation en C:+sbeg " organised a large party, inviting a large number of acquaintances."
     end
 
     sentence
     begin
       translation eo "Estis multe da invitantoj: " C:+pro " ne memoras ĉiujn el ili."
+      translation fr "Il y avait beaucoup d’invités : " C:+pro " ne se souvient plus de tout le monde."
+      translation en "There were quite a lot of people coming: " C:+pro " no longer remembers who came."
     end
 
     sentence
@@ -98,6 +110,14 @@ begin
       translation eo "Sed " C:+pro " ja memoras pri inviti " I1:+acc ", " I2:+acc ", kaj " B:+acc "."
       translation eo "Sed " C:+pro " ja memoras pri inviti " A:+acc " kaj " I1:+acc "."
       translation eo "Sed " C:+pro " ja memoras pri inviti " I2:+acc " kaj " B:+acc "."
+      translation fr "Mais " C:+pro " se souvient bien d’avoir invité " A ", " B ", et " I1 "."
+      translation fr "Mais " C:+pro " se souvient bien d’avoir invité " I1 ", " I2 ", et " B "."
+      translation fr "Mais " C:+pro " se souvient bien d’avoir invité " A " et " I1 "."
+      translation fr "Mais " C:+pro " se souvient bien d’avoir invité " I2 " et " B "."
+      translation en C:+sbeg:+pro " remembers quite well to have invited " A ", " B ", and " I1 "."
+      translation en C:+sbeg:+pro " remembers quite well to have invited " I1 ", " I2 ", and " B "."
+      translation en C:+sbeg:+pro " remembers quite well to have invited " A " and " I1 "."
+      translation en C:+sbeg:+pro " remembers quite well to have invited " I2 " and " B "."
     end
   end
 
@@ -107,12 +127,16 @@ begin
 
     sentence
     begin
-      translation eo I1 " estis invitita de " C " por iu festo."
+      translation eo I1:+sbeg " estis invitita de " C " por iu festo."
+      translation fr I1:+sbeg " a été invité" I1:+agr " par " C " à une fête."
+      translation en I1:+sbeg " was invited by " C " to a party."
     end
 
     sentence
     begin
       translation eo "Estis agrabla festo."
+      translation fr "C’était sympa."
+      translation en "It was a nice party."
     end
   end
 
@@ -122,12 +146,16 @@ begin
 
     sentence
     begin
-      translation eo C " invitis " I2:+acc " por festi ion."
+      translation eo C:+sbeg " invitis " I2:+acc " por festi ion."
+      translation fr C:+sbeg " a invité " I2 " à fêter quelque chose."
+      translation en C:+sbeg " invited " I2 " to party."
     end
 
     sentence
     begin
       translation eo "Estis simpatia de " C:+pro "."
+      translation fr "C’était sympa d’avoir pensé à " I2:+pro "."
+      translation en "It was nice of " C:+cli "."
     end
   end
 
@@ -140,11 +168,16 @@ begin
     sentence
     begin
       translation eo "Dum festo organizita de " C ", " A " kaj " B " renkontiĝis."
+      translation fr A:+sbeg " et " B " se sont rencontrés lors d’une fête organisée par " C "."
+      translation fr A:fem:+sbeg " et " B:fem " se sont rencontrées lors d’une fête organisée par " C "."
+      translation en A:+sbeg " and " B " met during a party organised by " C "."
     end
 
     sentence
     begin
       translation eo "Ili ŝategis babili unu kun la alia kaj interŝanĝis siajn kontaktojn."
+      translation fr "Ils se sont vite rendus compte qu’ils partagent beaucoup de choses et se sont échangés leurs contacts."
+      translation en "They greatly appreciated chatting one with the other and exchanged their contacts."
     end
 
     provide contact Know between A and B as True
@@ -157,6 +190,9 @@ begin
     sentence
     begin
       translation eo "Rerenkontiĝante unu la alian, " A " kaj " B " entute enamiĝis."
+      translation fr "Lors d’un nouveau rendez-vous, " A " et " B " sont tombés amoureux."
+      translation fr "Lors d’un nouveau rendez-vous, " A:fem " et " B:fem " sont tombées amoureuses."
+      translation en "Meeting once again each other, " A " and " B " fell in love."
     end
 
     provide contact LoveRelation between A and B as InLove

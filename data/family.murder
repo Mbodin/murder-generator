@@ -278,9 +278,16 @@ begin
 
     sentence
     begin
-      translation fr B:+sbeg:+pro " ne supporte pas ça : une nouvelle aventure est régulièrement trouvée en quelques minutes de torture !"
-      translation en B:+sbeg:+pro " can’t stand this, and usually finds new a adventure in a matter of minutes!"
-      translation eo B:+sbeg:+pro " neniam tion eltenis kaj preskaŭ ĉiam trovis novan aventuron en kelkaj minutoj!"
+      translation fr "Les chatouilles commencent, c’est un signal pour " B:+cli " de trouver une nouvelle aventure !"
+      translation en "Tickling is a signal for " B:+cli " to find a new aventure!"
+      translation eo "Tiklado ja estas signalo por " B:+pro " trovi novan aventuron!"
+    end
+
+    sentence
+    begin
+      translation fr "En général, il " B:+cli " suffit d’une minute de chatouilles pour inventer quelque chose."
+      translation en "Generally, " B:+pro " finds a new game after less than a minute of tickling."
+      translation eo "Ĝenerale, " B:+pro " trovas novan ludon post malpli ol minuto de tiklado."
     end
   end
 
@@ -301,13 +308,6 @@ begin
       translation fr "Le pire, c’est quand " A:+pro " se met en tête d’attaquer par des chatouilles : c’est tellement horrible !"
       translation en "The worst happens when " A:+pro " puts into " A:+pos " head to tickle " B:+cli ": this is so horrible!"
       translation eo "La plej terura okazas kiam " A:+pro " volas tikli " B:+pro:+acc ": tio tiom teruras!"
-    end
-
-    sentence
-    begin
-      translation fr B:+sbeg:+pro " ne supporte pas ça : une nouvelle aventure est régulièrement trouvée en quelques minutes de torture !"
-      translation en B:+sbeg:+pro " can’t stand this, and usually finds new a adventure in a matter of minutes!"
-      translation eo B:+sbeg:+pro " neniam tion eltenis kaj preskaŭ ĉiam trovis novan aventuron en kelkaj minutoj!"
     end
 
     sentence

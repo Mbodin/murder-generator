@@ -1095,9 +1095,9 @@ let parse_element st element_name status block =
                           st.import_information.constructor_maps.contact aid) in
                     List.filter (fun c -> not (List.mem c cid)) all
                   ) else cid in
+                let p' = Option.map get_player_array p' in
                 add_constraint
-                  (Element.Contact (aid, Some (get_player_array p'),
-                    State.One_value_of cid)) ;
+                  (Element.Contact (aid, p', State.One_value_of cid)) ;
                 intersect_with_constructor_dependencies_list deps
                   (List.map (fun id ->
                     Attribute.ContactConstructor id) cid)) deps pc in

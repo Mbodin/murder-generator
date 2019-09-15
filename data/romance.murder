@@ -1,0 +1,167 @@
+
+category Romance
+begin
+  translation fr "Romance"
+  translation en "Romance"
+  translation eo "Amrakonto"
+end
+
+declare contact LoveRelation
+begin
+  category Romance
+
+  translation fr "Relation amoureuse"
+  translation en "Love Relation"
+  translation eo "Amrilato"
+end
+
+contact LoveRelation None
+begin
+  translation eo "nenia"
+end
+
+contact LoveRelation InLove
+begin
+  translation eo "enamiĝintaj"
+end
+
+element TwoPeopleFallingInLove
+begin
+  let A be player with contact FamilyRelation to B as None
+		  with contact LoveRelation to any other player as None
+  let B be player with contact FamilyRelation to A as None
+		  with contact LoveRelation to any other player as None
+
+  provide event lasting seconds to A and B
+  begin
+    event Personal
+    assume no event providing contact Know from A to B before
+    assume no event providing contact Know from B to A before
+
+    sentence
+    begin
+      translation eo "Dum trajnvojaĝo, " A " kaj " B " vidis unu la alian per fenestro."
+    end
+
+    sentence
+    begin
+      translation eo "En la unua fulmrigardo, ili tuj enamiĝis unu la alian."
+    end
+
+    sentence
+    begin
+      translation eo "Bedaŭrinde, ili estis en malsamaj trajnoj kaj ne povis kontaktiĝi unu kun la alia."
+    end
+
+    sentence
+    begin
+      translation eo "Ili havos la vizaĝon de unu la alia en la kapo kun espero iam rerenkontiĝi."
+    end
+
+    provide contact LoveRelation between A and B as InLove
+    provide compatible contact Know between A and B as True
+  end
+
+  provide relation between A and B as trust
+end
+
+element FallInLoveAfterAParty
+begin
+  let A be player with contact Know to C as True
+		  with contact FamilyRelation to B as None
+  let B be player with contact Know to C as True
+		  with contact FamilyRelation to A as None
+  let C be player with contact Know to A as True
+                  with contact Know to B as True
+                  with contact Know to I1 as True
+                  with contact Know to I2 as True
+  let I1 be player with contact Know to C as True
+  let I2 be player with contact Know to C as True
+
+  provide event lasting minutes to C
+  begin
+    event Personal
+
+    sentence
+    begin
+      translation eo C " decidis fari feston, kaj invitis konatulojn."
+    end
+
+    sentence
+    begin
+      translation eo "Estis multe da invitantoj: " C:+pro " ne memoras ĉiujn el ili."
+    end
+
+    sentence
+    begin
+      translation eo "Sed " C:+pro " ja memoras pri inviti " A:+acc ", " B:+acc ", kaj " I1:+acc "."
+      translation eo "Sed " C:+pro " ja memoras pri inviti " I1:+acc ", " I2:+acc ", kaj " B:+acc "."
+      translation eo "Sed " C:+pro " ja memoras pri inviti " A:+acc " kaj " I1:+acc "."
+      translation eo "Sed " C:+pro " ja memoras pri inviti " I2:+acc " kaj " B:+acc "."
+    end
+  end
+
+  provide event lasting minutes to I1
+  begin
+    event Personal
+
+    sentence
+    begin
+      translation eo I1 " estis invitita de " C " por iu festo."
+    end
+
+    sentence
+    begin
+      translation eo "Estis agrabla festo."
+    end
+  end
+
+  provide event lasting minutes to I2
+  begin
+    event Personal
+
+    sentence
+    begin
+      translation eo C " invitis " I2:+acc " por festi ion."
+    end
+
+    sentence
+    begin
+      translation eo "Estis simpatia de " C:+pro "."
+    end
+  end
+
+  provide event lasting minutes to A and B
+  begin
+    event Personal
+    assume no event providing contact Know from A to B before
+    assume no event providing contact Know from B to A before
+
+    sentence
+    begin
+      translation eo "Dum festo organizita de " C ", " A " kaj " B " renkontiĝis."
+    end
+
+    sentence
+    begin
+      translation eo "Ili ŝategis babili unu kun la alia kaj interŝanĝis siajn kontaktojn."
+    end
+
+    provide contact Know between A and B as True
+  end
+
+  provide event lasting days to A and B
+  begin
+    event Personal
+
+    sentence
+    begin
+      translation eo "Rerenkontiĝante unu la alian, " A " kaj " B " entute enamiĝis."
+    end
+
+    provide contact LoveRelation between A and B as InLove
+  end
+
+  provide relation between A and B as trust
+end
+

@@ -113,7 +113,6 @@ begin
   begin
     event Personal
     assume event providing attribute Famousness to A before
-    assume no event providing contact Know from C to B before
 
     translation fr "Suite à une discussion, " B " indique à " A " qu’" B:+pro " aimerait rencontrer " C "."
     translation en "In a discussion, " B " tells " A " that " B:+pro " would like to meet " C "."
@@ -125,6 +124,7 @@ begin
   provide event lasting minutes to A and C
   begin
     event Personal
+    assume no event providing contact Know from C to B before
 
     provide contact Know from C to B as True
     provide compatible contact Favor from B to A as Small

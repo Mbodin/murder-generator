@@ -179,6 +179,17 @@ let from_rfc2445 str =
     let (h, m) = parse_time time in
     (y, d, 60 * h + m)
 
+let timeline (y, d, m) =
+  let (month, day) = month_day (y, d, m) in
+  let y = Utils.positive_mod y 10_000 in
+  Utils.complete_string_pre "0" (string_of_int y) 4
+  ^ "-" ^ Utils.complete_string_pre "0" (string_of_int month) 2
+  ^ "-" ^ Utils.complete_string_pre "0" (string_of_int day) 2
+  ^ " "
+  ^ Utils.complete_string_pre "0" (string_of_int (m / 60)) 2
+  ^ ":" ^ Utils.complete_string_pre "0" (string_of_int (m mod 60)) 2
+  ^ ":00"
+
 (** Dates in ord-mode are encapsulated in either square or angle brackets
  * dependending on whether they are active.
  * These functions choose the right enclosing symbols accordingly. **)

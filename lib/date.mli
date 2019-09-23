@@ -56,6 +56,9 @@ val rfc2445 : t -> string
 (** Invert the function [rfc2445]. **)
 val from_rfc2445 : string -> t
 
+(** Translate the date into the date format used by Timeline. **)
+val timeline : t -> string
+
 (** Translate the date into an org-mode date.
  * The optionnal argument state whether the date is supposed to be active
  * or inactive (default).

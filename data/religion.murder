@@ -115,7 +115,7 @@ begin
     sentence
     begin
       translation fr P:+sbeg:+pro " est."
-      translation en P:+sbeg:+pro " is."
+      translation en P:+sbeg:+pro " just is."
       translation eo P:+sbeg:+pro " estas."
     end
   end

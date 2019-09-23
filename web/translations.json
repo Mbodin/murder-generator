@@ -97,7 +97,9 @@
     "iCalendar": "iCalendar",
     "icalDescription": "Ĉi tiu formato donas reprezenton de eventoj kiel kalendaro.  Tiu kalendaro povas estis importita en ia ajn komputila kalendarilo.",
     "orgmode": "Org-mode",
-    "orgDescription": "Ĉi tiu homlegebla formato priskribas la kreitan scenaron.  Vi povas legi ĝin per ia ajn tekstredaktilo."
+    "orgDescription": "Ĉi tiu homlegebla formato priskribas la kreitan scenaron.  Vi povas legi ĝin per ia ajn tekstredaktilo.",
+    "timeline": "Timeline",
+    "timelineDescription": "Ĉi tiu formato de la projekto Timeline permesas esplori templiniojn kaj elporti ilin en diversaj bildtipoj."
   },
   { "iso639": "fr",
     "name": "Français",
@@ -197,7 +199,9 @@
     "iCalendar": "iCalendar",
     "icalDescription": "Ce format donne une représentation des événements sous forme de calendrier.  Ce dernier peut ensuite être importé dans n’importe quel calendrier numérique.",
     "orgmode": "Org-mode",
-    "orgDescription": "Ce format conçu pour être lisible par des humains fournit une description du scénario généré.  Il peut être lu par n’importe quel éditeur de texte."
+    "orgDescription": "Ce format conçu pour être lisible par des humains fournit une description du scénario généré.  Il peut être lu par n’importe quel éditeur de texte.",
+    "timeline": "Timeline",
+    "timelineDescription": "Ce format du projet Timeline permet d’explorer des frises chronologiques, ainsi que de les exporter dans différents formats d’image."
   },
   { "iso639": "en",
     "name": "English",
@@ -297,6 +301,8 @@
     "iCalendar": "iCalendar",
     "icalDescription": "This format provides a representations of generated events as a calendar.  This calendar can then be imported into any digital calendar.",
     "orgmode": "Org-mode",
-    "orgDescription": "This format provides a readable description of the generated scenario.  It can be read by any text editor."
+    "orgDescription": "This format provides a readable description of the generated scenario.  It can be read by any text editor.",
+    "timeline": "Timeline",
+    "timelineDescription": "This format from the Timeline project enables to explore timelines as well as exporting it into various picture formats."
   }
 ]

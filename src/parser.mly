@@ -165,8 +165,8 @@ add_remove:
 target_destination (player):
   | FROM; p1 = player; TO; p2 = player
     { FromTo (p1, p2) }
-  | BETWEEN; p1 = player; AND; p2 = player
-    { Between (p1, p2) }
+  | BETWEEN; p = player; AND; l = separated_nonempty_list (AND, player)
+    { Between (p :: l) }
 
 destination:
   | p = UIDENT          { DestinationPlayer p }

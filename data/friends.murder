@@ -1,0 +1,31 @@
+
+declare contact Know
+begin
+  translation fr "Connaît"
+  translation en "Knows"
+  translation eo "Konas"
+end
+
+contact Know True
+begin
+  translation fr "oui"
+  translation en "yes"
+  translation eo "jes"
+
+  compatible with Intimate
+end
+
+contact Know Intimate
+begin
+  translation fr "intimement"
+  translation en "intimately"
+  translation eo "intime"
+end
+
+internal contact Know False
+begin
+  translation fr "non"
+  translation en "no"
+  translation eo "ne"
+end
+

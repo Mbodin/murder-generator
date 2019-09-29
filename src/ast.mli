@@ -40,7 +40,7 @@ type destination =
  * [destination] type instead. **)
 type 'player target_destination =
   | FromTo of 'player * 'player (** From the first player to the second player. **)
-  | Between of 'player * 'player (** Between both players, in a symmetrical way. **)
+  | Between of 'player list (** Between players, in a symmetrical way. **)
 
 (** Describes a translation in a given language and required or given grammatical
  * cases. **)

@@ -868,8 +868,12 @@ let parse_element st element_name status block =
         triangle.(j) <- (a, max m (i + 1))) in
     List.iter (fun (td, r) ->
       match td with
-      | Ast.Between (p1, p2) ->
-        write (get_player p1) (get_player p2) r
+      | Ast.Between l ->
+        Option.may (fun p ->
+          raise (SelfRelation (p, element_name))) (Utils.is_uniq_witness l) ;
+        let l = List.map get_player l in
+        List.iter (fun (p1, p2) -> write p1 p2 r)
+          (List.filter (fun (p1, p2) -> p1 < p2) (Utils.list_square l l))
       | Ast.FromTo (p1, p2) ->
         write (get_player p1) (get_player p2)
           (Relation.asymmetrical r Relation.neutral)) block.provide_relation ;
@@ -1059,7 +1063,16 @@ let parse_element st element_name status block =
         let _ =
           match pc.Ast.contact_destination with
           | Ast.FromTo (p1, p2) -> add p1 p2
-          | Ast.Between (p1, p2) -> add p1 p2 ; add p2 p1 in
+          | Ast.Between l ->
+            Option.may (fun d ->
+              let p =
+                match d with
+                | Ast.DestinationPlayer p -> p
+                | Ast.AllOtherPlayers -> "all other players"
+                | Ast.AllPlayers -> "all players" in
+              raise (SelfRelation (p, element_name))) (Utils.is_uniq_witness l) ;
+            List.iter (fun (p1, p2) -> add p1 p2)
+              (List.filter (fun (p1, p2) -> p1 <> p2) (Utils.list_square l l)) in
         merge_with_constructor_dependencies_list deps
           (List.map (fun id -> Attribute.ContactConstructor id) cid))
       deps contacts in
@@ -1144,7 +1157,13 @@ let parse_element st element_name status block =
               let p' = get_player p' in
               add p (Events.kind_of_contact aid p') in
             match pa.Ast.contact_destination with
-            | Between (p1, p2) -> add p1 p2 (add p2 p1 kinds)
+            | Between l ->
+              Option.may (function
+                | Ast.DestinationPlayer p ->
+                  raise (SelfRelation (p, element_name))
+                | _ -> assert false) (Utils.is_uniq_witness l) ;
+              List.fold_left (fun kinds (p1, p2) -> add p1 p2 kinds) kinds
+                (List.filter (fun (p1, p2) -> p1 <> p2) (Utils.list_square l l))
             | FromTo (p1, p2) -> add p1 p2 kinds) kinds block.provide_contact in
         kinds in
       let translation =

@@ -19,9 +19,9 @@ before_script:
   - esy local
 
 script:
+  - esy test
   - esy js
   - esy native
-  - esy test
 
 deploy:
   provider: pages

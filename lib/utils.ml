@@ -83,12 +83,15 @@ let uniq ?(cmp = compare) l =
     | [] -> [] in
   aux (List.sort ~cmp:cmp l)
 
-let is_uniq ?(cmp = compare) l =
+let is_uniq_witness ?(cmp = compare) l =
   let rec aux = function
-    | a :: b :: l when a = b -> false
+    | a :: b :: l when a = b -> Some a
     | a :: l -> aux l
-    | [] -> true in
+    | [] -> None in
   aux (List.sort ~cmp:cmp l)
+
+let is_uniq ?(cmp = compare) l =
+  is_uniq_witness ~cmp:cmp l = None
 
 let rec repeat i e =
   if i = 0 then []
@@ -173,6 +176,14 @@ let rec argmax compare = function
   | a :: b :: l ->
     if compare a b > 0 then argmax compare (a :: l)
     else argmax compare (b :: l)
+
+let list_square l =
+  let rec aux stack = function
+    | [] -> List.concat stack
+    | b :: lb ->
+      aux (List.map (fun a -> (a, b)) l :: stack) lb in
+  aux []
+
 
 let swap (a, b) = (b, a)
 

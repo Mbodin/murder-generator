@@ -133,9 +133,14 @@ val argmax : ('a -> 'a -> int) -> 'a list -> 'a option
  * The comparison function is optional: if not given, it will be [compare]. **)
 val uniq : ?cmp:('a -> 'a -> int) -> 'a list -> 'a list
 
-(** Return [true] if and only if [uniq] behaves as the identity function
-  * on the given list. **)
+(** Return [true] if and only if [uniq] does not remove any element
+ * from the given list. **)
 val is_uniq : ?cmp:('a -> 'a -> int) -> 'a list -> bool
+
+(** Return [None] if and only if [is_uniq] returns [true] on the given list.
+ * If returning [Some], the returned element is an element that would have
+ * been removed by [sort]. **)
+val is_uniq_witness : ?cmp:('a -> 'a -> int) -> 'a list -> 'a option
 
 (** Shuffle a list. **)
 val shuffle : 'a list -> 'a list
@@ -145,6 +150,11 @@ val array_shuffle : 'a array -> 'a array
 
 (** Pattern match the list in the right instead of the left. **)
 val list_match_right : 'a list -> ('a list * 'a) option
+
+(** Return a list such that [(a, b)] is in the final list iff [a] was in the first list
+ * and [b] in the second list. **)
+val list_square : 'a list -> 'b list -> ('a * 'b) list
+
 
 (** Swap the given pair. **)
 val swap : 'a * 'b -> 'b * 'a

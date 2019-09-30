@@ -21,3 +21,10 @@ begin
   translation eo "protekti"
 end
 
+contact Goal Help
+begin
+  translation fr "aider"
+  translation en "help"
+  translation eo "helpi"
+end
+

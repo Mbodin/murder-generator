@@ -356,8 +356,8 @@ begin
   let B be player with contact FamilyRelation to A as None or Spouse
   let C be player with attribute Born as True
                   with attribute Age not as Old
-  let any other player be with contact FamilyRelation to F as None
-                          with contact FamilyRelation to M as None
+  let any other player be with contact FamilyRelation to A as None
+                          with contact FamilyRelation to B as None
                           with contact FamilyRelation to C as None
 
   provide phantom event lasting days to A and B
@@ -421,6 +421,8 @@ begin
 
   provide relation between A and B as trust
 end
+
+(* TODO: More families *)
 
 
 (** * Family Relations **)

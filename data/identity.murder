@@ -13,6 +13,14 @@ begin
   translation eo "jes"
 end
 
+declare event Personal (* An event personally involving a character. *)
+
+declare event Description (* Simple description of a character. *)
+
+declare event Birth
+
+(* * Age *)
+
 declare attribute Age
 begin
   translation fr "Âge"
@@ -41,11 +49,29 @@ begin
   translation eo "maljuna"
 end
 
-declare event Personal (* An event personnally involving a character. *)
+duplicable element AdultAndOldOlderThanYoung
+begin
+  let A be player with attribute Age as Young
+  let B be player with attribute Age as Adult or Old
 
-declare event Description (* Simple description of a character. *)
+  provide immediate phantom event to A and B
+  begin
+    assume no event Birth to A before
+    assume no event Birth to B after
+  end
+end
 
-declare event Birth
+duplicable element OldOlderThanAdultAndYoung
+begin
+  let A be player with attribute Age as Young or Adult
+  let B be player with attribute Age as Old
+
+  provide immediate phantom event to A and B
+  begin
+    assume no event Birth to A before
+    assume no event Birth to B after
+  end
+end
 
 element BirthYoung
 begin
@@ -118,6 +144,7 @@ begin
   end
 end
 
+(* * Gender *)
 
 declare attribute Gender
 begin
@@ -193,6 +220,7 @@ begin
   provide strict attribute Gender to P as Female
 end
 
+(* * Species *)
 
 declare attribute Specy
 begin

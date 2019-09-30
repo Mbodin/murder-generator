@@ -20,6 +20,20 @@ begin
   translation eo "nenia"
 end
 
+internal contact FamilyRelation True
+begin
+  translation fr "oui"
+  translation en "yes"
+  translation eo "jes"
+
+  compatible with Sibling
+  compatible with Parent
+  compatible with Child
+  compatible with GrandParent
+  compatible with GrandChild
+  compatible with Spouse
+end
+
 contact FamilyRelation Sibling
 begin
   category Family
@@ -45,6 +59,24 @@ begin
   translation fr "enfant de"
   translation en "child of"
   translation eo "filo de"
+end
+
+contact FamilyRelation GrandParent
+begin
+  category Family
+
+  translation fr "grand-parent de"
+  translation en "grandparent of"
+  translation eo "avo de"
+end
+
+contact FamilyRelation GrandChild
+begin
+  category Family
+
+  translation fr "petit-enfant de"
+  translation en "grandchild of"
+  translation eo "nepo de"
 end
 
 contact FamilyRelation Spouse
@@ -125,6 +157,7 @@ begin
   provide immediate event to A and B
   begin
     event Birth
+    event Description
 
     provide strict attribute Born to A as True
     provide strict attribute Born to B as True
@@ -159,6 +192,7 @@ begin
   provide event lasting years to A and B
   begin
     event Personal
+    event Description
     provide contact FamilyRelation between A and B as Sibling
 
     sentence
@@ -188,6 +222,7 @@ begin
   provide event lasting years to A and B
   begin
     event Personal
+    event Description
     assume no event providing contact Know from A to B before
     assume no event providing contact Know from B to A before
 
@@ -253,6 +288,7 @@ begin
   provide immediate event to A and B
   begin
     event Personal
+    event Description
 
     provide strict contact FamilyRelation from A to B as Parent
     provide strict contact FamilyRelation from B to A as Child
@@ -282,7 +318,9 @@ begin
                   with contact FamilyRelation to F as None or Spouse
   let C be player with attribute Born as True
                   with attribute Age not as Old
-  let any other player be with contact FamilyRelation to C as None
+  let any other player be with contact FamilyRelation to F as None
+                          with contact FamilyRelation to M as None
+                          with contact FamilyRelation to C as None
 
   provide phantom event lasting days to F and M
   begin
@@ -292,6 +330,8 @@ begin
 
   provide immediate event to F and M and C
   begin
+    event Description
+
     provide strict contact FamilyRelation from M to C as Parent
     provide strict contact FamilyRelation from F to C as Parent
     provide strict contact FamilyRelation from C to M as Child
@@ -316,7 +356,9 @@ begin
   let B be player with contact FamilyRelation to A as None or Spouse
   let C be player with attribute Born as True
                   with attribute Age not as Old
-  let any other player be with contact FamilyRelation to C not as Parent
+  let any other player be with contact FamilyRelation to F as None
+                          with contact FamilyRelation to M as None
+                          with contact FamilyRelation to C as None
 
   provide phantom event lasting days to A and B
   begin
@@ -327,6 +369,7 @@ begin
   provide immediate event to A and B and C
   begin
     event Personal
+    event Description
 
     provide strict contact FamilyRelation from A to C as Parent
     provide strict contact FamilyRelation from B to C as Parent
@@ -346,6 +389,7 @@ begin
   provide relation between B and C as trust
 end
 
+(* TODO: Update this element to make it more precise. *)
 element SameParentSibling
 begin
   let P be player
@@ -355,6 +399,7 @@ begin
   provide event lasting years to A and B
   begin
     event Personal
+    event Description
     assume event providing contact FamilyRelation from A and B to P before
 
     provide compatible contact FamilyRelation between A and B as Sibling
@@ -380,8 +425,6 @@ end
 
 (** * Family Relations **)
 
-(* TODO: These elements must mark some information to avoid being applied simultanesouly. *)
-
 element TrustedSiblings
 begin
   let A be player with contact FamilyRelation to B as Sibling
@@ -400,6 +443,8 @@ begin
       translation en "They always have trusted one another, counting on the other to help them."
       translation eo "Ili ĉiam fidis unu la alian, kaj scias ke povos daŭre fidi sin."
     end
+
+    provide contact Relation between A and B as Trust
   end
 
   provide relation between A and B as trust
@@ -436,6 +481,8 @@ begin
       translation eo "Bedaŭrinde, estas tiel."
       translation eo "Neniam pliboniĝis la situacio post tempo."
     end
+
+    provide contact Relation between A and B as Conflicted
   end
 
   provide relation between A and B as explosive trust hate
@@ -448,6 +495,7 @@ begin
   let B be player with contact FamilyRelation to A as Sibling
                   with contact Know to A as Intimate
 
+  (* Making sure that B is older than A. *)
   provide immediate phantom event to A and B
   begin
     assume no event Birth to A before
@@ -493,6 +541,8 @@ begin
       translation en "Generally, " B:+pro " finds a new game after less than a minute of tickling."
       translation eo "Ĝenerale, " B:+pro " trovas novan ludon post malpli ol minuto de tiklado."
     end
+
+    provide contact Relation from A to B as Trust
   end
 
   provide immediate event to B
@@ -534,6 +584,8 @@ begin
       translation en "This is as bad as hell."
       translation eo "Tio estas infero."
     end
+
+    provide contact Relation from B to A as Conflicted
   end
 
   provide relation from A to B as trust

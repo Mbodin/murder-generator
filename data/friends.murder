@@ -1,31 +1,18 @@
 
-declare contact Know
+contact Relation Friendship
 begin
-  translation fr "Connaît"
-  translation en "Knows"
-  translation eo "Konas"
+  translation fr "amitié"
+  translation en "friendship"
+  translation eo "amikeco"
 end
 
-contact Know True
+(* People kind of acting like they are friends, but regularly run into conflicts. *)
+contact Relation ConflictedFriendship
 begin
-  translation fr "oui"
-  translation en "yes"
-  translation eo "jes"
-
-  compatible with Intimate
+  translation fr "amitié compliquée"
+  translation en "conflicted friendship"
+  translation eo "malsimpla amikeco"
 end
 
-contact Know Intimate
-begin
-  translation fr "intimement"
-  translation en "intimately"
-  translation eo "intime"
-end
-
-internal contact Know False
-begin
-  translation fr "non"
-  translation en "no"
-  translation eo "ne"
-end
+(* TODO: Complete with friendship stories, for each jobs and character attributes. *)
 

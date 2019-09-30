@@ -1,0 +1,78 @@
+
+(* * Knowing *)
+
+declare contact Know
+begin
+  translation fr "Connaît"
+  translation en "Knows"
+  translation eo "Konas"
+end
+
+contact Know True
+begin
+  translation fr "oui"
+  translation en "yes"
+  translation eo "jes"
+
+  compatible with Intimate
+end
+
+contact Know Intimate
+begin
+  translation fr "intimement"
+  translation en "intimately"
+  translation eo "intime"
+end
+
+internal contact Know False
+begin
+  translation fr "non"
+  translation en "no"
+  translation eo "ne"
+end
+
+
+(* * Relations Between Players *)
+
+declare internal contact Relation
+begin
+  translation fr "Relation"
+  translation en "Relation"
+  translation eo "Rilato"
+end
+
+internal contact Relation Neutral
+begin
+  translation fr "neutre"
+  translation en "neutral"
+  translation eo "neŭtrala"
+end
+
+contact Relation Trust
+begin
+  translation fr "confiance"
+  translation en "trust"
+  translation eo "fidplena"
+end
+
+contact Relation Hate
+begin
+  translation fr "haine"
+  translation en "hate"
+  translation eo "malamo"
+end
+
+contact Relation Avoidance
+begin
+  translation fr "moins je le vois, mieux je me porte"
+  translation en "avoidance"
+  translation eo "hevitema"
+end
+
+contact Relation Conflicted
+begin
+  translation fr "en conflit"
+  translation en "conflicted"
+  translation eo "malpaca"
+end
+

@@ -6,31 +6,21 @@ begin
   translation eo "Amrakonto"
 end
 
-declare contact LoveRelation
+contact Relation Love
 begin
   category Romance
 
-  translation fr "Relation amoureuse"
-  translation en "Love Relation"
+  translation fr "amoureuse"
+  translation en "Love"
   translation eo "Amrilato"
-end
-
-contact LoveRelation None
-begin
-  translation eo "nenia"
-end
-
-contact LoveRelation InLove
-begin
-  translation eo "enamiĝintaj"
 end
 
 element TwoPeopleFallingInLove
 begin
   let A be player with contact FamilyRelation to B as None
-                  with contact LoveRelation to any other player as None
+                  with contact Relation to any other player not as Love
   let B be player with contact FamilyRelation to A as None
-                  with contact LoveRelation to any other player as None
+                  with contact Relation to any other player not as Love
 
   provide event lasting seconds to A and B
   begin
@@ -66,7 +56,7 @@ begin
       translation en "They shall keep each other’s face into their memory, hoping to meet again."
     end
 
-    provide contact LoveRelation between A and B as InLove
+    provide contact Relation between A and B as Love
     provide compatible contact Know between A and B as True
   end
 
@@ -195,9 +185,9 @@ begin
       translation en "Meeting once again each other, " A " and " B " fell in love."
     end
 
-    provide contact LoveRelation between A and B as InLove
+    provide contact Relation between A and B as Love
   end
 
-  provide relation between A and B as trust
+  provide relation between A and B as strong trust
 end
 

@@ -337,16 +337,16 @@ begin
   add translation eo:nom:plu:acc "robotojn"
 end
 
-category OutOfThisUniverse
+category OutOfOurWorld
 begin
-  translation fr "Hors de cet univers"
-  translation en "Out of this universe"
-  translation eo "Ekster ĉi tiu universo"
+  translation fr "Hors de notre univers"
+  translation en "Out of our world"
+  translation eo "Ekster nia mondo"
 end
 
 category Fantasy
 begin
-  category OutOfThisUniverse
+  category OutOfOurWorld
 
   translation fr "Merveilleux"
   translation en "Fantasy"
@@ -355,7 +355,7 @@ end
 
 category ScienceFiction
 begin
-  category OutOfThisUniverse
+  category OutOfOurWorld
 
   translation fr "Science-fiction"
   translation en "Science fiction"

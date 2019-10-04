@@ -313,3 +313,77 @@ begin
   end
 end
 
+element SeenADreamTraveller
+begin
+  let D be player with attribute SecretSociety as DreamTravellers
+  let P be player with contact Know to D as True
+                  with attribute SecretSociety not as DreamTravellers
+
+  provide event lasting minutes to P
+  begin
+    event Personal
+    assume event providing contact Know from P to D before
+    assume event providing attribute SecretSociety to D before
+
+    sentence
+    begin
+      translation fr P:+sbeg " s’est reveillé soudainement : quelque chose n’allait pas."
+      translation en P:+sbeg " suddenly woke up: something was wrong."
+      translation eo P:+sbeg " subite vekiĝis: io ne glatis."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " était en train de rêver… de " D " ?"
+      translation en P:+sbeg:+pro " was dreaming… of " D "?"
+      translation eo P:+sbeg:+pro " estis sonĝanta pri… ĉu " D "?"
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " l’a clairement vu."
+      translation en P:+sbeg:+pro " clearly saw " D:+cli "."
+      translation eo P:+sbeg:+pro " klare vidis " D:+pro:+acc "."
+    end
+
+    sentence
+    begin
+      translation fr D:fem:+empty "Sauf que ce rêve n’était pas à propos d’elle."
+      translation fr D:mas:+empty "Sauf que ce rêve n’était pas à propos de lui."
+      translation fr "Sauf que ce rêve n’était pas à propos d’iellui."
+      translation en "Except that this dream was not about " D:+cli "."
+      translation eo "Sed tiu ĉi sonĝo ne temis pri " D:+pro "."
+    end
+
+    sentence
+    begin
+      translation fr "C’était même complètement hors de propos."
+      translation en "It was even completely out of place."
+      translation eo "Absolute ne temis prie, eĉ."
+    end
+
+    sentence
+    begin
+      translation fr D:+sbeg:+pro " ne faisait que passer, s’en allant au loin."
+      translation en D:+sbeg:+pro " was only bypassing, going away."
+      translation eo D:+sbeg:+pro " nur trapasis, forirante."
+    end
+
+    sentence
+    begin
+      translation fr "Non, décidement, quelque chose n’allait pas."
+      translation en "No, surely something was wrong."
+      translation eo "Ne, certe io ne glatis."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " s’est rendormi, mais avec la certitude que ce n’était pas normal."
+      translation en P:+sbeg:+pro " went to sleep again, but kept thinking that this was not mundane."
+      translation eo P:+sbeg:+pro " reendormiĝis, sed daŭre pensante ke io ne normalas."
+    end
+  end
+
+  add complexity to D
+end
+

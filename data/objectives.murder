@@ -28,3 +28,10 @@ begin
   translation eo "helpi"
 end
 
+contact Goal Know
+begin
+  translation fr "connaître"
+  translation en "know"
+  translation eo "konatiĝi"
+end
+

@@ -149,8 +149,8 @@ end
 
 element Twins
 begin
-  let A be player
-  let B be player
+  let A be player with attribute Specy as Human
+  let B be player with attribute Specy as Human
   let any other player be with contact FamilyRelation to A as None
                           with contact FamilyRelation to B as None
 
@@ -185,7 +185,9 @@ end
 element Siblings
 begin
   let A be player with attribute Born as True
+                  with attribute Specy as Human
   let B be player with attribute Born as True
+                  with attribute Specy as Human
   let any other player be with contact FamilyRelation to A as None
                           with contact FamilyRelation to B as None
 
@@ -214,8 +216,10 @@ element OldSiblings
 begin
   let A be player with attribute Age as Old
                   with attribute Born as True
+                  with attribute Specy as Human
   let B be player with attribute Age as Old
                   with attribute Born as True
+                  with attribute Specy as Human
   let any other player be with contact FamilyRelation to A as None
                           with contact FamilyRelation to B as None
 
@@ -274,8 +278,9 @@ end
 
 element Parent
 begin
-  let A be player
+  let A be player with attribute Specy as Human
   let B be player with attribute Born as True
+                  with attribute Specy as Human
   let any other player be with contact FamilyRelation to A as None
                           with contact FamilyRelation to B as None
 
@@ -311,12 +316,15 @@ end
 element Parents
 begin
   let F be player with attribute Gender as Male
+                  with attribute Specy as Human
                   with contact Know to M as Intimate
                   with contact FamilyRelation to M as None or Spouse
   let M be player with attribute Gender as Female
+                  with attribute Specy as Human
                   with contact Know to F as Intimate
                   with contact FamilyRelation to F as None or Spouse
   let C be player with attribute Born as True
+                  with attribute Specy as Human
                   with attribute Age not as Old
   let any other player be with contact FamilyRelation to F as None
                           with contact FamilyRelation to M as None

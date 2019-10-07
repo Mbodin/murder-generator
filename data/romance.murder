@@ -66,9 +66,9 @@ end
 element FallInLoveAfterAParty
 begin
   let A be player with contact Know to C as True
-		  with contact FamilyRelation to B as None
+                  with contact FamilyRelation to B as None
   let B be player with contact Know to C as True
-		  with contact FamilyRelation to A as None
+                  with contact FamilyRelation to A as None
   let C be player with contact Know to A as True
                   with contact Know to B as True
                   with contact Know to I1 as True
@@ -173,6 +173,8 @@ begin
     provide contact Know between A and B as True
   end
 
+  provide phantom event lasting days to A and B
+
   provide event lasting days to A and B
   begin
     event Personal
@@ -189,5 +191,134 @@ begin
   end
 
   provide relation between A and B as strong trust
+end
+
+element LoveAtFirstSight
+begin
+  let A be player with contact FamilyRelation to B as None
+                  with contact Relation to any other player not as Love
+  let B be player with contact FamilyRelation to A as None
+
+  provide event lasting seconds to A
+  begin
+    event Personal
+
+    provide compatible contact Goal from A to B as Know
+    provide contact Relation from A to B as Love
+
+    sentence
+    begin
+      translation eo A:+sbeg " bone memoras kiam " A:+pro " vidis " B:+acc " por la unua fojo."
+      translation fr A:+sbeg " se souviens très bien du moment où " A:+pro " a vu " B " pour la première fois."
+      translation en A:+sbeg " remembers well how " A:+pro " saw " B " for the first time."
+    end
+
+    sentence
+    begin
+      translation eo "Nu, " A:+pro " ĉefe memoras pri " B:+pro ", fakte."
+      translation fr "Enfin, " A:+pro " se souviens surtout de " B:+pro ", pour être honnête."
+      translation en "To be honest " A:+pro " mostly remembers about " B:+pro "."
+    end
+
+    sentence
+    begin
+      translation eo "Tiam la cetero de la mondo kvazaŭ malaperis."
+      translation fr "À ce moment, c’était comme si le reste du monde s’était effacé."
+      translation en "At this time, it was as if the rest of the world was fading away."
+    end
+
+    sentence
+    begin
+      translation eo "Nur gravis unu afero: " B:+pro "."
+      translation fr "Seul importait une seule personne : " B:+cli "."
+      translation en "Only one person then mattered: " B:+cli "."
+    end
+
+    sentence
+    begin
+      translation eo "Iu prononcis " B:+pos:+acc " nomon: " B "."
+      translation fr "Quelqu’un prononçait son nom : " B "."
+      translation en "Someone was calling " B:+pos " name: " B "."
+    end
+
+    sentence
+    begin
+      translation eo "Kia bela nomo."
+      translation fr "Quel beau nom."
+      translation en "What a beautiful name."
+    end
+
+    sentence
+    begin
+      translation eo A:+sbeg:+pro " tuj enamiĝis."
+      translation fr A:+sbeg:+pro " est tout de suite tombé" A:fem:+agr " amoureuse."
+      translation fr A:+sbeg:+pro " est tout de suite tombé" A:+agr " amoureux."
+      translation en A:+sbeg:+pro " immediately fell in love."
+    end
+
+    sentence
+    begin
+      translation eo "Bedaŭrinde " A:+pro " ne povis babili kun " B:+pro ": oni estis alvokanta " B:+pro:+acc " kaj " B:+pro " eliris tiudirekten."
+      translation fr "Malheureusement " A:+pro " n’a pas pu discuter avec " B:+cli " : quelqu’un l’appelait et " B:+pro " s’en est allé" B:+agr "."
+      translation en "Unfortunately " A:+pro " couldn’t discuss with " B:+cli ": someone was calling " B:+cli " and " B:+pro " went away."
+    end
+  end
+
+  provide phantom event lasting days to A
+
+  provide event lasting days to A
+  begin
+    event Personal
+    assume no event providing contact Know from B to A before
+
+    sentence
+    begin
+      translation eo "Ekde kiam " A " vidis " B:+acc " por la unua fojo, " A:+pro " ne ĉesis pensi pri " B:+pro:+acc "."
+      translation fr "Depuis que " A " a vu " B " pour la première fois, " A:+pro " n’a pas arrêté de penser à " B:+cli "."
+      translation en "Since " A " saw " B " for the first time, " A:+pro " never stopped thinking about " B:+cli "."
+    end
+
+    sentence
+    begin
+      translation eo "Kiu " B:+pro " estas?"
+      translation fr "Qui est " B:+pro " ?"
+      translation en "Who is " B:+pro "?"
+    end
+
+    sentence
+    begin
+      translation eo "Kie " B:+pro " loĝas?"
+      translation fr "Où loge-t-" B:+pro " ?"
+      translation en "Where does " B:+pro " live?"
+    end
+
+    sentence
+    begin
+      translation eo "Kion " B:+pro " faras?"
+      translation fr "Que fait-" B:+pro " ?"
+      translation en "What does " B:+pro " do?"
+    end
+
+    sentence
+    begin
+      translation eo A:+sbeg:+pro " volas revidi " B:+pro:+acc "."
+      translation fr B:fem:+empty A:+sbeg:+pro " veut la revoir."
+      translation fr B:mas:+empty A:+sbeg:+pro " veut le revoir."
+      translation fr B:+empty A:+sbeg:+pro " veut l·e·a revoir."
+      translation en A:+sbeg:+pro " wants to see " B:+cli " again."
+    end
+
+    sentence
+    begin
+      translation eo A:+sbeg:+pro " volas koni " B:+pro:+acc "."
+      translation fr B:fem:+empty A:+sbeg:+pro " veut la connaître."
+      translation fr B:mas:+empty A:+sbeg:+pro " veut le connaître."
+      translation fr B:+empty A:+sbeg:+pro " veut l·e·a connaître."
+      translation en A:+sbeg:+pro " wants to know " B:+cli "."
+    end
+  end
+
+  provide relation from A to B as strong trust
+  provide relation from B to A as strong neutral
 end
 

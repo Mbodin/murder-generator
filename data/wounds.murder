@@ -1,9 +1,9 @@
 
 category Disabilities
 begin
-  translation fr "Handicaps"
-  translation en "Disabilities"
-  translation eo "Malatutaĵoj"
+  translation fr "Handicaps graves"
+  translation en "Heavy disabilities"
+  translation eo "Fortaj malatutaĵoj"
 end
 
 declare event Accident
@@ -27,6 +27,8 @@ begin
   translation en "none"
   translation eo "nenia"
 end
+
+(* * Blindness *)
 
 attribute Disability Blind
 begin
@@ -109,6 +111,7 @@ begin
     end
   end
 
+  add complexity to P
   add complexity to P
   add difficulty to P
   add difficulty to P
@@ -279,6 +282,7 @@ begin
   provide relation from V to A as strong hate
 
   add complexity to V
+  add complexity to V
   add difficulty to V
   add difficulty to V
   add difficulty to V
@@ -300,5 +304,212 @@ begin
   add difficulty to V
   add difficulty to V
   add difficulty to V
+end
+
+(* * Cancer *)
+
+element DoesntHaveMuchTimeBecauseOfCancer
+begin
+  category NonKids
+
+  let P be player with attribute Born as True
+                  with attribute Specy not as God
+                  with attribute Disability not as Blind
+
+  provide phantom event lasting years to P
+  begin
+    event Personal
+  end
+
+  provide event lasting weeks to P
+  begin
+    event Personal
+
+    sentence
+    begin
+      translation fr "Au début, ce n’était qu’un doute."
+      translation en "It all started with a doubt."
+      translation eo "Ĉio vere nur komencis per dubo."
+    end
+
+    sentence
+    begin
+      translation fr "Ensuite, les symptômes sont devenus plus présents."
+      translation en "Then symptoms accumulated."
+      translation eo "Poste simptomoj plifortiĝis."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg " a décidé d’aller voir les médecins."
+      translation en P:+sbeg " decided to visit " P:+pos " doctors about it."
+      translation eo P:+sbeg " decidis demandi al kuracistoj."
+    end
+
+    sentence
+    begin
+      translation fr "Ils étaient rassurants."
+      translation en "They were reassuring."
+      translation eo "La kuracistoj estis tranvkiligemaj."
+    end
+
+    sentence
+    begin
+      translation fr "Ils disaient « ce n’est rien, on va juste faire quelques analyses supplémentaires, au cas où »."
+      translation en "They said “don’t worry, we’re just going to perform some additional analyses just in case.”"
+      translation eo "Ili diris “ne timu, ni nur faru pliajn analizojn, enkaze”."
+    end
+
+    sentence
+    begin
+      translation fr "Ensuite les analyses se sont multipliées."
+      translation en "Then analyses became more frequent."
+      translation eo "Poste pliaj analizoj estis bezonataj."
+    end
+
+    sentence
+    begin
+      translation fr "Prises de sang, examens médicaux, beaucoup de rendez-vous."
+      translation en "Blood sample, physical checkups, a lot of appointments."
+      translation eo "Sangeltiro, kuracaj kontroloj, multege da rendevuoj."
+    end
+
+    sentence
+    begin
+      translation fr "Ça n’en finissait plus."
+      translation en "It just never ended."
+      translation eo "Estis senlima."
+    end
+
+    sentence
+    begin
+      translation fr "Mais le mot est enfin sorti : « c’est peut-être un cancer »."
+      translation en "But the word was finally pronounced: “it may be a cancer.”"
+      translation eo "Set la vorto finfine prononciĝis: “eblas esti kancero”."
+    end
+
+    sentence
+    begin
+      translation fr "Immédiatement suivi de « mais pas d’inquiétude : la plupart du temps c’est autre chose »."
+      translation en "Immediately followed by “but no worries: most of the time it’s just something else.”"
+      translation eo "Tuj sekvita de “sed ne timu: plejparte de la fojoj estas aliaĵo”."
+    end
+
+    sentence
+    begin
+      translation fr "Seulement à moitié rassurant."
+      translation en "Only half-reassuring."
+      translation eo "Nur duonmaltimiganta."
+    end
+
+    sentence
+    begin
+      translation fr "Les résultats finaux devraient arriver dans environ un mois."
+      translation en "The final results should arrive in about a month."
+      translation eo "La finaj rezultoj alvenos post ĉirkaŭ unu monato."
+    end
+  end
+
+  provide phantom event lasting weeks to P
+
+  provide event lasting minutes to P
+  begin
+    event Personal
+    assume no event Personal to P after
+
+    sentence
+    begin
+      translation fr "Les résultats des analyses de " P " sont arrivés."
+      translation en "The results of " P "’s analyses arrived."
+      translation eo "La rezultoj de la analizoj de " P " alvenis."
+    end
+
+    sentence
+    begin
+      translation fr P:fem:+sbeg:+pro " était assez nerveuse en lisant les résultats."
+      translation fr P:+sbeg:+pro " était assez nerveux en lisant les résultats."
+      translation en P:+sbeg:+pro " was very nervous when reading the results."
+      translation eo P:+sbeg:+pro " estis nervozega legante la rezultojn."
+    end
+
+    sentence
+    begin
+      translation fr "Ils sont positifs."
+      translation en "They are positive."
+      translation eo "Ili estas pozitivaj."
+    end
+
+    sentence
+    begin
+      translation fr "Au sens médical, malheureusement."
+      translation en "In the medical sense, unfortunately."
+      translation eo "En la kuraca signifo, bedaŭrinde."
+    end
+
+    sentence
+    begin
+      translation fr "Le cancer est là."
+      translation en "Cancer is there."
+      translation eo "Kancero estas tie."
+    end
+
+    sentence
+    begin
+      translation fr "Avec plusieurs métastases."
+      translation en "Metastasised."
+      translation eo "Kun pluraj metastazoj."
+    end
+
+    sentence
+    begin
+      translation fr "Plus aucun doute possible."
+      translation en "No possible doubt."
+      translation eo "Ne plu eblas dubi."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " n’en a pas pour longtemps."
+      translation en P:+sbeg:+pro " doesn’t have much time left."
+      translation eo P:+sbeg:+pro " ne havas multe da cetera vivtempo."
+    end
+
+    sentence
+    begin
+      translation fr "Trois mois."
+      translation en "Three months."
+      translation eo "Tri monatoj."
+    end
+
+    sentence
+    begin
+      translation fr "Peut-être six, s’" P:mas:+pro " a de la chance."
+      translation fr "Peut-être six, si " P:+pro " a de la chance."
+      translation en "Maybe six, if " P:+pro " is lucky."
+      translation eo "Eble ses, se " P:+pro " bonŝancas."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " est resté" P:+arg " un moment sans bouger."
+      translation en P:+sbeg:+pro " stood still a moment."
+      translation eo P:+sbeg:+pro " tute ne movis dum iom da tempo."
+    end
+
+    sentence
+    begin
+      translation fr "Trois mois…"
+      translation en "Three months…"
+      translation eo "Tri monatoj…"
+    end
+  end
+
+  add complexity to P
+  add complexity to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
 end
 

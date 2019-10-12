@@ -332,7 +332,8 @@ let main =
             ]) ;
           InOut.List (false,
             PMap.fold (fun (e, _, _, _) l -> InOut.Node e :: l)
-              categoriesButtons [])
+            categoriesButtons []) ;
+          InOut.P [ InOut.Text (get_translation "categoriesExplain") ]
         ])) ;
       next_button w parameters (fun _ ->
           let selected_categories =

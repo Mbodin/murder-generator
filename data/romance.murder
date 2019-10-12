@@ -216,8 +216,9 @@ begin
     sentence
     begin
       translation eo "Nu, " A:+pro " ĉefe memoras pri " B:+pro ", fakte."
-      translation fr "Enfin, " A:+pro " se souviens surtout de " B:+pro ", pour être honnête."
-      translation en "To be honest " A:+pro " mostly remembers about " B:+pro "."
+      translation fr "Enfin, " A:+pro " se souviens surtout de " B:mas:+cli ", pour être honnête."
+      translation fr "Enfin, " A:+pro " se souviens surtout d’" B:+cli ", pour être honnête."
+      translation en "To be honest " A:+pro " mostly remembers about " B:+cli "."
     end
 
     sentence
@@ -273,7 +274,7 @@ begin
 
     sentence
     begin
-      translation eo "Ekde kiam " A " vidis " B:+acc " por la unua fojo, " A:+pro " ne ĉesis pensi pri " B:+pro:+acc "."
+      translation eo "Ekde kiam " A " vidis " B:+acc " por la unua fojo, " A:+pro " ne ĉesis pensi pri " B:+pro "."
       translation fr "Depuis que " A " a vu " B " pour la première fois, " A:+pro " n’a pas arrêté de penser à " B:+cli "."
       translation en "Since " A " saw " B " for the first time, " A:+pro " never stopped thinking about " B:+cli "."
     end
@@ -304,7 +305,7 @@ begin
       translation eo A:+sbeg:+pro " volas revidi " B:+pro:+acc "."
       translation fr B:fem:+empty A:+sbeg:+pro " veut la revoir."
       translation fr B:mas:+empty A:+sbeg:+pro " veut le revoir."
-      translation fr B:+empty A:+sbeg:+pro " veut l·e·a revoir."
+      translation fr A:+sbeg:+pro " veut le·a revoir."
       translation en A:+sbeg:+pro " wants to see " B:+cli " again."
     end
 
@@ -313,7 +314,7 @@ begin
       translation eo A:+sbeg:+pro " volas koni " B:+pro:+acc "."
       translation fr B:fem:+empty A:+sbeg:+pro " veut la connaître."
       translation fr B:mas:+empty A:+sbeg:+pro " veut le connaître."
-      translation fr B:+empty A:+sbeg:+pro " veut l·e·a connaître."
+      translation fr A:+sbeg:+pro " veut le·a connaître."
       translation en A:+sbeg:+pro " wants to know " B:+cli "."
     end
   end

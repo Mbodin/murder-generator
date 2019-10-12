@@ -1,6 +1,5 @@
 
-(* This file is meant to be for internal use and not to actually declare scenario
-  elements.
+(* This file is meant to be for internal use and not to actually declare scenario elements.
   Instead, this file declares grammatical constructs for each languages. *)
 
 (* * Declaration of grammatical cases *)
@@ -183,7 +182,7 @@ begin
   add translation eo:sbeg:pos:plu:acc "Ilian"
 end
 
-element NormalGrammar
+unique element NormalGrammar
 begin
   provide strict attribute Grammar to any other player as Normal
 end

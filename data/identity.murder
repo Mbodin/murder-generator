@@ -342,6 +342,10 @@ begin
   translation fr "Hors de notre univers"
   translation en "Out of our world"
   translation eo "Ekster nia mondo"
+
+  description fr "Tout ce qui n’est pas possible dans notre monde de tous les jours."
+  description en "Everything which is not possible in our daily life."
+  description eo "Ĉio kio ne eblas en nia ĉiutaga mondo."
 end
 
 category Fantasy
@@ -351,6 +355,10 @@ begin
   translation fr "Merveilleux"
   translation en "Fantasy"
   translation eo "Miraĵoj"
+
+  description fr "Elfes, nains, dragons, fées, etc."
+  description en "Elves, dwarves, dragons, fairy etc."
+  description eo "Elfoj, gnomoj, drakoj, feoj, ktp."
 end
 
 category ScienceFiction
@@ -360,6 +368,10 @@ begin
   translation fr "Science-fiction"
   translation en "Science fiction"
   translation eo "Sciencfikcio"
+
+  description fr "Robots, extra-terrestres, technologie futuriste, etc."
+  description en "Robots, aliens, futurist technologies, etc."
+  description eo "Robotoj, eksterteranoj, estontecaj teĥnologioj, ktp."
 end
 
 

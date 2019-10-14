@@ -4,6 +4,10 @@ begin
   translation fr "Romance"
   translation en "Romance"
   translation eo "Amrakonto"
+
+  description fr "Histoires d’amour."
+  description en "Love stories."
+  description eo "Rakontoj pri amo."
 end
 
 contact Relation Love

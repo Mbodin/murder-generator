@@ -3,8 +3,9 @@
 \#~\#
 *.swp
 
-_build
-_esy
+/_build
+/_esy
+/node_modules
 *.byte
 *.native
 *.js

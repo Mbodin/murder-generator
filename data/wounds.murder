@@ -4,6 +4,10 @@ begin
   translation fr "Handicaps graves"
   translation en "Heavy disabilities"
   translation eo "Fortaj malatutaĵoj"
+
+  description fr "Des handicaps qui forceront certains joueurs à se priver de certains de ces capacités physiques lors de la soirée enquête."
+  description en "Disabilities that will force some players to leave some of they abilities behind during the murder party."
+  description eo "Malatutaĵoj kiu devigos kelkajn ludantojn forlasi kelkajn de siaj kapabloj dum la vesperenketo."
 end
 
 declare event Accident

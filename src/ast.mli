@@ -49,6 +49,9 @@ type translation =
   * Translation.command list
   * string Translation.sitem list
 
+(** A description in a language. **)
+type description = Translation.language * string
+
 (** States that having this constructors set as attribute or contact changes
  * the grammatical cases of the player by implicitely providing the following
  * new tag at each translation. **)
@@ -111,6 +114,7 @@ type command =
   | OfCategory of string
     (** The given category is required to consider this block. **)
   | Translation of translation
+  | Description of description
   | Sentence of block
     (** A sentence with multiple translations for an event.
      * Only accepts [Translation] commands. **)

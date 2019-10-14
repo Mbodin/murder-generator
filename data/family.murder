@@ -4,6 +4,10 @@ begin
   translation fr "Famille"
   translation en "Family"
   translation eo "Familio"
+
+  description fr "Histoires de famille, relation de parent à enfant, etc."
+  description en "Family stories, relation between parent and children, etc."
+  description eo "Familiaj rakontaĵoj, rilatoj inter gepatroj kaj siaj infanoj, ktp."
 end
 
 declare contact FamilyRelation

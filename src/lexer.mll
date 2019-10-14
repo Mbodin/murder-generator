@@ -87,6 +87,8 @@ rule read = parse
 
   | "sentence"              { SENTENCE }
   | "translation"           { TRANSLATION }
+  | "description"           { DESCRIPTION }
+
   | ':'                     { COLON }
   | "+"                     { PLUS }
   | "-"                     { MINUS }

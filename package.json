@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@opam/ocamlfind": "*",
+    "@opam/ocamlbuild": "*",
     "@opam/extlib": "*",
     "@opam/menhir": "*",
     "@opam/yojson": "*",

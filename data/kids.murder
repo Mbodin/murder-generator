@@ -4,5 +4,9 @@ begin
   translation fr "Non adapté à un jeune public"
   translation en "Unsuitable for children"
   translation eo "Ne taŭga por junuloj"
+
+  description fr "Violence (physique ou verbale), sexe, maltraitance, etc."
+  description en "Violence (physical or verbal), sex, abuse, etc."
+  description eo "Violencoj (fizikaj aŭ parolaj), sekso, molestado, ktp."
 end
 

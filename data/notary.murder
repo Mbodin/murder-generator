@@ -4,6 +4,10 @@ begin
   translation fr "Finance"
   translation en "Money"
   translation eo "Monaĵoj"
+
+  description fr "Histoires d’argent."
+  description en "Stories dealing with money."
+  description eo "Rakontaĵoj kiu inkludas monon."
 end
 
 declare event MoneyExchange

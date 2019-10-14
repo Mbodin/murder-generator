@@ -8,6 +8,7 @@
     "buildsInSource": "_build"
   },
   "scripts": {
+    "clean": "rm -R _build *.byte *.native *.js",
     "local": "./build.sh local",
     "test": "./build.sh tests",
     "js": "./build.sh check move main.js",

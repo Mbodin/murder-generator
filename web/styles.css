@@ -526,6 +526,10 @@ input[type="number"] {
   height: 0 ;
 }
 
+.switch_text {
+  font-weight: 700 ;
+}
+
 .slider {
   position: absolute ;
   border-radius: 29px ;

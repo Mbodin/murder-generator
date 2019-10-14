@@ -88,7 +88,7 @@ module type T = sig
   val createResponsiveListInput : (string * 'a) list -> string -> (string -> (string * 'a) list) -> node * (unit -> 'a list)
   val createPercentageInput : float -> node * (unit -> float)
   val createDateInput : Date.t -> node * (unit -> Date.t)
-  val createSwitch : string -> string option -> string option -> bool -> (unit -> unit) -> node * (bool -> unit) * (unit -> bool)
+  val createSwitch : string -> string option -> string option -> string option -> bool -> (unit -> unit) -> node * (bool -> unit) * (unit -> bool)
   val createFileImport : string list -> (unit -> unit Lwt.t) -> node * (unit -> (string * string) Lwt.t)
 
 end

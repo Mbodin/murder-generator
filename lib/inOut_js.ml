@@ -375,7 +375,7 @@ let createDateInput d =
   ((input :> Dom_html.element Js.t), fun _ ->
     (Date.from_iso8601 (Js.to_string input##.value)))
 
-let createSwitch text texton textoff b f =
+let createSwitch text descr texton textoff b f =
   let label = Dom_html.createLabel document in
   label##.classList##add (Js.string "switch") ;
   let input = Dom_html.createInput ~_type:(Js.string "checkbox") document in
@@ -384,11 +384,15 @@ let createSwitch text texton textoff b f =
   let span = Dom_html.createSpan document in
   span##.classList##add (Js.string "slider") ;
   Dom.appendChild label span ;
-  Dom.appendChild label (block_node (Text text)) ;
+  let text = block_node (Text text) in
+  text##.classList##add (Js.string "switch_text") ;
+  Dom.appendChild label text ;
+  Option.may (fun text ->
+    Dom.appendChild label (block_node (Text text))) descr ;
   let addText textClass =
     Option.may (fun text ->
       Dom.appendChild label (block_node (Text " ")) ;
-      let node = block_node (Text (text)) in
+      let node = block_node (Text text) in
       node##.classList##add (Js.string textClass) ;
       Dom.appendChild label node) in
   addText "textswitchon" texton ;

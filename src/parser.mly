@@ -103,7 +103,7 @@ command:
                { Translation.variable id tags })
     { Translation (Translation.from_iso639 lang, tb @ tags, l) }
   | DESCRIPTION; lang = language; str = STRING
-    { Description (lang, str) }
+    { Description (Translation.from_iso639 lang, str) }
   | SENTENCE; b = block
     { Sentence b }
   | ADD; lang = language; COLON; tag = LIDENT

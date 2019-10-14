@@ -154,6 +154,7 @@ val from_json : string -> string -> string t * language list
 (** A type to store each notion used in elements. **)
 type element = {
     category : Id.t t (** The translations of categories. **) ;
+    category_description : Id.t t (** The translations of categories’s descriptions. **) ;
     attribute : Attribute.attribute t (** The translations of attributes. **) ;
     constructor : Attribute.constructor gt
       (** The translations of constructors. **) ;

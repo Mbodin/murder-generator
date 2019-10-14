@@ -73,6 +73,7 @@ type 'a complete_translation_function = 'a -> tag PSet.t -> string * tag PSet.t
 
 type element = {
     category : Id.t t ;
+    category_description : Id.t t ;
     attribute : Attribute.attribute t ;
     constructor : Attribute.constructor gt ;
     add : (language,
@@ -86,6 +87,7 @@ let sempty = PMap.empty
 
 let empty_element = {
     category = empty ;
+    category_description = empty ;
     attribute = empty ;
     constructor = gempty ;
     add = PMap.empty

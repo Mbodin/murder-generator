@@ -37,6 +37,7 @@ let parse_relation str =
 type block = {
     of_category : string list ;
     translation : Ast.translation list ;
+    description : Ast.description list ;
     sentence : Ast.block list ;
     add : Ast.add list ;
     compatible_with : string list ;
@@ -54,6 +55,7 @@ type block = {
 let empty_block = {
     of_category = [] ;
     translation = [] ;
+    description = [] ;
     sentence = [] ;
     add = [] ;
     compatible_with = [] ;
@@ -238,6 +240,7 @@ let all_categories i =
 type command_type =
   | OfCategory
   | Translation
+  | Description
   | Sentence
   | Add
   | CompatibleWith
@@ -255,6 +258,7 @@ type command_type =
 let command_type_to_string = function
   | OfCategory -> "category"
   | Translation -> "translation"
+  | Description -> "description"
   | Sentence -> "sentence"
   | Add -> "add"
   | CompatibleWith -> "category compatibility"
@@ -297,6 +301,7 @@ let convert_block block_name expected =
   | [] -> {
       of_category = List.rev acc.of_category ;
       translation = List.rev acc.translation ;
+      description = List.rev acc.description ;
       sentence = List.rev acc.sentence ;
       add = List.rev acc.add ;
       compatible_with = List.rev acc.compatible_with ;
@@ -319,6 +324,9 @@ let convert_block block_name expected =
       | Ast.Translation t ->
         check Translation ;
         { acc with translation = t :: acc.translation }
+      | Ast.Description d ->
+        check Description ;
+        { acc with description = d :: acc.description }
       | Ast.Sentence b ->
         check Sentence ;
         { acc with sentence = b :: acc.sentence }
@@ -656,7 +664,7 @@ let prepare_declaration i =
     declare_constructor contact_functions attribute constructor internal block
   | Ast.DeclareCategory (name, block) ->
     let block =
-      convert_block name [OfCategory; Translation] block in
+      convert_block name [OfCategory; Translation; Description] block in
     let (category_names, deps) =
       category_names_to_dep_dep false i.current_state block.of_category in
     let (id, category_names) =
@@ -706,6 +714,11 @@ let prepare_declaration i =
         (Translation.add i.current_state.translations.Translation.category
           Translation.generic id name)
         block.translation in
+    let category_description =
+      List.fold_left (fun translation (lg, desc) -> Translation.add translation lg id desc)
+        (Translation.add i.current_state.translations.Translation.category
+          Translation.generic id "")
+        block.description in
     { i with
         categories_to_be_defined = categories_to_be_defined ;
         current_state =
@@ -716,8 +729,9 @@ let prepare_declaration i =
               attribute_dependencies = attribute_dependencies ;
               constructor_dependencies = constructor_dependencies ;
               translations =
-                { i.current_state.translations with Translation.category =
-                    category_translation } } }
+                { i.current_state.translations with
+                    Translation.category = category_translation ;
+                    Translation.category_description = category_description } } }
   | Ast.DeclareElement (status, name, block) ->
     (match Id.get_id i.current_state.element_names name with
      | None -> ()

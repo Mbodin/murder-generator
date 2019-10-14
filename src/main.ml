@@ -278,8 +278,11 @@ let main =
       let translate_categories =
         let translate_categories =
           (Driver.get_translations data).Translation.category in
-        Translation.force_translate translate_categories
-          (get_language parameters) in
+        Translation.force_translate translate_categories (get_language parameters) in
+      let translate_category_descriptions =
+        let translate_category_descriptions =
+          (Driver.get_translations data).Translation.category_description in
+        Translation.force_translate translate_category_descriptions (get_language parameters) in
       let all_categories = Driver.all_categories data in
       let selected_categories =
         match parameters.categories with
@@ -288,6 +291,7 @@ let main =
       let onCategoryClick = ref (fun _ -> ()) in
       let categoriesButtons =
         List.fold_left (fun m c ->
+          let descr = translate_category_descriptions c in
           let dependencies =
             let deps =
               List.map translate_categories (PSet.to_list
@@ -297,7 +301,7 @@ let main =
               Some ("(" ^ get_translation "categoryDepends" ^ " "
                     ^ print_list (get_translation "and") deps ^ ")") in
           let (e, set, get) =
-            IO.createSwitch (translate_categories c)
+            IO.createSwitch (translate_categories c) (Some descr)
               None dependencies (PSet.mem c selected_categories)
               (fun _ -> !onCategoryClick c) in
           PMap.add c (e, set, get, PSet.empty) m) PMap.empty all_categories in
@@ -562,13 +566,10 @@ let main =
         List.map (fun (name, descr) ->
             let (node, set, get) =
               IO.createSwitch (get_translation "generateAs"
-                                  ^ " " ^ get_translation name) None None
+                               ^ " " ^ get_translation name)
+                (Some (get_translation descr)) None None
                 (PSet.mem name parameters.chosen_productions) Utils.id in
-            let node =
-              InOut.Div (InOut.Inlined, [
-                InOut.Node node ;
-                InOut.Text (get_translation descr) ]) in
-            (name, node, set, get))
+            (name, InOut.Node node, set, get))
           (("html", "htmlDescription")
            :: List.map (fun (name, descr, _, _, _, _) -> (name, descr))
                 Export.all_production) in
@@ -617,7 +618,7 @@ let main =
       let switch_printing_mode =
         let get = ref (fun _ -> false) in
         let (node, _, actual_get) =
-          IO.createSwitch (get_translation "changeStyles")
+          IO.createSwitch (get_translation "changeStyles") None
             (Some (get_translation "changeStylesOff"))
             (Some (get_translation "changeStylesOn")) false
             (fun _ ->

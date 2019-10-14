@@ -128,9 +128,9 @@ module type T = sig
    * It takes a function that will be called at each state change as argument.
    * It also returns a setter and a getter.
    * The first string is the text associated with the button, to which can be
-   * added two facultative texts: one added afterwards for when the button is
-   * on, and one when the button is off. **)
-  val createSwitch : string -> string option -> string option -> bool -> (unit -> unit) -> node * (bool -> unit) * (unit -> bool)
+   * added three facultative texts: one serving as a description, one added
+   * afterwards for when the button is on, and one when the button is off. **)
+  val createSwitch : string -> string option -> string option -> string option -> bool -> (unit -> unit) -> node * (bool -> unit) * (unit -> bool)
 
   (** Create a button to import a file.
    * It takes as argument the list of extension it accepts.

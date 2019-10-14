@@ -528,13 +528,14 @@ let createDateInput d =
       v := v') ^ " ") in
   (node, fun _ -> !v)
 
-let createSwitch text texton textoff b f =
+let createSwitch text descr texton textoff b f =
   let b = ref b in
   let node link =
     let text =
       " [" ^ (if !b then "X" else " ") ^ "] "
       ^ link (fun _ -> b := not !b ; print_newline () ; f ())
       ^ (if text <> "" then " " ^ text else "")
+      ^ Option.map_default (fun str -> " " ^ str) "" descr
       ^ Option.map_default (fun str -> " " ^ str) ""
           (if !b then texton else textoff) ^ " " in
     block_node (Text text) link in

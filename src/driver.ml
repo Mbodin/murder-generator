@@ -716,7 +716,7 @@ let prepare_declaration i =
         block.translation in
     let category_description =
       List.fold_left (fun translation (lg, desc) -> Translation.add translation lg id desc)
-        (Translation.add i.current_state.translations.Translation.category
+        (Translation.add i.current_state.translations.Translation.category_description
           Translation.generic id "")
         block.description in
     { i with

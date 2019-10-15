@@ -515,7 +515,6 @@ input[type="number"] {
   display: inline-block ;
   cursor: pointer ;
   margin-right: 1em ;
-  text-align: center ;
   min-height: 25px ;
   min-width: 42px ;
 }
@@ -524,6 +523,7 @@ input[type="number"] {
   opacity: 0 ;
   width: 0 ;
   height: 0 ;
+  margin-bottom: 7px ;
 }
 
 .switch_text {

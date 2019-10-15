@@ -291,7 +291,6 @@ let main =
       let onCategoryClick = ref (fun _ -> ()) in
       let categoriesButtons =
         List.fold_left (fun m c ->
-          let descr = translate_category_descriptions c in
           let dependencies =
             let deps =
               List.map translate_categories (PSet.to_list
@@ -301,7 +300,8 @@ let main =
               Some ("(" ^ get_translation "categoryDepends" ^ " "
                     ^ print_list (get_translation "and") deps ^ ")") in
           let (e, set, get) =
-            IO.createSwitch (translate_categories c) (Some descr)
+            IO.createSwitch (translate_categories c)
+              (Some (translate_category_descriptions c))
               None dependencies (PSet.mem c selected_categories)
               (fun _ -> !onCategoryClick c) in
           PMap.add c (e, set, get, PSet.empty) m) PMap.empty all_categories in

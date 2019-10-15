@@ -388,6 +388,7 @@ let createSwitch text descr texton textoff b f =
   text##.classList##add (Js.string "switch_text") ;
   Dom.appendChild label text ;
   Option.may (fun text ->
+    Dom.appendChild label (block_node (Text " ")) ;
     Dom.appendChild label (block_node (Text text))) descr ;
   let addText textClass =
     Option.may (fun text ->

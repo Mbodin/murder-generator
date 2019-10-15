@@ -9,14 +9,14 @@ Scenarios are made by combining scenario elements, defined in the [data](./data)
 These elements range from very simple ones (for instance by just stating that a given player is female) to relatively complex ones (like stating that a player is a double agent, or that a player is responsible for a contract between several other players).
 Each of these elements yields some specific relations, and the generator tries to even them out along players according to the player’s preferences.
 
-The generator is available online at [this adress](https://mbodin.github.io/murder-generator/).
+The generator is available online at [this address](https://mbodin.github.io/murder-generator/).
 
 # Installation
 
 You do not need to compile the program to use it, as it is already available [online](https://mbodin.github.io/murder-generator/).
 Compiling the program yourself however provides an additional native version of the program, which is sensibly faster (but not as pretty as the online interface).
 
-To compile the program, you will need to install npm and esy.
+To compile the program, you will need to install `npm` and `esy`.
 On Debian, this would look like that:
 ```bash
 sudo apt install npm
@@ -31,7 +31,7 @@ esy install
 All commands cited below may take a much longer time the first time that they are run.
 
 The [dummy](./dummy) folder contains OCaml files meant to be instantiated some actual usage of files in the repository.  The following command will update them.
-This command should be called everytime one updates the repository.
+This command should be called every time one updates the repository.
 ```bash
 esy local
 ```
@@ -55,7 +55,7 @@ Once the native program has been built, you can run it using `./main.native` or 
 You get a terminal interface similar to the web interface.  The interface wait for a number input, corresponding to one of the displayed links.  For instance, if it is displayed `[3]`, then typing `3` then enter would activate this link.
 One can also change the width of the display by typing `0` and entering the new width.  To exist, emit an end-of-file message to the terminal (which is usually done by simultaneously typing the control and `d` keys).
 
-Optionnally, one can perform some tests using the following command.
+Optionally, one can perform some tests using the following command.
 ```bash
 esy test
 ```

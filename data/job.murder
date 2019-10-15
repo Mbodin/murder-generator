@@ -92,6 +92,7 @@ element SellerIsEasilyKnown
 begin
   let S be player with attribute Job as Seller
   let P be player with attribute Job not as Seller
+                  with contact FamilyRelation to S as None
 
   provide event lasting weeks to P
   begin

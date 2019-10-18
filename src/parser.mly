@@ -239,6 +239,7 @@ kind_players (O):
 
 time:
   | LIFE        { Events.For_life_event }
+  | VERY; LONG  { Events.For_life_event }
   | LONG        { Events.Long_term_event }
   | MEDIUM      { Events.Medium_term_event }
   | SHORT       { Events.Short_term_event }

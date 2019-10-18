@@ -26,7 +26,7 @@ begin
 
   add translation fr:adj:mas "inconnu"
   add translation fr:adj:fem "inconnue"
-  add translation en:adj "unKnown"
+  add translation en:adj "unknown"
   add translation eo:adj "malfama"
 end
 

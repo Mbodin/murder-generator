@@ -24,7 +24,8 @@ begin
   translation eo "nenia"
 end
 
-internal contact FamilyRelation True
+(* The following contact is meant for any non-direct family relation (oncle, taunt, half-brother, etc.). *)
+contact FamilyRelation True
 begin
   translation fr "oui"
   translation en "yes"

@@ -19,17 +19,18 @@ Consider sending the JSON file generated with the scenario as well as describing
 # Playing with the Generated Scenarios
 
 In addition to just using the program, why not actually using the generated scenarios?
+These scenarios are indeed meant to be played!
 If you have any feedback, do not hesitate to [contact me](https://github.com/Mbodin).
-I can’t promise a quick answer, but feedbacks are greatly appreciated!
+I can’t promise a quick answer, but feedbacks are always greatly appreciated!
 If you have comments about a specific generated scenario, please include the JSON file (also, optionally, photos!), as it really helps me to understand how I can improve the program.
 
 Here are the things that I would be interested to know if you use the generated scenario for an actual play:
-* How did you use the program?  Did you generated a lot of scenarios and picked the one you preferred?  Or did you just generated it on the go?
-* Did you had to rewrite parts of the generated scenario to be playable or interesting?
+* How did you use the program?  Did you generate a lot of scenarios and picked the one you preferred?  Or did you just generated one on the go?
+* Did you have to rewrite parts of the generated scenario to be playable or interesting?
 * Which extracted format was the most useful for you?  Or did you just printed the final webpage?
 
 Also, I would be very glad if you were to use this program in a different context than traditional role-playing game.
-In particular, if you used it for education purposes (for instance in a language course, or in a theater context), I would be very interested in knowing whether I could improve the program for your particular use case.
+In particular, if you used it for education purposes (for instance in a language or theater course), I would be very interested in knowing whether I could improve the program for your particular use case.
 
 # Writing Scenario Elements
 
@@ -38,8 +39,8 @@ These scenarios elements are defined in a specific `.murder` format and are stor
 If you would like to participate in the writing, [read here](./doc/elements.md) on how to write these elements.
 Do not hesitate to send pull requests.
 
-Note that the elements in the [data](./data) folders are subject, as for the whole program, to the Affero General Public License version 3 (AGPLv3): if you do not want your work to fall into this license, please refrain yourself from sending me a pull request.
-If you would like to create elements in another license, you can [contact me](https://github.com/Mbodin) to see how we can link all these elements together.
+Note that the elements in the [data](./data) folder are subject, as for the whole program, to the Affero General Public License version 3 (AGPLv3): if you do not want your work to fall into this license, please refrain yourself from sending me a pull request.
+If you would like to write elements in another license, you can [contact me](https://github.com/Mbodin) to see how we can link all these elements together.
 
 # Enhancing Scenario Elements
 
@@ -61,16 +62,18 @@ begin
   let P be player
 ```
 There were no constraints on the player `P`!
-This mean that sometimes, `S` and `P` could be of the same (close) family, which would be weird: if these two characters are from the same family, they probably know each others before `S` even became a seller.
+This mean that sometimes, `S` and `P` could be from the same family, which would be weird: if these two characters are from the same family, they probably know each others before `S` even became a seller.
 
 Such constraints are easy to forget when writing scenario elements.
 Most of the strange generated scenarios can be solved by adding constraints on elements like the ones above.
-If you don’t want to write elements by yourself but would be willing to reread the already created elements, any pull request are welcomed.
+If you don’t want to write elements by yourself but would be willing to reread the already-written elements, any pull request is welcomed.
 
 # Translating
 
 Currently this program is available in three languages: English, French, and Esperanto.
 If you would like to translate it into another language, you are very welcomed to!
+This program does not use any translation framework, unfortunately.
+The reason is that grammar plays quite an important role in the generated sentences, which makes usual translation framework less useful.
 
 There are two different things that need to be translated: the interface and the scenario elements.
 The interface’s translations are stored in the [translations.json](./web/translations.json) file, whose content is explained in the file [translations.md](./doc/translations.md).
@@ -87,6 +90,14 @@ The means of contributing above were about using the program and updating its da
 If you prefer to contribute to its actual source code, you are also very welcomed.
 This program is written in OCaml and its source code can be found in the [src](./src) folder (as well as in [lib](./lib) for source code that are not particularly specific to this project).
 
-A good way to contribute is to add an extraction format in the [export.ml](./src/export.ml) file: if you consider that a format which is not currently exported to (or whose extraction is currently not useful enough for you) can be useful, write an extractor!
+A good way to contribute is to add an extraction format in the [export.ml](./src/export.ml) file: if you consider that a format which is not currently exported to (or whose current extraction is not useful enough for you) is relevant, write an extractor!
+For instance, there is currently no extractor to LaTeX or Patoline: if you have a good idea on what the generated TeX/Patoline file should look like, do try to write an extractor to these.
+
 Pull requests for other features are also welcomed.
+Examples of features that could be added to the program:
+* instead of just writing repeatitive sentences, maybe one could reuse [some recent advances in machine learning](https://openai.com/blog/better-language-models/) to generate ever changing-scenarios.
+* actually generate proper character sheets.
+* currently, `.murder` files are parsed client-side, which means that the client has to include a full parser for these files.  Maybe it would be worth trying to preparse these files and send a small `.json` file instead.
+* there are currently no helper for people that would like to write new scenario elements: maybe an editor or editor-features would be interesting.
+* on a similar idea, a program to help non-specialists translating the program into other languages would be a very good asset.
 

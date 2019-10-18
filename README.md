@@ -11,6 +11,8 @@ Each of these elements yields some specific relations, and the generator tries t
 
 The generator is available online at [this address](https://mbodin.github.io/murder-generator/).
 
+If you want to contribute, you are very welcomed to: more information can be found in [CONTRIBUTING.md](./CONTRIBUTING.md).
+
 # Installation
 
 You do not need to compile the program to use it, as it is already available [online](https://mbodin.github.io/murder-generator/).

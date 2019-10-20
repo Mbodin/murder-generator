@@ -59,6 +59,8 @@ Sometimes one would still like to combine two different values for a given attri
 For that, there is a possibility to declare compatible values.
 One would for instance create a value for the combination, then declare this “combined” value as being compatible with the other base values.
 See the example of the contact `FamilyRelation` for more details: all these mechanisms are the same for attributes.
+If you are familiar with [OpenStreetMap](https://www.openstreetmap.org), you can think of it as the different values for the [key `sidewalk`](https://wiki.openstreetmap.org/wiki/Key:sidewalk): `no`, `left`, `right`, and `both`.
+The only difference is that we tell here the program that `both` can also be interpreted as a `left` or a `right`, where OpenStreetMap requires for the renderers to know what each value exactly mean.
 
 The values of each attribute live in a different namespace: there is no issue with naming two values of two different attributes the same way.
 For instance, both attributes `SecretSociety` and `Disability` have a value `None`.

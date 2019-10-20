@@ -67,6 +67,7 @@ This mean that sometimes, `S` and `P` could be from the same family, which would
 Such constraints are easy to forget when writing scenario elements.
 Most of the strange generated scenarios can be solved by adding constraints on elements like the ones above.
 If you don’t want to write elements by yourself but would be willing to reread the already-written elements, any pull request is welcomed.
+As for writing elements, [elements.md](./doc/elements.md) can be a good read (in particular the “advanced” features) to enhance scenario elements.
 
 # Translating
 

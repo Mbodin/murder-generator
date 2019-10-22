@@ -387,3 +387,133 @@ begin
   add complexity to D
 end
 
+element DreamTravellerSeeingTheFuture
+begin
+  let D be player with attribute SecretSociety as DreamTravellers
+                  with contact Know to P as True
+                  with contact Know to A as False
+                  with contact Know to B as False
+  let P be player
+  let A be player with contact Know to B as True
+  let B be player with contact Know to A as True
+
+  provide event lasting minutes to D
+  begin
+    event Personal
+    assume event providing contact Know from A to B before
+    assume event providing contact Know from B to A before
+    assume event providing contact Know from D to P before
+    assume event providing attribute SecretSociety to D before
+
+    sentence
+    begin
+      translation fr "Alors qu’" D:+pro " se promenait dans un rêve, " D " a décidé de lâcher prise."
+      translation en "While in a lucid dream, " D " decided to let it go."
+      translation eo "Lucidsonĝante, " D " decidis mallucidigi ĝin."
+    end
+
+    sentence
+    begin
+      translation fr "Le rêve s’est alors embrouillé."
+      translation en "The dream went confused."
+      translation eo "La sonĝo ĥaosiĝis."
+    end
+
+    sentence
+    begin
+      translation fr "Des vagues qui miroitaient dans le ciel."
+      translation en "Waves that spreaded in the sky."
+      translation eo "Ondoj kiuj dise movis en la ĉielo."
+    end
+
+    sentence
+    begin
+      translation fr "Un bateau pendu par son ancre, elle-même accrochée depuis cet océan au dessus de nos têtes."
+      translation en "A boat suspended by its anchor, lost in this ocean above our heads."
+      translation eo "Ŝipo tenita per ties ankro, ligita en tiu oceano super niaj kapoj."
+    end
+
+    sentence
+    begin
+      translation fr "Aux commandes de ce bateau se trouvait " P "."
+      translation en "At the controls of the boat was " P "."
+      translation eo "Kontrolante la ŝipon estis " P "."
+    end
+
+    sentence
+    begin
+      translation fr "Sur le pont se trouvait " A:+nom:-def "."
+      translation en "On the bridge was " A:+nom:-def "."
+      translation eo "Sur la ferdeko staris " A:+nom:-def "."
+    end
+
+    sentence
+    begin
+      translation fr A:+sbeg:+pro " discutait avec " B:+nom:-def "."
+      translation en A:+sbeg:+pro " was discussing with " B:+nom:-def "."
+      translation eo A:+sbeg:+pro " babilis kun " B:+nom:-def "."
+    end
+
+    sentence
+    begin
+      translation fr "L’ancre s’est alors décrochée."
+      translation en "The anchor unhook itself."
+      translation eo "La ankro malligiĝis."
+    end
+
+    sentence
+    begin
+      translation fr "Tout le monde est tombé."
+      translation en "Everybody fell."
+      translation eo "Ĉiuj falis."
+    end
+
+    sentence
+    begin
+      translation fr "Le rêve s’est terminé."
+      translation en "The dream ended."
+      translation eo "La sonĝo finiĝis."
+    end
+  end
+
+  provide event lasting minutes to A
+  begin
+    event Personal
+
+    sentence
+    begin
+      translation fr A:+sbeg " était sur un navire, discutant avec " B "."
+      translation en A:+sbeg " was on a ship, discussing with " B "."
+      translation eo A:+sbeg " estis surŝipe, babilante kun " B "."
+    end
+
+    sentence
+    begin
+      translation fr "Subitement, le bateau chavirait."
+      translation en "Suddenly, the ship turned over."
+      translation eo "Subite la ŝipo renversiĝis."
+    end
+
+    sentence
+    begin
+      translation fr "Tout le monde criait et courrait partout."
+      translation en "Everybody was shouting and running all over the place."
+      translation eo "Ĉiuj estis kirantaj kaj kurantaj ĉien."
+    end
+
+    sentence
+    begin
+      translation fr A:+sbeg:+pro " s’est réveillé" A:+agr " en sueur."
+      translation en A:+sbeg:+pro " woke up sweaty."
+      translation eo A:+sbeg:+pro " ŝvite vekiĝis."
+    end
+
+    sentence
+    begin
+      translation fr "Ce n’était qu’un rêve."
+      translation en "It was only a dream."
+      translation eo "Nur estis sonĝo."
+    end
+  end
+end
+

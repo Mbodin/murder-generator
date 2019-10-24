@@ -6,7 +6,7 @@ begin
   translation eo "Religio"
 
   description fr "Dieu(x), prètres, cultes, etc."
-  description en "God(s), priests, wrokships, etc."
+  description en "God(s), priests, workships, etc."
   description eo "Dio(j), preĝistoj, diservoj, ktp."
 end
 

@@ -11,12 +11,12 @@ The event history is what is outputed in the “Graphviz (events)” export.
 It comprises all the events (although not yet translated at this stage) of any characters in the scenario.
 
 Events are divided into six categories of length:
-* immediate events, that last a few seconds;
-* very short events, that last a few minutes;
-* short events, that last a few days;
-* medium events, that last a few weeks;
-* long events, that last a few years;
-* life events, or very long events, that last decades.
+- immediate events, that last a few seconds;
+- very short events, that last a few minutes;
+- short events, that last a few days;
+- medium events, that last a few weeks;
+- long events, that last a few years;
+- life events, or very long events, that last decades.
 
 At any given point in history, a player can’t have more than one event of a given length-category.
 
@@ -142,12 +142,12 @@ This is done through relations.
 Relations express some basic emotions that a player have with respect to a character.
 They are voluntarily small: the goal is not to express scenario relations (use contacts for this), but to guide the program into what kind of gaming behaviours each players will have with respect to the others.
 There are six basic relations:
-* `neutral`, for when the scenario doesn’t influence the relation of these two players into a particular behaviour.
-* `hate`, for when the players will try to hinder the actions of the other.
-* `trust`, when the players will have the tendency to trust or help each other.
-* `chaotic`, for when the behaviour of both players strongly depends on the current situation, which will vary during the game.  This can happen when both players will have to compete in some ways because of a contract, but have no particular advantage into helping or preventing the other’s actions.  The help or hindering of the players will however never last long: “It’s just business.”
-* `undetermined`, for a relation that can easily go into hate or trust depending on what the players do or decide.  This happens for instance when two long-separated acquaintances meet again.
-* `avoidance`, for when both players are incited not to speak with the other.
+- `neutral`, for when the scenario doesn’t influence the relation of these two players into a particular behaviour.
+- `hate`, for when the players will try to hinder the actions of the other.
+- `trust`, when the players will have the tendency to trust or help each other.
+- `chaotic`, for when the behaviour of both players strongly depends on the current situation, which will vary during the game.  This can happen when both players will have to compete in some ways because of a contract, but have no particular advantage into helping or preventing the other’s actions.  The help or hindering of the players will however never last long: “It’s just business.”
+- `undetermined`, for a relation that can easily go into hate or trust depending on what the players do or decide.  This happens for instance when two long-separated acquaintances meet again.
+- `avoidance`, for when both players are incited not to speak with the other.
 
 These are the base types of relations.
 However, in contrary to contacts, relations never prevent an element to be applied.

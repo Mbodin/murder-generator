@@ -25,9 +25,9 @@ I can’t promise a quick answer, but feedbacks are always greatly appreciated!
 If you have comments about a specific generated scenario, please include the JSON file (also, optionally, photos!), as it really helps me to understand how I can improve the program.
 
 Here are the things that I would be interested to know if you use the generated scenario for an actual play:
-* How did you use the program?  Did you generate a lot of scenarios and picked the one you preferred?  Or did you just generated one on the go?
-* Did you have to rewrite parts of the generated scenario to be playable or interesting?
-* Which extracted format was the most useful for you?  Or did you just printed the final webpage?
+- How did you use the program?  Did you generate a lot of scenarios and picked the one you preferred?  Or did you just generated one on the go?
+- Did you have to rewrite parts of the generated scenario to be playable or interesting?
+- Which extracted format was the most useful for you?  Or did you just printed the final webpage?
 
 Also, I would be very glad if you were to use this program in a different context than traditional role-playing game.
 In particular, if you used it for education purposes (for instance in a language or theater course), I would be very interested in knowing whether I could improve the program for your particular use case.
@@ -96,9 +96,9 @@ For instance, there is currently no extractor to LaTeX or Patoline: if you have 
 
 Pull requests for other features are also welcomed.
 Examples of features that could be added to the program:
-* instead of just writing repeatitive sentences, maybe one could reuse [some recent advances in machine learning](https://openai.com/blog/better-language-models/) to generate ever changing-scenarios.
-* actually generate proper character sheets.
-* currently, `.murder` files are parsed client-side, which means that the client has to include a full parser for these files.  Maybe it would be worth trying to preparse these files and send a small `.json` file instead.
-* there are currently no helper for people that would like to write new scenario elements: maybe an editor or editor-features would be interesting.
-* on a similar idea, a program to help non-specialists translating the program into other languages would be a very good asset.
+- instead of just writing repeatitive sentences, maybe one could reuse [some recent advances in machine learning](https://openai.com/blog/better-language-models/) to generate ever changing-scenarios.
+- actually generate proper character sheets.
+- currently, `.murder` files are parsed client-side, which means that the client has to include a full parser for these files.  Maybe it would be worth trying to preparse these files and send a small `.json` file instead.
+- there are currently no helper for people that would like to write new scenario elements: maybe an editor or editor-features would be interesting.
+- on a similar idea, a program to help non-specialists translating the program into other languages would be a very good asset.
 

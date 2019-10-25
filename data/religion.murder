@@ -132,6 +132,14 @@ begin
   provide strict attribute Famousness to P as Famous
 end
 
+duplicable element GodYieldStrongFeeling
+begin
+  let P be player
+  let G be player with attribute Specy as God
+
+  provide relation from P to G as strong neutral
+end
+
 element NoGod
 begin
   let any other player be with attribute Specy not as God
@@ -329,6 +337,8 @@ begin
       translation eo G:+sbeg:+pro " konsideras meditadon gravegan."
     end
   end
+
+  add complexity to G
 end
 
 attribute DivineAllegiance Dialogue
@@ -377,6 +387,8 @@ begin
       translation eo G:+sbeg:+pro " eĉ ŝanĝus realecon por adaptigi ĝin al la kredoj de tiuj kiuj aŭskultas kaj argumentas."
     end
   end
+
+  add complexity to G
 end
 
 attribute DivineAllegiance Inquisitiveness
@@ -425,6 +437,8 @@ begin
       translation eo "Sed " G:+pro " emas punigegi iun ajn kiu ignoras konatan datumon pro ĝi ne taŭgas al ties kredoj."
     end
   end
+
+  add complexity to G
 end
 
 attribute DivineAllegiance Chaos
@@ -474,6 +488,10 @@ begin
       translation eo "Sinsekvoj ĉiuokaze estos interesaj."
     end
   end
+
+  (* TODO: provide relation from G to any other player as chaotic *)
+
+  add complexity to G
 end
 
 attribute DivineAllegiance Harmony
@@ -522,6 +540,8 @@ begin
       translation eo G:+sbeg:+pro " do provas reverki la Universon, ordigante ĝin."
     end
   end
+
+  add complexity to G
 end
 
 attribute DivineAllegiance Mazes
@@ -570,6 +590,8 @@ begin
       translation eo G:+sbeg:+pro " konsideras ke scio estas malbeno, ĉar ĝi fuŝas la finan surprizon."
     end
   end
+
+  add complexity to G
 end
 
 attribute DivineAllegiance TheTrueOne
@@ -631,6 +653,82 @@ begin
       translation eo G:+sbeg:+pro " gvidas."
     end
   end
+
+  add complexity to G
+end
+
+unique element TheTrueOneLost
+begin
+  let G be player with attribute Specy as God
+                  with attribute DivineAllegiance as TheTrueOne
+                  with contact FamilyRelation to any other player not as Sibling or Child or GrandChild
+
+  provide immediate phantom event to G
+  begin
+    assume event providing attribute Specy to G before
+    assume event providing attribute DivineAllegiance to G before
+  end
+
+  provide phantom event lasting decades to G
+
+  provide phantom event lasting decades to G
+
+  provide phantom event lasting decades to G
+
+  provide immediate event to G
+  begin
+    event Description
+
+    sentence
+    begin
+      translation fr G:+sbeg " est maintenant très agé" G:+agr "."
+      translation en G:+sbeg " is now very old."
+      translation eo G:+sbeg " nun maljunegas."
+    end
+
+    sentence
+    begin
+      translation fr "Des choses étranges se sont produites."
+      translation en "Odd things happenned."
+      translation eo "Strangaĵoj okazis."
+    end
+
+    sentence
+    begin
+      translation fr "Des fractions d’éternité sont passées."
+      translation en "Eternity fragments passed."
+      translation eo "Tempaj senfineroj pasis."
+    end
+
+    sentence
+    begin
+      translation fr "Il semblerait qu'" G:+pro " a été oublié" G:+agr "."
+      translation en "It seems that " G:+pro " has been forgotten."
+      translation eo "Ŝajnas ke " G:+pro " forgesiĝis."
+    end
+
+    sentence
+    begin
+      translation fr "D’autres divinités semblent maintenant présentes en son sein."
+      translation en "Other gods are now playing inside " G:+cli "."
+      translation eo "Aliaj dioj nun ĉeestas en " G:+pro "."
+    end
+
+    sentence
+    begin
+      translation fr "Ceci n’aurait pas dû se passer comme cela."
+      translation en "This shouldn’t have happenned like that."
+      translation eo "Tio tute ne devintus tiel okazi."
+    end
+  end
+
+  provide phantom event lasting decades to G
+
+  provide phantom event lasting decades to G
+
+  provide phantom event lasting decades to G
+
+  add complexity to G
 end
 
 
@@ -640,13 +738,13 @@ element WarBetweenGod
 begin
   let A be player with attribute Specy as God
   let B be player with attribute Specy as God
-  let any other player be with attribute Specy not as God
 
   provide relation between A and B as hate
 
   provide immediate event to A and B
   begin
     assume no event Personal to A or B before
+    assume event providing attribute Specy to A and B before
 
     provide strict contact Goal between A and B as Harm
 
@@ -667,5 +765,50 @@ begin
       translation eo "Estas nun parto de iliaj identecoj."
     end
   end
+end
+
+element HelpingGod
+begin
+  let A be player with attribute Specy as God
+  let B be player with attribute Specy as God
+
+  provide relation from A to B as trust
+  provide relation from B to A as strong trust
+
+  provide immediate event to A and B
+  begin
+    assume no event Personal to A or B before
+    assume event providing attribute Specy to A and B before
+
+    provide strict contact Goal from A to B as Help
+
+    sentence
+    begin
+      translation fr A:+sbeg " a toujours aidé " B "."
+      translation fr "Depuis la nuit des temps, " A " a aidé " B "."
+      translation en A:+sbeg " has always helped " B "."
+      translation en "Since the dawn of time, " A " helped " B "."
+      translation eo A:+sbeg " ĉiam helpis " B "."
+      translation eo "Ekde ke tiu mondo ekzistas, " A " helpis " B "."
+    end
+
+    sentence
+    begin
+      translation fr "Ils n’ont jamais eu la même vision du monde, mais cela ne l’a pas empêché de venir quand " B:+pro " en avait besoin."
+      translation en "They never had the same view of the world, but this never prevented " A:+cli " to help."
+      translation eo "Ili neniam havis la saman vidpunkton pri la mondo, sed tio neniam baris " A:+pro:+acc " helpi " B:+pro:+acc "."
+    end
+
+    sentence
+    begin
+      translation fr "Cela fait maintenant partie de leurs identités."
+      translation en "It’s now part of their identities."
+      translation eo "Estas nun parto de iliaj identecoj."
+    end
+  end
+
+  remove difficulty to B
+  remove difficulty to B
+  remove difficulty to B
 end
 

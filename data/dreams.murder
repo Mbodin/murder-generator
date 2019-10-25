@@ -1,4 +1,9 @@
 
+declare event Dream
+begin
+  event Personal
+end
+
 unique element DreamAboutThief
 begin
   let P be player with attribute Job not as Thief
@@ -9,7 +14,7 @@ begin
 
   provide event lasting minutes to P
   begin
-    event Personal
+    event Dream
     assume event providing attribute Job to T before
 
     sentence
@@ -75,7 +80,7 @@ begin
 
   provide event lasting minutes to P
   begin
-    event Personal
+    event Dream
     assume event providing contact Know from P to O before
 
     sentence
@@ -132,7 +137,7 @@ begin
 
   provide event lasting weeks to P
   begin
-    event Personal
+    event Dream
     assume event providing attribute Richness to P before
     assume event providing attribute Richness to R before
 
@@ -187,7 +192,7 @@ begin
 
   provide event lasting minutes to P
   begin
-    event Personal
+    event Dream
     assume event providing attribute Job to P before
     assume event providing attribute Job to T before
 
@@ -244,7 +249,7 @@ begin
 
   provide event lasting minutes to P
   begin
-    event Personal
+    event Dream
     assume event providing attribute Job to P before
     assume event providing attribute SecretSociety to S before
 
@@ -321,7 +326,7 @@ begin
 
   provide event lasting minutes to P
   begin
-    event Personal
+    event Dream
     assume event providing contact Know from P to D before
     assume event providing attribute SecretSociety to D before
 
@@ -399,7 +404,7 @@ begin
 
   provide event lasting minutes to D
   begin
-    event Personal
+    event Dream
     assume event providing contact Know from A to B before
     assume event providing contact Know from B to A before
     assume event providing contact Know from D to P before
@@ -478,7 +483,7 @@ begin
 
   provide event lasting minutes to A
   begin
-    event Personal
+    event Dream
 
     sentence
     begin

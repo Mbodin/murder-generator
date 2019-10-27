@@ -97,6 +97,55 @@ type parameters = {
     chosen_productions : string PSet.t (** The name of each chosen production. **)
   }
 
+(** Update player informations from the parameters such that it matches the [player_number] data. **)
+let create_player_information get_translation parameters =
+  let get_language p = Utils.assert_option __LOC__ p.language in
+  let startV = get_translation "nameStartVowels" in
+  let startC = get_translation "nameStartConsonant" in
+  let middleV = get_translation "nameMiddleVowels" in
+  let middleC = get_translation "nameMiddleConsonant" in
+  let endV = get_translation "nameEndVowels" in
+  let endC = get_translation "nameEndConsonant" in
+  let size =
+    let raw = get_translation "nameSize" in
+    try int_of_string raw
+    with Failure _ ->
+      failwith ("The key `nameSize' for language `" ^
+                (Translation.iso639 (get_language parameters)) ^ "' is `" ^ raw
+                ^ "', which is not a valid number.") in
+  let seed =
+    Names.createVowelConsonant size startV startC middleV middleC endV endC in
+  let (complexity, difficulty) =
+    let generalLevel = parameters.general_level in
+    let generalComplexity = parameters.general_complexity in
+    let generalLevel = generalLevel *. generalLevel in
+    let complexityDifficulty =
+      10. +. generalLevel *. 90. in
+    let result p = int_of_float (0.5 +. complexityDifficulty *. p) in
+    (result generalComplexity, result (1. -. generalComplexity)) in
+    let player_information = parameters.player_information in
+    let len = List.length player_information in
+  if len >= parameters.player_number then
+    List.take parameters.player_number player_information
+  else
+    List.fold_left (fun player_information _ ->
+        let name =
+          (** Because the seed contains external data, one can hardly
+           * assume that it can produce infinitely many different names.
+           * We are thus stuck to just generate new ones until a really new
+           * one appears. **)
+          let rec aux = function
+            | 0 -> Names.generate seed
+            | n ->
+              let name = Names.generate seed in
+              if List.exists (fun (name', _, _, _) ->
+                   name' = name) player_information then
+                aux (n - 1)
+              else name in
+          aux 100 in
+        (name, complexity, difficulty, []) :: player_information)
+      player_information (Utils.seq (parameters.player_number - len))
+
 (** The main script. **)
 let main =
   try%lwt
@@ -167,6 +216,26 @@ let main =
               Lwt.wakeup_later w (fun _ ->
                 IO.clear_response () ;
                 ask_for_basic parameters)) ]) ;
+      (** Suggest to shortcut the questions. **)
+      let (numberOfPlayers, readNumberOfPlayers) =
+        IO.createNumberInput ~min:1 parameters.player_number in
+      IO.print_block (InOut.Div (InOut.Normal, [
+          InOut.P [ InOut.Text (get_translation "fastCreation") ] ;
+          InOut.Div (InOut.Centered, [
+              InOut.Node numberOfPlayers ;
+              InOut.LinkContinuation (true, get_translation "startFastGeneration",
+                fun _ ->
+                  Lwt.wakeup_later w (fun _ ->
+                    let parameters =
+                      { parameters with
+                          player_number = readNumberOfPlayers () ;
+                          computation_power = 0. } in
+                    let player_information = create_player_information get_translation parameters in
+                    let parameters = { parameters with player_information = player_information } in
+                    IO.clear_response () ;
+                    generate parameters))
+            ])
+        ])) ;
       (** Suggest to shortcut the generation by importing a file. **)
       let (shortcut, readShortcut) =
         IO.createFileImport ["json"] (fun _ ->
@@ -355,7 +424,6 @@ let main =
       let get_translation = get_translation parameters in
       let%lwt data = data in
       let (cont, w) = Lwt.task () in
-      let player_number = parameters.player_number in
       (** Asking about individual player constraints. **)
       IO.print_block (InOut.Div (InOut.Normal, [
         InOut.P [ InOut.Text (get_translation "individualConstraints") ] ;
@@ -365,52 +433,7 @@ let main =
             InOut.Text (get_translation "lowComplexityHighDifficulty") ;
             InOut.Text (get_translation "highComplexityLowDifficulty") ;
             InOut.Text (get_translation "highComplexityHighDifficulty") ])])) ;
-      let startV = get_translation "nameStartVowels" in
-      let startC = get_translation "nameStartConsonant" in
-      let middleV = get_translation "nameMiddleVowels" in
-      let middleC = get_translation "nameMiddleConsonant" in
-      let endV = get_translation "nameEndVowels" in
-      let endC = get_translation "nameEndConsonant" in
-      let size =
-        let raw = get_translation "nameSize" in
-        try int_of_string raw
-        with Failure _ ->
-          failwith ("The key `nameSize' for language `" ^
-                    (Translation.iso639 (get_language parameters)) ^ "' is `" ^ raw
-                    ^ "', which is not a valid number.") in
-      let seed =
-        Names.createVowelConsonant size startV startC middleV middleC endV endC in
-      let player_information =
-        let (complexity, difficulty) =
-          let generalLevel = parameters.general_level in
-          let generalComplexity = parameters.general_complexity in
-          let generalLevel = generalLevel *. generalLevel in
-          let complexityDifficulty =
-            10. +. generalLevel *. 90. in
-          let result p = int_of_float (0.5 +. complexityDifficulty *. p) in
-          (result generalComplexity, result (1. -. generalComplexity)) in
-          let player_information = parameters.player_information in
-          let len = List.length player_information in
-        if len >= player_number then
-          List.take player_number player_information
-        else
-          List.fold_left (fun player_information _ ->
-              let name =
-                (** Because the seed contains external data, one can hardly
-                 * assume that it can produce infinitely many different names.
-                 * We are thus stuck to just generate new ones until a really new
-                 * one appears. **)
-                let rec aux = function
-                  | 0 -> Names.generate seed
-                  | n ->
-                    let name = Names.generate seed in
-                    if List.exists (fun (name', _, _, _) ->
-                         name' = name) player_information then
-                      aux (n - 1)
-                    else name in
-                aux 100 in
-              (name, complexity, difficulty, []) :: player_information)
-            player_information (Utils.seq (player_number - len)) in
+      let player_information = create_player_information get_translation parameters in
       let constructor_maps = Driver.get_constructor_maps data in
       let translation = Driver.get_translations data in
       let constructor_infos c =
@@ -521,11 +544,19 @@ let main =
         }) (Some ask_for_categories) (Some generate) ;
       let%lwt cont = cont in cont ()
     and generate parameters =
+      let get_translation = get_translation parameters in
+      let parameters =
+        { parameters with
+            player_information = create_player_information get_translation parameters } in
       (** Starts the generation! **)
       let state =
         IO.pause () ;%lwt
         let%lwt data = data in
-        let categories = Utils.assert_option __LOC__ parameters.categories in
+        let categories =
+          match parameters.categories with
+          | Some s -> s
+          | None -> PSet.from_list (Driver.all_categories data) in
+        let parameters = { parameters with categories = Some categories } in
         let global =
           let elements_map = Driver.elements data in
           let elements =

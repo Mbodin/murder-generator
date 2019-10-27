@@ -146,6 +146,12 @@ let create_player_information get_translation parameters =
         (name, complexity, difficulty, []) :: player_information)
       player_information (Utils.seq (parameters.player_number - len))
 
+(** Get the categories from the parameters, but return the default value if not defined. **)
+let get_categories data parameters =
+  match parameters.categories with
+  | Some s -> s
+  | None -> PSet.from_list (Driver.all_categories data)
+
 (** The main script. **)
 let main =
   try%lwt
@@ -263,9 +269,17 @@ let main =
                         List.mapi (fun c name ->
                           let c = Id.from_array c in
                           let st = State.get_relation_state state in
+                          let attributes =
+                            let m =
+                              State.get_all_attributes_character
+                                (State.get_character_state state) c in
+                            PMap.fold (fun c l ->
+                              match c with
+                              | State.Fixed_value (c :: [], _) -> c :: l
+                              | _ -> l) m [] in
                           (name, State.character_complexity st c,
                            State.character_difficulty st c,
-                           [] (* TODO: Get them from the state. *))) names in
+                           attributes)) names in
                       let parameters =
                         { parameters with
                             player_information = informations ;
@@ -457,7 +471,7 @@ let main =
                   (PSet.singleton Translation.base)) in
         (a, Attribute.PlayerAttribute.is_internal m a c, name, translated) in
       let (internal_cons, main_cons) =
-        let categories = Utils.assert_option __LOC__ parameters.categories in
+        let categories = get_categories data parameters in
         let all_constructors =
           Utils.list_map_filter (fun c ->
             let dep =
@@ -552,10 +566,7 @@ let main =
       let state =
         IO.pause () ;%lwt
         let%lwt data = data in
-        let categories =
-          match parameters.categories with
-          | Some s -> s
-          | None -> PSet.from_list (Driver.all_categories data) in
+        let categories = get_categories data parameters in
         let parameters = { parameters with categories = Some categories } in
         let global =
           let elements_map = Driver.elements data in

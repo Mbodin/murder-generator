@@ -121,7 +121,7 @@
     "previous": "Étape précédente",
     "startGeneration": "Générer un scénario !",
     "createNewScenario": "Vous pouvez soit générer un nouveau scénario, soit charger un scénario déjà existant.",
-    "fastCreation": "L’option précédente va vous demander de nombreuses questions afin de créer un scénario qui correspond au mieux à vos attentes.  Peut-être préférez vous sauter directement à la génération en tant que telle.  Dans ce cas, indiquez tout simplement le nombre de joueurs (hors maîtres de jeu) que vous voulez et lancer une génération rapide.",
+    "fastCreation": "L’option précédente va vous demander de nombreuses questions afin de créer un scénario qui correspond au mieux à vos attentes.  Peut-être préférez vous sauter directement à la génération en tant que telle.  Dans ce cas, indiquez tout simplement le nombre de joueurs (hors maîtres de jeu) que vous voulez et lancez une génération rapide.",
     "startFastGeneration": "Génération rapide !",
     "importFileShortcut": "Si vous avez déjà créé un scénario et voulez le recharger, vous pouvez téléverser son fichier JSON ici.  Ceci vous fera passer directement à la dernière étape.",
     "shortcutGeneration": "Téléverser ce scénario",

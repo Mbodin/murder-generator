@@ -14,6 +14,15 @@ let webpage_link = "https://github.com/Mbodin/murder-generator"
 let webpage_issues = "https://github.com/Mbodin/murder-generator/issues"
 
 
+(** A trace of the menu function to help debugging. **)
+let trace = ref ["init"]
+
+(** Adding a message in the trace **)
+let add_trace msg = trace := msg :: !trace
+
+(** Get the full trace. **)
+let get_trace _ = List.rev !trace
+
 (** The default error messages. **)
 let errorTranslationsDefault =
   ("An error occurred!", "Please report it", "there", "Error details:")
@@ -21,11 +30,15 @@ let errorTranslationsDefault =
 (** The translations needed to print error messages. **)
 let errorTranslations = ref errorTranslationsDefault
 
+let file_signature file =
+  string_of_int (Hashtbl.hash file)
+
 (** Getting and parsing the translations file. **)
 let get_translations _ =
   let%lwt (translation, languages) =
     let translations_file = "web/translations.json" in
     let%lwt translations = IO.get_file translations_file in
+    add_trace ("getting translation file (" ^ file_signature translations_file ^ ")") ;
     Lwt.return (Translation.from_json translations_file translations) in
   (** Shuffling languages, but putting the user languages on top. **)
   let (matching, nonmatching) =
@@ -50,6 +63,7 @@ let get_data _ =
   let intermediate = ref Driver.empty_intermediary in
   Lwt_list.iter_p (fun fileName ->
       let%lwt file = IO.get_file fileName in
+      add_trace ("getting " ^ fileName ^ " (" ^ file_signature file ^ ")") ;
       let lexbuf = Lexing.from_string file in
       let file = Driver.parse_lexbuf fileName lexbuf in
       intermediate := Driver.prepare_declarations !intermediate file ;
@@ -125,6 +139,8 @@ let create_player_information get_translation parameters =
     (result generalComplexity, result (1. -. generalComplexity)) in
     let player_information = parameters.player_information in
     let len = List.length player_information in
+  add_trace ("Getting from " ^ string_of_int len
+             ^ " players to " ^ string_of_int parameters.player_number) ;
   if len >= parameters.player_number then
     List.take parameters.player_number player_information
   else
@@ -138,8 +154,7 @@ let create_player_information get_translation parameters =
             | 0 -> Names.generate seed
             | n ->
               let name = Names.generate seed in
-              if List.exists (fun (name', _, _, _) ->
-                   name' = name) player_information then
+              if List.exists (fun (name', _, _, _) -> name' = name) player_information then
                 aux (n - 1)
               else name in
           aux 100 in
@@ -157,6 +172,7 @@ let main =
   try%lwt
     IO.clear_response () ;
     let%lwt (translation, languages) = get_translations () in
+    add_trace "Translations ready" ;
     let get_translation_language lg key =
       Utils.assert_option ("No key `" ^ key ^ "' found for language `"
                            ^ (Translation.iso639 lg) ^ "' at " ^ __LOC__ ^ ".")
@@ -188,6 +204,7 @@ let main =
     (** We request the data without forcing it yet. **)
     let data = get_data () in
     let rec ask_for_languages parameters =
+      add_trace "ask_for_languages" ;
       errorTranslations := errorTranslationsDefault ;
       (** Showing to the user all available languages. **)
       let%lwt language =
@@ -206,6 +223,7 @@ let main =
         res in
       load_or_create { parameters with language = Some language }
     and load_or_create parameters =
+      add_trace "load_or_create" ;
       let get_translation = get_translation parameters in
       let (cont, w) = Lwt.task () in
       (** Describing the project to the user. **)
@@ -282,11 +300,12 @@ let main =
                            attributes)) names in
                       let parameters =
                         { parameters with
+                            player_number = List.length informations ;
                             player_information = informations ;
                             categories =
                               Some (PSet.from_list
                                       (Driver.all_categories data)) } in
-                      chooseFormats (Lwt.return state) parameters
+                      choose_formats (Lwt.return state) parameters
                     )))
             ])
         ])) ;
@@ -294,6 +313,7 @@ let main =
         (Some ask_for_languages) (Some ask_for_basic) ;
       let%lwt cont = cont in cont ()
     and ask_for_basic parameters =
+      add_trace "ask_for_basic" ;
       let get_translation = get_translation parameters in
       let (cont, w) = Lwt.task () in
       (** Asking the first basic questions about the murder party. **)
@@ -349,6 +369,7 @@ let main =
         (Some load_or_create) (Some ask_for_categories) ;
       let%lwt cont = cont in cont ()
     and ask_for_categories parameters =
+      add_trace "ask_for_categories" ;
       let get_translation = get_translation parameters in
       let (cont, w) = Lwt.task () in
       (** Forcing the data to be loaded. **)
@@ -435,6 +456,7 @@ let main =
         (Some ask_for_basic) (Some ask_for_player_constraints) ;
       let%lwt cont = cont in cont ()
     and ask_for_player_constraints parameters =
+      add_trace "ask_for_player_constraints" ;
       let get_translation = get_translation parameters in
       let%lwt data = data in
       let (cont, w) = Lwt.task () in
@@ -558,6 +580,7 @@ let main =
         }) (Some ask_for_categories) (Some generate) ;
       let%lwt cont = cont in cont ()
     and generate parameters =
+      add_trace "generate" ;
       let get_translation = get_translation parameters in
       let parameters =
         { parameters with
@@ -594,8 +617,9 @@ let main =
                       (state, Element.merge_attribute_differences diff diff'))))
               (Some (state, diff)) parameters.player_information) in
         Solver.solve_with_difference IO.pause global state diff objectives in
-      chooseFormats state parameters
-    and chooseFormats state parameters =
+      choose_formats state parameters
+    and choose_formats state parameters =
+      add_trace "choose_formats" ;
       IO.unset_printing_mode () ;
       IO.stopLoading () ;%lwt
       let get_translation = get_translation parameters in
@@ -624,7 +648,7 @@ let main =
         if PSet.is_empty parameters.chosen_productions then (
           IO.print_block ~error:true (InOut.P [
             InOut.Text (get_translation "noProductionSelected") ]) ;
-          chooseFormats state parameters
+          choose_formats state parameters
         ) else (
           IO.startLoading () ;%lwt
           cont parameters
@@ -636,6 +660,7 @@ let main =
         (Some ask_for_player_constraints) (Some (check (display state))) ;
       let%lwt cont = cont in cont ()
     and display state parameters =
+      add_trace "display" ;
       let get_translation = get_translation parameters in
       let (cont, w) = Lwt.task () in
       let%lwt data = data in
@@ -675,14 +700,14 @@ let main =
                :: if html then [ InOut.Text (get_translation "exportedAsHTML") ]
                   else []) ;
             InOut.List (true,
-            List.map (fun (name, descr, mime, ext, native, f) ->
-              let fileName = "murder" ^ if ext = "" then "" else ("." ^ ext) in
-              InOut.Div (InOut.Inlined, [
-                  InOut.LinkFile (get_translation "downloadAs"
-                                  ^ " " ^ get_translation name,
-                                  fileName, mime, native, fun _ -> f estate) ;
-                  InOut.Text (get_translation descr)
-                ])) chosen_productions)
+              List.map (fun (name, descr, mime, ext, native, f) ->
+                let fileName = "murder" ^ if ext = "" then "" else ("." ^ ext) in
+                InOut.Div (InOut.Inlined, [
+                    InOut.LinkFile (get_translation "downloadAs"
+                                    ^ " " ^ get_translation name,
+                                    fileName, mime, native, fun _ -> f estate) ;
+                    InOut.Text (get_translation descr)
+                  ])) chosen_productions)
           ])) ;
       if html then
         IO.print_block (InOut.Div (InOut.Normal,
@@ -694,7 +719,7 @@ let main =
         InOut.Text (get_translation "participate") ;
         InOut.Link (get_translation "there", webpage_link) ]) ;
       next_button w parameters (fun _ -> parameters)
-        (Some (chooseFormats (Lwt.return state))) None ;
+        (Some (choose_formats (Lwt.return state))) None ;
       let%lwt cont = cont in cont () in
     let parameters = {
         language = None ;
@@ -719,7 +744,11 @@ let main =
             ] ;
           InOut.P [
               InOut.Text errorDetails ;
-              InOut.Text (Printexc.to_string e)
+              InOut.Text (Printexc.to_string e) ;
+              InOut.Text "; " ;
+              InOut.Text Version.version ;
+              InOut.Text "; " ;
+              InOut.Text (String.concat ", " (get_trace ()))
             ]
         ])) ;
       IO.stopLoading () ;%lwt
@@ -730,6 +759,8 @@ let main =
       IO.log ("Please report it to " ^ webpage_issues) ;
       IO.log ("Primary error details: " ^ Printexc.to_string e) ;
       IO.log ("Secondary error details: " ^ Printexc.to_string e') ;
+      IO.log ("Version: " ^ Version.version) ;
+      IO.log ("Trace: " ^ String.concat "; " (get_trace ())) ;
       Lwt.return ()
 
 end

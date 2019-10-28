@@ -533,7 +533,7 @@ let to_block s =
                          "line" :: event_type_to_class t ::
                            if attendee
                               && t = e.History.event.Events.event_type then (
-                                assert (n = 0) ;
+                             assert (n = 0) ;
                              ["active"; if beg then "event_start" else "event_end"]
                            ) else if n = 0 then [] else ["active"] }))
                   Events.all_event_type) (State.all_players_final state)) in

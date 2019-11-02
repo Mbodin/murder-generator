@@ -30,7 +30,7 @@ then
     # It is generally a good thing to do it before committing.
     if [ "$1" = "checkout" ]
     then
-      git checkout dummy/murderFiles.ml dummy/usedTranslations.ml dummy/version.ml web/main.js
+      git checkout dummy/murderFiles.ml dummy/nameFiles.ml dummy/usedTranslations.ml dummy/version.ml web/main.js
       exit 0
     else
       CHECK="false"
@@ -73,6 +73,7 @@ else
   then
     echo "${COLOR}Building local files…${ROLOC}"
     ./build.sh check murderFiles.ml
+    ./build.sh check nameFiles.ml
     ./build.sh check usedTranslations.ml
     ./build.sh check version.ml
     echo "${COLOR}Done.${ROLOC}"
@@ -90,7 +91,24 @@ else
 
     # Overwriting the dummy file [dummy/murderFiles.ml] with the actual real content.
     # As this overwrites a committed file, please only do that on deployment.
-    echo "let files = [\n`ls data/*.murder | sed -e 's/\\(.*\\)/    \"\\1\" ;/'`\n  ]\n" > dummy/murderFiles.ml
+    echo "let files = [\n`find data/ -type f | grep '\\.murder$' | sed -e 's/\\(.*\\)/    \"\\1\" ;/'`\n  ]\n" > dummy/murderFiles.ml
+
+    echo "${COLOR}Done.${ROLOC}"
+    exit 0
+  fi
+
+  if [ "$1" = "nameFiles.ml" ]
+  then
+    if [ $CHECK = "true" ]
+    then
+      grep '^let .* = \[\]$' dummy/nameFiles.ml && echo "${COLOR}File $1 was safe.${ROLOC}" || (echo "${COLOR}Unsafe file $1.${ROLOC}"; exit 1)
+    fi
+
+    echo "${COLOR}Creating $1 from actual content…${ROLOC}"
+
+    # Overwriting the dummy file [dummy/nameFiles.ml] with the actual real content.
+    # As this overwrites a committed file, please only do that on deployment.
+    echo "let files = [\n`find data/ -type f | grep '\\.names$' | sed -e 's/\\(.*\\)/    \"\\1\" ;/'`\n  ]\n" > dummy/nameFiles.ml
 
     echo "${COLOR}Done.${ROLOC}"
     exit 0

@@ -1,0 +1,13 @@
+fr:Noms à consonance française
+eo:Francumaj nomoj
+en:Names sounding like French
+
+alternate
+
+size:5
+startVowels:A,É;An;Hé,Hi,O;Ya,Xa,Ê
+startConsonant:B,C,D,F,G,L,M,N,P,R,S,T,V,Qu;Hec
+middleVowels:a,ou,an,en,in,on;é,ai,oi;u,i,o;è,ê
+middleConsonant:l,m,n,r,ss,t,tr;s,ch,gu,ll;c,d,j,f,rt;bon,ct
+endVowels:ine,in,elle,el,e;sse
+endConsonant:d,t,re,le,nie,tier;rd,rt,ge

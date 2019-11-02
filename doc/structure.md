@@ -6,7 +6,7 @@ Signature files `.mli` are commented, but `.ml` files only documents what is not
 The project is divided into several folders:
 - [src/](../src) contains all the source code of the generator specific to this project.
 - [lib/](../lib) contains all the source code of the generator that is not specific to this project, and could thus be reused in other projects.
-- [data/](../data) contains all the scenario elements.  The generator uses these scenario elements to combine them and create a fully-fledged scenario.  In particular, [language.murder](../data/language.murder) describes how languages features are implemented, and is described in [language.md](./language.ml).
+- [data/](../data) contains all the data used by the program, in particular the scenario elements in its subfolder [elements](../data/elements).  The generator uses these scenario elements to combine them and create a fully-fledged scenario.  In particular, [language.murder](../data/elements/language.murder) describes how languages features are implemented, and is described in [language.md](./language.md).
 - [dummy](../dummy) contains source files that are meant to be updated at each compilation.  These files are created by the [build.sh](../build.sh) script.  These files are not meant to be manually changed or committed.
 - [web](../web) contains resources for the online interface.
 

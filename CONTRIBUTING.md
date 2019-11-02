@@ -35,17 +35,17 @@ In particular, if you used it for education purposes (for instance in a language
 # Writing Scenario Elements
 
 What this program does is just combining scenario elements together to create one big scenario.
-These scenarios elements are defined in a specific `.murder` format and are stored in the [data](./data) folder.
+These scenarios elements are defined in a specific `.murder` format and are stored in the [data/elements](./data/elements) folder.
 If you would like to participate in the writing, [read here](./doc/elements.md) on how to write these elements.
 Do not hesitate to send pull requests.
 
-Note that the elements in the [data](./data) folder are subject, as for the whole program, to the [Affero General Public License version 3 (AGPLv3)](./LICENSE): if you do not want your work to fall into this license, please refrain yourself from sending me a pull request.
+Note that the elements in the [data/elements](./data/elements) folder are subject, as for the whole program, to the [Affero General Public License version 3 (AGPLv3)](./LICENSE): if you do not want your work to fall into this license, please refrain yourself from sending me a pull request.
 If you would like to write elements in another license, you can [contact me](https://github.com/Mbodin) to see how we can link all these elements together.
 
 # Enhancing Scenario Elements
 
 It is easy when writing scenario elements to forget that a situation can happen.
-For instance, [job.murder](./data/job.murder) contains the following lines:
+For instance, [job.murder](./data/elements/job.murder) contains the following lines:
 ```murder
 element SellerIsEasilyKnown
 begin
@@ -78,7 +78,7 @@ The reason is that grammar plays quite an important role in the generated senten
 
 There are two different things that need to be translated: the interface and the scenario elements.
 The interface’s translations are stored in [translations.json](./web/translations.json), whose content is explained in [translations.md](./doc/translations.md).
-The scenario elements are present in the [data](./data) folder.
+The scenario elements are present in the [data/elements](./data/elements) folder.
 See [language.md](./doc/language.md) for how the language part of these files works and on how to add a language there.
 
 Note that only the interface has to be fully translated to be able to use the program.

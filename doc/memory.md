@@ -40,7 +40,7 @@ Attributes are labels attached to each players.
 Each attribute is named, and is associated a value.
 This is very similar to what is done in the memory model of e.g., [OpenStreetMap](https://www.openstreetmap.org) or [WikiData](https://www.wikidata.org).
 
-For instance, [identity.murder](../data/identity.murder) defines the following attribute `Gender`:
+For instance, [identity.murder](../data/elements/identity.murder) defines the following attribute `Gender`:
 ```murder
 declare attribute Gender
 ```
@@ -74,7 +74,7 @@ This has actually very little to do with the memory model: this is just a way to
 
 Contacts are very similar to attributes, but instead of being labels on characters, they are labels on arrows between two characters.
 This means that contacts involve two characters: one “from”, and one “to” (as well as the usual contact name and its value).
-For instance, let us consider the following lines from [relations.murder](../data/relations.murder):
+For instance, let us consider the following lines from [relations.murder](../data/elements/relations.murder):
 ```murder
 declare contact Know
 contact Know True
@@ -90,7 +90,7 @@ It is the responsibility of the element writers to always generate the reversed 
 
 As for attributes (because, really, contacts and attributes are the same thing, just that contacts are from a character to another whereas attributes air “sticked” on a particular character), one might want to combine values.
 This is done through the notion of compatibility: the “combination”-value will be compatible with both “base”-values.
-For instance, [family.murder](../data/family.murder) declares a value `True` for `FamilyRelation` in addition to all the specific values for family relations.
+For instance, [family.murder](../data/elements/family.murder) declares a value `True` for `FamilyRelation` in addition to all the specific values for family relations.
 This value `True` is meant to describe the relation between two players of the same family that are not any of the most precise values (like `Sibling`, `Spouse`, etc.).
 It is declared as follows:
 ```murder
@@ -115,7 +115,7 @@ The solver will do its best to match these target difficulties and complexities 
 
 Difficulties and complexities come into two forms.
 The first form is in direct control of the scenario-element writer.
-For instance, in [job.murder](../data/job.murder), a scenario element suggest to a thief that a character is wealthy, and thus a good target.
+For instance, in [job.murder](../data/elements/job.murder), a scenario element suggest to a thief that a character is wealthy, and thus a good target.
 By doing so, the scenario element is clearly making the life of the target more complex.
 To indicate this to the program, this element contains the following line (`P` is the name of the target in this element):
 ```murder
@@ -171,7 +171,7 @@ Hence, a `strong hate` relation adds four points of difficulty and two of comple
 To sum up, each player is associated an inner difficulty and complexity, as well as a relation to the other players.
 The total difficulty and complexity of a player is the sum of its inner difficulty/complexity and of each of the complexity/difficulty yielded by its relations.
 
-Note that [relations.murder](../data/relations.murder) defines a contact named `Relation`, with similar values than the relations, like `Neutral` or `Trust`.
+Note that [relations.murder](../data/elements/relations.murder) defines a contact named `Relation`, with similar values than the relations, like `Neutral` or `Trust`.
 These are not to be mixed: the contact named `Relation` is a contact, used to describe the scenario and to make some elements incompatible with each others, whilst relations are meant to describe how this scenario will affect each players.
 In particular, relations will never make elements incompatible with the current state, whilst contacts are designed for this.
 

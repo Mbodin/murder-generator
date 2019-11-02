@@ -11,7 +11,7 @@ The generator is available online at [this address](https://mbodin.github.io/mur
 The generated scenarios can be freely used for any role-playing game you want, in any context: it can be a party amongst friends, an exercise in a theater or language course, part of a role-playing-game festival, etc.
 The generated scenarios can also be used as a help to write custom scenarios.
 
-Scenarios are made by combining scenario elements, defined in the [data](./data) folder.
+Scenarios are made by combining scenario elements, defined in the [data/elements](./data/elements) folder.
 These elements range from very simple ones (for instance by just stating that a given player is female) to relatively complex ones (like stating that a player is a double agent, or that a player is responsible for a contract between several other players).
 Each of these elements yields some specific relations, and the generator tries to even them out along players according to the player’s preferences.
 

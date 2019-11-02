@@ -17,7 +17,7 @@ Users are given the choice of which categories to include when generating the sc
 When writing elements that may be unwanted by some users, it is important to make sure that it falls into at least one category.
 
 A category can be declared as follows.
-This is a snippet from [religion.murder](../data/religion.murder), defining the category named `Religion`.
+This is a snippet from [religion.murder](../data/elements/religion.murder), defining the category named `Religion`.
 ```murder
 category Religion
 begin
@@ -33,7 +33,7 @@ User-defined names, like `Religion` in this example, start with an upper-case le
 Comments are between `(*` and `*)`: everything inside a comment will be ignored by the program.
 Comments are meant to help you and other element writers organise the files, and clarify some subtleties about user definitions.
 
-There is no particular place where each command needs to be: despite the category `Religion` is defined in [religion.murder](../data/religion.murder), it can be referred to in any `.murder` file in the [data](../data) folder.
+There is no particular place where each command needs to be: despite the category `Religion` is defined in [religion.murder](../data/elements/religion.murder), it can be referred to in any `.murder` file in the [data](../data) folder.
 Organising the files is thus just a matter of dividing each notions into files that are meaningful to you.
 
 The two keywords `begin` and `end` define a block that describes the defined category.
@@ -44,7 +44,7 @@ It is not necessary to have a translation in all available languages, but having
 
 In addition to the `translation` and `description` declarations, a category can also be marked as being dependent of another category.
 This is done through the `category` keyword.
-For instance, here follows a snippet from [secrets.murder](../data/secrets.murder).
+For instance, here follows a snippet from [secrets.murder](../data/elements/secrets.murder).
 ```murder
 category DarkSecrets
 begin
@@ -61,7 +61,7 @@ This means that any element dependent on the category `DarkSecrets` will also be
 ## Attributes and Contacts
 
 An attribute can be declared very similarly to a category, but with the `declare attribute` keyword.
-Here is for instance a snippet from [identity.murder](../data/identity.murder) declaring the `Gender` attribute.
+Here is for instance a snippet from [identity.murder](../data/elements/identity.murder) declaring the `Gender` attribute.
 ```murder
 declare attribute Gender
 begin
@@ -98,12 +98,12 @@ end
 As explained in [memory.md](./memory.md), both `Male` and `Female` are marked as being compatible with `NonBinary` such that a character with attribute `Gender` as `NonBinary` may be chosen if an elements is looking for a character with attribute `Gender` as `Male` or `Female`.
 The converse is however not true: if an element is looking for a character with attribute `Gender` as `NonBinary`, only the `NonBinary`-characters will be chosen, as there is no `compatible with` command in `NonBinary`’s block.
 
-In [identity.murder](../data/identity.murder), the attribute values `Male` and `Female` have other `add` commands.
+In [identity.murder](../data/elements/identity.murder), the attribute values `Male` and `Female` have other `add` commands.
 These commands are explained in [language.md](./language.md).
 In most attribute declarations, you won’t need to use neither the `compatible with` nor the `add` commands.
 
 As for categories, an attribute can be marked to depend on a category.
-For instance, here is a snippet from [religion.murder](../data/religion.murder) where the attribute `DivineAllegiance` is marked as being dependent on the category `Religion`.
+For instance, here is a snippet from [religion.murder](../data/elements/religion.murder) where the attribute `DivineAllegiance` is marked as being dependent on the category `Religion`.
 Any element referring to the attribute `DivineAllegiance` will then be implicitly marked as also dependent to the category `Religion`.
 ```murder
 declare attribute DivineAllegiance
@@ -115,7 +115,7 @@ end
 ```
 
 Contacts work in a very similar way than attributes.
-Here is for instance a snippet from [relations.murder](../data/relations.murder).
+Here is for instance a snippet from [relations.murder](../data/elements/relations.murder).
 The contact `Know` is defined, with possible values `True`, `Intimate`, and `False`.
 As for attributes, this snippet uses the `compatible with` keyword to make `True` compatible with `Intimate`: if a character intimately knows another, then it also knows this other character.
 ```murder
@@ -152,7 +152,7 @@ In this case, if no contact is shown between two characters, one will probably a
 
 Attribute values can naturally also be set as internal.
 One can also directly set an attribute or a contact as internal: this will mark all its values as being internal, effectively hiding this attribute or this contact to the user.
-An example can be found in [objectives.murder](../data/objectives.murder), where the contact `Goal` is defined.
+An example can be found in [objectives.murder](../data/elements/objectives.murder), where the contact `Goal` is defined.
 This contact is meant to explicit the goals of each characters with respect to each other characters.
 These goals are usually quite clear in the character sheets, and there is no need to burden the user with such an information.
 ```murder
@@ -227,7 +227,7 @@ Of course, the value after the `as` keyword has to correspond to a possible valu
 Look for common values of attributes and contacts among the other `.murder` files if you are unsure, or just create your own (see the first section of this file for how to declare such values).
 
 Constraints on characters can be chained.
-For instance, here is a snippet from [job.murder](../data/job.murder) where the character `P` has two constraints: not only he or she can’t be a seller, but its family relation to the character `S` has to be `None`.
+For instance, here is a snippet from [job.murder](../data/elements/job.murder) where the character `P` has two constraints: not only he or she can’t be a seller, but its family relation to the character `S` has to be `None`.
 This snippet also shows that one can state that a value should *not* be a particular one, using the `not as` keyword.
 ```murder
 element SellerIsEasilyKnown

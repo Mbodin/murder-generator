@@ -49,12 +49,10 @@ fi
 
 if [ -z "$1" ]
 then
-  echo "${COLOR}No argument given: compiling main.js as a default.${ROLOC}"
-  TARGET=main
-  JS="true"
-  NATIVE="false"
-  REALTARGET="main.js"
-  MOVE="true"
+  echo "${COLOR}No argument given: compiling main.js and main.native as a default.${ROLOC}"
+  ./build.sh move main.js
+  ./build.sh main.native
+  exit 0
 else
   REALTARGET=$1
 

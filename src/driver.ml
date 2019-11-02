@@ -648,6 +648,7 @@ let prepare_declaration i =
                       update (intermediary_constructor_maps i) state } ;
               constructor_dependencies =
                 PMap.add id deps i.current_state.constructor_dependencies ;
+              category_names = category_names ;
               translations =
                 { i.current_state.translations with
                     Translation.constructor = translations ;

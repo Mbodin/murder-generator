@@ -16,7 +16,7 @@ end
 attribute Specy God
 begin
   category Religion
-  category OutOfThisUniverse
+  category OutOfOurWorld
 
   translation fr "divinité"
   translation en "god"

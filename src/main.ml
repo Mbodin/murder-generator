@@ -118,6 +118,7 @@ let urltag_level = "level"
 let urltag_complexity = "comp"
 let urltag_date = "date"
 let urltag_power = "power"
+let urltag_categories = "cats"
 
 exception InvalidUrlArgument
 
@@ -480,6 +481,27 @@ let main =
       add_trace "ask_for_player_constraints" ;
       let get_translation = get_translation parameters in
       let%lwt data = data in
+      let translate_categories_generic =
+        let translate_categories =
+          (Driver.get_translations data).Translation.category in
+        Translation.force_translate translate_categories Translation.generic in
+      let categories =
+        if PSet.length (get_categories data parameters)
+           = List.length (Driver.all_categories data) then
+          "all"
+        else
+          String.concat "," (List.map translate_categories_generic
+            (PSet.to_list (get_categories data parameters))) in
+      IO.set_parameters [
+          (urltag_lang, Translation.iso639 (get_language parameters)) ;
+          (urltag_number, string_of_int parameters.player_number) ;
+          (urltag_level, string_of_float parameters.general_level) ;
+          (urltag_complexity, string_of_float parameters.general_complexity) ;
+          (urltag_date, Date.iso8601 parameters.play_date) ;
+          (urltag_power, string_of_float parameters.computation_power) ;
+          (urltag_categories, categories)
+        ] ;
+      IO.stopLoading () ;%lwt
       IO.print_block (InOut.Div (InOut.Normal, [
         InOut.P [ InOut.Text (get_translation "individualConstraints") ] ;
         InOut.P [ InOut.Text (get_translation "complexityDifficultyExplanation") ] ;
@@ -797,7 +819,34 @@ let main =
                   general_complexity = comp ;
                   play_date = date ;
                   computation_power = power } in
-            ask_for_categories (cont, w) parameters
+            match List.assoc_opt urltag_categories arguments with
+            | None ->
+              ask_for_categories (cont, w) parameters
+            | Some cats ->
+              let%lwt data = data in
+              let cats =
+                let translate_categories =
+                  let translate_categories =
+                    (Driver.get_translations data).Translation.category in
+                  Translation.force_translate translate_categories Translation.generic in
+                let all_categories = Driver.all_categories data in
+                let assoc_categories =
+                  List.map (fun c -> (translate_categories c, c)) all_categories in
+                if cats = "" then
+                  Some []
+                else if cats = "all" then
+                  Some all_categories
+                else
+                  let cats = String.split_on_char ',' cats in
+                  Utils.list_map_option (fun c ->
+                    List.assoc_opt c assoc_categories) cats in
+              match cats with
+              | None ->
+                ask_for_categories (cont, w) parameters
+              | Some cats ->
+                let parameters =
+                  { parameters with categories = Some (PSet.from_list cats) } in
+                ask_for_player_constraints (cont, w) parameters
            with InvalidUrlArgument ->
              load_or_create (cont, w) parameters)
         | _ ->

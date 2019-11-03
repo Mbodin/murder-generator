@@ -107,7 +107,6 @@ let get_parameters _ =
   Utils.list_map_filter (fun str ->
     match String.split_on_char '=' str with
     | key :: value :: [] -> Some (decode key, decode value)
-    | key :: [] -> Some (decode key, "true")
     | _ -> None) l
 
 let set_parameters l =

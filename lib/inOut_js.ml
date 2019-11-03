@@ -64,13 +64,14 @@ let get_file url =
   res
 
 let url_replacements = [
-    (';', 's') (** Must be the first one as we use it to encode all the rest. **) ;
+    ('_', 'o') (** Must be the first one as we use it to encode all the rest. **) ;
+    (';', 's') ;
     ('=', 'e') ;
-    ('+', 'a') ;
+    ('+', 'p') ;
     ('-', 'm') ;
     ('&', 'j') ;
     (':', 'c') ;
-    (' ', 'p') ;
+    (' ', 'l') ;
     ('%', 'n') ;
     ('#', 'd') ;
     ('(', 'b') ;
@@ -79,7 +80,15 @@ let url_replacements = [
     ('"', 'u') ;
     ('!', 'i') ;
     ('?', 'y') ;
-    ('*', 'r')
+    ('*', 'r') ;
+    ('@', 'a') ;
+    (',', 'v') ;
+    ('/', 'h') ;
+    ('\\', 'x') ;
+    ('[', 'f') ;
+    (']', 'g') ;
+    ('~', 'w') ;
+    ('.', 't') ;
   ]
 
 let _ =
@@ -90,12 +99,10 @@ let get_parameters _ =
   let decode str =
     let replace str = Re.Str.global_replace (Re.Str.regexp_string str) in
     List.fold_left (fun str (c, r) ->
-      replace (";" ^ String.make 1 r) (String.make 1 c) str) str (List.rev url_replacements) in
+      replace ("_" ^ String.make 1 r) (String.make 1 c) str) str (List.rev url_replacements) in
   let str = Url.Current.get_fragment () in
   let str = Url.urldecode str in
-  let str = Url.urldecode str in (** We do it a second times to compensate from eventual
-                                  ** additionnal encoding by the browser.
-                                  ** As there is no percent in the original chain, this is safe. **)
+  let str = decode str in
   let l = String.split_on_char '&' str in
   Utils.list_map_filter (fun str ->
     match String.split_on_char '=' str with
@@ -107,11 +114,11 @@ let set_parameters l =
   let encode str =
     let replace str = Re.Str.global_replace (Re.Str.regexp_string str) in
     List.fold_left (fun str (c, r) ->
-      replace (String.make 1 c) (";" ^ String.make 1 r) str) str url_replacements in
+      replace (String.make 1 c) ("_" ^ String.make 1 r) str) str url_replacements in
   let l =
     List.map (fun (key, value) ->
       encode key ^ "=" ^ encode value) l in
-  Url.Current.set_fragment (Url.urlencode (String.concat "&" l))
+  Url.Current.set_fragment (Url.urlencode (encode (String.concat "&" l)))
 
 let languages =
   let navigator = Dom_html.window##.navigator in

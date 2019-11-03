@@ -26,6 +26,9 @@ let get_file fileName =
     with End_of_file -> [] in
   Lwt.return (String.concat "\n" (aux ()))
 
+let get_parameters _ = []
+let set_parameters = ignore
+
 let log msg =
   print_endline ("Log: " ^ msg)
 

@@ -79,6 +79,11 @@ module type T = sig
   (** Fetch a file from an address and returns its content. **)
   val get_file : string -> string Lwt.t
 
+  (** Get parameters from the current address, in the form of a list of string. **)
+  val get_parameters : unit -> (string * string) list
+
+  (** Write parameters to the address. **)
+  val set_parameters : (string * string) list -> unit
 
   (** The local set of accepted languages. **)
   val languages : string list

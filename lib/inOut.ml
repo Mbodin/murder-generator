@@ -74,6 +74,9 @@ module type T = sig
 
   val get_file : string -> string Lwt.t
 
+  val get_parameters : unit -> (string * string) list
+  val set_parameters : (string * string) list -> unit
+
   val languages : string list
 
   type node

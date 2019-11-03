@@ -111,6 +111,9 @@ type parameters = {
     chosen_productions : string PSet.t (** The name of each chosen production. **)
   }
 
+(** URL tags **)
+let urltag_lang = "lang"
+
 (** Update player informations from the parameters such that it matches the [player_number] data. **)
 let create_player_information get_translation parameters =
   let get_language p = Utils.assert_option __LOC__ p.language in
@@ -204,11 +207,13 @@ let main =
     (** We request the data without forcing it yet. **)
     let data = get_data () in
     let rec ask_for_languages parameters =
-      add_trace "ask_for_languages" ;
-      errorTranslations := errorTranslationsDefault ;
       (** Showing to the user all available languages. **)
+      add_trace "ask_for_languages" ;
+      IO.set_parameters [] ;
+      errorTranslations := errorTranslationsDefault ;
+      IO.stopLoading () ;%lwt
       let%lwt language =
-        let (res, w) = Lwt.task () in
+        let (cont, w) = Lwt.task () in
         IO.print_block (InOut.Div (InOut.Normal, List.map (fun lg ->
           let get_translation = get_translation_language lg in
           InOut.Div (InOut.Centered, [
@@ -220,13 +225,13 @@ let main =
                    get_translation "there", get_translation "errorDetails") ;
                 Lwt.wakeup_later w lg) ]])) languages)) ;
         IO.stopLoading () ;%lwt
-        res in
-      load_or_create { parameters with language = Some language }
-    and load_or_create parameters =
-      add_trace "load_or_create" ;
-      let get_translation = get_translation parameters in
-      let (cont, w) = Lwt.task () in
+        cont in
+      load_or_create (Lwt.task ()) { parameters with language = Some language }
+    and load_or_create (cont, w) parameters =
       (** Describing the project to the user. **)
+      add_trace "load_or_create" ;
+      IO.set_parameters [(urltag_lang, Translation.iso639 (get_language parameters))] ;
+      let get_translation = get_translation parameters in
       IO.print_block (InOut.P [
           InOut.Text (get_translation "description") ;
           InOut.Text (get_translation "openSource") ;
@@ -277,7 +282,7 @@ let main =
                       IO.print_block ~error:true (InOut.P [
                         InOut.Text (get_translation "noFileSelected") ]) ;
                       IO.stopLoading () ;%lwt
-                      load_or_create parameters
+                      load_or_create (Lwt.task ()) parameters
                     ) else (
                       let%lwt data = data in
                       let (names, state) =
@@ -309,14 +314,15 @@ let main =
                     )))
             ])
         ])) ;
+      IO.stopLoading () ;%lwt
       next_button ~nextText:"startGeneration" w parameters (fun _ -> parameters)
         (Some ask_for_languages) (Some ask_for_basic) ;
       let%lwt cont = cont in cont ()
     and ask_for_basic parameters =
+      (** Asking the first basic questions about the murder party. **)
       add_trace "ask_for_basic" ;
       let get_translation = get_translation parameters in
       let (cont, w) = Lwt.task () in
-      (** Asking the first basic questions about the murder party. **)
       let (playerNumber, readPlayerNumber) =
         IO.createNumberInput ~min:1 parameters.player_number in
       IO.print_block (InOut.P [
@@ -366,9 +372,10 @@ let main =
               general_complexity = readGeneralComplexity () ;
               play_date = readPlayDate () ;
               computation_power = readFastOrSlow () })
-        (Some load_or_create) (Some ask_for_categories) ;
+        (Some (load_or_create (Lwt.task ()))) (Some ask_for_categories) ;
       let%lwt cont = cont in cont ()
     and ask_for_categories parameters =
+      (** Asking about categories. **)
       add_trace "ask_for_categories" ;
       let get_translation = get_translation parameters in
       let (cont, w) = Lwt.task () in
@@ -378,7 +385,6 @@ let main =
       else Lwt.return ()) ;%lwt
       let%lwt data = data in
       IO.stopLoading () ;%lwt
-      (** Asking about categories. **)
       let translate_categories =
         let translate_categories =
           (Driver.get_translations data).Translation.category in
@@ -456,11 +462,11 @@ let main =
         (Some ask_for_basic) (Some ask_for_player_constraints) ;
       let%lwt cont = cont in cont ()
     and ask_for_player_constraints parameters =
+      (** Asking about individual player constraints. **)
       add_trace "ask_for_player_constraints" ;
       let get_translation = get_translation parameters in
       let%lwt data = data in
       let (cont, w) = Lwt.task () in
-      (** Asking about individual player constraints. **)
       IO.print_block (InOut.Div (InOut.Normal, [
         InOut.P [ InOut.Text (get_translation "individualConstraints") ] ;
         InOut.P [ InOut.Text (get_translation "complexityDifficultyExplanation") ] ;
@@ -580,12 +586,12 @@ let main =
         }) (Some ask_for_categories) (Some generate) ;
       let%lwt cont = cont in cont ()
     and generate parameters =
+      (** Starting the generation. **)
       add_trace "generate" ;
       let get_translation = get_translation parameters in
       let parameters =
         { parameters with
             player_information = create_player_information get_translation parameters } in
-      (** Starts the generation! **)
       let state =
         IO.pause () ;%lwt
         let%lwt data = data in
@@ -619,6 +625,7 @@ let main =
         Solver.solve_with_difference IO.pause global state diff objectives in
       choose_formats state parameters
     and choose_formats state parameters =
+      (** Asking the user to what formats we should export the scenario. **)
       add_trace "choose_formats" ;
       IO.unset_printing_mode () ;
       IO.stopLoading () ;%lwt
@@ -660,12 +667,12 @@ let main =
         (Some ask_for_player_constraints) (Some (check (display state))) ;
       let%lwt cont = cont in cont ()
     and display state parameters =
+      (** Exporting the generated state to various formats. **)
       add_trace "display" ;
       let get_translation = get_translation parameters in
       let (cont, w) = Lwt.task () in
       let%lwt data = data in
       let%lwt state = state in
-      (** Exports the generated state to various formats. **)
       let estate =
         Export.process {
           Export.language = get_language parameters ;
@@ -721,6 +728,7 @@ let main =
       next_button w parameters (fun _ -> parameters)
         (Some (choose_formats (Lwt.return state))) None ;
       let%lwt cont = cont in cont () in
+    (** Setting the environment. **)
     let parameters = {
         language = None ;
         player_number = 7 ;
@@ -732,7 +740,30 @@ let main =
         player_information = [] ;
         chosen_productions = PSet.from_list ["html" ; "json"]
       } in
-    ask_for_languages parameters
+    let arguments = IO.get_parameters () in
+    let print_jump w parameters =
+      let get_translation = get_translation parameters in
+      IO.print_block (InOut.P [
+          InOut.Text (get_translation "linkJumped") ;
+          InOut.LinkContinuation (true, get_translation "jumpBack",
+            fun _ ->
+              Lwt.wakeup_later w (fun _ ->
+                IO.clear_response () ;
+                ask_for_languages parameters))
+        ]) in
+    match List.assoc_opt urltag_lang arguments with
+    | None -> (** No language is provided. **)
+      ask_for_languages parameters
+    | Some lg ->
+      let lg = Translation.from_iso639 lg in
+      match Translation.translate translation lg "iso639" with
+      | None -> (** Invalid language. **)
+        ask_for_languages parameters
+      | Some _ ->
+        let parameters = { parameters with language = Some lg } in
+        let (cont, w) = Lwt.task () in
+        print_jump w parameters ;
+        load_or_create (cont, w) parameters
   (** Reporting errors. **)
   with e ->
     try%lwt

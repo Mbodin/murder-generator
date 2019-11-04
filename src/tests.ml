@@ -137,7 +137,11 @@ let test_parser languages =
   let s = Driver.parse i in
   let translations = Driver.get_translations s in
   let categories = Driver.all_categories s in
-  (* TODO: attributes and constructors *)
+  let constructor_maps = Driver.get_constructor_maps s in
+  let constructors_player =
+    Attribute.PlayerAttribute.all_constructors constructor_maps.Attribute.player in
+  let constructors_contact =
+    Attribute.ContactAttribute.all_constructors constructor_maps.Attribute.contact in
   let elements = Driver.elements s in
   List.iter (fun lg ->
     let warn =
@@ -145,27 +149,60 @@ let test_parser languages =
       if not (PSet.mem (t, name) !seen) then (
         seen := PSet.add (t, name) !seen ;
         prerr_endline ("Warning: Missing translation for language "
-                       ^ Translation.iso639 lg ^ " in " ^ t
+                       ^ Translation.iso639 lg ^ " for " ^ t
                        ^ " \"" ^ name ^ "\".")) in
     List.iter (fun c ->
       let t = translations.Translation.category in
       if Translation.translate t lg c = None then
-        warn "category"
+        warn "category" (Translation.force_translate t Translation.generic c) ;
+      let td = translations.Translation.category_description in
+      if Translation.translate td lg c = None then
+        warn "category description"
           (Translation.force_translate t Translation.generic c)) categories ;
-    (* TODO: attributes and constructors *)
-    PMap.iter (fun id e ->
-      let name = Utils.assert_option __LOC__ (Driver.get_element_name s id) in
-      List.iteri (fun id e ->
-          let (n, t) = e.Events.translation in
-          List.iter (fun i ->
-            if Translation.stranslate t lg (fun _ -> PSet.empty)
-                 (fun _ _ -> Some ("", PSet.empty))
-                 i (PSet.singleton Translation.base) = None then
-              warn "element" (name ^ "#" ^ string_of_int id)) (Utils.seq n))
-        e.Element.events) elements) languages
+    let check_constructors m constructor_attribute get_attribute get_constructor constructors =
+      let ta = translations.Translation.attribute in
+      let tc = translations.Translation.constructor in
+      let base = PSet.singleton Translation.base in
+      List.iter (fun c ->
+          let a = Utils.assert_option __LOC__ (constructor_attribute m c) in
+          let a = get_attribute a in
+          if Translation.translate ta lg a = None then
+            warn "attribute" (Translation.force_translate ta Translation.generic a) ;
+          let c = get_constructor c in
+          if Translation.gtranslate tc lg c base = None then
+            warn "attribute" (fst (Translation.gforce_translate tc Translation.generic c base)))
+        constructors in
+    check_constructors
+      constructor_maps.Attribute.player
+      Attribute.PlayerAttribute.constructor_attribute
+      (fun a -> Attribute.PlayerAttribute a)
+      (fun c -> Attribute.PlayerConstructor c)
+      constructors_player ;
+    check_constructors
+      constructor_maps.Attribute.contact
+      Attribute.ContactAttribute.constructor_attribute
+      (fun a -> Attribute.ContactAttribute a)
+      (fun c -> Attribute.ContactConstructor c)
+      constructors_contact ;
+    let n =
+      PMap.foldi (fun id e n ->
+        let name = Utils.assert_option __LOC__ (Driver.get_element_name s id) in
+        let ok =
+          Utils.list_fold_lefti (fun id ok e ->
+            let (n, t) = e.Events.translation in
+            List.fold_left (fun ok i ->
+              ok &&
+                if Translation.stranslate t lg (fun _ -> PSet.empty)
+                     (fun _ _ -> Some ("", PSet.empty))
+                     i (PSet.singleton Translation.base) = None then (
+                  warn "element" (name ^ "#" ^ string_of_int id) ;
+                  false
+                ) else true) ok (Utils.seq n)) true e.Element.events in
+        if ok then 1 + n else n) elements 0 in
+    print_endline ("Number of available elements for language "
+                   ^ Translation.iso639 lg ^ ": " ^ string_of_int n)) languages
 
 let main =
-  test_date () ;
   let languages = test_translations () in
   test_parser languages
 

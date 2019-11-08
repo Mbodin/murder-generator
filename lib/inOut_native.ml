@@ -568,3 +568,12 @@ let clear_response _ =
   print_newline () ;
   Print.separator '='
 
+let createTextOutput str =
+  let txt = ref str in
+  let node link = Print.print !txt in
+  (node, fun str -> txt := str)
+
+let createNumberOutput n =
+  let (node, set) = createTextOutput (string_of_int n) in
+  (node, fun n -> set (string_of_int n))
+

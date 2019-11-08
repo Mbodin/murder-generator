@@ -416,3 +416,12 @@ let apply_constructors m state c =
       try Some (apply_player_constructor m state diff c a (State.One_value_of [v]))
       with _ -> None)) (Some (state, empty_difference))
 
+let is_translatable e lg =
+  Utils.list_fold_lefti (fun id ok e ->
+    let (n, t) = e.Events.translation in
+    List.fold_left (fun ok i ->
+      ok &&
+        Translation.stranslate t lg (fun _ -> PSet.empty)
+          (fun _ _ -> Some ("", PSet.empty))
+          i (PSet.singleton Translation.base) <> None) ok (Utils.seq n)) true e.events
+

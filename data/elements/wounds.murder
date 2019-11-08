@@ -143,6 +143,7 @@ end
 element BlindAfterBeingBeaten
 begin
   category NonKids
+  category DarkSecrets
 
   let V be player
   let A be player with contact Goal to V as Harm

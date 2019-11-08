@@ -178,6 +178,12 @@ let get_categories data parameters =
   | Some s -> s
   | None -> PSet.from_list (Driver.all_categories data)
 
+(** Get all elements corresponding to these settings. **)
+let get_all_elements data parameters =
+  let lg = Utils.assert_option __LOC__ parameters.language in
+  let categories = get_categories data parameters in
+  Driver.get_all_elements data lg categories parameters.player_number
+
 (** The main script. **)
 let main =
   try%lwt
@@ -413,6 +419,10 @@ let main =
         match parameters.categories with
         | None -> PSet.from_list all_categories
         | Some s -> s in
+      let get_element_number s =
+        List.length (get_all_elements data { parameters with categories = Some s }) in
+      let (elementNumberNode, setElementNumber) =
+        IO.createNumberOutput (get_element_number selected_categories) in
       let onCategoryClick = ref (fun _ -> ()) in
       let categoriesButtons =
         List.fold_left (fun m c ->
@@ -437,27 +447,37 @@ let main =
               let (e, set, get, ideps) = PMap.find cd m in
               PMap.add cd (e, set, get, PSet.add c ideps) m) m deps)
           categoriesButtons all_categories in
+      let get_selected_categories _ =
+        PMap.foldi (fun c (_, _, get, _) s ->
+          if get () then
+            PSet.add c s
+          else s) categoriesButtons PSet.empty in
+      let update_element_number _ =
+        setElementNumber (get_element_number (get_selected_categories ())) in
       onCategoryClick := (fun c ->
         let (_, _, get, ideps) = PMap.find c categoriesButtons in
-        if get () then
-          let deps = Driver.get_category_dependencies data c in
-          PSet.iter (fun c ->
-            let (_, set, _, _) = PMap.find c categoriesButtons in
-            set true) deps
-        else
-          PSet.iter (fun c ->
-            let (_, set, _, _) = PMap.find c categoriesButtons in
-            set false) ideps) ;
+        (if get () then
+           let deps = Driver.get_category_dependencies data c in
+           PSet.iter (fun c ->
+             let (_, set, _, _) = PMap.find c categoriesButtons in
+             set true) deps
+         else
+           PSet.iter (fun c ->
+             let (_, set, _, _) = PMap.find c categoriesButtons in
+             set false) ideps) ;
+        update_element_number ()) ;
       IO.print_block (InOut.Div (InOut.Normal, [
           InOut.P [ InOut.Text (get_translation "unselectCategories") ] ;
           InOut.Div (InOut.Centered, [
               InOut.LinkContinuation (false, get_translation "noCategories",
                 fun _ ->
-                  PMap.iter (fun _ (_, set, _, _) -> set false) categoriesButtons) ;
+                  PMap.iter (fun _ (_, set, _, _) -> set false) categoriesButtons ;
+                  update_element_number ()) ;
               InOut.Space ;
               InOut.LinkContinuation (true, get_translation "allCategories",
                 fun _ ->
-                  PMap.iter (fun _ (_, set, _, _) -> set true) categoriesButtons) ;
+                  PMap.iter (fun _ (_, set, _, _) -> set true) categoriesButtons ;
+                  update_element_number ()) ;
             ]) ;
           InOut.List (false,
             PMap.fold (fun (e, _, _, _) l -> InOut.Node e :: l)
@@ -467,12 +487,13 @@ let main =
               InOut.Text (get_translation "categoriesExamples")
             ]
         ])) ;
+      IO.print_block (InOut.P [
+          InOut.Text (get_translation "howManyElements1") ;
+          InOut.Node elementNumberNode ;
+          InOut.Text (get_translation "howManyElements2")
+        ]) ;
       next_button w parameters (fun _ ->
-          let selected_categories =
-            PMap.foldi (fun c (_, _, get, _) s ->
-              if get () then
-                PSet.add c s
-              else s) categoriesButtons PSet.empty in
+          let selected_categories = get_selected_categories () in
           { parameters with categories = Some selected_categories })
         (Some ask_for_basic) (Some ask_for_player_constraints) ;
       let%lwt cont = cont in cont ()
@@ -634,8 +655,7 @@ let main =
         let parameters = { parameters with categories = Some categories } in
         let global =
           let elements_map = Driver.elements data in
-          let elements =
-            Driver.get_all_elements data categories parameters.player_number in
+          let elements = get_all_elements data parameters in
           let elements =
             List.map (fun e -> PMap.find e elements_map) elements in
           List.fold_left Solver.register_element

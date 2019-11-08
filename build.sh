@@ -206,7 +206,7 @@ ocamlbuild -use-ocamlfind -Is src,lib,dummy \
            -pkgs unix,extlib,yojson,re,lwt,lwt_ppx,ppx_deriving${ADDITIONALPACKAGES} \
            -use-menhir -menhir "menhir --explain" \
            -tags "optimize(3)${DEBUGFLAG}${ADDITIONALFLAGS}" \
-           $TARGET.$EXT
+           ${TARGET}.${EXT}
 echo "${COLOR}Done.${ROLOC}"
 
 REALTARGETBASE=`echo "$REALTARGET" | sed -e 's/\\..*//'`
@@ -238,13 +238,13 @@ then
   echo "${COLOR}Compiling to JavaScript as ${TARGET}.js…${ROLOC}"
 
   # Translate to JavaScript
-  js_of_ocaml $DEBUGFLAG $TARGET.byte
+  js_of_ocaml ${DEBUGFLAG} ${TARGET}.byte
 
   # Adding license information.
-  sed -i "1i/* The source code of this compiled program is available at https://github.com/Mbodin/murder-generator */" $TARGET.js
-  sed -i "1i/* @license magnet:?xt=urn:btih:0b31508aeb0634b347b8270c7bee4d411b5d4109&dn=agpl-3.0.txt AGPL-v3-or-Later */" $TARGET.js
-  echo "/* @license-end */" >> $TARGET.js
-  echo "//# sourceURL=main.js" >> $TARGET.js
+  sed -i "1i/* The source code of this compiled program is available at https://github.com/Mbodin/murder-generator */" ${TARGET}.js
+  sed -i "1i/* @license magnet:?xt=urn:btih:0b31508aeb0634b347b8270c7bee4d411b5d4109&dn=agpl-3.0.txt AGPL-v3-or-Later */" ${TARGET}.js
+  echo "/* @license-end */" >> ${TARGET}.js
+  echo "//# sourceURL=main.js" >> ${TARGET}.js
 
   echo "${COLOR}Done.${ROLOC}"
 

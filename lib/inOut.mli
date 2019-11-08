@@ -105,6 +105,12 @@ module type T = sig
   (** Clears the [response] div in the main webpage. **)
   val clear_response : unit -> unit
 
+  (** Create a text output as a number which can be later reset. **)
+  val createNumberOutput : int -> node * (int -> unit)
+
+  (** Create a text output as a number which can be later reset. **)
+  val createTextOutput : string -> node * (string -> unit)
+
   (** Create a (positive) number input with default value given as argument.
    * It also returns a function reading it. **)
   val createNumberInput : ?min:int -> ?max:int -> int -> node * (unit -> int)

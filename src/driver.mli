@@ -101,9 +101,9 @@ val get_element_name : state -> Id.t -> string option
 val get_element_dependencies : state -> Id.t -> Id.t list
 
 (** Return all defined elements in this state that are compatible with
- * the chosen set of categories (given as identifiers) and at most this
- * number of players. **)
-val get_all_elements : state -> Id.t PSet.t -> int -> Id.t list
+ * the provided language, the chosen set of categories (given as
+ * identifiers) and at most this number of players. **)
+val get_all_elements : state -> Translation.language -> Id.t PSet.t -> int -> Id.t list
 
 (** Once the state has been built, categories can be listed. **)
 val all_categories : state -> Id.t list

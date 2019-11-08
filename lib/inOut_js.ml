@@ -275,6 +275,17 @@ let print_block ?(error = false) =
   Utils.compose (print_node ~error) (Utils.compose block_node InOut.add_spaces)
 
 
+let createTextOutput txt =
+  let span = Dom_html.createSpan document in
+  let add txt =
+    Dom.appendChild span (Dom_html.document##createTextNode (Js.string txt)) in
+  add txt ;
+  ((span :> Dom_html.element Js.t), fun txt -> clear_node span ; add txt)
+
+let createNumberOutput n =
+  let (node, set) = createTextOutput (string_of_int n) in
+  (node, fun n -> set (string_of_int n))
+
 let createNumberInput ?min:(mi = 0) ?max:(ma = max_int) d =
   let d = min ma (max mi d) in
   let input = Dom_html.createInput ~_type:(Js.string "number") document in

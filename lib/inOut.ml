@@ -86,6 +86,9 @@ module type T = sig
   val print_block : ?error:bool -> node block -> unit
   val clear_response : unit -> unit
 
+  val createNumberOutput : int -> node * (int -> unit)
+  val createTextOutput : string -> node * (string -> unit)
+
   val createNumberInput : ?min:int -> ?max:int -> int -> node * (unit -> int)
   val createTextInput : string -> node * (unit -> string)
   val createResponsiveListInput : (string * 'a) list -> string -> (string -> (string * 'a) list) -> node * (unit -> 'a list)

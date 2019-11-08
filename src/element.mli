@@ -62,6 +62,11 @@ val provided_attributes : t -> Attribute.attribute list
  * The boolean is lazily evaluated. **)
 val compatible_and_progress : Attribute.constructor_maps -> State.t -> t -> character array -> bool Lazy.t option
 
+(** Given an element and a language, states whether it can be safely translated into
+ * a given language (that is, whether the language is listed amongst all its translations
+ * and that default cases are well-handled in these translations). **)
+val is_translatable : t -> Translation.language -> bool
+
 (** To speed-up the search for instantiation, a cache is left in the state.
  * This type describes this cache. **)
 type cache

@@ -1340,10 +1340,11 @@ let get_element_name s =
 let get_element_dependencies s e =
   PMap.find e s.elements_dependencies
 
-let get_all_elements s cats maxPlayers =
+let get_all_elements s lg cats maxPlayers =
   PMap.foldi (fun e deps el ->
     if PSet.for_all (fun c -> PSet.mem c cats) deps then (
-      let l = Array.length (PMap.find e s.elements).Element.players in
-      if l <= maxPlayers then e :: el else el)
+      let element = PMap.find e s.elements in
+      let l = Array.length element.Element.players in
+      if l <= maxPlayers && Element.is_translatable element lg then e :: el else el)
     else el) s.elements_dependencies []
 

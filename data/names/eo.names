@@ -2,6 +2,8 @@ eo:Esperantumaj nomoj
 fr:Noms à la consonance de l’espéranto
 en:Names sounding like esperanto
 
+default:eo
+
 alternate
 
 size:5
@@ -11,3 +13,4 @@ middleVowels:a,e,i,o,u;aŭ;io,eŭ
 middleConsonant:b,c,d,f,g,j,k,l,m,n,p,r,s,ŝ,t,v,z;h,ĉ,ĝ,lj,ĵ;ĥ,nj;st,kv
 endVowels:o,ino
 endConsonant:ĉjo,njo
+

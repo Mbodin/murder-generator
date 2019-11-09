@@ -102,7 +102,7 @@ let get_names _ =
       try Names.import file
       with Invalid_argument str ->
         invalid_arg ("Error while parsing name file “" ^ fileName ^ "”: " ^ str) in
-    Lwt.return (fileName, generator)) NameFiles.files
+    Lwt.return generator) NameFiles.files
 
 
 (** A type to store what each page of the menu provides. **)
@@ -137,14 +137,11 @@ exception InvalidUrlArgument
 let create_player_information names get_translation parameters =
   let lg = Utils.assert_option __LOC__ parameters.language in
   let generator =
-    let matches fileName =
-      Re.Str.string_match (Re.Str.regexp
-        ("\\([.A-Za-z0-9_]*/\\)*[.A-Za-z0-9_]*" ^ Translation.iso639 lg ^ "\\.names")) fileName 0 in
-    let l = List.filter (fun (n, _) -> matches n) names in
+    let l = List.filter (fun g -> Names.is_default g lg) names in
     if l <> [] then
-      snd (Utils.select_any l)
+      Utils.select_any l
     else if names <> [] then
-      snd (Utils.select_any names)
+      Utils.select_any names
     else Names.empty in
   let (complexity, difficulty) =
     let generalLevel = parameters.general_level in
@@ -167,10 +164,11 @@ let create_player_information names get_translation parameters =
            * assume that it can produce infinitely many different names.
            * We are thus stuck to just generate new ones until a really new
            * one appears. **)
-          let rec aux = function
-            | 0 -> Names.generate generator
+          let rec aux fuel =
+            let name = Names.generate generator in
+            match fuel with
+            | 0 -> name
             | n ->
-              let name = Names.generate generator in
               if List.exists (fun (name', _, _, _) -> name' = name) player_information then
                 aux (n - 1)
               else name in
@@ -541,6 +539,14 @@ let main =
             InOut.Text (get_translation "lowComplexityHighDifficulty") ;
             InOut.Text (get_translation "highComplexityLowDifficulty") ;
             InOut.Text (get_translation "highComplexityHighDifficulty") ])])) ;
+      let (changingNames, get_name_generator) =
+        let lg = get_language parameters in
+        let (default, non_default) = List.partition (fun g -> Names.is_default g lg) names in
+        let names = default @ non_default in
+        IO.createListInput (Utils.list_map_filter (fun g ->
+          let tr = Names.translate g in
+          Option.map (fun txt -> (txt, g))
+            (Translation.translate tr lg ())) names) in
       let player_information = create_player_information names get_translation parameters in
       let constructor_maps = Driver.get_constructor_maps data in
       let translation = Driver.get_translations data in
@@ -580,7 +586,7 @@ let main =
           if internal then Utils.Left r else Utils.Right r) all_constructors in
       let table =
         List.map (fun (name, complexity, difficulty, misc) ->
-          (IO.createTextInput name,
+          (IO.createSettableTextInput name,
            IO.createNumberInput complexity,
            IO.createNumberInput difficulty,
            let getrec =
@@ -626,6 +632,28 @@ let main =
                List.map (fun (c, a, _, t) -> (t, (a, c))) l) in
            getrec := get ;
            (node, get))) player_information in
+      IO.print_block (InOut.P [
+          InOut.Text (get_translation "changingNames") ;
+          InOut.Node changingNames ;
+          InOut.LinkContinuation (true, get_translation "changeNames", fun _ ->
+            match get_name_generator () with
+            | None -> ()
+            | Some gen ->
+              ignore (List.fold_left (fun avoid ((_, _, set_name), _, _, _) ->
+                (** Again, as the generator contains external data, one can hardly
+                 * assume that it can produce infinitely many different names.
+                 * We are thus stuck to just generate new ones until a really new
+                 * one appears. **)
+                let name =
+                  let rec aux fuel =
+                    let name = Names.generate gen in
+                    match fuel with
+                    | 0 -> name
+                    | n -> if PSet.mem name avoid then aux (fuel - 1) else name in
+                  aux 100 in
+                set_name name ;
+                PSet.add name avoid) PSet.empty table))
+        ]) ;
       IO.print_block (InOut.Div (InOut.Normal, [
         InOut.P [ InOut.Text (get_translation "changeThisTable") ] ;
         InOut.Div (InOut.Centered, [
@@ -635,7 +663,7 @@ let main =
                         (InOut.Text (get_translation "difficulty"), InOut.default) ;
                         (InOut.Text (get_translation "miscellaneous"),
                          InOut.default)],
-                       List.map (fun ((name, _), (complexity, _),
+                       List.map (fun ((name, _, _), (complexity, _),
                                       (difficulty, _), (misc, _)) -> ([], [
                            (InOut.Node name, InOut.default) ;
                            (InOut.Node complexity, InOut.default) ;
@@ -645,7 +673,7 @@ let main =
       next_button ~nextText:"startGeneration" w parameters (fun _ ->
         { parameters with
             player_information =
-              List.map (fun ((_, get_name), (_, get_complexity),
+              List.map (fun ((_, get_name, _), (_, get_complexity),
                              (_, get_difficulty), (_, get_misc)) ->
                 (get_name (), get_complexity (),
                  get_difficulty (), List.map snd (get_misc ()))) table

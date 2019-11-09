@@ -1,6 +1,8 @@
 fr:Noms à consonance anglaise
-eo:ANglumumaj nomoj
+eo:Anglumumaj nomoj
 en:Names sounding like English
+
+default:en
 
 alternate
 
@@ -11,3 +13,4 @@ middleVowels:a,e,i,y,ea;ee,o,oo,u,ya,im,on,en;aw,ow,ew
 middleConsonant:br,c,d,f,gh,rg,li,ls,m,nn,pp,rr,s,t,th;b,ch,sh,ph,v,k,st;z,ht,g,fl
 endVowels:own,ay,en,ia,any,eth,ough,e,ing,er
 endConsonant:rson,cester,ms,nes,rne,ly,hn,rd
+

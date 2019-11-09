@@ -205,6 +205,11 @@ body.printable ul.bullet > li::before {
   color: #5c3566 ;
 }
 
+select {
+  margin-left: 1em ;
+  margin-right: 1em ;
+}
+
 /* Table */
 
 table.table {

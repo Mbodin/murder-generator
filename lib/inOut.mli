@@ -105,11 +105,13 @@ module type T = sig
   (** Clears the [response] div in the main webpage. **)
   val clear_response : unit -> unit
 
+
   (** Create a text output as a number which can be later reset. **)
   val createNumberOutput : int -> node * (int -> unit)
 
   (** Create a text output as a number which can be later reset. **)
   val createTextOutput : string -> node * (string -> unit)
+
 
   (** Create a (positive) number input with default value given as argument.
    * It also returns a function reading it. **)
@@ -119,10 +121,18 @@ module type T = sig
    * It also returns a function reading it. **)
   val createTextInput : string -> node * (unit -> string)
 
+  (** Similar to [createTextInput], but also return a function to set its current value. **)
+  val createSettableTextInput : string -> node * (unit -> string) * (string -> unit)
+
+  (** Create a drop-down list where the user can choose one of its items.
+   * If the list is empty, the fucntion reading it returns [None]. **)
+  val createListInput : (string * 'a) list -> node * (unit -> 'a option)
+
   (** Create a text input meant to return a list of things.
    * Each time that the user type a string, it is fed to its argument function.
-   * The strings of the returned list is shown to the user.  The final list can
-   * be fetched with the function returned with the node.
+   * The strings of the returned list is shown to the user.  If the user chooses
+   * one of these elements, it is added to a list displayed next to the input.
+   * This final list can be fetched with the function returned with the node.
    * The initial list and a placeholder string is given to the function to help
    * the user. **)
   val createResponsiveListInput : (string * 'a) list -> string -> (string -> (string * 'a) list) -> node * (unit -> 'a list)

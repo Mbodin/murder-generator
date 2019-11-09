@@ -295,10 +295,34 @@ let createNumberInput ?min:(mi = 0) ?max:(ma = max_int) d =
   ((input :> Dom_html.element Js.t), fun _ ->
     min ma (max mi (int_of_string (Js.to_string input##.value))))
 
-let createTextInput txt =
+let createSettableTextInput txt =
   let input = Dom_html.createInput ~_type:(Js.string "text") document in
   input##.value := Js.string txt ;
-  ((input :> Dom_html.element Js.t), fun _ -> Js.to_string input##.value)
+  let get _ = Js.to_string input##.value in
+  let set str = input##.value := Js.string str in
+  ((input :> Dom_html.element Js.t), get, set)
+
+let createTextInput str =
+  let (node, get, _) = createSettableTextInput str in
+  (node, get)
+
+let createListInput l =
+  if l = [] then (
+    let input = Dom_html.createSelect document in
+    input##.disabled := Js.bool true ;
+    ((input :> Dom_html.element Js.t), fun _ -> None)
+  ) else (
+    let input = Dom_html.createSelect document in
+    List.iteri (fun i (txt, _) ->
+      let i = "option_" ^ string_of_int i in
+      let o = Dom_html.createOption document in
+      o##.value := Js.string i ;
+      Dom.appendChild o (Dom_html.document##createTextNode (Js.string txt)) ;
+      Dom.appendChild input o) l ;
+    ((input :> Dom_html.element Js.t), fun _ ->
+      let i = input##.selectedIndex in
+      Option.map snd (List.nth_opt l i))
+  )
 
 let createResponsiveListInput default placeholder get =
   let main = Dom_html.createDiv document in

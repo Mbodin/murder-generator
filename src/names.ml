@@ -17,9 +17,12 @@ type data =
 type t = {
     translate : unit Translation.t ;
     data : data ;
+    default : Translation.language PSet.t
   }
 
 let translate g = g.translate
+
+let is_default g lg = PSet.mem lg g.default
 
 (** A more furnished automaton. **)
 type 'a alternative = {
@@ -118,7 +121,8 @@ let generate g =
 
 let empty = {
     translate = Translation.empty ;
-    data = List [""]
+    data = List [""] ;
+    default = PSet.empty
   }
 
 let import file =
@@ -141,11 +145,20 @@ let import file =
       | Some (key, value) ->
         Enum.junk file ;
         cont_then key value in
-  let rec aux tr =
+  let rec aux tr default =
     get_key_value
       (fun lg name ->
-        let lg = Translation.from_iso639 lg in
-        aux (Translation.add tr lg () name))
+        if lg = "default" then
+          let elements =
+            if name = "" then
+              PSet.empty
+            else
+              let l = String.split_on_char ',' name in
+              PSet.from_list (List.map Translation.from_iso639 l) in
+          aux tr (PSet.merge elements default)
+        else
+          let lg = Translation.from_iso639 lg in
+          aux (Translation.add tr lg () name) default)
       (fun _ ->
         let data =
           match Enum.get file with
@@ -181,6 +194,7 @@ let import file =
             | _ -> invalid_arg ("Invalid name file: invalid kind “" ^ k ^ "”.") in {
           translate = tr ;
           data = data ;
+          default = default
         }) in
-  aux Translation.empty
+  aux Translation.empty PSet.empty
 

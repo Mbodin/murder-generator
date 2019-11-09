@@ -459,7 +459,7 @@ let createNumberInput ?min:(mi = 0) ?max:(ma = max_int) n =
       v := max mi (min !v ma))) in
   (node, fun _ -> !v)
 
-let createTextInput str =
+let createSettableTextInput str =
   let txt = ref str in
   let node link =
     Print.print (" <" ^ !txt ^ "> " ^ link (fun _ ->
@@ -467,7 +467,30 @@ let createTextInput str =
       flush stdout ;
       let str = input_line stdin in
       txt := str) ^ " ") in
-  (node, fun _ -> !txt)
+  (node, (fun _ -> !txt), (fun str -> txt := str))
+
+let createTextInput str =
+  let (node, get, _) = createSettableTextInput str in
+  (node, get)
+
+let createListInput l =
+  if l = [] then (
+    let node link = Print.print " <>" in
+    (node, fun _ -> None)
+  ) else (
+    let index = ref 0 in
+    let node link =
+      let txt =
+        match List.nth_opt l !index with
+        | None -> ""
+        | Some (txt, _) -> txt in
+      Print.print (" <" ^ txt ^ "> " ^ link (fun _ ->
+        List.iteri (fun i (txt, _) ->
+          print_string (string_of_int i ^ ": " ^ txt)) l ;
+        flush stdout ;
+        numberInput (fun _ -> !index) (fun i -> index := i)) ^ " ") in
+    (node, fun _ -> Option.map snd (List.nth_opt l !index))
+  )
 
 let createResponsiveListInput default _ get =
   let l = ref default in

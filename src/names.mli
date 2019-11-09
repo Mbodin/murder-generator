@@ -16,3 +16,6 @@ val generate : t -> string
 (** Translate the generator. **)
 val translate : t -> unit Translation.t
 
+(** States whether this generator is marked as default for this particular language. **)
+val is_default : t -> Translation.language -> bool
+

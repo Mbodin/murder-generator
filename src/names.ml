@@ -1,11 +1,25 @@
+open ExtList
 
-(** This type works like an automaton. **)
-type 'a t = {
+(** A specification of the language sounds.
+ * This type works like an automaton, the parameterised type being the state system. **)
+type 'a automaton = {
     init : unit -> 'a (** The initial state. **) ;
     transition : 'a -> string * 'a option
       (** A transition.
        * Returning [None] means that the transition halted. **)
   }
+
+(** All the possible data stored in a name file. **)
+type data =
+  | Automaton : 'a automaton -> data
+  | List of string list
+
+type t = {
+    translate : unit Translation.t ;
+    data : data ;
+  }
+
+let translate g = g.translate
 
 (** A more furnished automaton. **)
 type 'a alternative = {
@@ -49,9 +63,20 @@ let convertAlternative spec =
             Some (size - 1, Some s, str))
   }
 
-
+(** A simple type to represent in a transition system the alternance of vowels and consonant. **)
 type vowelConsonant = int * bool option * string
 
+(** Create a transition system for vowels and consonants.
+ * It takes as an argument six string specifying how the language sounds, as well
+ * as the expected size of the output (in term of the given vowels and consonants).
+ * Each string is a list of list separated by [,] for the inner lists and [;] for
+ * the outer.
+ * The inner lists (separated by [,]) commutes, whilst the outer lists represent
+ * changes in probability (the first elements being more probable).
+ * The six lists corresponds to:
+ * - initial vowels and consonants;
+ * - middle vowels and consonants;
+ * - end vowels and consonants. **)
 let createVowelConsonant size initV initC middleV middleC endV endC =
   let get_spec f strspec =
     let rec aux = function
@@ -63,7 +88,7 @@ let createVowelConsonant size initV initC middleV middleC endV endC =
     snd (aux (List.map (String.split_on_char ',')
       (String.split_on_char ';' strspec))) in
   let add b e = (b, e) in
-  convertAlternative {
+  Automaton (convertAlternative {
       alternative_size = size ;
       alternative_init = get_spec (add false) initV @ get_spec (add true) initC ;
       alternative_transition = 
@@ -74,10 +99,10 @@ let createVowelConsonant size initV initC middleV middleC endV endC =
         let endV = get_spec Utils.id endV in
         let endC = get_spec Utils.id endC in
         fun b -> if b then endV else endC
-    }
+    })
 
 
-let generate data =
+let generateAutomaton data =
   let rec aux str s =
     let (suffix, next) = data.transition s in
     let str = str ^ suffix in
@@ -85,4 +110,77 @@ let generate data =
     | None -> str
     | Some s -> aux str s in
   aux "" (data.init ())
+
+let generate g =
+  match g.data with
+  | Automaton data -> generateAutomaton data
+  | List l -> Utils.select_any l
+
+let empty = {
+    translate = Translation.empty ;
+    data = List [""]
+  }
+
+let import file =
+  let file = List.enum (String.split_on_char '\n' file) in
+  let file = Enum.concat (Enum.map (fun str -> List.enum (String.split_on_char '\r' str)) file) in
+  let file = Enum.filter ((<>) "") file in
+  Enum.force file ;
+  let split_at i line =
+    let key = String.sub line 0 i in
+    let value = String.sub line (1 + i) (String.length line - i - 1) in
+    (key, value) in
+  let split line =
+    Option.map (fun i -> split_at i line) (String.index_opt line ':') in
+  let get_key_value cont_then cont_else =
+    match Enum.peek file with
+    | None -> cont_else ()
+    | Some line ->
+      match split line with
+      | None -> cont_else ()
+      | Some (key, value) ->
+        Enum.junk file ;
+        cont_then key value in
+  let rec aux tr =
+    get_key_value
+      (fun lg name ->
+        let lg = Translation.from_iso639 lg in
+        aux (Translation.add tr lg () name))
+      (fun _ ->
+        let data =
+          match Enum.get file with
+          | None -> invalid_arg "Invalid name file: no kind given."
+          | Some k ->
+            match k with
+            | "alternate" ->
+              let assoc =
+                match Utils.list_map_option split (List.of_enum file) with
+                | None -> invalid_arg "Invalid name file of kind “alternate”."
+                | Some assoc -> assoc in
+              let get key =
+                match List.assoc_opt key assoc with
+                | None ->
+                  invalid_arg ("Invalid name file: missing key “" ^ key
+                               ^ "” for kind “alternate”.")
+                | Some v -> v in
+              let startV = get "startVowels" in
+              let startC = get "startConsonant" in
+              let middleV = get "middleVowels" in
+              let middleC = get "middleConsonant" in
+              let endV = get "endVowels" in
+              let endC = get "endConsonant" in
+              let size =
+                let raw = get "size" in
+                try int_of_string raw
+                with _ ->
+                  invalid_arg ("Invalid name file: invalid value for key “size”"
+                               ^ " for kind “alternate”: “" ^ raw ^ "”.") in
+              createVowelConsonant size startV startC middleV middleC endV endC
+            | "list" ->
+              List (List.of_enum file)
+            | _ -> invalid_arg ("Invalid name file: invalid kind “" ^ k ^ "”.") in {
+          translate = tr ;
+          data = data ;
+        }) in
+  aux Translation.empty
 

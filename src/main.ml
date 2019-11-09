@@ -62,13 +62,12 @@ let print_list andw = function
 let get_data _ =
   let intermediate = ref Driver.empty_intermediary in
   Lwt_list.iter_p (fun fileName ->
-      let%lwt file = IO.get_file fileName in
-      add_trace ("getting " ^ fileName ^ " (" ^ file_signature file ^ ")") ;
-      let lexbuf = Lexing.from_string file in
-      let file = Driver.parse_lexbuf fileName lexbuf in
-      intermediate := Driver.prepare_declarations !intermediate file ;
-      Lwt.return ())
-    MurderFiles.files ;%lwt
+    let%lwt file = IO.get_file fileName in
+    add_trace ("getting " ^ fileName ^ " (" ^ file_signature file ^ ")") ;
+    let lexbuf = Lexing.from_string file in
+    let file = Driver.parse_lexbuf fileName lexbuf in
+    intermediate := Driver.prepare_declarations !intermediate file ;
+    Lwt.return ()) MurderFiles.files ;%lwt
   if not (Driver.is_intermediary_final !intermediate) then (
     let categories = Driver.categories_to_be_defined !intermediate in
     let (attributes, contacts) = Driver.attributes_to_be_defined !intermediate in
@@ -93,6 +92,18 @@ let get_data _ =
        ^ missing "events" events
        ^ missing "language tags" tags)))
   else Lwt.return (Driver.parse !intermediate)
+
+(** Get and parse each name file. **)
+let get_names _ =
+  Lwt_list.map_p (fun fileName ->
+    let%lwt file = IO.get_file fileName in
+    add_trace ("getting " ^ fileName ^ " (" ^ file_signature file ^ ")") ;
+    let generator =
+      try Names.import file
+      with Invalid_argument str ->
+        invalid_arg ("Error while parsing name file “" ^ fileName ^ "”: " ^ str) in
+    Lwt.return (fileName, generator)) NameFiles.files
+
 
 (** A type to store what each page of the menu provides. **)
 type parameters = {
@@ -123,23 +134,18 @@ let urltag_categories = "cats"
 exception InvalidUrlArgument
 
 (** Update player informations from the parameters such that it matches the [player_number] data. **)
-let create_player_information get_translation parameters =
-  let get_language p = Utils.assert_option __LOC__ p.language in
-  let startV = get_translation "nameStartVowels" in
-  let startC = get_translation "nameStartConsonant" in
-  let middleV = get_translation "nameMiddleVowels" in
-  let middleC = get_translation "nameMiddleConsonant" in
-  let endV = get_translation "nameEndVowels" in
-  let endC = get_translation "nameEndConsonant" in
-  let size =
-    let raw = get_translation "nameSize" in
-    try int_of_string raw
-    with Failure _ ->
-      failwith ("The key `nameSize' for language `" ^
-                (Translation.iso639 (get_language parameters)) ^ "' is `" ^ raw
-                ^ "', which is not a valid number.") in
-  let seed =
-    Names.createVowelConsonant size startV startC middleV middleC endV endC in
+let create_player_information names get_translation parameters =
+  let lg = Utils.assert_option __LOC__ parameters.language in
+  let generator =
+    let matches fileName =
+      Re.Str.string_match (Re.Str.regexp
+        ("\\([.A-Za-z0-9_]*/\\)*[.A-Za-z0-9_]*" ^ Translation.iso639 lg ^ "\\.names")) fileName 0 in
+    let l = List.filter (fun (n, _) -> matches n) names in
+    if l <> [] then
+      snd (Utils.select_any l)
+    else if names <> [] then
+      snd (Utils.select_any names)
+    else Names.empty in
   let (complexity, difficulty) =
     let generalLevel = parameters.general_level in
     let generalComplexity = parameters.general_complexity in
@@ -157,14 +163,14 @@ let create_player_information get_translation parameters =
   else
     List.fold_left (fun player_information _ ->
         let name =
-          (** Because the seed contains external data, one can hardly
+          (** Because the generator contains external data, one can hardly
            * assume that it can produce infinitely many different names.
            * We are thus stuck to just generate new ones until a really new
            * one appears. **)
           let rec aux = function
-            | 0 -> Names.generate seed
+            | 0 -> Names.generate generator
             | n ->
-              let name = Names.generate seed in
+              let name = Names.generate generator in
               if List.exists (fun (name', _, _, _) -> name' = name) player_information then
                 aux (n - 1)
               else name in
@@ -221,6 +227,7 @@ let main =
         else previous @ [ InOut.Space ] @ next)) in
     (** We request the data without forcing it yet. **)
     let data = get_data () in
+    let names = get_names () in
     let rec ask_for_languages _ parameters =
       (** Showing to the user all available languages. **)
       add_trace "ask_for_languages" ;
@@ -274,7 +281,9 @@ let main =
                       { parameters with
                           player_number = readNumberOfPlayers () ;
                           computation_power = 0. } in
-                    let player_information = create_player_information get_translation parameters in
+                    let%lwt names = names in
+                    let player_information =
+                      create_player_information names get_translation parameters in
                     let parameters = { parameters with player_information = player_information } in
                     IO.clear_response () ;
                     generate (Lwt.task ()) parameters))
@@ -502,6 +511,7 @@ let main =
       add_trace "ask_for_player_constraints" ;
       let get_translation = get_translation parameters in
       let%lwt data = data in
+      let%lwt names = names in
       let translate_categories_generic =
         let translate_categories =
           (Driver.get_translations data).Translation.category in
@@ -531,7 +541,7 @@ let main =
             InOut.Text (get_translation "lowComplexityHighDifficulty") ;
             InOut.Text (get_translation "highComplexityLowDifficulty") ;
             InOut.Text (get_translation "highComplexityHighDifficulty") ])])) ;
-      let player_information = create_player_information get_translation parameters in
+      let player_information = create_player_information names get_translation parameters in
       let constructor_maps = Driver.get_constructor_maps data in
       let translation = Driver.get_translations data in
       let constructor_infos c =
@@ -645,9 +655,10 @@ let main =
       (** Starting the generation. **)
       add_trace "generate" ;
       let get_translation = get_translation parameters in
+      let%lwt names = names in
       let parameters =
         { parameters with
-            player_information = create_player_information get_translation parameters } in
+            player_information = create_player_information names get_translation parameters } in
       let state =
         IO.pause () ;%lwt
         let%lwt data = data in

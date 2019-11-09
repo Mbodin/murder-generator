@@ -1,26 +1,18 @@
 (** Module Names
- * Deals with name generation. **)
+ * This module deals with name generation. **)
 
-(** A specification of the language sounds.
- * The parameterised type is the state system. **)
-type 'a t
+(** The type of name generator. **)
+type t
 
-(** A simple type to represent the alternance of vowels and consonant. **)
-type vowelConsonant
+(** A dummy generator that always generate the empty name. **)
+val empty : t
 
-(** Create a transition system for vowels and consonants.
- * It takes as an argument six string specifying how the language sounds, as well
- * as the expected size of the output (in term of the given vowels and consonants).
- * Each string is a list of list separated by [,] for the inner lists and [;] for
- * the outer.
- * The inner lists (separated by [,]) commutes, whilst the outer lists represent
- * changes in probability (the first elements being more probable).
- * The six lists corresponds to:
- * - initial vowels and consonants;
- * - middle vowels and consonants;
- * - end vowels and consonants. **)
-val createVowelConsonant : int -> string -> string -> string -> string -> string -> string -> vowelConsonant t
+(** Given the content of a name file, returns a name generator. **)
+val import : string -> t
 
-(** Generates a random name. **)
-val generate : 'a t -> string
+(** Generate a random name. **)
+val generate : t -> string
+
+(** Translate the generator. **)
+val translate : t -> unit Translation.t
 

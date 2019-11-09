@@ -24,6 +24,12 @@ let startLoading _ =
     pause ())
   else Lwt_js.yield ()
 
+let setLoading p =
+  ignore (Js.Unsafe.fun_call (Js.Unsafe.js_expr "startLoading")
+            [| Js.Unsafe.inject (Js.number_of_float p) |]) ;
+  loading := true ;
+  pause ()
+
 
 let log msg = Firebug.console##log (Js.string msg)
 

@@ -66,6 +66,7 @@ module type T = sig
   val pause : unit -> unit Lwt.t
   val stopLoading : unit -> unit Lwt.t
   val startLoading : unit -> unit Lwt.t
+  val setLoading : float -> unit Lwt.t
 
   val set_printing_mode : unit -> unit
   val unset_printing_mode : unit -> unit

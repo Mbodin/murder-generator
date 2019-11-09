@@ -60,14 +60,17 @@ val add_spaces : 'node block -> 'node block
  * It is satisfied by the various files [lib/inOut_*.ml]. **)
 module type T = sig
 
-  (** Pauses the program for a short amount of time. **)
+  (** Pause the program for a short amount of time. **)
   val pause : unit -> unit Lwt.t
 
-  (** Stops the loading animation. **)
+  (** Stop the loading animation. **)
   val stopLoading : unit -> unit Lwt.t
 
-  (** Starts the loading animation. **)
+  (** Start the loading animation. **)
   val startLoading : unit -> unit Lwt.t
+
+  (** Given a float between [0.] and [1.], set the corresponding loading in the loading animation. **)
+  val setLoading : float -> unit Lwt.t
 
   (** Set or unset the printing mode, a mode more adapted to printing. **)
   val set_printing_mode : unit -> unit

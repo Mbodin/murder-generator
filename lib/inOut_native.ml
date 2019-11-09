@@ -12,7 +12,13 @@ let startLoading _ =
   print_newline () ;
   print_endline "..." ;
   pause ()
-
+let setLoading p =
+  let p = max 0. p in
+  let p = min 1. p in
+  let p = 100. *. p in
+  let p = int_of_float p in
+  print_endline ("... " ^ string_of_int p ^ "%") ;
+  pause ()
 
 let set_printing_mode = Utils.id
 let unset_printing_mode = Utils.id

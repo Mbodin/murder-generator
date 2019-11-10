@@ -291,6 +291,7 @@ let main =
       let (shortcut, readShortcut) =
         IO.createFileImport ["json"] (fun _ ->
           IO.clear_response () ;
+          IO.setLoading 0.2 ;%lwt
           IO.startLoading ()) in
       IO.print_block (InOut.Div (InOut.Normal, [
           InOut.P [ InOut.Text (get_translation "importFileShortcut") ] ;
@@ -408,9 +409,10 @@ let main =
         ] ;
       let get_translation = get_translation parameters in
       (** Forcing the data to be loaded. **)
-      (if Lwt.state data = Lwt.Sleep then
-        IO.startLoading ()
-      else Lwt.return ()) ;%lwt
+      (if Lwt.state data = Lwt.Sleep then (
+         IO.setLoading 0.2 ;%lwt
+         IO.startLoading ()
+       ) else Lwt.return ()) ;%lwt
       let%lwt data = data in
       IO.stopLoading () ;%lwt
       let translate_categories =
@@ -687,6 +689,7 @@ let main =
       (** Starting the generation. **)
       add_trace "generate" ;
       let get_translation = get_translation parameters in
+      IO.setLoading 0. ;%lwt
       let%lwt names = names in
       let parameters =
         { parameters with
@@ -720,7 +723,7 @@ let main =
                     (fun (state, diff') ->
                       (state, Element.merge_attribute_differences diff diff'))))
               (Some (state, diff)) parameters.player_information) in
-        Solver.solve_with_difference IO.pause global state diff objectives in
+        Solver.solve_with_difference IO.setLoading global state diff objectives in
       choose_formats state task parameters
     and choose_formats state (cont, w) parameters =
       (** Asking the user to what formats we should export the scenario. **)

@@ -16,7 +16,7 @@
         <g id = "loadingSVGScale">
           <g transform = "translate(-50, -50)">
             <circle cx = "50" cy = "50" r = "50" fill = "#75507b" />
-            <path id = "rotatingPath" d = "M 80 50 A 30 30 0 0 1 50 20" fill = "none" stroke = "#ad7fa8" stroke-width = "5px" />
+            <path id = "rotatingPath" d = "M 80 50 A 30 30 0 0 0 50 20" fill = "none" stroke = "#ad7fa8" stroke-width = "5px" />
             <animateTransform attributeType = "xml" attributeName = "transform" type = "rotate" from = "0 50 50" to = "360 50 50" dur = "2s" additive = "sum" repeatCount = "indefinite" />
           </g>
         </g>
@@ -25,7 +25,7 @@
 
     <noscript>
       This webpage needs JavaScript to work properly.
-      If you want to, you can check the source code of the project <a href = "https://github.com/Mbodin/murder-generator">there</a>
+      If you want to, you can check the source code of the project <a href = "https://github.com/Mbodin/murder-generator">there</a>.
     </noscript>
     <script><!--//--><![CDATA[//><!--
       /* @license magnet:?xt=urn:btih:0b31508aeb0634b347b8270c7bee4d411b5d4109&dn=agpl-3.0.txt AGPL-v3-or-Later */
@@ -40,6 +40,7 @@
           if (progress === undefined) progress = 0.2
           if (progress < 0.1) progress = 0.1
           if (progress > 0.9) progress = 0.9
+          progress = 0.1 + 0.8 * progress
           var dir = "0 1 "
           if (progress > 0.5) dir = "1 1 "
           var angle = 2 * Math.PI * progress

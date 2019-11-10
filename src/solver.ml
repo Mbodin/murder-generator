@@ -321,14 +321,72 @@ let final g (s, evs) o m =
     List.map (read_element g) (BidirectionalList.to_list g.all_elements) in
   repeat g (s, evs) m l (get_branch g 1 20)
 
-(** This function performs a simulted annealing based on [wide_step].
+(** An heuristic for the next temperature of the simulated annealing of [wider_step]
+ * for when no better position have been found. **)
+let next_temperature g temperature =
+  get_branch g 6 8 * temperature / 10 - 1
+
+(** An heuristic for the next temperature of the simulated annealing for when
+ * a better position has been found. **)
+let next_temperature_evs g temperature m evs evs' =
+  if Element.difference_weigth m > 0 || evs' > evs then
+    if temperature <= 2 then
+      temperature
+    else get_branch g 97 99 * temperature / 100 - 1
+  else get_branch g 8 9 * temperature / 10 - 1
+
+(** The maximum number of iterations that we are willing to take in the simulated
+ * annealing. **)
+let max_steps g = get_branch g 1_000 1_000_000
+
+(** Estimate how many steps will be needed for the simulated annealing to terminate. **)
+let estimate_steps g iteration temperature m evs =
+  (** Estimate the number of steps in a given scenario where the next temperature
+   * is given by [next]. **)
+  let estimate next =
+    let rec aux i temperature =
+      if temperature <= 0 || i > max_steps g then i
+      else aux (1 + i) (next temperature) in
+    aux (1 + iteration) temperature in
+  Utils.average [
+      estimate (next_temperature g) ;
+      estimate (fun temp -> next_temperature_evs g temp m evs evs) ;
+      estimate (fun temp ->
+        match Random.int 2 with
+        | 0 -> next_temperature g temp
+        | 1 -> next_temperature_evs g temp m evs (evs / 2)
+        | 2 -> next_temperature_evs g temp m evs (evs + 100)
+        | _ -> assert false)
+    ]
+
+(** This function performs a simulated annealing based on [wide_step].
  * This last function is considered costly and we thus starts using the [Lwt.t]
  * type here. **)
 let wider_step pause g (s, evs) o m =
-  let rec aux temperature g (s, evs) m =
-    if temperature <= 0 then
+  (** Each step of the simulation carries the following information:
+   *  - how many steps have already been taken and how many more are estimated to be
+   *    needed,
+   *  - the current temperature,
+   *  - global informations,
+   *  - the current state,
+   *  - the current attribute difference. **)
+  let rec aux iteration estimate temperature g (s, evs) m =
+    if temperature <= 0 || iteration > max_steps g then
       Lwt.return (final g (s, evs) o m)
     else (
+      let estimate =
+        (** Estimating the number of step can be a costly operation.
+         * We thus only redo it when we reach specific thresholds. **)
+        if iteration >= estimate || iteration <= 3
+           || List.mem (estimate - iteration) [
+                 10; 100;
+                 estimate / 5 ; estimate / 3 ; estimate / 2 ;
+                 2 * estimate / 3 ; 9 * estimate / 10 ] then
+          estimate_steps g iteration temperature m evs
+        else estimate - 1 in
+      let progress =
+        float_of_int iteration /. float_of_int estimate in
+      let pause _ = pause progress in
       pause () ;%lwt
       if Utils.assert_defend then assert (evs = evaluate_state o (getv s)) ;
       let rec compute g (s, evs) = function
@@ -350,18 +408,13 @@ let wider_step pause g (s, evs) o m =
       match Utils.argmax (fun (_, (s1, evs1), _) (_, (s2, evs2), _) ->
               compare evs1 evs2) l with
       | Some (g, (s', evs'), m) ->
-        let temperature =
-          if Element.difference_weigth m > 0 || evs' > evs then
-            if temperature <= 2 then
-              temperature
-            else get_branch g 97 99 * temperature / 100 - 1
-          else get_branch g 8 9 * temperature / 10 - 1 in
-        aux temperature g (s', evs') m
+        let temperature = next_temperature_evs g temperature m evs evs' in
+        aux (1 + iteration) estimate temperature g (s', evs') m
       | None ->
-        aux (get_branch g 6 8 * temperature / 10 - 1) g (s, evs) m) in
+        aux (1 + iteration) estimate (next_temperature g temperature) g (s, evs) m) in
   let distance_to_objective =
     max 0 (int_of_float (sqrt (float_of_int (abs evs)))) in
-  aux (distance_to_objective / 3 + 1) g (s, evs) m
+  aux 0 0 (distance_to_objective / 3 + 1) g (s, evs) m
 
 let solve_with_difference pause g s m o =
   let g = { g with all_elements =

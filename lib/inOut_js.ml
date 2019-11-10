@@ -10,6 +10,7 @@ let pause _ = Lwt_js.sleep 0.02
 
 (** Whether the loading animation is currently running. **)
 let loading = ref true
+let loadingProgress = ref 0.2
 
 let stopLoading _ =
   if !loading then (
@@ -17,17 +18,19 @@ let stopLoading _ =
     loading := false) ;
   Lwt_js.yield ()
 
+let callStartLoading _ =
+  ignore (Js.Unsafe.fun_call (Js.Unsafe.js_expr "startLoading")
+            [| Js.Unsafe.inject (Js.number_of_float !loadingProgress) |])
+
 let startLoading _ =
   if not !loading then (
-    ignore (Js.Unsafe.fun_call (Js.Unsafe.js_expr "startLoading") [||]) ;
-    loading := true ;
-    pause ())
-  else Lwt_js.yield ()
+    callStartLoading () ;
+    loading := true) ;
+  pause ()
 
 let setLoading p =
-  ignore (Js.Unsafe.fun_call (Js.Unsafe.js_expr "startLoading")
-            [| Js.Unsafe.inject (Js.number_of_float p) |]) ;
-  loading := true ;
+  loadingProgress := p ;
+  if !loading then callStartLoading () ;
   pause ()
 
 

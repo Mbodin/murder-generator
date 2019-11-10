@@ -239,6 +239,8 @@ let take_any = function
 let sum = List.fold_left (+) 0
 let array_sum = Array.fold_left (+) 0
 
+let average l = sum l / List.length l
+
 let count f = List.fold_left (fun v x -> v + if f x then 1 else 0) 0
 let array_count f = Array.fold_left (fun v x -> v + if f x then 1 else 0) 0
 

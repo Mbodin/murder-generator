@@ -195,6 +195,9 @@ val sum : int list -> int
 (** Sum the integers of the array. **)
 val array_sum : int array -> int
 
+(** COmpute the average number of the list. **)
+val average : int list -> int
+
 (** Indicate how many elements of the list satisfy the predicates. **)
 val count : ('a -> bool) -> 'a list -> int
 

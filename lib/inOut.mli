@@ -69,7 +69,9 @@ module type T = sig
   (** Start the loading animation. **)
   val startLoading : unit -> unit Lwt.t
 
-  (** Given a float between [0.] and [1.], set the corresponding loading in the loading animation. **)
+  (** Given a float between [0.] and [1.], set the corresponding loading in the loading animation.
+   * This function does not change the state of the animation: if the animation is stopped, it
+   * will not start it. **)
   val setLoading : float -> unit Lwt.t
 
   (** Set or unset the printing mode, a mode more adapted to printing. **)

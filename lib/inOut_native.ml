@@ -27,8 +27,7 @@ let unset_printing_mode = Utils.id
 let get_file fileName =
   let file = open_in fileName in
   let rec aux _ =
-    try let str = input_line file in
-        str :: aux ()
+    try let str = input_line file in str :: aux ()
     with End_of_file -> [] in
   Lwt.return (String.concat "\n" (aux ()))
 

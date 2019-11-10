@@ -539,14 +539,17 @@ let main =
             InOut.Text (get_translation "lowComplexityHighDifficulty") ;
             InOut.Text (get_translation "highComplexityLowDifficulty") ;
             InOut.Text (get_translation "highComplexityHighDifficulty") ])])) ;
-      let (changingNames, get_name_generator) =
+      let (changingNames, get_name_generator, changingNamesOK) =
         let lg = get_language parameters in
         let (default, non_default) = List.partition (fun g -> Names.is_default g lg) names in
         let names = default @ non_default in
-        IO.createListInput (Utils.list_map_filter (fun g ->
-          let tr = Names.translate g in
-          Option.map (fun txt -> (txt, g))
-            (Translation.translate tr lg ())) names) in
+        let l =
+          Utils.list_map_filter (fun g ->
+            let tr = Names.translate g in
+            Option.map (fun txt -> (txt, g))
+              (Translation.translate tr lg ())) names in
+        let (node, get) = IO.createListInput l in
+        (node, get, l <> []) in
       let player_information = create_player_information names get_translation parameters in
       let constructor_maps = Driver.get_constructor_maps data in
       let translation = Driver.get_translations data in
@@ -632,28 +635,29 @@ let main =
                List.map (fun (c, a, _, t) -> (t, (a, c))) l) in
            getrec := get ;
            (node, get))) player_information in
-      IO.print_block (InOut.P [
-          InOut.Text (get_translation "changingNames") ;
-          InOut.Node changingNames ;
-          InOut.LinkContinuation (true, get_translation "changeNames", fun _ ->
-            match get_name_generator () with
-            | None -> ()
-            | Some gen ->
-              ignore (List.fold_left (fun avoid ((_, _, set_name), _, _, _) ->
-                (** Again, as the generator contains external data, one can hardly
-                 * assume that it can produce infinitely many different names.
-                 * We are thus stuck to just generate new ones until a really new
-                 * one appears. **)
-                let name =
-                  let rec aux fuel =
-                    let name = Names.generate gen in
-                    match fuel with
-                    | 0 -> name
-                    | n -> if PSet.mem name avoid then aux (fuel - 1) else name in
-                  aux 100 in
-                set_name name ;
-                PSet.add name avoid) PSet.empty table))
-        ]) ;
+      if changingNamesOK then
+        IO.print_block (InOut.P [
+            InOut.Text (get_translation "changingNames") ;
+            InOut.Node changingNames ;
+            InOut.LinkContinuation (true, get_translation "changeNames", fun _ ->
+              match get_name_generator () with
+              | None -> ()
+              | Some gen ->
+                ignore (List.fold_left (fun avoid ((_, _, set_name), _, _, _) ->
+                  (** Again, as the generator contains external data, one can hardly
+                   * assume that it can produce infinitely many different names.
+                   * We are thus stuck to just generate new ones until a really new
+                   * one appears. **)
+                  let name =
+                    let rec aux fuel =
+                      let name = Names.generate gen in
+                      match fuel with
+                      | 0 -> name
+                      | n -> if PSet.mem name avoid then aux (fuel - 1) else name in
+                    aux 100 in
+                  set_name name ;
+                  PSet.add name avoid) PSet.empty table))
+          ]) ;
       IO.print_block (InOut.Div (InOut.Normal, [
         InOut.P [ InOut.Text (get_translation "changeThisTable") ] ;
         InOut.Div (InOut.Centered, [

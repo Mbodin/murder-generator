@@ -1,4 +1,11 @@
 
+let get_file fileName =
+  let file = open_in fileName in
+  let rec aux _ =
+    try let str = input_line file in str :: aux ()
+    with End_of_file -> [] in
+  String.concat "\n" (aux ())
+
 let test_date _ =
   let test d =
     assert (Date.compare d (Date.from_rfc2445 (Date.rfc2445 d)) = 0) in
@@ -84,29 +91,34 @@ let test_translations _ =
   List.iter (fun lg ->
     List.iter (fun key ->
       ignore (translate key lg)) used) languages ;
-  let _test_name_generation _ =
-    List.iter (fun lg ->
-      print_endline ("Testing name generation for languages "
-                     ^ Translation.iso639 lg ^ ".") ;
-      let startV = translate "nameStartVowels" lg in
-      let startC = translate "nameStartConsonant" lg in
-      let middleV = translate "nameMiddleVowels" lg in
-      let middleC = translate "nameMiddleConsonant" lg in
-      let endV = translate "nameEndVowels" lg in
-      let endC = translate "nameEndConsonant" lg in
-      List.iter (fun i ->
-          print_endline ("Names of size " ^ string_of_int i ^ ": " ^
-            let seed =
-              Names.createVowelConsonant i startV startC middleV middleC endV endC in
-            String.concat ", " (List.map (fun _ ->
-                Names.generate seed) (Utils.seq 10))))
-        (Utils.seq_range 3 8)) languages in
   if not !ok then
-    failwith "There were some missing translations." ;
+    failwith "Error: There were some missing translations." ;
   languages
 
+let test_name_generation languages =
+  print_endline ("Number of name files: " ^
+                 string_of_int (List.length NameFiles.files)) ;
+  let read_file fileName =
+    print_endline ("Reading file " ^ fileName) ;
+    let file = get_file fileName in
+    let gen = Names.import file in
+    ignore (Names.generate gen) ;
+    (fileName, gen) in
+  let generators = List.map read_file NameFiles.files in
+  List.iter (fun lg ->
+    let has_default =
+      List.fold_left (fun has_default (fileName, gen) ->
+        let tr = Names.translate gen in
+         if Translation.translate tr lg () = None then
+           print_endline ("Warning: Missing translation of `" ^ fileName
+                          ^ "' for language " ^ Translation.iso639 lg ^ ".") ;
+        has_default || Names.is_default gen lg) false generators in
+    if not has_default then
+      print_endline ("Warning: No default name generation for language "
+                     ^ Translation.iso639 lg ^ ".")) languages
+
 let test_parser languages =
-  print_endline ("Total number of files: " ^
+  print_endline ("Number of murder files: " ^
                  string_of_int (List.length MurderFiles.files)) ;
   let read_file f =
     print_endline ("Reading file " ^ f) ;
@@ -150,7 +162,7 @@ let test_parser languages =
         seen := PSet.add (t, name) !seen ;
         prerr_endline ("Warning: Missing translation for language "
                        ^ Translation.iso639 lg ^ " for " ^ t
-                       ^ " \"" ^ name ^ "\".")) in
+                       ^ " `" ^ name ^ "'.")) in
     List.iter (fun c ->
       let t = translations.Translation.category in
       if Translation.translate t lg c = None then
@@ -204,5 +216,6 @@ let test_parser languages =
 
 let main =
   let languages = test_translations () in
+  test_name_generation languages ;
   test_parser languages
 

@@ -153,7 +153,7 @@ let create_player_information names get_translation parameters =
     (result generalComplexity, result (1. -. generalComplexity)) in
     let player_information = parameters.player_information in
     let len = List.length player_information in
-  add_trace ("Getting from " ^ string_of_int len
+  add_trace ("switching from " ^ string_of_int len
              ^ " players to " ^ string_of_int parameters.player_number) ;
   if len >= parameters.player_number then
     List.take parameters.player_number player_information
@@ -799,26 +799,40 @@ let main =
                else IO.unset_printing_mode) ()) in
         get := actual_get ;
         node in
-      if chosen_productions <> [] then
+      let (results, error) =
+        let (results, error) =
+          List.fold_left (fun (l, e) (name, descr, mime, ext, native, f) ->
+            try
+              let file = f estate in
+              let fileName = "murder" ^ if ext = "" then "" else ("." ^ ext) in
+              let node =
+                InOut.Div (InOut.Inlined, [
+                    InOut.LinkFile (get_translation "downloadAs"
+                                    ^ " " ^ get_translation name,
+                                    fileName, mime, native, fun _ -> file) ;
+                    InOut.Text (get_translation descr)
+                  ]) in
+              (node :: l, e)
+            with e -> (l, Some e)) ([], None) chosen_productions in
+        (List.rev results, error) in
+      if results <> [] then
         IO.print_block (InOut.Div (InOut.Normal, [
             InOut.P
               (InOut.Text (get_translation "exportList")
                :: if html then [ InOut.Text (get_translation "exportedAsHTML") ]
                   else []) ;
-            InOut.List (true,
-              List.map (fun (name, descr, mime, ext, native, f) ->
-                let fileName = "murder" ^ if ext = "" then "" else ("." ^ ext) in
-                InOut.Div (InOut.Inlined, [
-                    InOut.LinkFile (get_translation "downloadAs"
-                                    ^ " " ^ get_translation name,
-                                    fileName, mime, native, fun _ -> f estate) ;
-                    InOut.Text (get_translation descr)
-                  ])) chosen_productions)
+            InOut.List (true, results)
           ])) ;
       if html then
-        IO.print_block (InOut.Div (InOut.Normal,
-          [ InOut.P [ InOut.Node switch_printing_mode ] ])) ;
-      if html then IO.print_block (Export.to_block estate) ;
+        IO.print_block (InOut.P [ InOut.Node switch_printing_mode ]) ;
+      let error =
+        try
+          if html then IO.print_block (Export.to_block estate) ;
+          error
+        with e -> Some e in
+      if error <> None then
+        IO.print_block ~error:true (InOut.P [ InOut.Text (get_translation "errorWhenExporting") ]) ;
+      Option.may (fun e -> raise e) error ;
       IO.stopLoading () ;%lwt
       IO.print_block (InOut.P [
         InOut.Text (get_translation "lookingForContribution") ;

@@ -12,12 +12,15 @@ let startLoading _ =
   print_newline () ;
   print_endline "..." ;
   pause ()
-let setLoading p =
+let setLoading =
+  let previous = ref 0 in fun p ->
   let p = max 0. p in
   let p = min 1. p in
   let p = 100. *. p in
   let p = int_of_float p in
-  print_endline ("... " ^ string_of_int p ^ "%") ;
+  if p <> !previous then
+    print_endline ("... " ^ string_of_int p ^ "%") ;
+  previous := p ;
   pause ()
 
 let set_printing_mode = Utils.id

@@ -29,8 +29,8 @@ let startLoading _ =
   pause ()
 
 let setLoading p =
+  if !loadingProgress <> p && !loading then callStartLoading () ;
   loadingProgress := p ;
-  if !loading then callStartLoading () ;
   pause ()
 
 

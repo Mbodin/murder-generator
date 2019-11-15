@@ -253,7 +253,8 @@ begin
 
     sentence
     begin
-      translation fr "Cependant, cela fait longtemps qu’" (* TODO: We here need a grouping pronoun. *) A:+pro " et " B:+pro " se sont perdus de vue."
+      translation fr "Cependant, cela fait longtemps qu’elles" A:+empty:fem B:+empty:fem " se sont perdus de vue."
+      translation fr "Cependant, cela fait longtemps qu’ils se sont perdus de vue."
       translation en "However, it has been a long time since they last met together."
       translation eo "Sed ili ne vidis sin ekde longe."
     end
@@ -264,22 +265,163 @@ begin
   provide relation between A and B as strong neutral
 end
 
-(* TODO
 element HiddenSibling
 begin
   category DarkSecrets
 
   let A be player with attribute Famousness as Hiding
-  let B be player
+                  with attribute Specy as Human
+  let B be player with attribute Specy as Human
+                  with attribute Born as True
+  let any other player be with contact FamilyRelation to B not as Sibling
+
+  provide immediate phantom event to A
+  begin
+    event Personal
+    assume no event Personal to B before
+    assume event providing attribute Famousness to A before
+  end
+
+  provide event lasting minutes to A
+  begin
+    event Personal
+    assume event Birth to B before
+
+    sentence
+    begin
+      translation fr "La situation pour " A " devient de plus en plus précaire."
+      translation en "The current situation for " A " is becoming worse and worse."
+      translation eo "La nuna situacio de " A " malboniĝas plu."
+    end
+
+    sentence
+    begin
+      translation fr A:+pro:+sbeg " doit disparaître, et vite !"
+      translation en A:+pro:+sbeg " must disappear, as soon as possible!"
+      translation eo A:+pro:+sbeg " devas malaperi, la plej rapide ebla!"
+    end
+
+    sentence
+    begin
+      translation fr "Cela ne va pas être facile : " B:fem ", sa sœur, vient de naître."
+      translation fr "Cela ne va pas être facile : " B:mas ", son frère, vient de naître."
+      translation fr "Cela ne va pas être facile : " B ", son adelphe, vient de naître."
+      translation en "It won’t be easy: : " B:fem ", " A:+pos " sister, was just born."
+      translation en "It won’t be easy: : " B:mas ", " A:+pos " brother, was just born."
+      translation en "It won’t be easy: : " B ", " A:+pos " sibling, was just born."
+      translation eo "Ne facilos: " B ", " A:+pos " frato, ĵus naskiĝis."
+      translation eo "Ne facilos: " B:fem ", " A:+pos " fratino, ĵus naskiĝis."
+      translation eo "Ne facilos: " B:mas ", " A:+pos " fratiĉo, ĵus naskiĝis."
+    end
+
+    sentence
+    begin
+      translation fr "Mais il faut vraiment partir maintenant."
+      translation en "But " A:+pro " has to go now."
+      translation eo "Sed " A:+pro " devas foriri nun."
+    end
+
+    sentence
+    begin
+      translation fr B:+sbeg:+pro " grandira sans connaître son ainé" A:+agr "."
+      translation en B:+sbeg:+pro " will grow up without knowing " B:+pos " sibling."
+      translation eo B:+sbeg:+pro " kreskos sen koni sian fraton."
+      translation eo B:+sbeg:+pro " kreskos sen koni sian fratinon." A:+empty:fem
+      translation eo B:+sbeg:+pro " kreskos sen koni sian fratiĉon." A:+empty:mas
+    end
+
+    sentence
+    begin
+      translation fr B:+sbeg:+pro " comprendra plus tard."
+      translation en B:+sbeg:+pro " will understand later."
+      translation eo B:+sbeg:+pro " poste komprenos."
+    end
+
+    sentence
+    begin
+      translation fr "On espère."
+      translation en "Hopefully."
+      translation eo "Espereble."
+    end
+
+    provide compatible contact FamilyRelation between A and B as Sibling
+  end
+
+  provide phantom event lasting years to B
+
+  provide event lasting years to B
+  begin
+    event Personal
+
+    sentence
+    begin
+      translation fr B:+sbeg " a eu une enfance étrange."
+      translation en B:+sbeg " has had a weird childhood."
+      translation eo B:+sbeg " havis strangan infanecon."
+    end
+
+    sentence
+    begin
+      translation fr "On lui a toujours répété qu’" B:+pro " avait une sœur." A:+empty:fem
+      translation fr "On lui a toujours répété qu’" B:+pro " avait un frère." A:+empty:mas
+      translation fr "On lui a toujours répété qu’" B:+pro " avait un frère ou une sœur, suivant les versions."
+      translation en B:+sbeg:+pro " has been told over and over that " B:+pro " had a sibling."
+      translation en B:+sbeg:+pro " has been told over and over that " B:+pro " had a sister." A:+empty:fem
+      translation en B:+sbeg:+pro " has been told over and over that " B:+pro " had a brother." A:+empty:mas
+      translation eo "Oni ĉiam ripetadis ke " B:+pro " havas fraton."
+      translation eo "Oni ĉiam ripetadis ke " B:+pro " havas fratiĉon." A:+empty:mas
+      translation eo "Oni ĉiam ripetadis ke " B:+pro " havas fratinon." A:+empty:fem
+    end
+
+    sentence
+    begin
+      translation fr "Mais aucune trace d’un" A:+agr " ainé" A:+agr "."
+      translation en "But no trace of such sibling."
+      translation eo "Sed nenia indiko de tia familiano."
+    end
+
+    sentence
+    begin
+      translation fr "Est-" A:+pro " mort" A:+agr " avant sa naissance ?"
+      translation en "Is " A:+pro " dead before " B:+pos " birth?"
+      translation eo "Ĉu " A:+pro " mortis antaŭ " B:+pos " naskiĝo?"
+    end
+
+    sentence
+    begin
+      translation fr "A-t-" A:+pro " été kidnappé" A:+agr " et porté" A:+agr " disparu" A:+agr " ?"
+      translation en "Had " A:+pro " been kidnapped and went missing?"
+      translation eo "Ĉu " A:+pro " ostaĝiĝis kaj tiel malaperis?"
+    end
+
+    sentence
+    begin
+      translation fr "On ignore la question."
+      translation en "People ignore such questions."
+      translation eo "Oni ignoras tiajn demandojn."
+    end
+
+    sentence
+    begin
+      translation fr "On change de sujet."
+      translation en "They change the subject."
+      translation eo "Oni ŝanĝas la temon."
+    end
+
+    sentence
+    begin
+      translation fr "Mais zut alors !"
+      translation en "Blast!"
+      translation eo "Ve!"
+    end
+
+    provide compatible contact Know between A and B as False
+  end
+
+  provide phantom event lasting decades to A
 
   provide relation from A to B as strong undetermined
-  provide contact FamilyRelation between A and B as Sibling
-  provide compatible contact Know from A to B as True
-  provide compatible contact Know from B to A as False
-
-  (* TODO: An event explaining this situation. *)
 end
-*)
 
 element Parent
 begin
@@ -408,6 +550,7 @@ begin
   let P be player
   let A be player with contact FamilyRelation to P as Child
   let B be player with contact FamilyRelation to P as Child
+  let any other player be with contact FamilyRelation to P not as Child
 
   provide event lasting years to A and B
   begin
@@ -433,6 +576,229 @@ begin
   end
 
   provide relation between A and B as trust
+end
+
+element ThreeGenerations
+begin
+  let A be player with attribute Age as Old
+  let B be player with attribute Age as Adult
+                  with attribute Born as True
+  let C be player with attribute Age as Young
+                  with attribute Born as True
+  let any other player be with contact FamilyRelation to A as None
+                          with contact FamilyRelation to B as None
+                          with contact FamilyRelation to C as None
+
+  provide immediate phantom event to A
+  begin
+    assume event Birth to A before
+    assume event Birth to B after
+  end
+
+  provide event lasting decades to B
+  begin
+    event Personal
+    event Description
+    assume event Birth to B before
+
+    sentence
+    begin
+      translation fr A:+sbeg " est le parent de " B "."
+      translation fr A:+sbeg:fem " est la mère de " B "."
+      translation fr A:+sbeg:mas " est le père de " B "."
+      translation en A:+sbeg " is the parent of " B "."
+      translation en A:+sbeg:mas " is the father of " B "."
+      translation en A:+sbeg:fem " is the mother of " B "."
+      translation eo A:+sbeg " estas la patro de " B "."
+      translation eo A:+sbeg:mas " estas la patriĉo de " B "."
+      translation eo A:+sbeg:fem " estas la patrino de " B "."
+    end
+
+    provide contact FamilyRelation from A to B as Parent
+    provide contact FamilyRelation from B to A as Child
+  end
+
+  provide event lasting decades to A
+  begin
+    event Personal
+
+    sentence
+    begin
+      translation fr B:+sbeg " est l’enfant de " A "."
+      translation fr B:fem:+sbeg " est la fille de " A "."
+      translation fr B:mas:+sbeg " est le fils de " A "."
+      translation en B:+sbeg " is " A "’s child."
+      translation en B:fem:+sbeg " is " A "’s daughter."
+      translation en B:mas:+sbeg " is " A "’s son."
+      translation eo B:+sbeg " estas la filo de " A "."
+      translation eo B:fem:+sbeg " estas la filino de " A "."
+      translation eo B:mas:+sbeg " estas la filiĉo de " A "."
+    end
+
+    sentence
+    begin
+      translation fr A:+pro:+sbeg " l’a éduqué."
+      translation en A:+pro:+sbeg " educated " B:+cli "."
+      translation eo A:+pro:+sbeg " edukis " B:+pro:+acc "."
+    end
+
+    sentence
+    begin
+      translation fr "Puis " B:+pro " est parti travailler."
+      translation en "Then " B:+pro " started working."
+      translation eo "Poste " B:+pro " komencis labori."
+    end
+
+    sentence
+    begin
+      translation fr "Vivre sa vie."
+      translation en B:+sbeg:+pro " went away."
+      translation eo B:+sbeg:+pro " foriris por vivi sian propran vivon."
+    end
+
+    sentence
+    begin
+      translation fr "Ça a laissé comme un trou dans sa vie."
+      translation en "It left a large hole in " A:+pos " life."
+      translation eo "Lasis grandan truon en " A:+pos " vivo."
+    end
+  end
+
+  provide immediate phantom event to B
+  begin
+    assume event Birth to B before
+    assume event Birth to C after
+  end
+
+  provide event lasting decades to C
+  begin
+    event Personal
+    event Description
+    assume event Birth to C before
+
+    sentence
+    begin
+      translation fr B:+sbeg " est le parent de " C "."
+      translation fr B:+sbeg:fem " est la mère de " C "."
+      translation fr B:+sbeg:mas " est le père de " C "."
+      translation en B:+sbeg " is the parent of " C "."
+      translation en B:+sbeg:mas " is the father of " C "."
+      translation en B:+sbeg:fem " is the mother of " C "."
+      translation eo B:+sbeg " estas la patro de " C "."
+      translation eo B:+sbeg:mas " estas la patriĉo de " C "."
+      translation eo B:+sbeg:fem " estas la patrino de " C "."
+    end
+
+    provide contact FamilyRelation from B to C as Parent
+    provide contact FamilyRelation from C to B as Child
+    provide contact FamilyRelation from A to C as GrandParent
+    provide contact FamilyRelation from C to A as GrandChild
+  end
+
+  provide immediate event to A
+  begin
+    event Personal
+
+    sentence
+    begin
+      translation fr "Quand " C " est né" C:+agr ", ça été magique pour " A "."
+      translation en "When " C " was born, it was a magical moment for " A "."
+      translation eo "Kiam " C " naskiĝis, estis magia momento por " A "."
+    end
+
+    sentence
+    begin
+      translation fr "Un petit enfant !"
+      translation en "A grandchild!"
+      translation eo A:+pos:+sbeg " nepo!"
+    end
+
+    sentence
+    begin
+      translation fr "Quelle merveille !"
+      translation en "That’s wonderful!"
+      translation eo "Mirindas!"
+    end
+  end
+
+  provide event lasting decades to B
+  begin
+    event Personal
+
+    sentence
+    begin
+      translation fr C:+sbeg " est l’enfant de " B "."
+      translation fr C:fem:+sbeg " est la fille de " B "."
+      translation fr C:mas:+sbeg " est le fils de " B "."
+      translation en C:+sbeg " is " B "’s child."
+      translation en C:fem:+sbeg " is " B "’s daughter."
+      translation en C:mas:+sbeg " is " B "’s son."
+      translation eo C:+sbeg " estas la filo de " B "."
+      translation eo C:fem:+sbeg " estas la filino de " B "."
+      translation eo C:mas:+sbeg " estas la filiĉo de " B "."
+    end
+
+    sentence
+    begin
+      translation fr B:+pro:+sbeg " s’en est occupé."
+      translation en B:+pro:+sbeg " took care of " C:+cli "."
+      translation eo B:+pro:+sbeg " zorgis " C:+pro:+acc "."
+    end
+
+    sentence
+    begin
+      translation fr "Ça n’a pas toujours été facile."
+      translation en "It wasn’t always easy."
+      translation eo "Ne ĉiam facilis."
+    end
+
+    sentence
+    begin
+      translation fr "Heureusement qu’il était possible de se reposer de temps en temps : il suffisait de confier la petite à " A "." C:+empty:fem
+      translation fr "Heureusement qu’il était possible de se reposer de temps en temps : il suffisait de confier le petit à " A "."
+      translation en "Fortunately, it was possible from time to time to rest: one just needed to give " C:+cli " to " A "."
+      translation eo "Feliĉe, eblis ripozi de tempo al tempo: nur bezonis doni " C:+pro:+acc " al " A " por ke " A:+pro " prizorgu."
+    end
+
+    sentence
+    begin
+      translation fr "Ils se sont toujours bien entendus ensemble."
+      translation fr A:fem C:fem "Elles se sont toujours bien entendues ensemble."
+      translation en "They always got along very well."
+      translation eo "Ili ĉiam bone kongruis unu kun la alia."
+    end
+  end
+
+  provide immediate event to C
+  begin
+    event Personal
+
+    sentence
+    begin
+      translation fr C:+sbeg " adore visiter " A:fem ", sa grand-mère."
+      translation fr C:+sbeg " adore visiter " A:mas ", son grand-père."
+      translation fr C:+sbeg " adore visiter " A ", son grand-parent."
+      translation en C:+sbeg " loves to visit " A:fem ", " C:+pos " grandmother."
+      translation en C:+sbeg " loves to visit " A:mas ", " C:+pos " grandfather."
+      translation en C:+sbeg " loves to visit " A ", " C:+pos " grandparent."
+      translation eo C:+sbeg " ŝategas viziti " A:+acc ", " C:+pos:+acc " avon."
+      translation eo C:+sbeg " ŝategas viziti " A:fem:+acc ", " C:+pos:+acc " avinon."
+      translation eo C:+sbeg " ŝategas viziti " A:mas:+acc ", " C:+pos:+acc " aviĉon."
+    end
+
+    sentence
+    begin
+      translation fr A:+sbeg:+pro " s’occupe toujours très bien de lui " C:+cli "."
+      translation fr A:+sbeg:+pro " s’occupe toujours très bien d’" C:fem:+cli "."
+      translation en A:+sbeg:+pro " always takes care of " C:+cli " very well."
+      translation eo A:+sbeg:+pro " ĉiam bone zorgas " C:+pro:+acc "."
+    end
+  end
+
+  provide relation between A and C as strong trust
+  provide relation between B and C as trust
+  provide relation between A and B as trust
+  provide relation from B to A as chaotic
 end
 
 (* TODO: More families *)

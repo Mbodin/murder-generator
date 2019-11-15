@@ -180,6 +180,7 @@ begin
   add translation eo:sbeg:pos:sin:fem:acc "Ŝian"
   add translation eo:sbeg:pos:sin:acc "Ĝian"
   add translation eo:sbeg:pos:plu:acc "Ilian"
+  (* TODO: Add something like agr, that translates to either "iĉ" or "in". *)
 end
 
 unique element NormalGrammar

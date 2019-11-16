@@ -1,0 +1,279 @@
+
+declare attribute Curse
+begin
+  translation fr "Malédiction"
+  translation en "Curse"
+  translation eo "Malbenaĵo"
+end
+
+attribute Curse None
+begin
+  translation fr "aucune"
+  translation en "none"
+  translation eo "nenia"
+end
+
+unique element NoCurse
+begin
+  provide strict attribute Curse to any other player as None
+end
+
+(* * Loss of memory *)
+
+attribute Curse MemoryLoss
+begin
+  translation fr "troubles de la mémoire"
+  translation en "memory loss"
+  translation eo "memorproblemoj"
+
+  compatible with EternalLifeFiniteMemory
+end
+
+element ForgetsThings
+begin
+  let P be player
+
+  provide event lasting years to P
+  begin
+    event Personal
+
+    sentence
+    begin
+      translation fr P:+sbeg " a des problèmes de mémoire."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " perd ses clefs."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " perd ses mots."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " oublie des connaissances."
+    end
+
+    sentence
+    begin
+      translation fr "Parfois des amis de longue date !"
+    end
+
+    sentence
+    begin
+      translation fr "C’est très handicapant."
+    end
+
+    sentence
+    begin
+      translation fr "Personne ne sait pourquoi."
+    end
+
+    sentence
+    begin
+      translation fr "Pour " P:+cli ", le monde s’efface petit à petit."
+    end
+
+    provide compatible attribute Curse to P as MemoryLoss
+  end
+
+  provide phantom event lasting weeks to P
+
+  add complexity to P
+  add complexity to P
+  add complexity to P
+end
+
+(* * Eternal life *)
+
+attribute Curse Immortal
+begin
+  category OutOfOurWorld
+
+  translation fr "immortel"
+  translation en "immortal"
+  translation eo "nemortebla"
+
+  compatible with EternalLifeFiniteMemory
+end
+
+element GodIsImmortal
+begin
+  let P be player with attribute Specy as God
+
+  provide immediate event to P
+  begin
+    event Personal
+
+    sentence
+    begin
+      translation fr P:+sbeg " est un dieu."
+      translation fr P:fem:+sbeg " est une déesse."
+    end
+
+    sentence
+    begin
+      translation fr P:+empty:fem "En tant que telle, " P:+pro " est immortelle."
+      translation fr P:+empty "En tant que tel, " P:+pro " est immortel."
+    end
+
+    sentence
+    begin
+      translation fr "Jamais " P:+pro " ne pourra faire l’expérience complète d’émotions comme la peur ou certaines formes de douleurs : le fait de ne pas pouvoir mourir de toutes façons biaise l’expérience."
+    end
+
+    sentence
+    begin
+      translation fr "Comment peut-" P:+pro " prétendre guider les humains tout en étant incapable de comprendre entièrement leur point de vue ?"
+    end
+
+    sentence
+    begin
+      translation fr "Qui voudrait d’une telle divinité ?"
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg " a donc décidé de chercher un moyen pour faire cette expérience."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " veut comprendre."
+    end
+
+    provide compatible attribute Curse to P as Immortal
+  end
+
+  remove difficulty to P
+  remove difficulty to P
+  add complexity to P
+end
+
+(* * Eternal life, but finite memory *)
+
+attribute Curse EternalLifeFiniteMemory
+begin
+  category OutOfOurWorld
+
+  translation fr "vie éternelle et souvenirs brumeux"
+  translation en "eternal life and memory loss"
+  translation eo "senlima vivo kaj memorproblemoj"
+end
+
+element ElvesHaveEternalLifeButFiniteMemory
+begin
+  let E be player with attribute Specy as Elf
+
+  provide immediate phantom event to E
+  begin
+    event Personal
+    assume no event Birth to E after
+  end
+
+  provide phantom event lasting decades to E
+
+  provide phantom event lasting decades to E
+
+  provide immediate event to E
+  begin
+    event Description
+
+    sentence
+    begin
+      translation fr "Certains elfes sont atteints d’une caractéristique particulière : la vie éternelle."
+    end
+
+    sentence
+    begin
+      translation fr "Ils ne sont pas immortels : malheureusement, de nombreuses personnes interprètent mal ce phénomène."
+    end
+
+    sentence
+    begin
+      translation fr "C’est juste qu’ils ne vieillissent pas, et donc ne meurent pas de vieillesse."
+    end
+
+    sentence
+    begin
+      translation fr "Cependant, la biologie de leur cerveau n’est pas particulièrement adaptée à cette situation."
+    end
+
+    sentence
+    begin
+      translation fr "Ces elfes vieillissent mentalement, tout en restant dans un corps qui a l’air plutôt jeune."
+    end
+
+    sentence
+    begin
+      translation fr "Ces elfes ont du mal à créer de nouvelles idées."
+    end
+
+    sentence
+    begin
+      translation fr "Ces elfes ont du à penser."
+    end
+
+    sentence
+    begin
+      translation fr "Ces elfes oublient."
+    end
+
+    sentence
+    begin
+      translation fr "Le monde s’efface petit à petit à leur yeux : ils ne peuvent que rarement se rappeler de ce qui s’est passé il y a plus d’une trentaine d’année."
+    end
+
+    sentence
+    begin
+      translation fr "S’ils participent à un événement majeur maintenant, ils seront toujours là cinquante ans plus tard, mais n’auront aucun souvenir de cet événement."
+    end
+
+    sentence
+    begin
+      translation fr "Ils ne sauront même plus s’ils y avait participé."
+    end
+
+    sentence
+    begin
+      translation fr "On raconte que des compteurs elfes ayant cette condition racontent les faits et armes de héros antiques… qui se trouvent en fait être le compteur lui-même."
+    end
+
+    sentence
+    begin
+      translation fr "Mais ce dernier a oublié qui il était."
+    end
+
+    sentence
+    begin
+      translation fr E:+sbeg " est dans cette situation."
+    end
+
+    sentence
+    begin
+      translation fr E:+sbeg:+pro " aimerait tellement vivre sans ce handicap."
+    end
+
+    sentence
+    begin
+      translation fr "C’est une situation très rare : très peu de personnes sont au courant."
+    end
+
+    sentence
+    begin
+      translation fr "D’ailleurs, " E " cherche à le cacher."
+    end
+
+    provide attribute Curse to E as EternalLifeFiniteMemory
+  end
+
+  provide phantom event lasting years to E
+
+  add complexity to E
+  add complexity to E
+  add complexity to E
+end
+

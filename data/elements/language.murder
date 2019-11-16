@@ -2,9 +2,7 @@
 (* This file is meant to be for internal use and not to actually declare scenario elements.
   Instead, this file declares grammatical constructs for each languages. *)
 
-(* * Declaration of grammatical cases *)
-
-(* ** French *)
+(* * French *)
 
 declare translation fr:empty (* A special grammatical case that prints nothing (useful to create a constraint without printing it). *)
 
@@ -27,60 +25,14 @@ declare translation fr:fem (* Feminine *)
 
 declare translation fr:agr (* Agreement (“e” for feminine) *)
 
-(* ** English *)
-
-declare translation en:empty
-
-declare translation en:sbeg (* At the beginning of a sentence. *)
-
-declare translation en:nom (* Nouns *)
-declare translation en:pro (* Pronouns *)
-declare translation en:adj (* Adjectives *)
-declare translation en:adv (* Adverbs *)
-
-declare translation en:def (* Definite (“the”, as opposed to “a”) *)
-declare translation en:cli (* Clitics (“her”/“him”) *)
-declare translation en:pos (* Possessive *)
-
-declare translation en:sin (* Singular *)
-declare translation en:plu (* Plural *)
-
-declare translation en:mas (* Masculine *)
-declare translation en:fem (* Feminine *)
-
-(* ** Esperanto *)
-
-declare translation eo:empty
-
-declare translation eo:sbeg (* At the beginning of a sentence. *)
-
-declare translation eo:nom (* Nouns *)
-declare translation eo:pro (* Pronouns *)
-declare translation eo:adj (* Adjectives *)
-declare translation eo:adv (* Adverbs *)
-
-declare translation eo:def (* Definite *)
-declare translation eo:pos (* Possessive *)
-declare translation eo:acc (* Accusative *)
-
-declare translation eo:sin (* Singular *)
-declare translation eo:plu (* Plural *)
-
-declare translation eo:mas (* Masculine *)
-declare translation eo:fem (* Feminine *)
-
-declare translation eo:suf (* Suffix (“-in-”/“-iĉ-") *)
-
-(* * General grammatical rules *)
-
-declare internal attribute Grammar
+declare internal attribute GrammarFR
 begin
-  translation fr "Grammaire"
-  translation en "Grammar"
-  translation eo "Gramatiko"
+  translation fr "Grammaire française"
+  translation en "French grammar"
+  translation eo "Franca gramatiko"
 end
 
-attribute Grammar Normal
+attribute GrammarFR Normal
 begin
   translation fr "normale"
   translation en "normal"
@@ -123,6 +75,46 @@ begin
   add translation fr:agr:plu:mas "s"
   add translation fr:agr:plu:fem "es"
   add translation fr:agr:plu "·e·s"
+end
+
+unique element NormalGrammarFR
+begin
+  provide strict attribute GrammarFR to any other player as Normal
+end
+
+(* * English *)
+
+declare translation en:empty
+
+declare translation en:sbeg (* At the beginning of a sentence. *)
+
+declare translation en:nom (* Nouns *)
+declare translation en:pro (* Pronouns *)
+declare translation en:adj (* Adjectives *)
+declare translation en:adv (* Adverbs *)
+
+declare translation en:def (* Definite (“the”, as opposed to “a”) *)
+declare translation en:cli (* Clitics (“her”/“him”) *)
+declare translation en:pos (* Possessive *)
+
+declare translation en:sin (* Singular *)
+declare translation en:plu (* Plural *)
+
+declare translation en:mas (* Masculine *)
+declare translation en:fem (* Feminine *)
+
+declare internal attribute GrammarEN
+begin
+  translation fr "Grammaire anglaise"
+  translation en "English grammar"
+  translation eo "Angla gramatiko"
+end
+
+attribute GrammarEN Normal
+begin
+  translation fr "normale"
+  translation en "normal"
+  translation eo "normala"
 
   add en:sin
   add en:def
@@ -151,6 +143,48 @@ begin
   add translation en:sbeg:pos:sin:fem "Her"
   add translation en:sbeg:pos:sin "Its"
   add translation en:sbeg:pos:plu "Their"
+end
+
+unique element NormalGrammarEN
+begin
+  provide strict attribute GrammarEN to any other player as Normal
+end
+
+(* * Esperanto *)
+
+declare translation eo:empty
+
+declare translation eo:sbeg (* At the beginning of a sentence. *)
+
+declare translation eo:nom (* Nouns *)
+declare translation eo:pro (* Pronouns *)
+declare translation eo:adj (* Adjectives *)
+declare translation eo:adv (* Adverbs *)
+
+declare translation eo:def (* Definite *)
+declare translation eo:pos (* Possessive *)
+declare translation eo:acc (* Accusative *)
+
+declare translation eo:sin (* Singular *)
+declare translation eo:plu (* Plural *)
+
+declare translation eo:mas (* Masculine *)
+declare translation eo:fem (* Feminine *)
+
+declare translation eo:suf (* Suffix (“-in-”/“-iĉ-") *)
+
+declare internal attribute GrammarEO
+begin
+  translation fr "Grammaire de l’espéranto"
+  translation en "Esperanto grammar"
+  translation eo "Esperanta gramatiko"
+end
+
+attribute GrammarEO Normal
+begin
+  translation fr "normale"
+  translation en "normal"
+  translation eo "normala"
 
   add eo:sin
   add eo:def
@@ -192,8 +226,8 @@ begin
   add translation eo:sbeg:pos:plu:acc "Ilian"
 end
 
-unique element NormalGrammar
+unique element NormalGrammarEO
 begin
-  provide strict attribute Grammar to any other player as Normal
+  provide strict attribute GrammarEO to any other player as Normal
 end
 

@@ -211,7 +211,7 @@ begin
       translation en A:+sbeg:mas " and " B:mas " are brothers."
       translation en A:+sbeg " and " B " are siblings."
       translation eo A:+sbeg:fem " kaj " B:fem " estas fratinoj."
-      translation eo A:+sbeg:mas " kaj " B:mas " estas fratoj."
+      translation eo A:+sbeg:mas " kaj " B:mas " estas fratiĉoj."
       translation eo A:+sbeg " kaj " B " estas gefratoj."
     end
   end
@@ -247,7 +247,7 @@ begin
       translation en A:+sbeg:mas " and " B:mas " are brothers."
       translation en A:+sbeg " and " B " are siblings."
       translation eo A:+sbeg:fem " kaj " B:fem " estas fratinoj."
-      translation eo A:+sbeg:mas " kaj " B:mas " estas fratoj."
+      translation eo A:+sbeg:mas " kaj " B:mas " estas fratiĉoj."
       translation eo A:+sbeg " kaj " B " estas gefratoj."
     end
 
@@ -309,9 +309,7 @@ begin
       translation en "It won’t be easy: : " B:fem ", " A:+pos " sister, was just born."
       translation en "It won’t be easy: : " B:mas ", " A:+pos " brother, was just born."
       translation en "It won’t be easy: : " B ", " A:+pos " sibling, was just born."
-      translation eo "Ne facilos: " B ", " A:+pos " frato, ĵus naskiĝis."
-      translation eo "Ne facilos: " B:fem ", " A:+pos " fratino, ĵus naskiĝis."
-      translation eo "Ne facilos: " B:mas ", " A:+pos " fratiĉo, ĵus naskiĝis."
+      translation eo "Ne facilos: " B ", " A:+pos " frat" B:+suf "o, ĵus naskiĝis."
     end
 
     sentence
@@ -325,9 +323,7 @@ begin
     begin
       translation fr B:+sbeg:+pro " grandira sans connaître son ainé" A:+agr "."
       translation en B:+sbeg:+pro " will grow up without knowing " B:+pos " sibling."
-      translation eo B:+sbeg:+pro " kreskos sen koni sian fraton."
-      translation eo B:+sbeg:+pro " kreskos sen koni sian fratinon." A:+empty:fem
-      translation eo B:+sbeg:+pro " kreskos sen koni sian fratiĉon." A:+empty:mas
+      translation eo B:+sbeg:+pro " kreskos sen koni sian frat" A:+suf "on."
     end
 
     sentence
@@ -368,9 +364,7 @@ begin
       translation en B:+sbeg:+pro " has been told over and over that " B:+pro " had a sibling."
       translation en B:+sbeg:+pro " has been told over and over that " B:+pro " had a sister." A:+empty:fem
       translation en B:+sbeg:+pro " has been told over and over that " B:+pro " had a brother." A:+empty:mas
-      translation eo "Oni ĉiam ripetadis ke " B:+pro " havas fraton."
-      translation eo "Oni ĉiam ripetadis ke " B:+pro " havas fratiĉon." A:+empty:mas
-      translation eo "Oni ĉiam ripetadis ke " B:+pro " havas fratinon." A:+empty:fem
+      translation eo "Oni ĉiam ripetadis ke " B:+pro " havas frat" A:+suf "on."
     end
 
     sentence
@@ -452,9 +446,7 @@ begin
     translation en A:+sbeg:mas " is the father of " B "."
     translation en A:+sbeg:fem " is the mother of " B "."
     translation en A:+sbeg " is " B "’s parent."
-    translation eo A:+sbeg " estas la patriĉo de " B "."
-    translation eo A:+sbeg:fem " estas la patrino de " B "."
-    translation eo A:+sbeg " estas la patro de " B "."
+    translation eo A:+sbeg " estas la patr" A:+suf "o de " B "."
   end
 
   provide relation between A and B as trust
@@ -614,8 +606,8 @@ begin
       translation eo A:+sbeg:fem " estas la patrino de " B "."
     end
 
-    provide contact FamilyRelation from A to B as Parent
-    provide contact FamilyRelation from B to A as Child
+    provide compatible contact FamilyRelation from A to B as Parent
+    provide compatible contact FamilyRelation from B to A as Child
   end
 
   provide event lasting decades to A
@@ -689,10 +681,10 @@ begin
       translation eo B:+sbeg:fem " estas la patrino de " C "."
     end
 
-    provide contact FamilyRelation from B to C as Parent
-    provide contact FamilyRelation from C to B as Child
-    provide contact FamilyRelation from A to C as GrandParent
-    provide contact FamilyRelation from C to A as GrandChild
+    provide compatible contact FamilyRelation from B to C as Parent
+    provide compatible contact FamilyRelation from C to B as Child
+    provide compatible contact FamilyRelation from A to C as GrandParent
+    provide compatible contact FamilyRelation from C to A as GrandChild
   end
 
   provide immediate event to A

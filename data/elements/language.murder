@@ -16,7 +16,8 @@ declare translation fr:adj (* Adjectives *)
 declare translation fr:adv (* Adverbs *)
 
 declare translation fr:def (* Definite *)
-declare translation fr:cli (* Clitics *)
+declare translation fr:cli (* Clitics (“lui”) *)
+declare translation fr:lcli (* Clitics (“la”/“le”) *)
 
 declare translation fr:sin (* Singular *)
 declare translation fr:plu (* Plural *)
@@ -24,7 +25,7 @@ declare translation fr:plu (* Plural *)
 declare translation fr:mas (* Masculine *)
 declare translation fr:fem (* Feminine *)
 
-declare translation fr:agr (* Agreement *)
+declare translation fr:agr (* Agreement (“e” for feminine) *)
 
 (* ** English *)
 
@@ -37,8 +38,8 @@ declare translation en:pro (* Pronouns *)
 declare translation en:adj (* Adjectives *)
 declare translation en:adv (* Adverbs *)
 
-declare translation en:def (* Definite *)
-declare translation en:cli (* Clitics *)
+declare translation en:def (* Definite (“the”, as opposed to “a”) *)
+declare translation en:cli (* Clitics (“her”/“him”) *)
 declare translation en:pos (* Possessive *)
 
 declare translation en:sin (* Singular *)
@@ -68,6 +69,8 @@ declare translation eo:plu (* Plural *)
 declare translation eo:mas (* Masculine *)
 declare translation eo:fem (* Feminine *)
 
+declare translation eo:suf (* Suffix (“-in-”/“-iĉ-") *)
+
 (* * General grammatical rules *)
 
 declare internal attribute Grammar
@@ -94,6 +97,10 @@ begin
   add translation fr:pro:plu "iels"
   add translation fr:cli:sin "lui"
   add translation fr:cli:plu "leur"
+  add translation fr:lcli:sin "le·a"
+  add translation fr:lcli:sin:mas "le"
+  add translation fr:lcli:sin:fem "la"
+  add translation fr:lcli:plu "les"
   add translation fr:nom:sin:-mas:+fem "une personne"
   add translation fr:nom:plu:-mas:+fem "des personnes"
   add translation fr:nom:def:sin:-mas:+fem "la personne"
@@ -164,6 +171,9 @@ begin
   add translation eo:pos:sin:fem:acc "ŝian"
   add translation eo:pos:sin:acc "ĝian"
   add translation eo:pos:plu:acc "ilian"
+  add translation eo:suf ""
+  add translation eo:suf:fem "in"
+  add translation eo:suf:mas "iĉ"
   add translation eo:sbeg:pro:sin "Ĝi"
   add translation eo:sbeg:pro:sin:mas "Li"
   add translation eo:sbeg:pro:sin:fem "Ŝi"
@@ -180,7 +190,6 @@ begin
   add translation eo:sbeg:pos:sin:fem:acc "Ŝian"
   add translation eo:sbeg:pos:sin:acc "Ĝian"
   add translation eo:sbeg:pos:plu:acc "Ilian"
-  (* TODO: Add something like agr, that translates to either "iĉ" or "in". *)
 end
 
 unique element NormalGrammar

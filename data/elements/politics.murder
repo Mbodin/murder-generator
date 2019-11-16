@@ -201,9 +201,7 @@ begin
       translation fr K:+empty "Vive le roi !"
       translation en K:+empty:fem "Long live to the queen!"
       translation en K:+empty "Long live to the king!"
-      translation eo K:+empty:fem "Ni aklamu la novan reĝinon!"
-      translation eo K:+empty:mas "Ni aklamu la novan reĝiĉon!"
-      translation eo K:+empty "Ni aklamu la novan reĝon!"
+      translation eo "Ni aklamu la novan reĝ" K:+suf "on!"
     end
   end
 end
@@ -228,9 +226,7 @@ begin
     translation fr K:+sbeg " est le roi."
     translation en K:+sbeg:fem " is the queen."
     translation en K:+sbeg " is the king."
-    translation eo K:+sbeg:fem " estas la reĝino."
-    translation eo K:+sbeg:mas " estas la reĝiĉo."
-    translation eo K:+sbeg " estas la reĝo."
+    translation eo K:+sbeg " estas la reĝ" K:+suf "o."
   end
 end
 

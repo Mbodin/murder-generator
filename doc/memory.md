@@ -57,13 +57,6 @@ Such a “negative” value is however no different for the program than any oth
 Characters can have as many attributes as they want.
 However, they can only have one instance of an attribute: no character can have two different attributes `Gender` for instance.
 
-Sometimes one would still like to combine two different values for a given attribute.
-For that, there is a possibility to declare compatible values.
-One would for instance create a value for the combination, then declare this “combined” value as being compatible with the other base values.
-See the example of the contact `FamilyRelation` in the next section for more details: all these mechanisms are the same for attributes.
-If you are familiar with [OpenStreetMap](https://www.openstreetmap.org), you can think of it as the different values for the [key `sidewalk`](https://wiki.openstreetmap.org/wiki/Key:sidewalk): `no`, `left`, `right`, and `both`.
-The only difference is that we tell here the program that `both` can also be interpreted as a `left` or a `right`, whereas OpenStreetMap requires the renderers to know what each value exactly means.
-
 The values of each attribute live in a different namespace: there is no issue with naming two values of two different attributes the same way.
 For instance, both attributes `SecretSociety` and `Disability` have a value `None`.
 
@@ -87,24 +80,6 @@ However, it is not possible that a given player both knows and doesn’t know a 
 
 Contacts are asymmetrical: it is possible that a first character A knows a second B without B knowing A.
 It is the responsibility of the element writers to always generate the reversed contact when a contact is meant to be symmetrical.
-
-As for attributes (because, really, contacts and attributes are the same thing, just that contacts are from a character to another whereas attributes air “sticked” on a particular character), one might want to combine values.
-This is done through the notion of compatibility: the “combination”-value will be compatible with both “base”-values.
-For instance, [family.murder](../data/elements/family.murder) declares a value `True` for `FamilyRelation` in addition to all the specific values for family relations.
-This value `True` is meant to describe the relation between two players of the same family that are not any of the most precise values (like `Sibling`, `Spouse`, etc.).
-It is declared as follows:
-```murder
-contact FamilyRelation True
-begin
-  compatible with Sibling
-  compatible with Parent
-end
-```
-Stating that a value is compatible with the other means that the value can be freely coerced from the base value to the compatible one.
-Hence, in the example, if the contact `FamilyRelation` from a player to another is `Sibling`, but that an element expects it to be `True`, the element will be applicable: `Sibling` can be coerced into `True` because `True` is compatible with `Sibling`.
-The converse is however not true: if an element expects a contact `FamilyRelation` to be `Sibling` but that it only is `True`, then the element won’t be applicable.
-In the rare case where one wants two values to be coercable in both direction, one can just declare both values to be compatible one with the other.
-The actual use case of such a situation is dubious as both values won’t be differentiable by any element: they thus would be equivalent for the program.
 
 # Difficulty and Complexity
 

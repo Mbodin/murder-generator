@@ -73,33 +73,23 @@ As for categories, an attribute can to be translated with the `translation` keyw
 It can’t be described through the `description` keyword as its description would never be shown to the user.
 
 Once the attribute has been defined, one can define attribute values (see [memory.md](./memory.md) for more details).
-In this case `Male`, `Female`, and `NonBinary`.
+In this case `Male` and `Female` (more genders are actually defined in [identity.murder](../data/elements/identity.murder)).
 ```murder
 attribute Gender Male
 begin
   translation en "male"
   (* Other translations *)
-  compatible with NonBinary
 end
 
 attribute Gender Female
 begin
   translation en "female"
   (* Other translations *)
-  compatible with NonBinary
-end
-
-attribute Gender NonBinary
-begin
-  translation en "genderqueer"
-  (* Other translations *)
 end
 ```
-As explained in [memory.md](./memory.md), both `Male` and `Female` are marked as being compatible with `NonBinary` such that a character with attribute `Gender` as `NonBinary` may be chosen if an elements is looking for a character with attribute `Gender` as `Male` or `Female`.
-The converse is however not true: if an element is looking for a character with attribute `Gender` as `NonBinary`, only the `NonBinary`-characters will be chosen, as there is no `compatible with` command in `NonBinary`’s block.
 
-In [identity.murder](../data/elements/identity.murder), the attribute values `Male` and `Female` have other `add` commands.
-These commands are explained in [language.md](./language.md).
+In [identity.murder](../data/elements/identity.murder), the attribute values `Male` and `Female` have other `add` and `compatible` commands.
+The `add` commands are explained in [language.md](./language.md), whilst the `compatible` commands are explained in the advanced feature section below.
 In most attribute declarations, you won’t need to use neither the `compatible with` nor the `add` commands.
 
 As for categories, an attribute can be marked to depend on a category.
@@ -117,7 +107,6 @@ end
 Contacts work in a very similar way than attributes.
 Here is for instance a snippet from [relations.murder](../data/elements/relations.murder).
 The contact `Know` is defined, with possible values `True`, `Intimate`, and `False`.
-As for attributes, this snippet uses the `compatible with` keyword to make `True` compatible with `Intimate`: if a character intimately knows another, then it also knows this other character.
 ```murder
 declare contact Know
 begin
@@ -129,7 +118,6 @@ contact Know True
 begin
   translation en "yes"
   (* Other translations *)
-  compatible with Intimate
 end
 
 contact Know Intimate
@@ -368,8 +356,7 @@ Most event blocks start with the `event Personal` command:
 The keyword `event` is similar to `category` in that it marks the event as being `Personal`.
 Personal events are events personally involving characters (instead of just describing things to them).
 Other kinds of events exist (`Work`, `Dream`, etc.) and they can simply be declared in the same way than categories—outside an element—with the `declare event` command.
-We won’t detail it here: it is rarely useful and should be self-explaining at this stage.
-An event may have more than one event type (being both `Work` and `Dream`, for instance).
+This command is detailed in the advanced features.
 
 Events themselves are also made of several parts: one stating where this event should be placed, what it provides, and what are its sentences.
 We have already seen the command providing attributes or contacts: it is exactly the same than the one for the element (`provide attribute Job to B as Seller`, `provide contact FamilyRelation from A to B as Sibling`, etc.), just that it is provided in the event.
@@ -515,18 +502,6 @@ Now you can read the already written elements in the files of the [data](../data
 This section presents various features that may be useful when writing scenario elements.
 There is no particular order in its subsections: they can be read in any order.
 
-TODO: describe the strictness flag on attribute and contacts.
-
-TODO: describe how to “break” compatible attributes and contacts by asking both “Female” and “not NonBinary”.
-
-TODO: `unique` and `duplicable`.
-
-TODO: (not) as Value1 or Value2
-
-TODO: `declare event`
-
-TODO: phantom events
-
 ## About Comments
 
 Comments can be nested: `(* (* *) *)`.
@@ -535,4 +510,188 @@ This especially useful when commenting out large portions of code: there is no n
 If a comment starts with a star, like `(* * My Section *)`, it means that it starts a thematic section.
 If it has two stars, like `(* ** My Subsection *)`, it defines a subsection.
 These are of course still ignored by the parser, but it is a nice way to indicate that the elements in a section are related in some ways.
+
+## Unique and Duplicable Elements
+
+By default, an element will not be applied more than once per character: if a character is already involved in an element, it can’t be involved again (even with a different instantiation).
+For instance, let us consider the following snippet from [notary.murder](../data/elements/notary.murder):
+```murder
+element CausalDebt
+begin
+  let A be player with attribute Richness as Neutral
+                  with contact Know to B as True
+  let B be player with attribute Richness as Neutral
+                  with contact Know to A as True
+```
+If a given player is involved in this element, for example associated to the player variable `A`, it can’t be involved in another instance of this same element, even as a different player variable (hence, not even as `B` with another `A`).
+However, the element itself might be reused with a completely different instantiation: as soon as the first players involved are not involved again.
+
+Sometimes, one wants a different behaviour.
+A common behaviour that is sometimes useful is that an element should be applied at most once in any given scenario.
+For instance, if a scenario element invokes a “chosen one”, or a particular god, or anything like that, one doesn’t want this scenario element to be instantiated more than once for different characters!
+This can be done by stating that a scenario element is `unique`.
+Here is a snippet from [religion.murder](../data/elements/religion.murder):
+```murder
+unique element HarmonyDescription
+begin
+  let G be player with attribute Specy as God
+                  with attribute DivineAllegiance as Harmony
+```
+This element describes a particular god.
+Only one player can play this god in a particular scenario: the `unique` keyword enforces that.
+
+As the scenario element writer, you might sometimes know that a scenario element can’t possibly be applied more than once.
+This is for instance the case of most of the (technical) scenario elements defined in [language.murder](../data/elements/language.murder).
+Here is an example:
+```murder
+unique element NormalGrammarEN
+begin
+  provide strict attribute GrammarEN to any other player as Normal
+end
+```
+The `provide strict attribute` command is applied to all players, and its strictness (see below) enforces it to only be applicable at most once per player.
+To help the solver, one can thus mark it as unique: it won’t change the final result, and may help the solver not trying it several times if there is no point to do it.
+
+In the opposite direction than the `unique` keyword, one may want no constraint to be on an element.
+For instance, here is a snippet from [religion.murder](../data/elements/religion.murder):
+```murder
+duplicable element GodYieldStrongFeeling
+begin
+  let P be player
+  let G be player with attribute Specy as God
+
+  provide relation from P to G as strong neutral
+end
+```
+We want this element to apply as many times as possible for each player `P`: this element is meant to be applied to every pairs of player and god.
+The `duplicable` keyword does exactly that: the solver will not be limited in how this element will be instantiated, and it may be instantiated several times with the same players.
+
+## Advanced Constraints
+
+Some elements do just not work if some conditions are met.
+Typically, if someone is part of the same family, one can hardly assume that they only met for the first time during their activity.
+It is thus important to be able to restrict the application of scenario elements.
+This can be done with the `not as` keyword.
+
+For instance, here is a snippet from [dreams.murder](../data/elements/dreams.murder):
+```murder
+unique element DreamAboutThief
+begin
+  let P be player with attribute Job not as Thief
+                  with contact Know to R as True
+                  with contact FamilyRelation to R not as Spouse or Parent or Child
+```
+This scenario element is checking that the player `P` is not a thief.
+Also note the usage of the `or` keyword to ensure that `P` is not a direct family member with `R`.
+This `or` keyword can also be used without the `not`: to ensure that two characters `A` and `B` are direct family members, one can add a restriction `with contact FamilyRelation to B as Spouse or Parent or Child` to the declaration of `A` (and symmetrically to `B`).
+
+One can also restrict the players that are not in referenced in the scenario element using the `any other player` expression.
+This expression is usually referenced at the very beginning of scenario elements to restrict the other players.
+It follows the same syntax than for any player declaration.
+For instance, here is a snippet from [family.murder](../data/elements/family.murder):
+```murder
+element Twins
+begin
+  let A be player with attribute Specy as Human
+  let B be player with attribute Specy as Human
+  let any other player be with contact FamilyRelation to A as None
+                          with contact FamilyRelation to B as None
+```
+The `let any other player be` command enforces that no other players share any family relation between `A` and `B`.
+If it weren’t there, other scenario elements might be applied, creating cycles in the family trees.
+
+The `any other player` expression can also be used in the `provide attribute` and `provide contact` commands.
+It will be applied to all players not referenced in the current scenario element.
+For instance, here is a snippet from [family.murder](../data/elements/family.murder):
+```murder
+element FromNobodysFamily
+begin
+  let P be player
+
+  provide compatible contact FamilyRelation between P and any other player as None
+end
+```
+This element will provide the contact between `P` and all players which are not `P`.
+If there were to be other players declared in the scenario element, they would also be removed from the `any other player` pool.
+If one also wants to apply a `provide attribute` or `provide contact` to all players, including the ones declared in the current scenario element, there exists the `any player` expression.
+Its usage his however rare in practise: in most cases, one only needs the `any other player` expression.
+
+## Event Kinds
+
+TODO: `declare event`
+
+An event may have more than one event type (being both `Work` and `Dream`, for instance).
+
+## Phantom Events
+
+TODO: phantom events
+
+## Compatibilities
+
+TODO: Rewrite that.
+
+The file [memory.md](./memory.md) says the following:
+> However, they can only have one instance of an attribute: no character can have two different attributes `Gender` for instance.
+
+Sometimes one would still like to combine two different values for a given attribute.
+For that, there is a possibility to declare compatible values.
+One would for instance create a value for the combination, then declare this “combined” value as being compatible with the other base values.
+See the example of the contact `FamilyRelation` in the next section for more details: all these mechanisms are the same for attributes.
+If you are familiar with [OpenStreetMap](https://www.openstreetmap.org), you can think of it as the different values for the [key `sidewalk`](https://wiki.openstreetmap.org/wiki/Key:sidewalk): `no`, `left`, `right`, and `both`.
+The only difference is that we tell here the program that `both` can also be interpreted as a `left` or a `right`, whereas OpenStreetMap requires the renderers to know what each value exactly means.
+
+As for attributes (because, really, contacts and attributes are the same thing, just that contacts are from a character to another whereas attributes air “sticked” on a particular character), one might want to combine values.
+This is done through the notion of compatibility: the “combination”-value will be compatible with both “base”-values.
+For instance, [family.murder](../data/elements/family.murder) declares a value `True` for `FamilyRelation` in addition to all the specific values for family relations.
+This value `True` is meant to describe the relation between two players of the same family that are not any of the most precise values (like `Sibling`, `Spouse`, etc.).
+It is declared as follows:
+```murder
+contact FamilyRelation True
+begin
+  compatible with Sibling
+  compatible with Parent
+end
+```
+Stating that a value is compatible with the other means that the value can be freely coerced from the base value to the compatible one.
+Hence, in the example, if the contact `FamilyRelation` from a player to another is `Sibling`, but that an element expects it to be `True`, the element will be applicable: `Sibling` can be coerced into `True` because `True` is compatible with `Sibling`.
+The converse is however not true: if an element expects a contact `FamilyRelation` to be `Sibling` but that it only is `True`, then the element won’t be applicable.
+In the rare case where one wants two values to be coercable in both direction, one can just declare both values to be compatible one with the other.
+The actual use case of such a situation is dubious as both values won’t be differentiable by any element: they thus would be equivalent for the program.
+
+As explained in [memory.md](./memory.md), both `Male` and `Female` are marked as being compatible with `NonBinary` such that a character with attribute `Gender` as `NonBinary` may be chosen if an elements is looking for a character with attribute `Gender` as `Male` or `Female`.
+The converse is however not true: if an element is looking for a character with attribute `Gender` as `NonBinary`, only the `NonBinary`-characters will be chosen, as there is no `compatible with` command in `NonBinary`’s block.
+
+As for attributes, this snippet uses the `compatible with` keyword to make `True` compatible with `Intimate`: if a character intimately knows another, then it also knows this other character.
+```murder
+declare contact Know
+begin
+  translation en "Knows"
+  (* Other translations *)
+end
+
+contact Know True
+begin
+  translation en "yes"
+  (* Other translations *)
+  compatible with Intimate
+end
+
+contact Know Intimate
+begin
+  translation en "intimately"
+  (* Other translations *)
+end
+
+internal contact Know False
+begin
+  translation en "no"
+  (* Other translations *)
+end
+```
+
+TODO: describe how to “break” compatible attributes and contacts by asking both “Female” and “not NonBinary”.
+
+## Strictness
+
+TODO: describe the strictness flag on attribute and contacts.
 

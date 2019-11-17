@@ -6,4 +6,5 @@ In particular:
 - [elements.md](./elements.md) explains how scenario elements are defined.
 - [structure.md](./structure.md) explains how the source code of the program is structured.
 - [translations.md](./translations.md) explains how the file [translations.json](../web/translations.json) works.
+- [names.md](./names.md) explains how the name files work.
 

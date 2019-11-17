@@ -95,7 +95,7 @@ declare translation en:adv (* Adverbs *)
 
 declare translation en:def (* Definite (“the”, as opposed to “a”) *)
 declare translation en:cli (* Clitics (“her”/“him”) *)
-declare translation en:pos (* Possessive *)
+declare translation en:pos (* Possessive (“her”/“his”) *)
 
 declare translation en:sin (* Singular *)
 declare translation en:plu (* Plural *)
@@ -162,7 +162,7 @@ declare translation eo:adj (* Adjectives *)
 declare translation eo:adv (* Adverbs *)
 
 declare translation eo:def (* Definite *)
-declare translation eo:pos (* Possessive *)
+declare translation eo:pos (* Possessive (“sia”) *)
 declare translation eo:acc (* Accusative *)
 
 declare translation eo:sin (* Singular *)

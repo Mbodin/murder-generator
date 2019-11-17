@@ -62,16 +62,64 @@ begin
 
   provide immediate event to D
   begin
-    translation fr "On ne peut pas faire confiance à un elfe."
-    translation en "One can’t trust an elf."
-    translation eo "Oni ne povas fidi elfojn."
+    sentence
+    begin
+      translation fr "Les elfes ont tendance à être assez stupides."
+      translation en "Elves tend to be quite stupid."
+      translation eo "Elfoj sufiĉe emas stulti."
+    end
+
+    sentence
+    begin
+      translation fr "On leur dit quelque chose, et ils vont le comprendre de travers."
+      translation en "Once being told something, they will misunderstand it."
+      translation eo "Tuj post aŭdi ion, ili miskomprenos ĝin."
+    end
+
+    sentence
+    begin
+      translation fr "Pire : on va se mettre d’accord sur quelque chose, mais le jour d’après, ils auront déjà oublié."
+      translation en "Worse: we will agree on something one day, but the day after, they will have forgotten the agreeement."
+      translation eo "Plej terure: oni interkonsentos pri io, sed la tagon poste, ili jam forgesintos."
+    end
+
+    sentence
+    begin
+      translation fr "On ne peut pas faire confiance à un elfe."
+      translation en "One can’t trust an elf."
+      translation eo "Oni ne povas fidi elfojn."
+    end
   end
 
   provide immediate event to E
   begin
-    translation fr "Les nains ne sont pas dignes de confiance."
-    translation en "Dwarves are not trustworthy."
-    translation eo "Gnomoj ne fideblas."
+    sentence
+    begin
+      translation fr "Les nains sont des créatures étranges."
+      translation en "Dwarves are strange creatures."
+      translation eo "Gnomoj estas strangaj bestoj."
+    end
+
+    sentence
+    begin
+      translation fr "Ils ne pensent qu’à une unique chose : le commerce."
+      translation en "They think about only one thing: commerce."
+      translation eo "Ili nur pensas pri unu afero: komerco."
+    end
+
+    sentence
+    begin
+      translation fr "Ils sont incapables de ressentir des émotions ou de l’empathie."
+      translation en "They are unable to feel empathy or other feelings."
+      translation eo "Ili ne kapablas senti emociojn aŭ empation."
+    end
+
+    sentence
+    begin
+      translation fr "Les nains ne sont pas dignes de confiance."
+      translation en "Dwarves are not trustworthy."
+      translation eo "Gnomoj ne fideblas."
+    end
   end
 
   provide relation between D and E as avoidance

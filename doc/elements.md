@@ -30,6 +30,7 @@ end
 ```
 The words `category`, `begin`, `end`, `translation`, `description`, and more generally any word starting with a lower-case letter, are keywords.
 User-defined names, like `Religion` in this example, start with an upper-case letter.
+These rules about case are general and hold all along the commands presented in this document.
 Comments are between `(*` and `*)`: everything inside a comment will be ignored by the program.
 Comments are meant to help you and other element writers organise the files, and clarify some subtleties about user definitions.
 
@@ -618,13 +619,150 @@ Its usage his however rare in practise: in most cases, one only needs the `any o
 
 ## Event Kinds
 
-TODO: `declare event`
+We said in the Event Assumptions section that events can be marked with event kinds, such as `Personal` or `Work`.
+Such event kinds can be declared using the `declare event` command.
+Here is for instance for the event `Personal` is declared in [identity.murder](../data/elements/identity.murder):
+```murder
+declare event Personal
+```
+That’s it.
+Thanks to this declaration, one can declare events in scenario elements as `Personal`, as shown in the Event Assumptions section above:
+```murder
+  provide event lasting weeks to A and B
+  begin
+    event Personal
+  end
+```
+Note that a given event may very well have more than one event kind: it just needs to include more than one `event` command.
 
-An event may have more than one event type (being both `Work` and `Dream`, for instance).
+It is possible to include dependencies between events.
+For that, just add `event` commands in a block after the `declare event` command.
+For instance, here is a snippet from [job.murder](../data/elements/job.murder):
+```murder
+declare event Work
+begin
+  event Personal
+end
+```
+This declares the event kind `Work` and declares it as being `Personal`: every work event personally implies the character.
+This means that every time an `event Work` command is issued in an event (in a scenario element), then there will be an implicit `event Personal` command.
+This is by the way why most events have only one `event` command: there are of several kinds, but most of these kinds are implicit.
+
+Inside an event kind declaration, one can also place a category inside an event declaration.
+For instance, here is a snippet from [notary.murder](../data/elements/notary.murder):
+```murder
+declare event MoneyExchange
+begin
+  event Personal
+  category Money
+end
+```
+This declaration means that the event kind `MoneyExchange` depends on the event kind `Personal` (that is, any exchange of money personally involves a character), but also that it depends on the category `Money`: any scenario element providing an event of kind `MoneyExchange` will be dependent on the `Money` category.
 
 ## Phantom Events
 
-TODO: phantom events
+Some events are just there to express some constraints.
+Such events are usually not associated to any translations, and it would be silly to display them in character sheets.
+The `phantom` keyword tells the program that this event is indeed just there for expressing constraints and should not be exported.
+
+For instance, to express in a scenario element that a character `B` is older than a character `A`, one can provide an event as follows (this is a snippet from [identity.murder](../data/elements/identity.murder)):
+```murder
+  provide immediate phantom event to A and B
+  begin
+    assume no event Birth to A before
+    assume no event Birth to B after
+  end
+```
+This event is declared `phantom` and is thus associated no translations (any translation will be rejected by the program in such an event).
+This event assumes some constraints about the birth events of `A` and `B`, enforcing `B` to be older.
+This event is `immediate`, so it won’t conflict with another event: if it were to last years, this would make an artificial hole in `A` and `B`’s life which would be difficult to explain.
+This event is thus purely here to ensure that indeed, `A`’s birth happened before than `B`.
+
+Another usage of phantom events is to space two events.
+To illustrate, here is a snippet from [romance.murder](../data/elements/romance.murder):
+```murder
+element FallInLoveAfterAParty
+begin
+  let A be player
+  let B be player
+
+  (* Some constraints and other events. *)
+
+  provide event lasting minutes to A and B
+  begin
+    event Personal
+    sentence
+    begin
+      translation en A:+sbeg " and " B " met during a party organised by " C "."
+      (* Other translations *)
+    end
+    sentence
+    begin
+      translation en "They greatly appreciated chatting one with the other and exchanged their contacts."
+      (* Other translations *)
+    end
+  end
+
+  provide phantom event lasting days to A and B
+
+  provide event lasting days to A and B
+  begin
+    event Personal
+    sentence
+    begin
+      translation en "Meeting once again each other, " A " and " B " fell in love."
+      (* Other translations *)
+    end
+    provide contact Relation between A and B as Love
+  end
+end
+```
+This scenario element defines two crucial events: first the two characters `A` and `B` met, then, after some time, they met again and fall in love.
+Without the phantom event, these two important events could be just placed one after the other… which would just be silly.
+To space the two events, we create a `phantom` event with the right duration in between: this will force the program to place at least this amount of time between the two events.
+Note that the phantom event is neither associated any translation (because it is a phantom event), but also no event kind (it could, but this one doesn’t need it) or constraints: its block is thus empty (`begin` would be immediately followed by `end`).
+Empty blocks can always be safely removed, as it is the case in this example.
+
+## Blocking Events
+
+By default, an event “books” the space for a player according to its duration: two events lasting years can’t intersect themselves if they involve the same characters, but an event lasting years and an event lasting minutes can.
+Sometimes, one may want to overwrite this default behaviour by preventing any other event from happening at the same time if they involve a common character.
+For instance, in [wounds.murder](../data/elements/wounds.murder), a scenario element describes a terrible event for a victim who ends up in an hospital:
+```murder
+  provide blocking event lasting days to V
+  begin
+    (* Player V is at the hospital for days and this will change their life. *)
+  end
+```
+The wounds are very high and are likely to completely change the victim’s life.
+It would be silly to place an event lasting minutes when the victim is at the hospital, as if nothing were to happen.
+As this event also changes the life of the victim, it would be silly to place an event lasting years (like the victim’s education cursus or a year-long job) intersecting with this event: we want this event to be a rupture in the victim’s life, yielding very strong emotions.
+We thus defines the event as `blocking`, enforcing that, for this player, nothing else happens at the same time.
+
+It is also possible to combine this with phantom events, to create the sensation of a large hole in a character’s life.
+For instance, here is a snippet from [identity.murder](../data/elements/identity.murder):
+```murder
+element BirthOld
+begin
+  let P be player
+
+  provide immediate event to P
+  begin
+    event Birth
+    translation en P:+sbeg " is born."
+  end
+
+  provide blocking phantom event lasting decades to P
+  begin
+    assume no event Personal to P before
+    provide attribute Age to P as Old
+  end
+end
+```
+To create the illusion that a character is old, an birth event is provided, then a large hole of two dozens of years with nothing, then the other events of the character start: it feels as if the life of this character started long after their birth, as if the time erased the rest.
+To create this sensation of a hole with no event, one use a `blocking` `phantom` event: as it is `phantom`, it is not displayed in character sheets, and as it is `blocking`, no other event will happen simultaneously.
+To avoid that the program fits some events to this player before the phantom event, a constraint is placed ensure that no personal event be placed before the phantom event.
+This is by the way because of this trick that the event kind `Birth` is not declared to be dependent on the event kind `Personal`: if `Birth` was `Personal` (although it morally is), one could not prevent other events to be placed before a special “beginning of actual life”-event (in this case, the blocking phantom event).
 
 ## Compatibilities
 

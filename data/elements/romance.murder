@@ -194,6 +194,8 @@ begin
     provide contact Relation between A and B as Love
   end
 
+  provide phantom event lasting days to A and B
+
   provide relation between A and B as strong trust
 end
 

@@ -108,6 +108,12 @@ val get_all_elements : state -> Translation.language -> Id.t PSet.t -> int -> Id
 (** Once the state has been built, categories can be listed. **)
 val all_categories : state -> Id.t list
 
+(** Returns the number of elements defined in the state. **)
+val total_number_of_elements : state -> int
+
+(** Returns the number of elements available for a particular language. **)
+val number_of_elements : state -> Translation.language -> int
+
 (** Takes a category identifier and returns the list of categories
  * that this category depends on. **)
 val get_category_dependencies : state -> Id.t -> Id.t PSet.t

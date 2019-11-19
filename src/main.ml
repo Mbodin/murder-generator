@@ -226,6 +226,7 @@ let main =
     (** We request the data without forcing it yet. **)
     let data = get_data () in
     let names = get_names () in
+
     let rec ask_for_languages _ parameters =
       (** Showing to the user all available languages. **)
       add_trace "ask_for_languages" ;
@@ -247,6 +248,7 @@ let main =
         IO.stopLoading () ;%lwt
         cont in
       load_or_create (Lwt.task ()) { parameters with language = Some language }
+
     and load_or_create (cont, w) parameters =
       (** Describing the project to the user. **)
       add_trace "load_or_create" ;
@@ -341,6 +343,7 @@ let main =
       next_button ~nextText:"startGeneration" w parameters (fun _ -> parameters)
         (Some ask_for_languages) (Some ask_for_basic) ;
       let%lwt cont = cont in cont ()
+
     and ask_for_basic (cont, w) parameters =
       (** Asking the first basic questions about the murder party. **)
       add_trace "ask_for_basic" ;
@@ -396,6 +399,7 @@ let main =
               computation_power = readFastOrSlow () })
         (Some load_or_create) (Some ask_for_categories) ;
       let%lwt cont = cont in cont ()
+
     and ask_for_categories (cont, w) parameters =
       (** Asking about categories. **)
       add_trace "ask_for_categories" ;
@@ -415,6 +419,19 @@ let main =
        ) else Lwt.return ()) ;%lwt
       let%lwt data = data in
       IO.stopLoading () ;%lwt
+      let _ =
+        let total = Driver.total_number_of_elements data in
+        let n = Driver.number_of_elements data (get_language parameters) in
+        assert (n <= total) ;
+        let p =
+          let n = float_of_int n in
+          let total = float_of_int total in
+          int_of_float (100. *. n /. total) in
+        if n < 9 * total / 10 then
+          IO.print_block ~error:true (InOut.P [
+              InOut.Text (get_translation "WarningVeryFewTranslations") ;
+              InOut.Text (string_of_int p ^ get_translation "percent" ^ ".")
+            ]) in
       let translate_categories =
         let translate_categories =
           (Driver.get_translations data).Translation.category in
@@ -506,6 +523,7 @@ let main =
           { parameters with categories = Some selected_categories })
         (Some ask_for_basic) (Some ask_for_player_constraints) ;
       let%lwt cont = cont in cont ()
+
     and ask_for_player_constraints (cont, w) parameters =
       (** Asking about individual player constraints. **)
       add_trace "ask_for_player_constraints" ;
@@ -600,7 +618,9 @@ let main =
              ref (fun _ -> assert false) in
            let (node, get) =
              let proposed =
-               try let (_, _, _, t) = Utils.select_any main_cons in t
+               try
+                 let (_, _, _, t) = Utils.select_any main_cons in
+                 get_translation "forExample" ^ " " ^ t
                with Utils.EmptyList -> "" in
              let misc =
                List.map (fun c ->
@@ -685,6 +705,7 @@ let main =
                  get_difficulty (), List.map snd (get_misc ()))) table
         }) (Some ask_for_categories) (Some generate) ;
       let%lwt cont = cont in cont ()
+
     and generate task parameters =
       (** Starting the generation. **)
       add_trace "generate" ;
@@ -725,6 +746,7 @@ let main =
               (Some (state, diff)) parameters.player_information) in
         Solver.solve_with_difference IO.setLoading global state diff objectives in
       choose_formats state task parameters
+
     and choose_formats state (cont, w) parameters =
       (** Asking the user to what formats we should export the scenario. **)
       add_trace "choose_formats" ;
@@ -766,6 +788,7 @@ let main =
                 if get () then PSet.add name s else s) PSet.empty exportButtons })
         (Some ask_for_player_constraints) (Some (check (display state))) ;
       let%lwt cont = cont in cont ()
+
     and display state (cont, w) parameters =
       (** Exporting the generated state to various formats. **)
       add_trace "display" ;
@@ -841,6 +864,7 @@ let main =
       next_button w parameters (fun _ -> parameters)
         (Some (choose_formats (Lwt.return state))) None ;
       let%lwt cont = cont in cont () in
+
     (** Setting the environment. **)
     let parameters = {
         language = None ;
@@ -931,6 +955,7 @@ let main =
              load_or_create (cont, w) parameters)
         | _ ->
           load_or_create (cont, w) parameters
+
   (** Reporting errors. **)
   with e ->
     try%lwt

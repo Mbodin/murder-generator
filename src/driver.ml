@@ -1348,3 +1348,9 @@ let get_all_elements s lg cats maxPlayers =
       if l <= maxPlayers && Element.is_translatable element lg then e :: el else el)
     else el) s.elements_dependencies []
 
+let total_number_of_elements s =
+  Enum.count (PMap.enum s.elements)
+
+let number_of_elements s lg =
+  Enum.count (Enum.filter (fun (_, e) -> Element.is_translatable e lg) (PMap.enum s.elements))
+

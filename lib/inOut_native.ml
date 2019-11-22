@@ -290,12 +290,12 @@ let createMenu get =
   let onChange f = l := f :: !l in
   let menu link f =
     link (fun _ ->
-      (match !l with
-       | [] -> ()
-       | _ ->
-         let v = get () in
-         List.iter (fun f -> f v) !l) ;
-      f ()) in
+      f () ;
+      match !l with
+      | [] -> ()
+      | _ ->
+        let v = get () in
+        List.iter (fun f -> f v) !l) in
   (menu, onChange)
 
 let rec block_node b =
@@ -635,14 +635,14 @@ let createDateInput d =
     onChange = onChange
   }
 
-let createSwitch text descr texton textoff b f =
+let createSwitch text descr texton textoff b =
   let b = ref b in
   let get _ = !b in
   let (menu, onChange) = createMenu get in
   let node link =
     let text =
       " [" ^ (if !b then "X" else " ") ^ "] "
-      ^ menu link (fun _ -> b := not !b ; print_newline () ; f ())
+      ^ menu link (fun _ -> b := not !b ; print_newline ())
       ^ (if text <> "" then " " ^ text else "")
       ^ Option.map_default (fun str -> " " ^ str) "" descr
       ^ Option.map_default (fun str -> " " ^ str) ""

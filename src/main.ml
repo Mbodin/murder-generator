@@ -463,8 +463,8 @@ let main =
           let e =
             IO.createSwitch (translate_categories c)
               (Some (translate_category_descriptions c))
-              None dependencies (PSet.mem c selected_categories)
-              (fun _ -> !onCategoryClick c) in
+              None dependencies (PSet.mem c selected_categories) in
+          e.IO.onChange (fun _ -> !onCategoryClick c) ;
           PMap.add c (e, PSet.empty) m) PMap.empty all_categories in
       let categoriesButtons =
         List.fold_left (fun m c ->
@@ -760,7 +760,7 @@ let main =
             let node =
               IO.createSwitch (get_translation "generateAs" ^ " " ^ get_translation name)
                 (Some (get_translation descr)) None None
-                (PSet.mem name parameters.chosen_productions) Utils.id in
+                (PSet.mem name parameters.chosen_productions) in
             (name, node))
           (("html", "htmlDescription")
            :: List.map (fun (name, descr, _, _, _, _) -> (name, descr))
@@ -813,10 +813,10 @@ let main =
         let node =
           IO.createSwitch (get_translation "changeStyles") None
             (Some (get_translation "changeStylesOff"))
-            (Some (get_translation "changeStylesOn")) false
-            (fun _ ->
-              (if !get () then IO.set_printing_mode
-               else IO.unset_printing_mode) ()) in
+            (Some (get_translation "changeStylesOn")) false in
+        node.IO.onChange (fun _ ->
+          (if !get () then IO.set_printing_mode
+           else IO.unset_printing_mode) ()) ;
         get := node.IO.get ;
         node in
       let (results, error) =

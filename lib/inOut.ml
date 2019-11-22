@@ -104,7 +104,7 @@ module type T = sig
   val createResponsiveListInput : (string * 'a) list -> string -> (string -> (string * 'a) list) -> (string * 'a) list sinteraction
   val createPercentageInput : float -> float sinteraction
   val createDateInput : Date.t -> Date.t sinteraction
-  val createSwitch : string -> string option -> string option -> string option -> bool -> (unit -> unit) -> bool sinteraction
+  val createSwitch : string -> string option -> string option -> string option -> bool -> bool sinteraction
   val createFileImport : string list -> (unit -> unit Lwt.t) -> node * (unit -> (string * string) Lwt.t)
 
 end

@@ -154,11 +154,10 @@ module type T = sig
   val createDateInput : Date.t -> Date.t sinteraction
 
   (** Create a switch button.
-   * It takes a function that will be called at each state change as argument. (* TODO: Remove. *)
    * The first string is the text associated with the button, to which can be
    * added three facultative texts: one serving as a description, one added
    * afterwards for when the button is on, and one when the button is off. **)
-  val createSwitch : string -> string option -> string option -> string option -> bool -> (unit -> unit) -> bool sinteraction
+  val createSwitch : string -> string option -> string option -> string option -> bool -> bool sinteraction
 
   (** Create a button to import a file.
    * It takes as argument the list of extension it accepts.

@@ -537,11 +537,10 @@ let createDateInput d =
     onChange = createOnChange input get
   }
 
-let createSwitch text descr texton textoff b f =
+let createSwitch text descr texton textoff b =
   let label = Dom_html.createLabel document in
   label##.classList##add (Js.string "switch") ;
   let input = Dom_html.createInput ~_type:(Js.string "checkbox") document in
-  input##.onchange := Dom_html.handler (fun _ -> f () ; Js._true) ;
   Dom.appendChild label input ;
   let span = Dom_html.createSpan document in
   span##.classList##add (Js.string "slider") ;

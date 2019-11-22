@@ -273,6 +273,31 @@ module Print : PrintType =
 type node =
   ((unit -> unit) -> string) -> unit
 
+type ('a, 'b) interaction = {
+    node : node ;
+    get : unit -> 'b ;
+    set : 'a -> unit ;
+    onChange : ('a -> unit) -> unit
+  }
+
+type 'a sinteraction = ('a, 'a) interaction
+
+(** Creates a menu and an [onChange] function.
+ * The menu is a wrapper around link to call the functions given to [onChange] each time
+ * the link is activated before calling the corresponding function. **)
+let createMenu get =
+  let l = ref [] in
+  let onChange f = l := f :: !l in
+  let menu link f =
+    link (fun _ ->
+      (match !l with
+       | [] -> ()
+       | _ ->
+         let v = get () in
+         List.iter (fun f -> f v) !l) ;
+      f ()) in
+  (menu, onChange)
+
 let rec block_node b =
   match b with
   | InOut.Div (layout, l) ->
@@ -460,58 +485,84 @@ let print_block ?(error = false) =
   Utils.compose (print_node ~error) (Utils.compose block_node InOut.add_spaces)
 
 let createNumberInput ?min:(mi = 0) ?max:(ma = max_int) n =
-  let v = ref n in
+  let v = ref (max mi (min ma n)) in
+  let get _ = !v in 
+  let (menu, onChange) = createMenu get in
   let node link =
-    Print.print (" " ^ string_of_int !v ^ " " ^ link (fun _ ->
+    Print.print (" " ^ string_of_int !v ^ " " ^ menu link (fun _ ->
       numberInput (fun _ -> !v) (fun v' -> v := v') ;
       v := max mi (min !v ma))) in
-  (node, fun _ -> !v)
+  let set n = v := (max mi (min ma n)) in {
+    node = node ;
+    get = get ;
+    set = set ;
+    onChange = onChange
+  }
 
-let createSettableTextInput str =
+let createTextInput str =
   let txt = ref str in
+  let get _ = !txt in 
+  let (menu, onChange) = createMenu get in
   let node link =
-    Print.print (" <" ^ !txt ^ "> " ^ link (fun _ ->
+    Print.print (" <" ^ !txt ^ "> " ^ menu link (fun _ ->
       print_string ("<" ^ !txt ^ "> -> ") ;
       flush stdout ;
       let str = input_line stdin in
       txt := str) ^ " ") in
-  (node, (fun _ -> !txt), (fun str -> txt := str))
-
-let createTextInput str =
-  let (node, get, _) = createSettableTextInput str in
-  (node, get)
+  let set str = txt := str in {
+    node = node ;
+    get = get ;
+    set = set ;
+    onChange = onChange
+  }
 
 let createListInput l =
-  if l = [] then (
-    let node link = Print.print " <>" in
-    (node, fun _ -> None)
-  ) else (
+  if l = [] then
+    let node link = Print.print " <>" in {
+      node = node ;
+      get = (fun _ -> None) ;
+      set = (fun _ -> invalid_arg "createListInput: set on an empty list.") ;
+      onChange = (fun _ -> invalid_arg "createListInput: onChange on an empty list.")
+    }
+  else
     let index = ref 0 in
+    let get _ = Option.map snd (List.nth_opt l !index) in
+    let get_str _ =
+      match List.nth_opt l !index with
+      | Some (k, _) -> k
+      | None -> invalid_arg "createListInput: onChange with a selected index too big." in
+    let (menu, onChange) = createMenu get_str in
     let node link =
-      let txt =
-        match List.nth_opt l !index with
-        | None -> ""
-        | Some (txt, _) -> txt in
-      Print.print (" <" ^ txt ^ "> " ^ link (fun _ ->
+      let txt = get_str () in
+      Print.print (" <" ^ txt ^ "> " ^ menu link (fun _ ->
         List.iteri (fun i (txt, _) ->
           print_string (string_of_int i ^ ": " ^ txt)) l ;
         flush stdout ;
         numberInput (fun _ -> !index) (fun i -> index := i)) ^ " ") in
-    (node, fun _ -> Option.map snd (List.nth_opt l !index))
-  )
+    let set k =
+      match Utils.list_associ_opt k l with
+      | None -> invalid_arg "createListInput: set on an non-existing element."
+      | Some (i, _) -> index := i in {
+      node = node ;
+      get = get ;
+      set = set ;
+      onChange = onChange
+    }
 
-let createResponsiveListInput default _ get =
+let createResponsiveListInput default _ get_possibilities =
   let l = ref default in
   let remove txt =
     l := List.filter (fun (txt', _) -> txt <> txt') !l in
-  let print _ =
+  let get _ = !l in
+  let (menu, onChange) = createMenu get in
+  let print link =
     String.concat " " (List.map (fun (txt, _) ->
-      "<" ^ txt ^ " [X]" ^ link (fun _ -> remove txt) ^ ">") !l) in
+      "<" ^ txt ^ " [X]" ^ menu link (fun _ -> remove txt) ^ ">") !l) in
   let rec add _ =
     print_string ("<> -> ") ;
     flush stdout ;
     let str = input_line stdin in
-    let possibilities = get str in
+    let possibilities = get_possibilities str in
     print_endline "[0] -> <>" ;
     List.iteri (fun i (txt, _) ->
       print_endline ("[" ^ string_of_int (1 + i) ^ "] " ^ txt)) possibilities ;
@@ -527,14 +578,25 @@ let createResponsiveListInput default _ get =
         l := (txt, e) :: !l
     with _ -> print_endline "Invalid value." in
   let node link =
-    Print.print (" <" ^ print () ^ "> " ^ link add ^ " ") in
-  (node, fun _ -> List.map snd !l)
+    Print.print (" <" ^ print link ^ "> " ^ menu link add ^ " ") in
+  let set l' =
+    l := l' in {
+    node = node ;
+    get = get ;
+    set = set ;
+    onChange = onChange
+  }
 
 let createPercentageInput d =
   let d = max 0. (min 1. d) in
   let v = ref (100. *. d) in
+  let set d =
+    let d = max 0. (min 1. d) in
+    v := 100. *. d in
+  let get _ = !v /. 100. in
+  let (menu, onChange) = createMenu get in
   let node link =
-    Print.print (" " ^ string_of_float !v ^ "% " ^ link (fun _ ->
+    Print.print (" " ^ string_of_float !v ^ "% " ^ menu link (fun _ ->
       print_string (string_of_float !v ^ "% -> ") ;
       flush stdout ;
       let str = input_line stdin in
@@ -546,13 +608,19 @@ let createPercentageInput d =
       let v' =
         try float_of_string str
         with _ -> print_endline "Invalid value."; !v in
-      v := max 0. (min v' 100.)) ^ " ") in
-  (node, fun _ -> !v /. 100.)
+      v := max 0. (min v' 100.)) ^ " ") in {
+    node = node ;
+    get = get ;
+    set = set ;
+    onChange = onChange
+  }
 
 let createDateInput d =
   let v = ref d in
+  let get _ = !v in
+  let (menu, onChange) = createMenu get in
   let node link =
-    Print.print (" " ^ Date.iso8601 !v ^ " " ^ link (fun _ ->
+    Print.print (" " ^ Date.iso8601 !v ^ " " ^ menu link (fun _ ->
       print_string (Date.iso8601 !v ^ " -> ") ;
       flush stdout ;
       let str = input_line stdin in
@@ -560,20 +628,32 @@ let createDateInput d =
         try Date.from_iso8601 str
         with _ -> print_endline "Invalid date."; !v in
       v := v') ^ " ") in
-  (node, fun _ -> !v)
+  let set d = v := d in {
+    node = node ;
+    get = get ;
+    set = set ;
+    onChange = onChange
+  }
 
 let createSwitch text descr texton textoff b f =
   let b = ref b in
+  let get _ = !b in
+  let (menu, onChange) = createMenu get in
   let node link =
     let text =
       " [" ^ (if !b then "X" else " ") ^ "] "
-      ^ link (fun _ -> b := not !b ; print_newline () ; f ())
+      ^ menu link (fun _ -> b := not !b ; print_newline () ; f ())
       ^ (if text <> "" then " " ^ text else "")
       ^ Option.map_default (fun str -> " " ^ str) "" descr
       ^ Option.map_default (fun str -> " " ^ str) ""
           (if !b then texton else textoff) ^ " " in
     block_node (Text text) link in
-  (node, (fun v -> b := v), fun _ -> !b)
+  let set b' = b := b' in {
+    node = node ;
+    get = get ;
+    set = set ;
+    onChange = onChange
+  }
 
 let createFileImport extensions prepare =
   let file = ref "" in

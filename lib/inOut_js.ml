@@ -369,7 +369,7 @@ let createListInput l =
     let i = input##.selectedIndex in
     match List.nth_opt l i with
     | Some (k, _) -> k
-    | None -> invalid_arg "createListInput: onChange on an empty list." in {
+    | None -> invalid_arg "createListInput: onChange with a selected index too big." in {
     node = (input :> Dom_html.element Js.t) ;
     get = get ;
     set = set ;

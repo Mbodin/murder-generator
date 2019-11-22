@@ -428,9 +428,12 @@ let main =
           let total = float_of_int total in
           int_of_float (100. *. n /. total) in
         if n < 9 * total / 10 then
-          IO.print_block ~error:true (InOut.P [
+          IO.print_block ~error:(n < total / 2) (InOut.P [
               InOut.Text (get_translation "WarningVeryFewTranslations") ;
-              InOut.Text (string_of_int p ^ get_translation "percent" ^ ".")
+              InOut.Text (string_of_int p ^ get_translation "percent" ^ ".") ;
+               InOut.Text (get_translation "lookingForContribution") ;
+               InOut.Text (get_translation "participate") ;
+               InOut.Link (get_translation "there", webpage_link)
             ]) in
       let translate_categories =
         let translate_categories =
@@ -855,9 +858,10 @@ let main =
       Option.may (fun e -> raise e) error ;
       IO.stopLoading () ;%lwt
       IO.print_block (InOut.P [
-        InOut.Text (get_translation "lookingForContribution") ;
-        InOut.Text (get_translation "participate") ;
-        InOut.Link (get_translation "there", webpage_link) ]) ;
+          InOut.Text (get_translation "lookingForContribution") ;
+          InOut.Text (get_translation "participate") ;
+          InOut.Link (get_translation "there", webpage_link)
+        ]) ;
       next_button w parameters (fun _ -> parameters)
         (Some (choose_formats (Lwt.return state))) None ;
       let%lwt cont = cont in cont () in

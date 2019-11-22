@@ -154,6 +154,14 @@ let rec list_partition_map f = function
     | Left b -> (b :: l, r)
     | Right c -> (l, c :: r)
 
+let list_associ k l =
+  let (i, (_, b)) = List.findi (fun _ (a, _) -> (a = k)) l in
+  (i, b)
+
+let list_associ_opt k l =
+  try Some (list_associ k l)
+  with Not_found -> None
+
 
 let shuffle l =
   List.sort ~cmp:(fun _ _ -> if Random.bool () then 1 else -1) l

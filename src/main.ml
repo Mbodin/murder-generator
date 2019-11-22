@@ -268,18 +268,18 @@ let main =
                 IO.clear_response () ;
                 ask_for_basic (Lwt.task ()) parameters)) ]) ;
       (** Suggest to shortcut the questions. **)
-      let (numberOfPlayers, readNumberOfPlayers) =
+      let numberOfPlayers =
         IO.createNumberInput ~min:1 parameters.player_number in
       IO.print_block (InOut.Div (InOut.Normal, [
           InOut.P [ InOut.Text (get_translation "fastCreation") ] ;
           InOut.Div (InOut.Centered, [
-              InOut.Node numberOfPlayers ;
+              InOut.Node numberOfPlayers.IO.node ;
               InOut.LinkContinuation (true, get_translation "startFastGeneration",
                 fun _ ->
                   Lwt.wakeup_later w (fun _ ->
                     let parameters =
                       { parameters with
-                          player_number = readNumberOfPlayers () ;
+                          player_number = numberOfPlayers.IO.get () ;
                           computation_power = 0. } in
                     let%lwt names = names in
                     let player_information =
@@ -348,55 +348,55 @@ let main =
       (** Asking the first basic questions about the murder party. **)
       add_trace "ask_for_basic" ;
       let get_translation = get_translation parameters in
-      let (playerNumber, readPlayerNumber) =
+      let playerNumber =
         IO.createNumberInput ~min:1 parameters.player_number in
       IO.print_block (InOut.P [
           InOut.Text (get_translation "howManyPlayers") ;
-          InOut.Node playerNumber
+          InOut.Node playerNumber.IO.node
         ]) ;
-      let (generalLevel, readGeneralLevel) =
+      let generalLevel =
         IO.createPercentageInput parameters.general_level in
       IO.print_block (InOut.Div (InOut.Normal, [
           InOut.P [ InOut.Text (get_translation "experience") ] ;
           InOut.Div (InOut.Centered, [
               InOut.Text (get_translation "beginner") ;
-              InOut.Node generalLevel ;
+              InOut.Node generalLevel.IO.node ;
               InOut.Text (get_translation "experienced")
             ])
         ])) ;
-      let (generalComplexity, readGeneralComplexity) =
+      let generalComplexity =
         IO.createPercentageInput parameters.general_complexity in
       IO.print_block (InOut.Div (InOut.Normal, [
           InOut.P [ InOut.Text (get_translation "lengthOfCharacterSheets") ] ;
           InOut.Div (InOut.Centered, [
               InOut.Text (get_translation "shortSheets") ;
-              InOut.Node generalComplexity ;
+              InOut.Node generalComplexity.IO.node ;
               InOut.Text (get_translation "longSheets")
             ])
         ])) ;
-      let (playDate, readPlayDate) =
+      let playDate =
         IO.createDateInput parameters.play_date in
       IO.print_block (InOut.P [
           InOut.Text (get_translation "whenDoYouPlanToPlay") ;
-          InOut.Node playDate
+          InOut.Node playDate.IO.node
         ]) ;
-      let (fastOrSlow, readFastOrSlow) =
+      let fastOrSlow =
         IO.createPercentageInput parameters.computation_power in
       IO.print_block (InOut.Div (InOut.Normal, [
           InOut.P [ InOut.Text (get_translation "fastOrSlowGeneration") ] ;
           InOut.Div (InOut.Centered, [
               InOut.Text (get_translation "fastGeneration") ;
-              InOut.Node fastOrSlow ;
+              InOut.Node fastOrSlow.IO.node ;
               InOut.Text (get_translation "slowGeneration")
             ])
         ])) ;
       next_button w parameters (fun _ ->
           { parameters with
-              player_number = readPlayerNumber () ;
-              general_level = readGeneralLevel () ;
-              general_complexity = readGeneralComplexity () ;
-              play_date = readPlayDate () ;
-              computation_power = readFastOrSlow () })
+              player_number = playerNumber.IO.get () ;
+              general_level = generalLevel.IO.get () ;
+              general_complexity = generalComplexity.IO.get () ;
+              play_date = playDate.IO.get () ;
+              computation_power = fastOrSlow.IO.get () })
         (Some load_or_create) (Some ask_for_categories) ;
       let%lwt cont = cont in cont ()
 
@@ -460,53 +460,53 @@ let main =
             else
               Some ("(" ^ get_translation "categoryDepends" ^ " "
                     ^ print_list (get_translation "and") deps ^ ")") in
-          let (e, set, get) =
+          let e =
             IO.createSwitch (translate_categories c)
               (Some (translate_category_descriptions c))
               None dependencies (PSet.mem c selected_categories)
               (fun _ -> !onCategoryClick c) in
-          PMap.add c (e, set, get, PSet.empty) m) PMap.empty all_categories in
+          PMap.add c (e, PSet.empty) m) PMap.empty all_categories in
       let categoriesButtons =
         List.fold_left (fun m c ->
             let deps = Driver.get_category_dependencies data c in
             PSet.fold (fun cd m ->
-              let (e, set, get, ideps) = PMap.find cd m in
-              PMap.add cd (e, set, get, PSet.add c ideps) m) m deps)
+              let (e, ideps) = PMap.find cd m in
+              PMap.add cd (e, PSet.add c ideps) m) m deps)
           categoriesButtons all_categories in
       let get_selected_categories _ =
-        PMap.foldi (fun c (_, _, get, _) s ->
-          if get () then
+        PMap.foldi (fun c (e, _) s ->
+          if e.IO.get () then
             PSet.add c s
           else s) categoriesButtons PSet.empty in
       let update_element_number _ =
         setElementNumber (get_element_number (get_selected_categories ())) in
       onCategoryClick := (fun c ->
-        let (_, _, get, ideps) = PMap.find c categoriesButtons in
-        (if get () then
+        let (e, ideps) = PMap.find c categoriesButtons in
+        (if e.IO.get () then
            let deps = Driver.get_category_dependencies data c in
            PSet.iter (fun c ->
-             let (_, set, _, _) = PMap.find c categoriesButtons in
-             set true) deps
+             let (e, _) = PMap.find c categoriesButtons in
+             e.IO.set true) deps
          else
            PSet.iter (fun c ->
-             let (_, set, _, _) = PMap.find c categoriesButtons in
-             set false) ideps) ;
+             let (e, _) = PMap.find c categoriesButtons in
+             e.IO.set false) ideps) ;
         update_element_number ()) ;
       IO.print_block (InOut.Div (InOut.Normal, [
           InOut.P [ InOut.Text (get_translation "unselectCategories") ] ;
           InOut.Div (InOut.Centered, [
               InOut.LinkContinuation (false, get_translation "noCategories",
                 fun _ ->
-                  PMap.iter (fun _ (_, set, _, _) -> set false) categoriesButtons ;
+                  PMap.iter (fun _ (e, _) -> e.IO.set false) categoriesButtons ;
                   update_element_number ()) ;
               InOut.Space ;
               InOut.LinkContinuation (true, get_translation "allCategories",
                 fun _ ->
-                  PMap.iter (fun _ (_, set, _, _) -> set true) categoriesButtons ;
+                  PMap.iter (fun _ (e, _) -> e.IO.set true) categoriesButtons ;
                   update_element_number ()) ;
             ]) ;
           InOut.List (false,
-            PMap.fold (fun (e, _, _, _) l -> InOut.Node e :: l)
+            PMap.fold (fun (e, _) l -> InOut.Node e.IO.node :: l)
             categoriesButtons []) ;
           InOut.P [
               InOut.Text (get_translation "categoriesExplain") ;
@@ -559,7 +559,7 @@ let main =
             InOut.Text (get_translation "lowComplexityHighDifficulty") ;
             InOut.Text (get_translation "highComplexityLowDifficulty") ;
             InOut.Text (get_translation "highComplexityHighDifficulty") ])])) ;
-      let (changingNames, get_name_generator, changingNamesOK) =
+      let (changingNames, changingNamesOK) =
         let lg = get_language parameters in
         let (default, non_default) = List.partition (fun g -> Names.is_default g lg) names in
         let names = default @ non_default in
@@ -568,8 +568,8 @@ let main =
             let tr = Names.translate g in
             Option.map (fun txt -> (txt, g))
               (Translation.translate tr lg ())) names in
-        let (node, get) = IO.createListInput l in
-        (node, get, l <> []) in
+        let node = IO.createListInput l in
+        (node, l <> []) in
       let player_information = create_player_information names get_translation parameters in
       let constructor_maps = Driver.get_constructor_maps data in
       let translation = Driver.get_translations data in
@@ -609,14 +609,14 @@ let main =
           if internal then Utils.Left r else Utils.Right r) all_constructors in
       let table =
         List.map (fun (name, complexity, difficulty, misc) ->
-          (IO.createSettableTextInput name,
+          (IO.createTextInput name,
            IO.createNumberInput complexity,
            IO.createNumberInput difficulty,
            let getrec =
              (* This reference is frustrating: I could not find another way to make
               * the compiler accept the recursion in this case. *)
              ref (fun _ -> assert false) in
-           let (node, get) =
+           let node =
              let proposed =
                try
                  let (_, _, _, t) = Utils.select_any main_cons in
@@ -655,17 +655,17 @@ let main =
                  Utils.list_header num_shown
                    (get_from_list main_cons @ get_from_list internal_cons) in
                List.map (fun (c, a, _, t) -> (t, (a, c))) l) in
-           getrec := get ;
-           (node, get))) player_information in
+           getrec := (fun _ -> List.map snd (node.IO.get ())) ;
+           node)) player_information in
       if changingNamesOK then
         IO.print_block (InOut.P [
             InOut.Text (get_translation "changingNames") ;
-            InOut.Node changingNames ;
+            InOut.Node changingNames.IO.node ;
             InOut.LinkContinuation (true, get_translation "changeNames", fun _ ->
-              match get_name_generator () with
+              match changingNames.IO.get () with
               | None -> ()
               | Some gen ->
-                ignore (List.fold_left (fun avoid ((_, _, set_name), _, _, _) ->
+                ignore (List.fold_left (fun avoid (e, _, _, _) ->
                   (** Again, as the generator contains external data, one can hardly
                    * assume that it can produce infinitely many different names.
                    * We are thus stuck to just generate new ones until a really new
@@ -677,7 +677,7 @@ let main =
                       | 0 -> name
                       | n -> if PSet.mem name avoid then aux (fuel - 1) else name in
                     aux 100 in
-                  set_name name ;
+                  e.IO.set name ;
                   PSet.add name avoid) PSet.empty table))
           ]) ;
       IO.print_block (InOut.Div (InOut.Normal, [
@@ -689,20 +689,18 @@ let main =
                         (InOut.Text (get_translation "difficulty"), InOut.default) ;
                         (InOut.Text (get_translation "miscellaneous"),
                          InOut.default)],
-                       List.map (fun ((name, _, _), (complexity, _),
-                                      (difficulty, _), (misc, _)) -> ([], [
-                           (InOut.Node name, InOut.default) ;
-                           (InOut.Node complexity, InOut.default) ;
-                           (InOut.Node difficulty, InOut.default) ;
-                           (InOut.Node misc, InOut.default)
+                       List.map (fun (name, complexity, difficulty, misc) -> ([], [
+                           (InOut.Node name.IO.node, InOut.default) ;
+                           (InOut.Node complexity.IO.node, InOut.default) ;
+                           (InOut.Node difficulty.IO.node, InOut.default) ;
+                           (InOut.Node misc.IO.node, InOut.default)
                          ])) table) ])])) ;
       next_button ~nextText:"startGeneration" w parameters (fun _ ->
         { parameters with
             player_information =
-              List.map (fun ((_, get_name, _), (_, get_complexity),
-                             (_, get_difficulty), (_, get_misc)) ->
-                (get_name (), get_complexity (),
-                 get_difficulty (), List.map snd (get_misc ()))) table
+              List.map (fun (name, complexity, difficulty, misc) ->
+                (name.IO.get (), complexity.IO.get (),
+                 difficulty.IO.get (), List.map (fun (_, (_, c)) -> c) (misc.IO.get ()))) table
         }) (Some ask_for_categories) (Some generate) ;
       let%lwt cont = cont in cont ()
 
@@ -759,19 +757,18 @@ let main =
           InOut.Link (get_translation "there", webpage_link) ]) ;
       let exportButtons =
         List.map (fun (name, descr) ->
-            let (node, set, get) =
-              IO.createSwitch (get_translation "generateAs"
-                               ^ " " ^ get_translation name)
+            let node =
+              IO.createSwitch (get_translation "generateAs" ^ " " ^ get_translation name)
                 (Some (get_translation descr)) None None
                 (PSet.mem name parameters.chosen_productions) Utils.id in
-            (name, InOut.Node node, set, get))
+            (name, node))
           (("html", "htmlDescription")
            :: List.map (fun (name, descr, _, _, _, _) -> (name, descr))
                 Export.all_production) in
       IO.print_block (InOut.Div (InOut.Normal, [
           InOut.P [ InOut.Text (get_translation "exportPossibilities") ] ;
           InOut.List (false,
-            List.map (fun (_, node, _, _) -> node) exportButtons)
+            List.map (fun (_, node) -> InOut.Node node.IO.node) exportButtons)
         ])) ;
       let check cont task parameters =
         if PSet.is_empty parameters.chosen_productions then (
@@ -784,8 +781,8 @@ let main =
         ) in
       next_button w parameters (fun _ ->
           { parameters with chosen_productions =
-              List.fold_left (fun s (name, _, _, get) ->
-                if get () then PSet.add name s else s) PSet.empty exportButtons })
+              List.fold_left (fun s (name, node) ->
+                if node.IO.get () then PSet.add name s else s) PSet.empty exportButtons })
         (Some ask_for_player_constraints) (Some (check (display state))) ;
       let%lwt cont = cont in cont ()
 
@@ -813,14 +810,14 @@ let main =
           Export.all_production in
       let switch_printing_mode =
         let get = ref (fun _ -> false) in
-        let (node, _, actual_get) =
+        let node =
           IO.createSwitch (get_translation "changeStyles") None
             (Some (get_translation "changeStylesOff"))
             (Some (get_translation "changeStylesOn")) false
             (fun _ ->
               (if !get () then IO.set_printing_mode
                else IO.unset_printing_mode) ()) in
-        get := actual_get ;
+        get := node.IO.get ;
         node in
       let (results, error) =
         let (results, error) =
@@ -847,7 +844,7 @@ let main =
             InOut.List (true, results)
           ])) ;
       if html then
-        IO.print_block (InOut.P [ InOut.Node switch_printing_mode ]) ;
+        IO.print_block (InOut.P [ InOut.Node switch_printing_mode.IO.node ]) ;
       let error =
         try
           if html then IO.print_block (Export.to_block estate) ;

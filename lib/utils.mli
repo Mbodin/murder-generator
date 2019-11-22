@@ -125,6 +125,13 @@ val list_map_option : ('a -> 'b option) -> 'a list -> 'b list option
  * a different type whether they satisfy the predicate. **)
 val list_partition_map : ('a -> ('b, 'c) plus) -> 'a list -> 'b list * 'c list
 
+(** Return the index and associated value of the pair with first element equal
+ * to the first argument, or raise [Not_found] if not present. **)
+val list_associ : 'a -> ('a * 'b) list -> (int * 'b)
+
+(** Same as [list_associ], but return [None] if not present. **)
+val list_associ_opt : 'a -> ('a * 'b) list -> (int * 'b) option
+
 (** Given a transitive comparison function and a list, returns the greatest
  * element of the list (or [None] if the list is empty). **)
 val argmax : ('a -> 'a -> int) -> 'a list -> 'a option

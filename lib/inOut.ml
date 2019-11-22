@@ -82,6 +82,14 @@ module type T = sig
 
   type node
 
+  type ('a, 'b) interaction = {
+      node : node ;
+      get : unit -> 'b ;
+      set : 'a -> unit ;
+      onChange : ('a -> unit) -> unit
+    }
+  type 'a sinteraction = ('a, 'a) interaction
+
   val block_node : node block -> node
   val print_node : ?error:bool -> node -> unit
   val print_block : ?error:bool -> node block -> unit
@@ -90,14 +98,13 @@ module type T = sig
   val createNumberOutput : int -> node * (int -> unit)
   val createTextOutput : string -> node * (string -> unit)
 
-  val createNumberInput : ?min:int -> ?max:int -> int -> node * (unit -> int)
-  val createTextInput : string -> node * (unit -> string)
-  val createSettableTextInput : string -> node * (unit -> string) * (string -> unit)
-  val createListInput : (string * 'a) list -> node * (unit -> 'a option)
-  val createResponsiveListInput : (string * 'a) list -> string -> (string -> (string * 'a) list) -> node * (unit -> 'a list)
-  val createPercentageInput : float -> node * (unit -> float)
-  val createDateInput : Date.t -> node * (unit -> Date.t)
-  val createSwitch : string -> string option -> string option -> string option -> bool -> (unit -> unit) -> node * (bool -> unit) * (unit -> bool)
+  val createNumberInput : ?min:int -> ?max:int -> int -> int sinteraction
+  val createTextInput : string -> string sinteraction
+  val createListInput : (string * 'a) list -> (string, 'a option) interaction
+  val createResponsiveListInput : (string * 'a) list -> string -> (string -> (string * 'a) list) -> (string * 'a) list sinteraction
+  val createPercentageInput : float -> float sinteraction
+  val createDateInput : Date.t -> Date.t sinteraction
+  val createSwitch : string -> string option -> string option -> string option -> bool -> (unit -> unit) -> bool sinteraction
   val createFileImport : string list -> (unit -> unit Lwt.t) -> node * (unit -> (string * string) Lwt.t)
 
 end

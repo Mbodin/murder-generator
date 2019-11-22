@@ -138,6 +138,15 @@ let languages =
 
 type node = Dom_html.element Js.t
 
+type ('a, 'b) interaction = {
+    node : node ;
+    get : unit -> 'b ;
+    set : 'a -> unit ;
+    onChange : ('a -> unit) -> unit
+  }
+
+type 'a sinteraction = ('a, 'a) interaction
+
 let document = Dom_html.window##.document
 
 let rec block_node =
@@ -295,43 +304,77 @@ let createNumberOutput n =
   let (node, set) = createTextOutput (string_of_int n) in
   (node, fun n -> set (string_of_int n))
 
+(** Given a node and a get function, create a field [onChange] of the type [interaction]. **)
+let createOnChange node get =
+  let l = ref [] in
+  node##.onchange :=
+    Dom_html.handler (fun _ ->
+      (match !l with
+       | [] -> ()
+       | _ ->
+         let v = get () in
+         List.iter (fun f -> f v) !l) ;
+      Js._false) ;
+  fun f -> l := f :: !l
+
 let createNumberInput ?min:(mi = 0) ?max:(ma = max_int) d =
-  let d = min ma (max mi d) in
   let input = Dom_html.createInput ~_type:(Js.string "number") document in
   ignore (input##setAttribute (Js.string "min") (Js.string (string_of_int mi))) ;
   ignore (input##setAttribute (Js.string "max") (Js.string (string_of_int ma))) ;
-  input##.value := Js.string (string_of_int d) ;
-  ((input :> Dom_html.element Js.t), fun _ ->
-    min ma (max mi (int_of_string (Js.to_string input##.value))))
+  let set d =
+    let d = min ma (max mi d) in
+    input##.value := Js.string (string_of_int d) in
+  set d ;
+  let get _ = min ma (max mi (int_of_string (Js.to_string input##.value))) in {
+    node = (input :> Dom_html.element Js.t) ;
+    get = get ;
+    set = set ;
+    onChange = createOnChange input get
+  }
 
-let createSettableTextInput txt =
+let createTextInput txt =
   let input = Dom_html.createInput ~_type:(Js.string "text") document in
   input##.value := Js.string txt ;
   let get _ = Js.to_string input##.value in
-  let set str = input##.value := Js.string str in
-  ((input :> Dom_html.element Js.t), get, set)
-
-let createTextInput str =
-  let (node, get, _) = createSettableTextInput str in
-  (node, get)
+  let set str = input##.value := Js.string str in {
+    node = (input :> Dom_html.element Js.t) ;
+    get = get ;
+    set = set ;
+    onChange = createOnChange input get
+  }
 
 let createListInput l =
-  if l = [] then (
-    let input = Dom_html.createSelect document in
-    input##.disabled := Js.bool true ;
-    ((input :> Dom_html.element Js.t), fun _ -> None)
-  ) else (
-    let input = Dom_html.createSelect document in
-    List.iteri (fun i (txt, _) ->
-      let i = "option_" ^ string_of_int i in
-      let o = Dom_html.createOption document in
-      o##.value := Js.string i ;
-      Dom.appendChild o (Dom_html.document##createTextNode (Js.string txt)) ;
-      Dom.appendChild input o) l ;
-    ((input :> Dom_html.element Js.t), fun _ ->
-      let i = input##.selectedIndex in
-      Option.map snd (List.nth_opt l i))
-  )
+  let input = Dom_html.createSelect document in
+  let (get, set) =
+    if l = [] then (
+      input##.disabled := Js.bool true ;
+      ((fun _ -> None), (fun _ -> invalid_arg "createListInput: set on an empty list."))
+    ) else (
+      let input = Dom_html.createSelect document in
+      List.iteri (fun i (txt, _) ->
+        let i = "option_" ^ string_of_int i in
+        let o = Dom_html.createOption document in
+        o##.value := Js.string i ;
+        Dom.appendChild o (Dom_html.document##createTextNode (Js.string txt)) ;
+        Dom.appendChild input o) l ;
+      ((fun _ ->
+         let i = input##.selectedIndex in
+         Option.map snd (List.nth_opt l i)),
+       (fun k ->
+         match Utils.list_associ_opt k l with
+         | None -> invalid_arg "createListInput: set on an non-existing element."
+         | Some (i, _) -> input##.selectedIndex := i))
+    ) in
+  let get_str _ =
+    let i = input##.selectedIndex in
+    match List.nth_opt l i with
+    | Some (k, _) -> k
+    | None -> invalid_arg "createListInput: onChange on an empty list." in {
+    node = (input :> Dom_html.element Js.t) ;
+    get = get ;
+    set = set ;
+    onChange = createOnChange input get_str
+  }
 
 let createResponsiveListInput default placeholder get =
   let main = Dom_html.createDiv document in
@@ -455,24 +498,44 @@ let createResponsiveListInput default placeholder get =
         Option.may (fun i -> snd (List.nth autocompletions i) ()) !current_focus ;
         Js._false
       | _ -> Js._true) ;
-  ((main :> Dom_html.element Js.t), fun _ -> List.map snd !l)
+  let get _ = !l in
+  let set l' =
+    l := l' ;
+    update_list () in {
+    node = (main :> Dom_html.element Js.t) ;
+    get = get ;
+    set = set ;
+    onChange = createOnChange input get
+  }
 
 let createPercentageInput d =
-  let d = max 0. (min 1. d) in
-  let maxv = 1_000 in
+  let maxv = 1_000_000 in
   let maxvf = float_of_int maxv in
   let input = Dom_html.createInput ~_type:(Js.string "range") document in
   ignore (input##setAttribute (Js.string "min") (Js.string "0")) ;
   ignore (input##setAttribute (Js.string "max") (Js.string (string_of_int maxv))) ;
-  input##.value := Js.string (string_of_int (int_of_float (maxvf *. d))) ;
-  ((input :> Dom_html.element Js.t), fun _ ->
-    (max 0. (min maxvf (float_of_string (Js.to_string input##.value)))) /. maxvf)
+  let set d =
+    let d = max 0. (min 1. d) in
+    input##.value := Js.string (string_of_int (int_of_float (maxvf *. d))) in
+  set d ;
+  let get _ = (max 0. (min maxvf (float_of_string (Js.to_string input##.value)))) /. maxvf in {
+    node = (input :> Dom_html.element Js.t) ;
+    get = get ;
+    set = set ;
+    onChange = createOnChange input get
+  }
 
 let createDateInput d =
   let input = Dom_html.createInput ~_type:(Js.string "date") document in
-  input##.value := Js.string (Date.iso8601 d) ;
-  ((input :> Dom_html.element Js.t), fun _ ->
-    (Date.from_iso8601 (Js.to_string input##.value)))
+  let set d =
+    input##.value := Js.string (Date.iso8601 d) in
+  set d ;
+  let get _ = Date.from_iso8601 (Js.to_string input##.value) in {
+    node = (input :> Dom_html.element Js.t) ;
+    get = get ;
+    set = set ;
+    onChange = createOnChange input get
+  }
 
 let createSwitch text descr texton textoff b f =
   let label = Dom_html.createLabel document in
@@ -497,10 +560,14 @@ let createSwitch text descr texton textoff b f =
       Dom.appendChild label node) in
   addText "textswitchon" texton ;
   addText "textswitchoff" textoff ;
-  let assign b = (Js.Unsafe.coerce input)##.checked := Js.bool b in
-  assign b ;
-  ((label :> Dom_html.element Js.t), assign, fun _ ->
-    Js.to_bool (Js.Unsafe.coerce input)##.checked)
+  let set b = (Js.Unsafe.coerce input)##.checked := Js.bool b in
+  set b ;
+  let get _ = Js.to_bool (Js.Unsafe.coerce input)##.checked in {
+    node = (label :> Dom_html.element Js.t) ;
+    get = get ;
+    set = set ;
+    onChange = createOnChange input get
+  }
 
 let createFileImport extensions prepare =
   let input = Dom_html.createInput ~_type:(Js.string "file") document in

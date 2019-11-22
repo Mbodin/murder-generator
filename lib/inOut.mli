@@ -97,6 +97,17 @@ module type T = sig
   (** An abstract type for representing nodes. **)
   type node
 
+  (** A type for node interaction. **)
+  type ('a, 'b) interaction = {
+      node : node (** The node itself **) ;
+      get : unit -> 'b (** Getting its value **) ;
+      set : 'a -> unit (** Setting its value **) ;
+      onChange : ('a -> unit) -> unit (** Calling a callback each time the value is changed. **)
+    }
+
+  (** The type of safe interactions. **)
+  type 'a sinteraction = ('a, 'a) interaction
+
   (** Converts the block to a node. **)
   val block_node : node block -> node
 
@@ -118,20 +129,14 @@ module type T = sig
   val createTextOutput : string -> node * (string -> unit)
 
 
-  (** Create a (positive) number input with default value given as argument.
-   * It also returns a function reading it. **)
-  val createNumberInput : ?min:int -> ?max:int -> int -> node * (unit -> int)
+  (** Create a (positive) number input with default value given as argument. **)
+  val createNumberInput : ?min:int -> ?max:int -> int -> int sinteraction
 
-  (** Create a text input with default value given as argument.
-   * It also returns a function reading it. **)
-  val createTextInput : string -> node * (unit -> string)
+  (** Create a text input with default value given as argument. **)
+  val createTextInput : string -> string sinteraction
 
-  (** Similar to [createTextInput], but also return a function to set its current value. **)
-  val createSettableTextInput : string -> node * (unit -> string) * (string -> unit)
-
-  (** Create a drop-down list where the user can choose one of its items.
-   * If the list is empty, the fucntion reading it returns [None]. **)
-  val createListInput : (string * 'a) list -> node * (unit -> 'a option)
+  (** Create a drop-down list where the user can choose one of its items. **)
+  val createListInput : (string * 'a) list -> (string, 'a option) interaction
 
   (** Create a text input meant to return a list of things.
    * Each time that the user type a string, it is fed to its argument function.
@@ -140,23 +145,20 @@ module type T = sig
    * This final list can be fetched with the function returned with the node.
    * The initial list and a placeholder string is given to the function to help
    * the user. **)
-  val createResponsiveListInput : (string * 'a) list -> string -> (string -> (string * 'a) list) -> node * (unit -> 'a list)
+  val createResponsiveListInput : (string * 'a) list -> string -> (string -> (string * 'a) list) -> (string * 'a) list sinteraction
 
-  (** Create a range input between [0.] and [1.].
-   * As of [createNumberInput], it also returns a function reading it. **)
-  val createPercentageInput : float -> node * (unit -> float)
+  (** Create a range input between [0.] and [1.]. **)
+  val createPercentageInput : float -> float sinteraction
 
-  (** Create a date input.
-   * As of [createNumberInput], it also returns a function reading it. **)
-  val createDateInput : Date.t -> node * (unit -> Date.t)
+  (** Create a date input. **)
+  val createDateInput : Date.t -> Date.t sinteraction
 
   (** Create a switch button.
-   * It takes a function that will be called at each state change as argument.
-   * It also returns a setter and a getter.
+   * It takes a function that will be called at each state change as argument. (* TODO: Remove. *)
    * The first string is the text associated with the button, to which can be
    * added three facultative texts: one serving as a description, one added
    * afterwards for when the button is on, and one when the button is off. **)
-  val createSwitch : string -> string option -> string option -> string option -> bool -> (unit -> unit) -> node * (bool -> unit) * (unit -> bool)
+  val createSwitch : string -> string option -> string option -> string option -> bool -> (unit -> unit) -> bool sinteraction
 
   (** Create a button to import a file.
    * It takes as argument the list of extension it accepts.

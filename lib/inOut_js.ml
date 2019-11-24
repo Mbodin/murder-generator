@@ -308,24 +308,31 @@ let createNumberOutput n =
   let (node, set) = createTextOutput (string_of_int n) in
   (node, fun n -> set (string_of_int n))
 
-(** Given a node and a get function, create a field [onChange] of the type [interaction]. **)
+(** Given a node and a get function, create a field [onChange] of the type [interaction],
+ * as well as a function to triggerring all changes to be applied on the [set] function. **)
 let createOnChange node get =
   let l = ref [] in
   let current = ref (get ()) in
-  fun f ->
+  let trigger _ =
+    let v = get () in
+    if v <> !current then (
+      current := v ;
+      List.iter (fun f -> f v) !l
+    ) in
+  let onChange f =
     if !l = [] then (
       (** To avoid placing too many event listeners, we only add it once we know that there is
        * at least one function. **)
       node##.onchange :=
         Dom_html.handler (fun _ ->
-          let v = get () in
-          if v <> !current then (
-            current := v ;
-            List.iter (fun f -> f v) !l
-          ) ;
+          trigger () ;
           Js._false)
     ) ;
-    l := f :: !l
+    l := f :: !l in
+  let trigger set x =
+    set x ;
+    trigger () in
+  (onChange, trigger)
 
 let createNumberInput ?min:(mi = 0) ?max:(ma = max_int) d =
   let input = Dom_html.createInput ~_type:(Js.string "number") document in
@@ -335,22 +342,24 @@ let createNumberInput ?min:(mi = 0) ?max:(ma = max_int) d =
     let d = min ma (max mi d) in
     input##.value := Js.string (string_of_int d) in
   set d ;
-  let get _ = min ma (max mi (int_of_string (Js.to_string input##.value))) in {
+  let get _ = min ma (max mi (int_of_string (Js.to_string input##.value))) in
+  let (onChange, trigger) = createOnChange input get in {
     node = (input :> Dom_html.element Js.t) ;
     get = get ;
-    set = set ;
-    onChange = createOnChange input get
+    set = trigger set ;
+    onChange = onChange
   }
 
 let createTextInput txt =
   let input = Dom_html.createInput ~_type:(Js.string "text") document in
   input##.value := Js.string txt ;
   let get _ = Js.to_string input##.value in
-  let set str = input##.value := Js.string str in {
+  let set str = input##.value := Js.string str in
+  let (onChange, trigger) = createOnChange input get in {
     node = (input :> Dom_html.element Js.t) ;
     get = get ;
-    set = set ;
-    onChange = createOnChange input get
+    set = trigger set ;
+    onChange = onChange
   }
 
 let createListInput l =
@@ -378,15 +387,15 @@ let createListInput l =
     let i = input##.selectedIndex in
     if i < 0 then None
     else Option.map fst (List.nth_opt l i) in
-  let onChange =
-    let onChange = createOnChange input get_stro in
-    fun f ->
+  let (trigger, onChange) =
+    let (onChange, trigger) = createOnChange input get_stro in
+    (trigger, fun f ->
       onChange (function
         | None -> ()
-        | Some x -> f x) in {
+        | Some x -> f x)) in {
     node = (input :> Dom_html.element Js.t) ;
     get = get ;
-    set = set ;
+    set = trigger set ;
     onChange = onChange
   }
 
@@ -516,11 +525,12 @@ let createResponsiveListInput default placeholder get =
   let get _ = !l in
   let set l' =
     l := l' ;
-    update_list () in {
+    update_list () in
+  let (onChange, trigger) = createOnChange input get in {
     node = (main :> Dom_html.element Js.t) ;
     get = get ;
-    set = set ;
-    onChange = createOnChange input get
+    set = trigger set ;
+    onChange = onChange
   }
 
 let createPercentageInput d =
@@ -533,11 +543,12 @@ let createPercentageInput d =
     let d = max 0. (min 1. d) in
     input##.value := Js.string (string_of_int (int_of_float (maxvf *. d))) in
   set d ;
-  let get _ = (max 0. (min maxvf (float_of_string (Js.to_string input##.value)))) /. maxvf in {
+  let get _ = (max 0. (min maxvf (float_of_string (Js.to_string input##.value)))) /. maxvf in
+  let (onChange, trigger) = createOnChange input get in {
     node = (input :> Dom_html.element Js.t) ;
     get = get ;
-    set = set ;
-    onChange = createOnChange input get
+    set = trigger set ;
+    onChange = onChange
   }
 
 let createDateInput d =
@@ -545,11 +556,12 @@ let createDateInput d =
   let set d =
     input##.value := Js.string (Date.iso8601 d) in
   set d ;
-  let get _ = Date.from_iso8601 (Js.to_string input##.value) in {
+  let get _ = Date.from_iso8601 (Js.to_string input##.value) in
+  let (onChange, trigger) = createOnChange input get in {
     node = (input :> Dom_html.element Js.t) ;
     get = get ;
-    set = set ;
-    onChange = createOnChange input get
+    set = trigger set ;
+    onChange = onChange
   }
 
 let createSwitch text descr texton textoff b =
@@ -576,11 +588,12 @@ let createSwitch text descr texton textoff b =
   addText "textswitchoff" textoff ;
   let set b = (Js.Unsafe.coerce input)##.checked := Js.bool b in
   set b ;
-  let get _ = Js.to_bool (Js.Unsafe.coerce input)##.checked in {
+  let get _ = Js.to_bool (Js.Unsafe.coerce input)##.checked in
+  let (onChange, trigger) = createOnChange input get in {
     node = (label :> Dom_html.element Js.t) ;
     get = get ;
-    set = set ;
-    onChange = createOnChange input get
+    set = trigger set ;
+    onChange = onChange
   }
 
 let createFileImport extensions prepare =

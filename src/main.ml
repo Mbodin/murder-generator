@@ -104,6 +104,14 @@ let get_names _ =
         invalid_arg ("Error while parsing name file “" ^ fileName ^ "”: " ^ str) in
     Lwt.return generator) NameFiles.files
 
+(** A type to store player information **)
+type player_information = {
+    name : string (** Character name *) ;
+    complexity : int (** Complexity **) ;
+    difficulty : int (** Difficulty **) ;
+    attributes : Attribute.PlayerAttribute.constructor list (** Preset attributes **) ;
+    (** TODO: Preset contacts **)
+  }
 
 (** A type to store what each page of the menu provides. **)
 type parameters = {
@@ -114,11 +122,7 @@ type parameters = {
     play_date : Date.t ;
     computation_power : float ;
     categories : Id.t PSet.t option ;
-    player_information : (string (** Character name *)
-                          * int (** Complexity **)
-                          * int (** Difficulty **)
-                          * Attribute.PlayerAttribute.constructor list
-                              (** Preset attributes **)) list ;
+    player_information : player_information list ;
     chosen_productions : string PSet.t (** The name of each chosen production. **)
   }
 
@@ -169,11 +173,15 @@ let create_player_information names get_translation parameters =
             match fuel with
             | 0 -> name
             | n ->
-              if List.exists (fun (name', _, _, _) -> name' = name) player_information then
+              if List.exists (fun infos -> infos.name = name) player_information then
                 aux (n - 1)
               else name in
-          aux 100 in
-        (name, complexity, difficulty, []) :: player_information)
+          aux 100 in {
+          name = name ;
+          complexity = complexity ;
+          difficulty = difficulty ;
+          attributes = []
+        } :: player_information)
       player_information (Utils.seq (parameters.player_number - len))
 
 (** Get the categories from the parameters, but return the default value if not defined. **)
@@ -324,10 +332,12 @@ let main =
                             PMap.fold (fun c l ->
                               match c with
                               | State.Fixed_value (c :: [], _) -> c :: l
-                              | _ -> l) m [] in
-                          (name, State.character_complexity st c,
-                           State.character_difficulty st c,
-                           attributes)) names in
+                              | _ -> l) m [] in {
+                            name = name ;
+                            complexity = State.character_complexity st c ;
+                            difficulty = State.character_difficulty st c ;
+                            attributes = attributes
+                          }) names in
                       let parameters =
                         { parameters with
                             player_number = List.length informations ;
@@ -601,164 +611,168 @@ let main =
         Utils.list_partition_map (fun (c, (a, internal, n, t)) ->
           let r = (c, a, n, t) in
           if internal then Utils.Left r else Utils.Right r) all_constructors in
-      let nameTable = [] (* TODO *) in
       IO.stopLoading () ;%lwt
       IO.print_block (InOut.P [ InOut.Text (get_translation "individualConstraints") ]) ;
-      let nameBlock =
+      let (nameTable, nameBlock) =
+        let table =
+          List.map (fun infos -> IO.createTextInput infos.name) player_information in
+        (table,
+         InOut.FoldableBlock (false, get_translation "stepNames",
+           InOut.Div (InOut.Normal, [
+               InOut.P [
+                   InOut.Text (get_translation "changingNamesManually") ;
+                   InOut.Text (get_translation "changingNamesAutomatically") ;
+                   InOut.Node changingNames.IO.node ;
+                   InOut.LinkContinuation (true, get_translation "changeNames", fun _ ->
+                     match changingNames.IO.get () with
+                     | None -> ()
+                     | Some gen ->
+                       ignore (List.fold_left (fun avoid node ->
+                         (** As the generator contains external data, one can hardly assume
+                          * that it can produce infinitely many different names.
+                          * We are thus stuck to just generate new ones until a really new
+                          * one appears. **)
+                         let name =
+                           let rec aux fuel =
+                             let name = Names.generate gen in
+                             match fuel with
+                             | 0 -> name
+                             | n -> if PSet.mem name avoid then aux (fuel - 1) else name in
+                           aux 100 in
+                         node.IO.set name ;
+                         PSet.add name avoid) PSet.empty table))
+                 ] ;
+               InOut.Div (InOut.Centered, [
+                   InOut.Table (["table"],
+                                [(InOut.Text (get_translation "playerName"), InOut.default)],
+                                List.map (fun node ->
+                                  ([], [(InOut.Node node.IO.node, InOut.default)])) table)
+                 ])
+             ]))) in
+      let (attributeTable, attributeBlock) =
+        let table =
+          List.map (fun infos ->
+            (IO.createTextInput infos.name,
+             let getrec =
+               (* This reference is frustrating: I could not find another way to make
+                * the compiler accept the recursion in this case. *)
+               ref (fun _ -> assert false) in
+             let node =
+               let proposed =
+                 try
+                   let (_, _, _, t) = Utils.select_any main_cons in
+                   get_translation "forExample" ^ " " ^ t
+                 with Utils.EmptyList -> "" in
+               let attributes =
+                 List.map (fun c ->
+                   let (a, _, _, t) = constructor_infos c in
+                   (t, (a, c))) infos.attributes in
+               IO.createResponsiveListInput attributes proposed (fun txt ->
+                 let re = Re.Str.regexp_string_case_fold txt in
+                 let corresponds txt' =
+                   try Some (Re.Str.search_forward re txt' 0)
+                   with Not_found -> None in
+                 let already_chosen =
+                   PSet.from_list (List.map (fun (a, _) -> a) (!getrec ())) in
+                 let num_shown = 10 in
+                 let get_from_list l =
+                   let l =
+                     Utils.list_map_filter (fun (c, a, n, t) ->
+                       if PSet.mem a already_chosen then None
+                       else
+                         let d =
+                           match corresponds t with
+                           | Some d -> Some (true, d)
+                           | None ->
+                             Option.map (fun d -> (false, d)) (corresponds n) in
+                         Option.map (fun d -> (c, a, d, t)) d) l in
+                   let l =
+                     List.sort ~cmp:(fun (_, _, (t1, d1), _) (_, _, (t2, d2), _) ->
+                       if t1 && not t2 then -1
+                       else if t2 && not t1 then 1
+                       else compare d1 d2) l in
+                   Utils.list_header num_shown l in
+                 let l =
+                   Utils.list_header num_shown
+                     (get_from_list main_cons @ get_from_list internal_cons) in
+                 List.map (fun (c, a, _, t) -> (t, (a, c))) l) in
+             getrec := (fun _ -> List.map snd (node.IO.get ())) ;
+             node)) player_information in
+        List.iter2 (fun name (name', _) -> IO.synchronise name name') nameTable table ;
+        (table,
+         InOut.FoldableBlock (false, get_translation "stepAttributes",
+           InOut.Div (InOut.Normal, [
+               InOut.P [
+                   InOut.Text (get_translation "attributeExplanation") ;
+                   InOut.Text (get_translation "setAttribute")
+                 ] ;
+               InOut.Div (InOut.Centered, [
+                   InOut.Table (["table"],
+                                [(InOut.Text (get_translation "playerName"), InOut.default) ;
+                                 (InOut.Text (get_translation "attributes"), InOut.default)],
+                                List.map (fun (name, attributes) ->
+                                  ([], [
+                                     (InOut.Node name.IO.node, InOut.default) ;
+                                     (InOut.Node attributes.IO.node, InOut.default)
+                                   ])) table)
+                 ])
+             ]))) in
+      let (contactTable, contactBlock) =
         let table = [] (* TODO *) in
-        InOut.FoldableBlock (false, get_translation "stepNames",
-          InOut.Div (InOut.Normal, [
-              InOut.P [
-                  InOut.Text (get_translation "changingNamesManually") ;
-                  InOut.Text (get_translation "changingNamesAutomatically") ;
-                  InOut.Node changingNames.IO.node ;
-                  InOut.LinkContinuation (true, get_translation "changeNames", fun _ ->
-                    match changingNames.IO.get () with
-                    | None -> ()
-                    | Some gen ->
-                      ignore (List.fold_left (fun avoid (e, _, _, _) ->
-                        (** Again, as the generator contains external data, one can hardly
-                         * assume that it can produce infinitely many different names.
-                         * We are thus stuck to just generate new ones until a really new
-                         * one appears. **)
-                        let name =
-                          let rec aux fuel =
-                            let name = Names.generate gen in
-                            match fuel with
-                            | 0 -> name
-                            | n -> if PSet.mem name avoid then aux (fuel - 1) else name in
-                          aux 100 in
-                        e.IO.set name ;
-                        PSet.add name avoid) PSet.empty table))
-                ] ;
-              InOut.Div (InOut.Centered, [
-                  InOut.Table (["table"],
-                               [(InOut.Text (get_translation "playerName"), InOut.default)],
-                               table)
-                ])
-            ])) in
-      let attributeBlock =
-        let table = [] (* TODO *) in
-        InOut.FoldableBlock (false, get_translation "stepAttributes",
-          InOut.Div (InOut.Normal, [
-              InOut.P [
-                  InOut.Text (get_translation "attributeExplanation") ;
-                  InOut.Text (get_translation "setAttribute")
-                ] ;
-              InOut.Div (InOut.Centered, [
-                  InOut.Table (["table"],
-                               [(InOut.Text (get_translation "attributes"), InOut.default)],
-                               table)
-                ])
-            ])) in
-      let contactBlock =
-        let table = [] (* TODO *) in
-        InOut.FoldableBlock (false, get_translation "stepContacts",
-          InOut.Div (InOut.Normal, [
-              InOut.P [
-                  InOut.Text (get_translation "contactExplanation") ;
-                  InOut.Text (get_translation "setContact")
-                ] ;
-              (* TODO: The table. *)
-            ])) in
-      let complexityDifficultyBlock =
-        let table = [] (* TODO *) in
-        InOut.FoldableBlock (false, get_translation "stepComplexityDifficulty",
-          InOut.Div (InOut.Normal, [
-              InOut.P [ InOut.Text (get_translation "complexityDifficultyExplanation") ] ;
-              InOut.List (true, [
-                  InOut.Text (get_translation "lowComplexityLowDifficulty") ;
-                  InOut.Text (get_translation "lowComplexityHighDifficulty") ;
-                  InOut.Text (get_translation "highComplexityLowDifficulty") ;
-                  InOut.Text (get_translation "highComplexityHighDifficulty")
-                ]) ;
-              InOut.P [
-                  InOut.Text (get_translation "complexityDifficultyPrefilled") ;
-                  InOut.Text (get_translation "changeThisTable")
-                ] ;
-              InOut.Div (InOut.Centered, [
-                  InOut.Table (["table"],
-                               [(InOut.Text (get_translation "playerName"), InOut.default) ;
-                                (InOut.Text (get_translation "complexity"), InOut.default) ;
-                                (InOut.Text (get_translation "difficulty"), InOut.default)],
-                               table)
-                ])
-            ])) in
+        (table,
+         InOut.FoldableBlock (false, get_translation "stepContacts",
+           InOut.Div (InOut.Normal, [
+               InOut.P [
+                   InOut.Text (get_translation "contactExplanation") ;
+                   InOut.Text (get_translation "setContact")
+                 ] ;
+               (* TODO: The table. *)
+             ]))) in
+      let (complexityDifficultyTable, complexityDifficultyBlock) =
+        let table =
+          List.map (fun infos ->
+            (IO.createTextInput infos.name,
+             IO.createNumberInput infos.complexity,
+             IO.createNumberInput infos.difficulty)) player_information in
+        List.iter2 (fun name (name', _, _) -> IO.synchronise name name') nameTable table ;
+        (table,
+         InOut.FoldableBlock (false, get_translation "stepComplexityDifficulty",
+           InOut.Div (InOut.Normal, [
+               InOut.P [ InOut.Text (get_translation "complexityDifficultyExplanation") ] ;
+               InOut.List (true, [
+                   InOut.Text (get_translation "lowComplexityLowDifficulty") ;
+                   InOut.Text (get_translation "lowComplexityHighDifficulty") ;
+                   InOut.Text (get_translation "highComplexityLowDifficulty") ;
+                   InOut.Text (get_translation "highComplexityHighDifficulty")
+                 ]) ;
+               InOut.P [
+                   InOut.Text (get_translation "complexityDifficultyPrefilled") ;
+                   InOut.Text (get_translation "changeThisTable")
+                 ] ;
+               InOut.Div (InOut.Centered, [
+                   InOut.Table (["table"],
+                                [(InOut.Text (get_translation "playerName"), InOut.default) ;
+                                 (InOut.Text (get_translation "complexity"), InOut.default) ;
+                                 (InOut.Text (get_translation "difficulty"), InOut.default)],
+                                List.map (fun (name, complexity, difficulty) ->
+                                  ([], [
+                                     (InOut.Node name.IO.node, InOut.default) ;
+                                     (InOut.Node complexity.IO.node, InOut.default) ;
+                                     (InOut.Node difficulty.IO.node, InOut.default)
+                                   ])) table)
+                 ])
+             ]))) in
       IO.print_block (InOut.List (false,
         [nameBlock ; attributeBlock ; contactBlock ; complexityDifficultyBlock])) ;
-      let table = (* TODO: Split and move before *)
-        List.map (fun (name, complexity, difficulty, misc) ->
-          (IO.createTextInput name,
-           IO.createNumberInput complexity,
-           IO.createNumberInput difficulty,
-           let getrec =
-             (* This reference is frustrating: I could not find another way to make
-              * the compiler accept the recursion in this case. *)
-             ref (fun _ -> assert false) in
-           let node =
-             let proposed =
-               try
-                 let (_, _, _, t) = Utils.select_any main_cons in
-                 get_translation "forExample" ^ " " ^ t
-               with Utils.EmptyList -> "" in
-             let misc =
-               List.map (fun c ->
-                 let (a, _, _, t) = constructor_infos c in
-                 (t, (a, c))) misc in
-             IO.createResponsiveListInput misc proposed (fun txt ->
-               let re = Re.Str.regexp_string_case_fold txt in
-               let corresponds txt' =
-                 try Some (Re.Str.search_forward re txt' 0)
-                 with Not_found -> None in
-               let already_chosen =
-                 PSet.from_list (List.map (fun (a, _) -> a) (!getrec ())) in
-               let num_shown = 10 in
-               let get_from_list l =
-                 let l =
-                   Utils.list_map_filter (fun (c, a, n, t) ->
-                     if PSet.mem a already_chosen then None
-                     else
-                       let d =
-                         match corresponds t with
-                         | Some d -> Some (true, d)
-                         | None ->
-                           Option.map (fun d -> (false, d)) (corresponds n) in
-                       Option.map (fun d -> (c, a, d, t)) d) l in
-                 let l =
-                   List.sort ~cmp:(fun (_, _, (t1, d1), _) (_, _, (t2, d2), _) ->
-                     if t1 && not t2 then -1
-                     else if t2 && not t1 then 1
-                     else compare d1 d2) l in
-                 Utils.list_header num_shown l in
-               let l =
-                 Utils.list_header num_shown
-                   (get_from_list main_cons @ get_from_list internal_cons) in
-               List.map (fun (c, a, _, t) -> (t, (a, c))) l) in
-           getrec := (fun _ -> List.map snd (node.IO.get ())) ;
-           node)) player_information in
-      (* TODO: Remove
-      IO.print_block (InOut.Div (InOut.Normal, [
-        InOut.P [ InOut.Text (get_translation "changeThisTable") ] ;
-        InOut.Div (InOut.Centered, [
-          InOut.Table (["table"],
-                       [(InOut.Text (get_translation "playerName"), InOut.default) ;
-                        (InOut.Text (get_translation "complexity"), InOut.default) ;
-                        (InOut.Text (get_translation "difficulty"), InOut.default) ;
-                        (InOut.Text (get_translation "miscellaneous"),
-                         InOut.default)],
-                       List.map (fun (name, complexity, difficulty, misc) -> ([], [
-                           (InOut.Node name.IO.node, InOut.default) ;
-                           (InOut.Node complexity.IO.node, InOut.default) ;
-                           (InOut.Node difficulty.IO.node, InOut.default) ;
-                           (InOut.Node misc.IO.node, InOut.default)
-                         ])) table) ])])) ;
-      *)
       next_button ~nextText:"startGeneration" w parameters (fun _ ->
         { parameters with
             player_information =
-              List.map (fun (name, complexity, difficulty, misc) ->
-                (name.IO.get (), complexity.IO.get (),
-                 difficulty.IO.get (), List.map (fun (_, (_, c)) -> c) (misc.IO.get ()))) table
+              Utils.list_map3 (fun name (_, attributes) (_, complexity, difficulty) -> {
+                  name = name.IO.get () ;
+                  complexity = complexity.IO.get () ;
+                  difficulty = difficulty.IO.get () ;
+                  attributes = List.map (fun (_, (_, c)) -> c) (attributes.IO.get ())
+                }) nameTable attributeTable complexityDifficultyTable
         }) (Some ask_for_categories) (Some generate) ;
       let%lwt cont = cont in cont ()
 
@@ -784,19 +798,19 @@ let main =
           List.fold_left Solver.register_element
             (Solver.empty_global parameters.computation_power) elements in
         let objectives =
-          Array.of_list (List.map (fun (_, complexity, difficulty, _) -> {
-              State.complexity = complexity ;
-              State.difficulty = difficulty
+          Array.of_list (List.map (fun infos -> {
+              State.complexity = infos.complexity ;
+              State.difficulty = infos.difficulty
             }) parameters.player_information) in
         let state = State.create_state parameters.player_number in
         let (state, diff) =
           let diff = Element.empty_difference in
           Utils.assert_option __LOC__
-            (Utils.list_fold_lefti (fun i stdiff (_, _, _, attributes) ->
+            (Utils.list_fold_lefti (fun i stdiff infos ->
                 Utils.if_option stdiff (fun (state, diff) ->
                   Utils.apply_option
                     (Element.apply_constructors (Driver.get_constructor_maps data)
-                      state (Id.from_array i) attributes)
+                      state (Id.from_array i) infos.attributes)
                     (fun (state, diff') ->
                       (state, Element.merge_attribute_differences diff diff'))))
               (Some (state, diff)) parameters.player_information) in
@@ -854,8 +868,7 @@ let main =
         Export.process {
           Export.language = get_language parameters ;
           Export.date = parameters.play_date ;
-          Export.names =
-            List.map (fun (name, _, _, _) -> name) parameters.player_information ;
+          Export.names = List.map (fun infos -> infos.name) parameters.player_information ;
           Export.translation = Driver.get_translations data ;
           Export.generic_translation = translation ;
           Export.constructor_maps = Driver.get_constructor_maps data ;

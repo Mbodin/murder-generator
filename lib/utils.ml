@@ -162,6 +162,20 @@ let list_associ_opt k l =
   try Some (list_associ k l)
   with Not_found -> None
 
+let list_map3 f l1 l2 l3 =
+  let rec aux = function
+    | [], [], [] -> []
+    | e1 :: l1, e2 :: l2, e3 :: l3 -> f e1 e2 e3 :: aux (l1, l2, l3)
+    | _ -> invalid_arg "list_map3" in
+  aux (l1, l2, l3)
+
+let list_map4 f l1 l2 l3 l4 =
+  let rec aux = function
+    | [], [], [], [] -> []
+    | e1 :: l1, e2 :: l2, e3 :: l3, e4 :: l4 -> f e1 e2 e3 e4 :: aux (l1, l2, l3, l4)
+    | _ -> invalid_arg "list_map4" in
+  aux (l1, l2, l3, l4)
+
 
 let shuffle l =
   List.sort ~cmp:(fun _ _ -> if Random.bool () then 1 else -1) l

@@ -132,6 +132,10 @@ val list_associ : 'a -> ('a * 'b) list -> (int * 'b)
 (** Same as [list_associ], but return [None] if not present. **)
 val list_associ_opt : 'a -> ('a * 'b) list -> (int * 'b) option
 
+(** Generalised versions of [List.map2]. **)
+val list_map3 : ('a -> 'b -> 'c -> 'd) -> 'a list -> 'b list -> 'c list -> 'd list
+val list_map4 : ('a -> 'b -> 'c -> 'd -> 'e) -> 'a list -> 'b list -> 'c list -> 'd list -> 'e list
+
 (** Given a transitive comparison function and a list, returns the greatest
  * element of the list (or [None] if the list is empty). **)
 val argmax : ('a -> 'a -> int) -> 'a list -> 'a option

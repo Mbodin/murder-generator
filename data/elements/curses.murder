@@ -6,7 +6,7 @@ begin
   translation eo "Malbenaĵo"
 end
 
-attribute Curse None
+internal attribute Curse None
 begin
   translation fr "aucune"
   translation en "none"

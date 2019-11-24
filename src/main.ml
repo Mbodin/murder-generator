@@ -110,7 +110,7 @@ type player_information = {
     complexity : int (** Complexity **) ;
     difficulty : int (** Difficulty **) ;
     attributes : Attribute.PlayerAttribute.constructor list (** Preset attributes **) ;
-    (** TODO: Preset contacts **)
+    contacts : Attribute.ContactAttribute.constructor list list (** Preset contacts **)
   }
 
 (** A type to store what each page of the menu provides. **)
@@ -180,7 +180,8 @@ let create_player_information names get_translation parameters =
           name = name ;
           complexity = complexity ;
           difficulty = difficulty ;
-          attributes = []
+          attributes = [] ;
+          contacts = []
         } :: player_information)
       player_information (Utils.seq (parameters.player_number - len))
 
@@ -195,6 +196,28 @@ let get_all_elements data parameters =
   let lg = Utils.assert_option __LOC__ parameters.language in
   let categories = get_categories data parameters in
   Driver.get_all_elements data lg categories parameters.player_number
+
+(** In order to factorise between attributes and contact, the following two declarations
+ * defines some functions in common between the two structures, so that subfunctions can
+ * be reused for both. **)
+let attribute_functions =
+  (Attribute.PlayerAttribute.all_constructors,
+   Attribute.PlayerAttribute.constructor_attribute,
+   Attribute.PlayerAttribute.attribute_name,
+   Attribute.PlayerAttribute.constructor_name,
+   Attribute.PlayerAttribute.is_internal,
+   (fun m -> m.Attribute.player),
+   (fun c -> Attribute.PlayerAttribute c),
+   (fun c -> Attribute.PlayerConstructor c))
+let contact_functions =
+  (Attribute.ContactAttribute.all_constructors,
+   Attribute.ContactAttribute.constructor_attribute,
+   Attribute.ContactAttribute.attribute_name,
+   Attribute.ContactAttribute.constructor_name,
+   Attribute.ContactAttribute.is_internal,
+   (fun m -> m.Attribute.contact),
+   (fun c -> Attribute.ContactAttribute c),
+   (fun c -> Attribute.ContactConstructor c))
 
 (** The main script. **)
 let main =
@@ -332,11 +355,21 @@ let main =
                             PMap.fold (fun c l ->
                               match c with
                               | State.Fixed_value (c :: [], _) -> c :: l
-                              | _ -> l) m [] in {
+                              | _ -> l) m [] in
+                          let contacts =
+                            List.mapi (fun c' _ ->
+                              let c' = Id.from_array c' in
+                              let m =
+                                State.get_all_contact_character
+                                  (State.get_character_state state) c c' in
+                              Utils.list_map_filter (function
+                                | (_, State.Fixed_value (c :: [], _)) -> Some c
+                                | _ -> None) m) names in {
                             name = name ;
                             complexity = State.character_complexity st c ;
                             difficulty = State.character_difficulty st c ;
-                            attributes = attributes
+                            attributes = attributes ;
+                            contacts = contacts
                           }) names in
                       let parameters =
                         { parameters with
@@ -577,40 +610,47 @@ let main =
       let player_information = create_player_information names get_translation parameters in
       let constructor_maps = Driver.get_constructor_maps data in
       let translation = Driver.get_translations data in
-      let constructor_infos c =
-        let m = constructor_maps.Attribute.player in
-        let a =
-          Utils.assert_option __LOC__
-            (Attribute.PlayerAttribute.constructor_attribute m c) in
+      (** Given either [attribute_functions] or [contact_functions], return some information
+       * about all constructors:
+       * - the associated attribute,
+       * - whether it is internal,
+       * - its generic name,
+       * - its translation. **)
+      let constructor_infos (_, constructor_attribute, attribute_name, constructor_name,
+          is_internal, proj, consa, consc) c =
+        let m = proj constructor_maps in
+        let a = Utils.assert_option __LOC__ (constructor_attribute m c) in
         let name =
-          let an =
-            Utils.assert_option __LOC__
-              (Attribute.PlayerAttribute.attribute_name m a) in
-          let cn =
-            Utils.assert_option __LOC__
-              (Attribute.PlayerAttribute.constructor_name m c) in
+          let an = Utils.assert_option __LOC__ (attribute_name m a) in
+          let cn = Utils.assert_option __LOC__ (constructor_name m c) in
           an ^ ": " ^ cn in
         let translated =
           Translation.force_translate translation.Translation.attribute
-            (get_language parameters) (Attribute.PlayerAttribute a) ^ ": "
+            (get_language parameters) (consa a) ^ ": "
           ^ fst (Translation.gforce_translate translation.Translation.constructor
-                  (get_language parameters) (Attribute.PlayerConstructor c)
+                  (get_language parameters) (consc c)
                   (PSet.singleton Translation.base)) in
-        (a, Attribute.PlayerAttribute.is_internal m a c, name, translated) in
-      let (internal_cons, main_cons) =
+        (a, is_internal m a c, name, translated) in
+      (** Given either [attribute_functions] or [contact_functions], fetch the constructors
+       * that are effectively chosen in the current settings, and return two lists of constructors,
+       * one for internal constructors and the other for the normal ones. **)
+      let create_lists_cons functions =
+        let (all, _, _, _, _, proj, _, cons) = functions in
+        let m = proj constructor_maps in
         let categories = get_categories data parameters in
         let all_constructors =
           Utils.list_map_filter (fun c ->
-            let dep =
-              Driver.get_constructor_dependencies data
-                (Attribute.PlayerConstructor c) in
+            let dep = Driver.get_constructor_dependencies data (cons c) in
             if PSet.incl dep categories then
-              Some (c, constructor_infos c)
-            else None) (Attribute.PlayerAttribute.all_constructors
-                         constructor_maps.Attribute.player) in
+              Some (c, constructor_infos functions c)
+            else None) (all m) in
         Utils.list_partition_map (fun (c, (a, internal, n, t)) ->
           let r = (c, a, n, t) in
           if internal then Utils.Left r else Utils.Right r) all_constructors in
+      let (attribute_internal_cons, attribute_main_cons) =
+        create_lists_cons attribute_functions in
+      let (contact_internal_cons, contact_main_cons) =
+        create_lists_cons contact_functions in
       IO.stopLoading () ;%lwt
       IO.print_block (InOut.P [ InOut.Text (get_translation "individualConstraints") ]) ;
       let (nameTable, nameBlock) =
@@ -649,55 +689,62 @@ let main =
                                   ([], [(InOut.Node node.IO.node, InOut.default)])) table)
                  ])
              ]))) in
+      (** Create a responsive list for either attributes or contacts, depending whether
+       * [functions] is [attribute_functions] or [contact_functions]. **)
+      let create_responsive_list functions internal_cons main_cons current =
+        let pick_list internal_cons main_cons get txt =
+          let re = Re.Str.regexp_string_case_fold txt in
+          let corresponds txt' =
+            try Some (Re.Str.search_forward re txt' 0)
+            with Not_found -> None in
+          let already_chosen =
+            PSet.from_list (List.map (fun (a, _) -> a) (get ())) in
+          let num_shown = 10 in
+          let get_from_list l =
+            let l =
+              Utils.list_map_filter (fun (c, a, n, t) ->
+                if PSet.mem a already_chosen then None
+                else
+                  let d =
+                    match corresponds t with
+                    | Some d -> Some (true, d)
+                    | None ->
+                      Option.map (fun d -> (false, d)) (corresponds n) in
+                  Option.map (fun d -> (c, a, d, t)) d) l in
+            let l =
+              List.sort ~cmp:(fun (_, _, (t1, d1), _) (_, _, (t2, d2), _) ->
+                if t1 && not t2 then -1
+                else if t2 && not t1 then 1
+                else compare d1 d2) l in
+            Utils.list_header num_shown l in
+          let l =
+            Utils.list_header num_shown
+              (get_from_list main_cons @ get_from_list internal_cons) in
+          List.map (fun (c, a, _, t) -> (t, (a, c))) l in
+        let getrec =
+          (* This reference is frustrating: I could not find another way to make
+           * the compiler accept the recursion in this case. *)
+          ref (fun _ -> []) in
+        let node =
+          let proposed =
+            try
+              let (_, _, _, t) = Utils.select_any main_cons in
+              get_translation "forExample" ^ " " ^ t
+            with Utils.EmptyList -> "" in
+          let attributes =
+            List.map (fun c ->
+              let (a, _, _, t) = constructor_infos functions c in
+              (t, (a, c))) current in
+          IO.createResponsiveListInput attributes proposed
+            (pick_list internal_cons main_cons !getrec) in
+        getrec := (fun _ -> List.map snd (node.IO.get ())) ;
+        node in
       let (attributeTable, attributeBlock) =
         let table =
           List.map (fun infos ->
             (IO.createTextInput infos.name,
-             let getrec =
-               (* This reference is frustrating: I could not find another way to make
-                * the compiler accept the recursion in this case. *)
-               ref (fun _ -> assert false) in
-             let node =
-               let proposed =
-                 try
-                   let (_, _, _, t) = Utils.select_any main_cons in
-                   get_translation "forExample" ^ " " ^ t
-                 with Utils.EmptyList -> "" in
-               let attributes =
-                 List.map (fun c ->
-                   let (a, _, _, t) = constructor_infos c in
-                   (t, (a, c))) infos.attributes in
-               IO.createResponsiveListInput attributes proposed (fun txt ->
-                 let re = Re.Str.regexp_string_case_fold txt in
-                 let corresponds txt' =
-                   try Some (Re.Str.search_forward re txt' 0)
-                   with Not_found -> None in
-                 let already_chosen =
-                   PSet.from_list (List.map (fun (a, _) -> a) (!getrec ())) in
-                 let num_shown = 10 in
-                 let get_from_list l =
-                   let l =
-                     Utils.list_map_filter (fun (c, a, n, t) ->
-                       if PSet.mem a already_chosen then None
-                       else
-                         let d =
-                           match corresponds t with
-                           | Some d -> Some (true, d)
-                           | None ->
-                             Option.map (fun d -> (false, d)) (corresponds n) in
-                         Option.map (fun d -> (c, a, d, t)) d) l in
-                   let l =
-                     List.sort ~cmp:(fun (_, _, (t1, d1), _) (_, _, (t2, d2), _) ->
-                       if t1 && not t2 then -1
-                       else if t2 && not t1 then 1
-                       else compare d1 d2) l in
-                   Utils.list_header num_shown l in
-                 let l =
-                   Utils.list_header num_shown
-                     (get_from_list main_cons @ get_from_list internal_cons) in
-                 List.map (fun (c, a, _, t) -> (t, (a, c))) l) in
-             getrec := (fun _ -> List.map snd (node.IO.get ())) ;
-             node)) player_information in
+             create_responsive_list attribute_functions
+               attribute_internal_cons attribute_main_cons infos.attributes)) player_information in
         List.iter2 (fun name (name', _) -> IO.synchronise name name') nameTable table ;
         (table,
          InOut.FoldableBlock (false, get_translation "stepAttributes",
@@ -718,7 +765,25 @@ let main =
                  ])
              ]))) in
       let (contactTable, contactBlock) =
-        let table = [] (* TODO *) in
+        let table =
+          let nplayers = Utils.seq (List.length player_information) in
+          List.map (fun infos ->
+            (IO.createTextInput infos.name,
+             List.map (fun c ->
+               let contacts =
+                 match List.nth_opt infos.contacts c with
+                 | None -> []
+                 | Some l -> l in
+               create_responsive_list contact_functions
+                 contact_internal_cons contact_main_cons contacts) nplayers)) player_information in
+        let header =
+          List.map (fun infos -> IO.createTextInput infos.name) player_information in
+        List.iter2 IO.synchronise nameTable header ;
+        let header =
+          (InOut.Text (get_translation "contacts"), InOut.default)
+          :: List.map (fun node ->
+               (InOut.Node node.IO.node, InOut.default)) header in
+        List.iter2 (fun name (name', _) -> IO.synchronise name name') nameTable table ;
         (table,
          InOut.FoldableBlock (false, get_translation "stepContacts",
            InOut.Div (InOut.Normal, [
@@ -726,7 +791,15 @@ let main =
                    InOut.Text (get_translation "contactExplanation") ;
                    InOut.Text (get_translation "setContact")
                  ] ;
-               (* TODO: The table. *)
+               InOut.Div (InOut.Centered, [
+                   InOut.Table (["table"], header,
+                                List.map (fun (name, contacts) ->
+                                    ([],
+                                     (InOut.Node name.IO.node, InOut.default)
+                                     :: List.map (fun node ->
+                                          (InOut.Node node.IO.node, InOut.default)) contacts))
+                                  table)
+                 ])
              ]))) in
       let (complexityDifficultyTable, complexityDifficultyBlock) =
         let table =
@@ -771,7 +844,8 @@ let main =
                   name = name.IO.get () ;
                   complexity = complexity.IO.get () ;
                   difficulty = difficulty.IO.get () ;
-                  attributes = List.map (fun (_, (_, c)) -> c) (attributes.IO.get ())
+                  attributes = List.map (fun (_, (_, c)) -> c) (attributes.IO.get ()) ;
+                  contacts = [] (* TODO *)
                 }) nameTable attributeTable complexityDifficultyTable
         }) (Some ask_for_categories) (Some generate) ;
       let%lwt cont = cont in cont ()
@@ -810,7 +884,7 @@ let main =
                 Utils.if_option stdiff (fun (state, diff) ->
                   Utils.apply_option
                     (Element.apply_constructors (Driver.get_constructor_maps data)
-                      state (Id.from_array i) infos.attributes)
+                      state (Id.from_array i) infos.attributes) (* TODO: infos.contacts *)
                     (fun (state, diff') ->
                       (state, Element.merge_attribute_differences diff diff'))))
               (Some (state, diff)) parameters.player_information) in

@@ -610,6 +610,7 @@ let main =
       let player_information = create_player_information names get_translation parameters in
       let constructor_maps = Driver.get_constructor_maps data in
       let translation = Driver.get_translations data in
+      let all_players = Utils.seq (List.length player_information) in
       (** Given either [attribute_functions] or [contact_functions], return some information
        * about all constructors:
        * - the associated attribute,
@@ -766,16 +767,20 @@ let main =
              ]))) in
       let (contactTable, contactBlock) =
         let table =
-          let nplayers = Utils.seq (List.length player_information) in
-          List.map (fun infos ->
+          List.mapi (fun c infos ->
             (IO.createTextInput infos.name,
-             List.map (fun c ->
-               let contacts =
-                 match List.nth_opt infos.contacts c with
-                 | None -> []
-                 | Some l -> l in
-               create_responsive_list contact_functions
-                 contact_internal_cons contact_main_cons contacts) nplayers)) player_information in
+             List.map (fun c' ->
+               if c = c' then
+                 None
+               else
+                 Some (
+                   let contacts =
+                     match List.nth_opt infos.contacts c' with
+                     | None -> []
+                     | Some l -> l in
+                   create_responsive_list contact_functions
+                     contact_internal_cons contact_main_cons contacts
+                 )) all_players)) player_information in
         let header =
           List.map (fun infos -> IO.createTextInput infos.name) player_information in
         List.iter2 IO.synchronise nameTable header ;
@@ -794,9 +799,12 @@ let main =
                InOut.Div (InOut.Centered, [
                    InOut.Table (["table"], header,
                                 List.map (fun (name, contacts) ->
-                                    ([],
-                                     (InOut.Node name.IO.node, InOut.default)
-                                     :: List.map (fun node ->
+                                  ([],
+                                   (InOut.Node name.IO.node, InOut.default)
+                                   :: List.map (function
+                                        | None ->
+                                          (InOut.Space, { InOut.default with classes = ["cellNA"] })
+                                        | Some node ->
                                           (InOut.Node node.IO.node, InOut.default)) contacts))
                                   table)
                  ])
@@ -840,13 +848,17 @@ let main =
       next_button ~nextText:"startGeneration" w parameters (fun _ ->
         { parameters with
             player_information =
-              Utils.list_map3 (fun name (_, attributes) (_, complexity, difficulty) -> {
+              Utils.list_map4 (fun name (_, attributes) (_, contacts)
+                    (_, complexity, difficulty) -> {
                   name = name.IO.get () ;
                   complexity = complexity.IO.get () ;
                   difficulty = difficulty.IO.get () ;
                   attributes = List.map (fun (_, (_, c)) -> c) (attributes.IO.get ()) ;
-                  contacts = [] (* TODO *)
-                }) nameTable attributeTable complexityDifficultyTable
+                  contacts =
+                    List.map (function
+                      | None -> []
+                      | Some node -> List.map (fun (_, (_, c)) -> c) (node.IO.get ())) contacts
+                }) nameTable attributeTable contactTable complexityDifficultyTable
         }) (Some ask_for_categories) (Some generate) ;
       let%lwt cont = cont in cont ()
 

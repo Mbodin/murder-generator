@@ -287,6 +287,10 @@ body.printable .table tr:hover {
   padding: 5px ;
 }
 
+.table td.cellNA {
+  background-color: #babdb6 ;
+}
+
 /* Timeline */
 
 table.timeline {

@@ -34,7 +34,19 @@ let get_file fileName =
     with End_of_file -> [] in
   Lwt.return (String.concat "\n" (aux ()))
 
-let get_parameters _ = []
+let get_parameters =
+  let rec aux = function
+    | [] -> []
+    | str :: l when String.length str = 0 -> assert false
+    | key :: value :: l when key.[0] = '-' ->
+      let key = String.sub key 1 (String.length key - 1) in
+      (key, value) :: aux l
+    | str :: l ->
+      match String.split_on_char '=' str with
+      | key :: value -> (key, String.concat "=" value) :: aux l
+      | _ -> aux l in
+  let l = lazy (aux (List.tl (Array.to_list Sys.argv))) in
+  fun () -> Lazy.force l
 let set_parameters = ignore
 
 let log msg =
@@ -540,9 +552,12 @@ let createListInput l =
       let txt = get_str () in
       Print.print (" <" ^ txt ^ "> " ^ menu link (fun _ ->
         List.iteri (fun i (txt, _) ->
-          print_string (string_of_int i ^ ": " ^ txt)) l ;
+          print_endline (string_of_int i ^ ": " ^ txt)) l ;
         flush stdout ;
-        numberInput (fun _ -> !index) (fun i -> index := i)) ^ " ") in
+        numberInput (fun _ -> !index) (fun i ->
+          if i >= 0 && i < List.length l then
+            index := i
+          else print_endline "Invalid number.")) ^ " ") in
     let set k =
       match Utils.list_associ_opt k l with
       | None -> invalid_arg "createListInput: set on an non-existing element."

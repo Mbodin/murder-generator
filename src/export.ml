@@ -127,7 +127,7 @@ let translation_players s final =
 
 (** Return the name of a character [c]. **)
 let get_name s c =
-  List.nth s.names (Id.to_array c)
+  Utils.assert_option __LOC__ (List.nth_opt s.names (Id.to_array c))
 
 (** Replace the characters '"' by '\"' and '\' by '\\'. **)
 let escape_quote str =

@@ -553,54 +553,6 @@ let main =
           (urltag_power, string_of_float parameters.computation_power) ;
           (urltag_categories, categories)
         ] ;
-      IO.stopLoading () ;%lwt
-      IO.print_block (InOut.P [ InOut.Text (get_translation "individualConstraints") ]) ;
-      let nameBlock =
-        InOut.FoldableBlock (false, get_translation "stepNames",
-          InOut.Div (InOut.Normal, [
-              InOut.P [
-                  InOut.Text (get_translation "changingNamesManually") ;
-                  InOut.Text (get_translation "changingNamesAutomatically")
-                  (* TODO *)
-                ] ;
-              (* TODO: The table. *)
-            ])) in
-      let attributeBlock =
-        InOut.FoldableBlock (false, get_translation "stepAttributes",
-          InOut.Div (InOut.Normal, [
-              InOut.P [
-                  InOut.Text (get_translation "attributeExplanation") ;
-                  InOut.Text (get_translation "setAttribute")
-                ] ;
-              (* TODO: The table. *)
-            ])) in
-      let contactBlock =
-        InOut.FoldableBlock (false, get_translation "stepContacts",
-          InOut.Div (InOut.Normal, [
-              InOut.P [
-                  InOut.Text (get_translation "contactExplanation") ;
-                  InOut.Text (get_translation "setContact")
-                ] ;
-              (* TODO: The table. *)
-            ])) in
-      let complexityDifficultyBlock =
-        InOut.FoldableBlock (false, get_translation "stepComplexityDifficulty",
-          InOut.Div (InOut.Normal, [
-              InOut.P [ InOut.Text (get_translation "complexityDifficultyExplanation") ] ;
-              InOut.List (true, [
-                  InOut.Text (get_translation "lowComplexityLowDifficulty") ;
-                  InOut.Text (get_translation "lowComplexityHighDifficulty") ;
-                  InOut.Text (get_translation "highComplexityLowDifficulty") ;
-                  InOut.Text (get_translation "highComplexityHighDifficulty")
-                ]) ;
-              InOut.P [
-                  InOut.Text (get_translation "complexityDifficultyPrefilled") ;
-                  InOut.Text (get_translation "changeThisTable")
-                ] ;
-              (* TODO: The table. *)
-            ])) in
-      IO.print_block (InOut.List (false,
-        [nameBlock ; attributeBlock ; contactBlock ; complexityDifficultyBlock])) ;
       let changingNames =
         let lg = get_language parameters in
         let (default, non_default) = List.partition (fun g -> Names.is_default g lg) names in
@@ -649,7 +601,92 @@ let main =
         Utils.list_partition_map (fun (c, (a, internal, n, t)) ->
           let r = (c, a, n, t) in
           if internal then Utils.Left r else Utils.Right r) all_constructors in
-      let table =
+      let nameTable = [] (* TODO *) in
+      IO.stopLoading () ;%lwt
+      IO.print_block (InOut.P [ InOut.Text (get_translation "individualConstraints") ]) ;
+      let nameBlock =
+        let table = [] (* TODO *) in
+        InOut.FoldableBlock (false, get_translation "stepNames",
+          InOut.Div (InOut.Normal, [
+              InOut.P [
+                  InOut.Text (get_translation "changingNamesManually") ;
+                  InOut.Text (get_translation "changingNamesAutomatically") ;
+                  InOut.Node changingNames.IO.node ;
+                  InOut.LinkContinuation (true, get_translation "changeNames", fun _ ->
+                    match changingNames.IO.get () with
+                    | None -> ()
+                    | Some gen ->
+                      ignore (List.fold_left (fun avoid (e, _, _, _) ->
+                        (** Again, as the generator contains external data, one can hardly
+                         * assume that it can produce infinitely many different names.
+                         * We are thus stuck to just generate new ones until a really new
+                         * one appears. **)
+                        let name =
+                          let rec aux fuel =
+                            let name = Names.generate gen in
+                            match fuel with
+                            | 0 -> name
+                            | n -> if PSet.mem name avoid then aux (fuel - 1) else name in
+                          aux 100 in
+                        e.IO.set name ;
+                        PSet.add name avoid) PSet.empty table))
+                ] ;
+              InOut.Div (InOut.Centered, [
+                  InOut.Table (["table"],
+                               [(InOut.Text (get_translation "playerName"), InOut.default)],
+                               table)
+                ])
+            ])) in
+      let attributeBlock =
+        let table = [] (* TODO *) in
+        InOut.FoldableBlock (false, get_translation "stepAttributes",
+          InOut.Div (InOut.Normal, [
+              InOut.P [
+                  InOut.Text (get_translation "attributeExplanation") ;
+                  InOut.Text (get_translation "setAttribute")
+                ] ;
+              InOut.Div (InOut.Centered, [
+                  InOut.Table (["table"],
+                               [(InOut.Text (get_translation "attributes"), InOut.default)],
+                               table)
+                ])
+            ])) in
+      let contactBlock =
+        let table = [] (* TODO *) in
+        InOut.FoldableBlock (false, get_translation "stepContacts",
+          InOut.Div (InOut.Normal, [
+              InOut.P [
+                  InOut.Text (get_translation "contactExplanation") ;
+                  InOut.Text (get_translation "setContact")
+                ] ;
+              (* TODO: The table. *)
+            ])) in
+      let complexityDifficultyBlock =
+        let table = [] (* TODO *) in
+        InOut.FoldableBlock (false, get_translation "stepComplexityDifficulty",
+          InOut.Div (InOut.Normal, [
+              InOut.P [ InOut.Text (get_translation "complexityDifficultyExplanation") ] ;
+              InOut.List (true, [
+                  InOut.Text (get_translation "lowComplexityLowDifficulty") ;
+                  InOut.Text (get_translation "lowComplexityHighDifficulty") ;
+                  InOut.Text (get_translation "highComplexityLowDifficulty") ;
+                  InOut.Text (get_translation "highComplexityHighDifficulty")
+                ]) ;
+              InOut.P [
+                  InOut.Text (get_translation "complexityDifficultyPrefilled") ;
+                  InOut.Text (get_translation "changeThisTable")
+                ] ;
+              InOut.Div (InOut.Centered, [
+                  InOut.Table (["table"],
+                               [(InOut.Text (get_translation "playerName"), InOut.default) ;
+                                (InOut.Text (get_translation "complexity"), InOut.default) ;
+                                (InOut.Text (get_translation "difficulty"), InOut.default)],
+                               table)
+                ])
+            ])) in
+      IO.print_block (InOut.List (false,
+        [nameBlock ; attributeBlock ; contactBlock ; complexityDifficultyBlock])) ;
+      let table = (* TODO: Split and move before *)
         List.map (fun (name, complexity, difficulty, misc) ->
           (IO.createTextInput name,
            IO.createNumberInput complexity,
@@ -699,28 +736,7 @@ let main =
                List.map (fun (c, a, _, t) -> (t, (a, c))) l) in
            getrec := (fun _ -> List.map snd (node.IO.get ())) ;
            node)) player_information in
-      IO.print_block (InOut.P [
-          InOut.Text (get_translation "changingNames") ;
-          InOut.Node changingNames.IO.node ;
-          InOut.LinkContinuation (true, get_translation "changeNames", fun _ ->
-            match changingNames.IO.get () with
-            | None -> ()
-            | Some gen ->
-              ignore (List.fold_left (fun avoid (e, _, _, _) ->
-                (** Again, as the generator contains external data, one can hardly
-                 * assume that it can produce infinitely many different names.
-                 * We are thus stuck to just generate new ones until a really new
-                 * one appears. **)
-                let name =
-                  let rec aux fuel =
-                    let name = Names.generate gen in
-                    match fuel with
-                    | 0 -> name
-                    | n -> if PSet.mem name avoid then aux (fuel - 1) else name in
-                  aux 100 in
-                e.IO.set name ;
-                PSet.add name avoid) PSet.empty table))
-        ]) ;
+      (* TODO: Remove
       IO.print_block (InOut.Div (InOut.Normal, [
         InOut.P [ InOut.Text (get_translation "changeThisTable") ] ;
         InOut.Div (InOut.Centered, [
@@ -736,6 +752,7 @@ let main =
                            (InOut.Node difficulty.IO.node, InOut.default) ;
                            (InOut.Node misc.IO.node, InOut.default)
                          ])) table) ])])) ;
+      *)
       next_button ~nextText:"startGeneration" w parameters (fun _ ->
         { parameters with
             player_information =

@@ -1,7 +1,6 @@
 (** Module InOut_js
  * An implementation of [InOut.T] for JavaScript. **)
 
-
 open Js_of_ocaml
 open Js_of_ocaml_lwt
 
@@ -361,7 +360,6 @@ let createListInput l =
       input##.disabled := Js.bool true ;
       ((fun _ -> None), (fun _ -> invalid_arg "createListInput: set on an empty list."))
     ) else (
-      let input = Dom_html.createSelect document in
       List.iteri (fun i (txt, _) ->
         let i = "option_" ^ string_of_int i in
         let o = Dom_html.createOption document in
@@ -376,15 +374,20 @@ let createListInput l =
          | None -> invalid_arg "createListInput: set on an non-existing element."
          | Some (i, _) -> input##.selectedIndex := i))
     ) in
-  let get_str _ =
+  let get_stro _ =
     let i = input##.selectedIndex in
-    match List.nth_opt l i with
-    | Some (k, _) -> k
-    | None -> invalid_arg "createListInput: onChange with a selected index too big." in {
+    if i < 0 then None
+    else Option.map fst (List.nth_opt l i) in
+  let onChange =
+    let onChange = createOnChange input get_stro in
+    fun f ->
+      onChange (function
+        | None -> ()
+        | Some x -> f x) in {
     node = (input :> Dom_html.element Js.t) ;
     get = get ;
     set = set ;
-    onChange = createOnChange input get_str
+    onChange = onChange
   }
 
 let createResponsiveListInput default placeholder get =
@@ -470,7 +473,7 @@ let createResponsiveListInput default placeholder get =
       Js._true) ;
   let update_focus l =
     Option.may (fun i ->
-      (fst (List.nth l i))##.classList##add
+      (fst (Utils.assert_option __LOC__ (List.nth_opt l i)))##.classList##add
         (Js.string "autocomplete-active")) !current_focus in
   input##.onkeydown :=
     Dom_html.handler (fun e ->
@@ -506,7 +509,8 @@ let createResponsiveListInput default placeholder get =
         Js._true
       | Dom_html.Keyboard_code.Enter ->
         let autocompletions = create_autocompletions () in
-        Option.may (fun i -> snd (List.nth autocompletions i) ()) !current_focus ;
+        Option.may (fun i ->
+          snd (Utils.assert_option __LOC__ (List.nth_opt autocompletions i)) ()) !current_focus ;
         Js._false
       | _ -> Js._true) ;
   let get _ = !l in

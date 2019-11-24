@@ -235,14 +235,14 @@ let rand min max =
 let select_any = function
   | [] -> raise EmptyList
   | e :: [] -> e
-  | l -> List.nth l (Random.int (List.length l))
+  | l -> assert_option __LOC__ (List.nth_opt l (Random.int (List.length l)))
 
 let take_any = function
   | [] -> raise EmptyList
   | e :: [] -> (e, [])
   | l ->
     let i = Random.int (List.length l) in
-    (List.nth l i, list_remove i l)
+    (assert_option __LOC__ (List.nth_opt l i), list_remove i l)
 
 let sum = List.fold_left (+) 0
 let array_sum = Array.fold_left (+) 0

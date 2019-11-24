@@ -282,6 +282,11 @@ type ('a, 'b) interaction = {
 
 type 'a sinteraction = ('a, 'a) interaction
 
+let synchronise i1 i2 =
+  i2.set (i1.get ()) ;
+  i1.onChange i2.set ;
+  i2.onChange i1.set
+
 (** Creates a menu and an [onChange] function.
  * The menu is a wrapper around link to call the functions given to [onChange] each time
  * the link is activated before calling the corresponding function. **)
@@ -290,11 +295,10 @@ let createMenu get =
   let onChange f = l := f :: !l in
   let menu link f =
     link (fun _ ->
+      let v_before = get () in
       f () ;
-      match !l with
-      | [] -> ()
-      | _ ->
-        let v = get () in
+      let v = get () in
+      if v <> v_before then
         List.iter (fun f -> f v) !l) in
   (menu, onChange)
 

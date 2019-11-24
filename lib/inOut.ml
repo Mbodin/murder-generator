@@ -90,6 +90,8 @@ module type T = sig
     }
   type 'a sinteraction = ('a, 'a) interaction
 
+  val synchronise : 'a sinteraction -> 'a sinteraction -> unit
+
   val block_node : node block -> node
   val print_node : ?error:bool -> node -> unit
   val print_block : ?error:bool -> node block -> unit

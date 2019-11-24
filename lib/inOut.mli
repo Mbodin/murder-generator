@@ -108,6 +108,9 @@ module type T = sig
   (** The type of safe interactions. **)
   type 'a sinteraction = ('a, 'a) interaction
 
+  (** Making two safe interactions of the same time be copies of one another. **)
+  val synchronise : 'a sinteraction -> 'a sinteraction -> unit
+
   (** Converts the block to a node. **)
   val block_node : node block -> node
 

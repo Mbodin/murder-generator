@@ -147,6 +147,11 @@ type ('a, 'b) interaction = {
 
 type 'a sinteraction = ('a, 'a) interaction
 
+let synchronise i1 i2 =
+  i2.set (i1.get ()) ;
+  i1.onChange i2.set ;
+  i2.onChange i1.set
+
 let document = Dom_html.window##.document
 
 let rec block_node =
@@ -307,15 +312,21 @@ let createNumberOutput n =
 (** Given a node and a get function, create a field [onChange] of the type [interaction]. **)
 let createOnChange node get =
   let l = ref [] in
-  node##.onchange :=
-    Dom_html.handler (fun _ ->
-      (match !l with
-       | [] -> ()
-       | _ ->
-         let v = get () in
-         List.iter (fun f -> f v) !l) ;
-      Js._false) ;
-  fun f -> l := f :: !l
+  let current = ref (get ()) in
+  fun f ->
+    if !l = [] then (
+      (** To avoid placing too many event listeners, we only add it once we know that there is
+       * at least one function. **)
+      node##.onchange :=
+        Dom_html.handler (fun _ ->
+          let v = get () in
+          if v <> !current then (
+            current := v ;
+            List.iter (fun f -> f v) !l
+          ) ;
+          Js._false)
+    ) ;
+    l := f :: !l
 
 let createNumberInput ?min:(mi = 0) ?max:(ma = max_int) d =
   let input = Dom_html.createInput ~_type:(Js.string "number") document in

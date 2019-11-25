@@ -305,14 +305,21 @@ let synchronise i1 i2 =
 let createMenu get =
   let l = ref [] in
   let onChange f = l := f :: !l in
+  let current = ref (get ()) in
+  let trigger _ =
+    let v = get () in
+    if v <> !current then (
+      current := v ;
+      List.iter (fun f -> f v) !l
+    ) in
   let menu link f =
     link (fun _ ->
-      let v_before = get () in
       f () ;
-      let v = get () in
-      if v <> v_before then
-        List.iter (fun f -> f v) !l) in
-  (menu, onChange)
+      trigger ()) in
+  let trigger set x =
+    set x ;
+    trigger () in
+  (menu, onChange, trigger)
 
 let rec block_node b =
   match b with
@@ -503,7 +510,7 @@ let print_block ?(error = false) =
 let createNumberInput ?min:(mi = 0) ?max:(ma = max_int) n =
   let v = ref (max mi (min ma n)) in
   let get _ = !v in 
-  let (menu, onChange) = createMenu get in
+  let (menu, onChange, trigger) = createMenu get in
   let node link =
     Print.print (" " ^ string_of_int !v ^ " " ^ menu link (fun _ ->
       numberInput (fun _ -> !v) (fun v' -> v := v') ;
@@ -511,14 +518,14 @@ let createNumberInput ?min:(mi = 0) ?max:(ma = max_int) n =
   let set n = v := (max mi (min ma n)) in {
     node = node ;
     get = get ;
-    set = set ;
+    set = trigger set ;
     onChange = onChange
   }
 
 let createTextInput str =
   let txt = ref str in
   let get _ = !txt in 
-  let (menu, onChange) = createMenu get in
+  let (menu, onChange, trigger) = createMenu get in
   let node link =
     Print.print (" <" ^ !txt ^ "> " ^ menu link (fun _ ->
       print_string ("<" ^ !txt ^ "> -> ") ;
@@ -528,7 +535,7 @@ let createTextInput str =
   let set str = txt := str in {
     node = node ;
     get = get ;
-    set = set ;
+    set = trigger set ;
     onChange = onChange
   }
 
@@ -547,7 +554,7 @@ let createListInput l =
       match List.nth_opt l !index with
       | Some (k, _) -> k
       | None -> invalid_arg "createListInput: onChange with a selected index too big." in
-    let (menu, onChange) = createMenu get_str in
+    let (menu, onChange, trigger) = createMenu get_str in
     let node link =
       let txt = get_str () in
       Print.print (" <" ^ txt ^ "> " ^ menu link (fun _ ->
@@ -564,7 +571,7 @@ let createListInput l =
       | Some (i, _) -> index := i in {
       node = node ;
       get = get ;
-      set = set ;
+      set = trigger set ;
       onChange = onChange
     }
 
@@ -573,7 +580,7 @@ let createResponsiveListInput default _ get_possibilities =
   let remove txt =
     l := List.filter (fun (txt', _) -> txt <> txt') !l in
   let get _ = !l in
-  let (menu, onChange) = createMenu get in
+  let (menu, onChange, trigger) = createMenu get in
   let print link =
     String.concat " " (List.map (fun (txt, _) ->
       "<" ^ txt ^ " [X]" ^ menu link (fun _ -> remove txt) ^ ">") !l) in
@@ -602,7 +609,7 @@ let createResponsiveListInput default _ get_possibilities =
     l := l' in {
     node = node ;
     get = get ;
-    set = set ;
+    set = trigger set ;
     onChange = onChange
   }
 
@@ -613,7 +620,7 @@ let createPercentageInput d =
     let d = max 0. (min 1. d) in
     v := 100. *. d in
   let get _ = !v /. 100. in
-  let (menu, onChange) = createMenu get in
+  let (menu, onChange, trigger) = createMenu get in
   let node link =
     Print.print (" " ^ string_of_float !v ^ "% " ^ menu link (fun _ ->
       print_string (string_of_float !v ^ "% -> ") ;
@@ -630,14 +637,14 @@ let createPercentageInput d =
       v := max 0. (min v' 100.)) ^ " ") in {
     node = node ;
     get = get ;
-    set = set ;
+    set = trigger set ;
     onChange = onChange
   }
 
 let createDateInput d =
   let v = ref d in
   let get _ = !v in
-  let (menu, onChange) = createMenu get in
+  let (menu, onChange, trigger) = createMenu get in
   let node link =
     Print.print (" " ^ Date.iso8601 !v ^ " " ^ menu link (fun _ ->
       print_string (Date.iso8601 !v ^ " -> ") ;
@@ -650,14 +657,14 @@ let createDateInput d =
   let set d = v := d in {
     node = node ;
     get = get ;
-    set = set ;
+    set = trigger set ;
     onChange = onChange
   }
 
 let createSwitch text descr texton textoff b =
   let b = ref b in
   let get _ = !b in
-  let (menu, onChange) = createMenu get in
+  let (menu, onChange, trigger) = createMenu get in
   let node link =
     let text =
       " [" ^ (if !b then "X" else " ") ^ "] "
@@ -670,7 +677,7 @@ let createSwitch text descr texton textoff b =
   let set b' = b := b' in {
     node = node ;
     get = get ;
-    set = set ;
+    set = trigger set ;
     onChange = onChange
   }
 

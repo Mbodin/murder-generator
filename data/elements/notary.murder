@@ -7,7 +7,7 @@ begin
 
   description fr "Histoires d’argent."
   description en "Stories dealing with money."
-  description eo "Rakontaĵoj kiu inkludas monon."
+  description eo "Rakontaĵoj kiuj inkludas monon."
 end
 
 declare event MoneyExchange

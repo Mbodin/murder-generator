@@ -57,7 +57,7 @@
     "setContact": "En tiu ĉi tabelo, vi povas aldoni specifajn kontaktojn inter viaj roluloj.  Alserĉu la kontakton el la linio de la rolulo kaj la columno de la celita rolulo, kaj selektu ĝin.",
     "resetContactLine": "Forviŝi ĉiujn kontaktojn de tiu ĉi linio",
     "resetContactColumn": "Forviŝi ĉiujn kontaktojn de tiu ĉi kolumno",
-    "stepComplexityDifficulty": "Agordoj de malsimpleco kaj malfacileco.",
+    "stepComplexityDifficulty": "Agordoj de malsimpleco kaj malfacileco",
     "complexityDifficultyExplanation": "Malsimpleco kaj malfacileco estas du argordoj kiuj reprezentas la sperton kaj la intereso de ĉiuj ludantoj.  Intuicie, malsimpleco rilatas al longeco de roldokumentoj, kaj malfacileco rilatas al la probableco de iu rolo morti dum la vesperenketo.  Jen kvar ekstremaj ekzemploj.",
     "lowComplexityLowDifficulty": "Ambaŭ simpla kaj facila: iu scivolemulo kiu preterpasis kaj kuniĝis la grupon;",
     "lowComplexityHighDifficulty": "Simpla, sed malfacila: iu kies piedosigno pro pura hazardo ekzakte similas al tiuj trovitaj ĉirkaŭ mortigado kiujn ĉiuj provas venĝi;",

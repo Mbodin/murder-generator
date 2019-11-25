@@ -27,7 +27,7 @@ end
 
 internal attribute Disability None
 begin
-  translation fr "aucune"
+  translation fr "aucun"
   translation en "none"
   translation eo "nenia"
 end

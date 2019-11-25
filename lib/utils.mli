@@ -121,6 +121,9 @@ val list_map_filter : ('a -> 'b option) -> 'a list -> 'b list
  * will be mapped to [None]. **)
 val list_map_option : ('a -> 'b option) -> 'a list -> 'b list option
 
+(** Similar to [List.find_opt], but also return the associated value. **)
+val list_find_map_opt : ('a -> 'b option) -> 'a list -> 'b option
+
 (** Same as [List.partition], but the predicate maps each value to
  * a different type whether they satisfy the predicate. **)
 val list_partition_map : ('a -> ('b, 'c) plus) -> 'a list -> 'b list * 'c list
@@ -172,6 +175,12 @@ val swap : 'a * 'b -> 'b * 'a
 
 (** Sort the two given elements. **)
 val pair_sort : 'a * 'a -> 'a * 'a
+
+(** Some projecting functions **)
+val fst3 : 'a * 'b * 'c -> 'a
+val snd3 : 'a * 'b * 'c -> 'b
+val fst4 : 'a * 'b * 'c * 'd -> 'a
+val snd4 : 'a * 'b * 'c * 'd -> 'b
 
 (** Return the positive modulo. **)
 val positive_mod : int -> int -> int

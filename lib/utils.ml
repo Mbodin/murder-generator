@@ -146,6 +146,10 @@ let list_map_option f l =
   Option.map List.rev (List.fold_left (fun r e ->
     if_option r (fun l -> if_option (f e) (fun v -> Some (v :: l)))) (Some []) l)
 
+let list_find_map_opt f l =
+  try Some (List.find_map f l)
+  with Not_found -> None
+
 let rec list_partition_map f = function
   | [] -> ([], [])
   | a :: l ->
@@ -212,6 +216,11 @@ let swap (a, b) = (b, a)
 let pair_sort (a, b) =
   if a > b then (b, a)
   else (a, b)
+
+let fst3 (a, _, _) = a
+let snd3 (_, b, _) = b
+let fst4 (a, _, _, _) = a
+let snd4 (_, b, _, _) = b
 
 
 let positive_mod a b =

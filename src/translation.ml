@@ -269,6 +269,32 @@ let smap_option f tr =
         PMap.add ilg t m))) tr (Some PMap.empty)
 
 
+let gall_translations m lg o =
+  let rec aux = function
+    | Leaf l -> List.fast_sort compare (List.map Utils.fst3 l)
+    | Node (_, t1, t2) ->
+      List.merge compare (aux t1) (aux t2) in
+  try Utils.uniq (aux (PMap.find (o, lg) m))
+  with Not_found -> []
+
+let sall_translations m lg f o =
+  let translate l =
+    List.fold_left (fun prev item ->
+      let add l =
+        List.map (fun (prev, l) -> prev ^ l) (Utils.list_square prev l) in
+      match item with
+      | Direct str -> add [str]
+      | Variable (x, _, _, _) ->
+        add (f x)) [""] l in
+  let rec aux = function
+    | Leaf l ->
+      List.fast_sort compare (List.concat (List.map (Utils.compose translate Utils.fst3) l))
+    | Node (_, t1, t2) ->
+      List.merge compare (aux t1) (aux t2) in
+  try Utils.uniq (aux (PMap.find (o, lg) m))
+  with Not_found -> []
+
+
 let gfold f acc m o lg =
   match try Some (PMap.find (o, lg) m)
         with Not_found -> None with

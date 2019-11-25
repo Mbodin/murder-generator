@@ -145,6 +145,13 @@ val sforce_translate : ?debug:('a -> string option) -> ('a, 'b) st -> language -
 (** Update the variables used in a translation object. **)
 val smap_option : ('b -> 'c option) -> ('a, 'b) st -> ('a, 'c) st option
 
+(** Return all the possible translations of a given object, regardless of the context. **)
+val gall_translations : 'a gt -> language -> 'a -> string list
+
+(** Return all the possible translations of a given object, regardless of the context.
+ * This function takes a function with a similar effect on the sentence items. **)
+val sall_translations : ('a, 'b) st -> language -> ('b -> string list) -> 'a -> string list
+
 (** [from_json fileName fileContent] reads the [fileContent] string as a
  * JSON object representing translations in different languages.
  * It then returns a translation object as well as the list of the found

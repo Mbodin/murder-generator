@@ -616,7 +616,8 @@ let main =
        * - the associated attribute,
        * - whether it is internal,
        * - its generic name,
-       * - its translation. **)
+       * - its translation,
+       * - all its possible translations. **)
       let constructor_infos (_, constructor_attribute, attribute_name, constructor_name,
           is_internal, proj, consa, consc) c =
         let m = proj constructor_maps in
@@ -631,7 +632,10 @@ let main =
           ^ fst (Translation.gforce_translate translation.Translation.constructor
                   (get_language parameters) (consc c)
                   (PSet.singleton Translation.base)) in
-        (a, is_internal m a c, name, translated) in
+        let all_translations =
+          Translation.gall_translations translation.Translation.constructor
+            (get_language parameters) (consc c) in
+        (a, is_internal m a c, name, translated, all_translations) in
       (** Given either [attribute_functions] or [contact_functions], fetch the constructors
        * that are effectively chosen in the current settings, and return two lists of constructors,
        * one for internal constructors and the other for the normal ones. **)
@@ -645,8 +649,8 @@ let main =
             if PSet.incl dep categories then
               Some (c, constructor_infos functions c)
             else None) (all m) in
-        Utils.list_partition_map (fun (c, (a, internal, n, t)) ->
-          let r = (c, a, n, t) in
+        Utils.list_partition_map (fun (c, (a, internal, n, t, ts)) ->
+          let r = (c, a, n, t, ts) in
           if internal then Utils.Left r else Utils.Right r) all_constructors in
       let (attribute_internal_cons, attribute_main_cons) =
         create_lists_cons attribute_functions in
@@ -694,33 +698,56 @@ let main =
        * [functions] is [attribute_functions] or [contact_functions]. **)
       let create_responsive_list functions internal_cons main_cons current =
         let pick_list internal_cons main_cons get txt =
+          let get = !get in
           let re = Re.Str.regexp_string_case_fold txt in
           let corresponds txt' =
             try Some (Re.Str.search_forward re txt' 0)
             with Not_found -> None in
           let already_chosen =
-            PSet.from_list (List.map (fun (a, _) -> a) (get ())) in
+            PSet.from_list (List.map fst (get ())) in
           let num_shown = 10 in
-          let get_from_list l =
+          let extract_enum enum =
+            let rec aux acc already_seen = function
+              | 0 -> acc
+              | n ->
+                match Enum.get enum with
+                | None -> acc
+                | Some (c, a, d, t) ->
+                  if PSet.mem c already_seen then
+                    aux acc already_seen n
+                  else aux ((c, a, d, t) :: acc) (PSet.add c already_seen) (n - 1) in
+            aux [] PSet.empty num_shown in
+          let get_partial_enum l =
             let l =
-              Utils.list_map_filter (fun (c, a, n, t) ->
+              Enum.filter_map (fun (c, a, n, t, ts) ->
+                (** As a help for the reader, here are the meaning of each of these values:
+                 * - [c] is the considered attribute constructor,
+                 * - [a] is the associated attribute,
+                 * - [n] its generic name,
+                 * - [t] its full translation in the current language,
+                 * - [ts] other possible translations for the current language in other contexts. **)
                 if PSet.mem a already_chosen then None
                 else
                   let d =
-                    match corresponds t with
+                    match Utils.list_find_map_opt corresponds (t :: ts) with
                     | Some d -> Some (true, d)
-                    | None ->
-                      Option.map (fun d -> (false, d)) (corresponds n) in
-                  Option.map (fun d -> (c, a, d, t)) d) l in
+                    | None -> Option.map (fun d -> (false, d)) (corresponds n) in
+                  Option.map (fun d -> (c, a, d, t)) d) (List.enum l) in
+            let l = List.of_enum l in
             let l =
               List.sort ~cmp:(fun (_, _, (t1, d1), _) (_, _, (t2, d2), _) ->
                 if t1 && not t2 then -1
                 else if t2 && not t1 then 1
                 else compare d1 d2) l in
-            Utils.list_header num_shown l in
+            List.enum l in
+          let enum =
+            Enum.concat (List.enum [
+                get_partial_enum main_cons ;
+                get_partial_enum internal_cons
+              ]) in
           let l =
-            Utils.list_header num_shown
-              (get_from_list main_cons @ get_from_list internal_cons) in
+            let l = extract_enum enum in
+            List.sort_uniq (fun e1 e2 -> compare (Utils.fst4 e1) (Utils.fst4 e2)) l in
           List.map (fun (c, a, _, t) -> (t, (a, c))) l in
         let getrec =
           (* This reference is frustrating: I could not find another way to make
@@ -729,15 +756,15 @@ let main =
         let node =
           let proposed =
             try
-              let (_, _, _, t) = Utils.select_any main_cons in
+              let (_, _, _, t, _) = Utils.select_any main_cons in
               get_translation "forExample" ^ " " ^ t
             with Utils.EmptyList -> "" in
           let attributes =
             List.map (fun c ->
-              let (a, _, _, t) = constructor_infos functions c in
+              let (a, _, _, t, _) = constructor_infos functions c in
               (t, (a, c))) current in
           IO.createResponsiveListInput attributes proposed
-            (pick_list internal_cons main_cons !getrec) in
+            (pick_list internal_cons main_cons getrec) in
         getrec := (fun _ -> List.map snd (node.IO.get ())) ;
         node in
       let (attributeTable, attributeBlock) =

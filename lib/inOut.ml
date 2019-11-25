@@ -55,6 +55,8 @@ let rec add_spaces =
     | Div (layout, l) -> Div (layout, aux l)
     | P l -> P (aux l)
     | List (visible, l) -> List (visible, List.map add_spaces l)
+    | FoldableBlock (show, title, b) ->
+      FoldableBlock (show, title, add_spaces b)
     | Table (classes, h, l) ->
       Table (classes, List.map (fun (b, o) -> (add_spaces b, o)) h,
              List.map (fun (classes, l) ->

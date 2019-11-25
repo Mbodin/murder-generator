@@ -315,7 +315,7 @@ let merge_attribute_differences (m1, s1, l1) (m2, s2, l2) =
   (m, s1 + s2, li @ List.filter (fun a -> not (List.mem a lo)) l1)
 
 (** Applies the value [v1] for the attribute [a] for player [c] in this context. **)
-let apply_player_constructor m state diff c a v1 =
+let apply_attribute_constructor m state diff c a v1 =
   let cst = State.get_character_state state in
   let compatible =
     Attribute.PlayerAttribute.is_compatible m.Attribute.player a in
@@ -363,7 +363,7 @@ let apply m state e inst =
   let other_players = other_players state inst in
   let apply_constraint c (state, diff) = function
     | Attribute (a, v1) ->
-      apply_player_constructor m state diff c a v1
+      apply_attribute_constructor m state diff c a v1
     | Contact (con, cha, v1) ->
       match cha with
       | Some cha ->
@@ -407,13 +407,22 @@ let apply_relations state e inst =
     e.players inst ;
   result
 
-let apply_constructors m state c =
+let apply_attributes m state c =
   List.fold_left (fun stm v ->
     Utils.if_option stm (fun (state, diff) ->
       let a =
         Utils.assert_option __LOC__
           (Attribute.PlayerAttribute.constructor_attribute m.Attribute.player v) in
-      try Some (apply_player_constructor m state diff c a (State.One_value_of [v]))
+      try Some (apply_attribute_constructor m state diff c a (State.One_value_of [v]))
+      with _ -> None)) (Some (state, empty_difference))
+
+let apply_contacts m state c c' =
+  List.fold_left (fun stm v ->
+    Utils.if_option stm (fun (state, diff) ->
+      let a =
+        Utils.assert_option __LOC__
+          (Attribute.ContactAttribute.constructor_attribute m.Attribute.contact v) in
+      try Some (apply_contact_constructor m state diff c a c' (State.One_value_of [v]))
       with _ -> None)) (Some (state, empty_difference))
 
 let is_translatable e lg =

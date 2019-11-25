@@ -123,7 +123,11 @@ val safe_apply : Attribute.constructor_maps -> State.t -> t -> character array -
  * The input state is not modified by this function. **)
 val apply_relations : State.relation_state -> t -> character array -> State.relation_state
 
-(** Apply the constructors to a given characters.
+(** Apply the attributes to a given character.
  * These constructors will be applied with the [State.One_value_of] constructor. **)
-val apply_constructors : Attribute.constructor_maps -> State.t -> character -> Attribute.PlayerAttribute.constructor list -> (State.t * attribute_differences) option
+val apply_attributes : Attribute.constructor_maps -> State.t -> character -> Attribute.PlayerAttribute.constructor list -> (State.t * attribute_differences) option
+
+(** Apply the contacts to a given source and target characters.
+ * These constructors will be applied with the [State.One_value_of] constructor. **)
+val apply_contacts : Attribute.constructor_maps -> State.t -> character -> character -> Attribute.ContactAttribute.constructor list -> (State.t * attribute_differences) option
 

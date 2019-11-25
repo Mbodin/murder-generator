@@ -752,7 +752,8 @@ let main =
            InOut.Div (InOut.Normal, [
                InOut.P [
                    InOut.Text (get_translation "attributeExplanation") ;
-                   InOut.Text (get_translation "setAttribute")
+                   InOut.Text (get_translation "setAttribute") ;
+                   InOut.Text (get_translation "generatorWillDealWithThese")
                  ] ;
                InOut.Div (InOut.Centered, [
                    InOut.Table (["table"],
@@ -794,7 +795,8 @@ let main =
            InOut.Div (InOut.Normal, [
                InOut.P [
                    InOut.Text (get_translation "contactExplanation") ;
-                   InOut.Text (get_translation "setContact")
+                   InOut.Text (get_translation "setContact") ;
+                   InOut.Text (get_translation "generatorWillDealWithThese")
                  ] ;
                InOut.Div (InOut.Centered, [
                    InOut.Table (["table"], header,
@@ -892,13 +894,24 @@ let main =
         let (state, diff) =
           let diff = Element.empty_difference in
           Utils.assert_option __LOC__
-            (Utils.list_fold_lefti (fun i stdiff infos ->
+            (Utils.list_fold_lefti (fun c stdiff infos ->
                 Utils.if_option stdiff (fun (state, diff) ->
-                  Utils.apply_option
-                    (Element.apply_constructors (Driver.get_constructor_maps data)
-                      state (Id.from_array i) infos.attributes) (* TODO: infos.contacts *)
+                  let c = Id.from_array c in
+                  Utils.if_option
+                    (Element.apply_attributes (Driver.get_constructor_maps data)
+                      state c infos.attributes)
                     (fun (state, diff') ->
-                      (state, Element.merge_attribute_differences diff diff'))))
+                      let diff = Element.merge_attribute_differences diff diff' in
+                      Utils.list_fold_lefti (fun c' stdiff contacts ->
+                          Utils.if_option stdiff (fun (state, diff) ->
+                            let c' = Id.from_array c' in
+                            Utils.apply_option
+                              (Element.apply_contacts (Driver.get_constructor_maps data)
+                                state c c' contacts)
+                              (fun (state, diff') ->
+                                let diff = Element.merge_attribute_differences diff diff' in
+                                (state, diff))))
+                        (Some (state, diff)) infos.contacts)))
               (Some (state, diff)) parameters.player_information) in
         Solver.solve_with_difference IO.setLoading global state diff objectives in
       choose_formats state task parameters

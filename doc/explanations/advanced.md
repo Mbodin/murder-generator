@@ -15,7 +15,7 @@ These are of course still ignored by the parser, but it is a nice way to indicat
 # Unique and Duplicable Elements
 
 By default, an element will not be applied more than once per character: if a character is already involved in an element, it can’t be involved again (even with a different instantiation).
-For instance, let us consider the following snippet from [notary.murder](../data/elements/notary.murder):
+For instance, let us consider the following snippet from [notary.murder](../../data/elements/notary.murder):
 ```murder
 element CausalDebt
 begin
@@ -31,7 +31,7 @@ Sometimes, one wants a different behaviour.
 A common behaviour that is sometimes useful is that an element should be applied at most once in any given scenario.
 For instance, if a scenario element invokes a “chosen one”, or a particular god, or anything like that, one doesn’t want this scenario element to be instantiated more than once for different characters!
 This can be done by stating that a scenario element is `unique`.
-Here is a snippet from [religion.murder](../data/elements/religion.murder):
+Here is a snippet from [religion.murder](../../data/elements/religion.murder):
 ```murder
 unique element HarmonyDescription
 begin
@@ -42,7 +42,7 @@ This element describes a particular god.
 Only one player can play this god in a particular scenario: the `unique` keyword enforces that.
 
 As the scenario element writer, you might sometimes know that a scenario element can’t possibly be applied more than once.
-This is for instance the case of most of the (technical) scenario elements defined in [language.murder](../data/elements/language.murder).
+This is for instance the case of most of the (technical) scenario elements defined in [language.murder](../../data/elements/language.murder).
 Here is an example:
 ```murder
 unique element NormalGrammarEN
@@ -54,7 +54,7 @@ The `provide strict attribute` command is applied to all players, and its strict
 To help the solver, one can thus mark it as unique: it won’t change the final result, and may help the solver not trying it several times if there is no point to do it.
 
 In the opposite direction than the `unique` keyword, one may want no constraint to be on an element.
-For instance, here is a snippet from [religion.murder](../data/elements/religion.murder):
+For instance, here is a snippet from [religion.murder](../../data/elements/religion.murder):
 ```murder
 duplicable element GodYieldStrongFeeling
 begin
@@ -74,7 +74,7 @@ Typically, if someone is part of the same family, one can hardly assume that the
 It is thus important to be able to restrict the application of scenario elements.
 This can be done with the `not as` keyword.
 
-For instance, here is a snippet from [dreams.murder](../data/elements/dreams.murder):
+For instance, here is a snippet from [dreams.murder](../../data/elements/dreams.murder):
 ```murder
 unique element DreamAboutThief
 begin
@@ -89,7 +89,7 @@ This `or` keyword can also be used without the `not`: to ensure that two charact
 One can also restrict the players that are not in referenced in the scenario element using the `any other player` expression.
 This expression is usually referenced at the very beginning of scenario elements to restrict the other players.
 It follows the same syntax than for any player declaration.
-For instance, here is a snippet from [family.murder](../data/elements/family.murder):
+For instance, here is a snippet from [family.murder](../../data/elements/family.murder):
 ```murder
 element Twins
 begin
@@ -103,7 +103,7 @@ If it weren’t there, other scenario elements might be applied, creating cycles
 
 The `any other player` expression can also be used in the `provide attribute` and `provide contact` commands.
 It will be applied to all players not referenced in the current scenario element.
-For instance, here is a snippet from [family.murder](../data/elements/family.murder):
+For instance, here is a snippet from [family.murder](../../data/elements/family.murder):
 ```murder
 element FromNobodysFamily
 begin
@@ -121,7 +121,7 @@ Its usage his however rare in practise: in most cases, one only needs the `any o
 
 The file [elements.md](./elements.md) said in the Event Assumptions section that events can be marked with event kinds, such as `Personal` or `Work`.
 Such event kinds can be declared using the `declare event` command.
-Here is for instance for the event `Personal` is declared in [identity.murder](../data/elements/identity.murder):
+Here is for instance for the event `Personal` is declared in [identity.murder](../../data/elements/identity.murder):
 ```murder
 declare event Personal
 ```
@@ -137,7 +137,7 @@ Note that a given event may very well have more than one event kind: it just nee
 
 It is possible to include dependencies between events.
 For that, just add `event` commands in a block after the `declare event` command.
-For instance, here is a snippet from [job.murder](../data/elements/job.murder):
+For instance, here is a snippet from [job.murder](../../data/elements/job.murder):
 ```murder
 declare event Work
 begin
@@ -149,7 +149,7 @@ This means that every time an `event Work` command is issued in an event (in a s
 This is by the way why most events have only one `event` command: there are of several kinds, but most of these kinds are implicit.
 
 Inside an event kind declaration, one can also place a category inside an event declaration.
-For instance, here is a snippet from [notary.murder](../data/elements/notary.murder):
+For instance, here is a snippet from [notary.murder](../../data/elements/notary.murder):
 ```murder
 declare event MoneyExchange
 begin
@@ -165,7 +165,7 @@ Some events are just there to express some constraints.
 Such events are usually not associated to any translations, and it would be silly to display them in character sheets.
 The `phantom` keyword tells the program that this event is indeed just there for expressing constraints and should not be exported.
 
-For instance, to express in a scenario element that a character `B` is older than a character `A`, one can provide an event as follows (this is a snippet from [identity.murder](../data/elements/identity.murder)):
+For instance, to express in a scenario element that a character `B` is older than a character `A`, one can provide an event as follows (this is a snippet from [identity.murder](../../data/elements/identity.murder)):
 ```murder
   provide immediate phantom event to A and B
   begin
@@ -179,7 +179,7 @@ This event is `immediate`, so it won’t conflict with another event: if it were
 This event is thus purely here to ensure that indeed, `A`’s birth happened before than `B`.
 
 Another usage of phantom events is to space two events.
-To illustrate, here is a snippet from [romance.murder](../data/elements/romance.murder):
+To illustrate, here is a snippet from [romance.murder](../../data/elements/romance.murder):
 ```murder
 element FallInLoveAfterAParty
 begin
@@ -227,7 +227,7 @@ Empty blocks can always be safely removed, as it is the case in this example.
 
 By default, an event “books” the space for a player according to its duration: two events lasting years can’t intersect themselves if they involve the same characters, but an event lasting years and an event lasting minutes can.
 Sometimes, one may want to overwrite this default behaviour by preventing any other event from happening at the same time if they involve a common character.
-For instance, in [wounds.murder](../data/elements/wounds.murder), a scenario element describes a terrible event for a victim who ends up in an hospital:
+For instance, in [wounds.murder](../../data/elements/wounds.murder), a scenario element describes a terrible event for a victim who ends up in an hospital:
 ```murder
   provide blocking event lasting days to V
   begin
@@ -240,7 +240,7 @@ As this event also changes the life of the victim, it would be silly to place an
 We thus defines the event as `blocking`, enforcing that, for this player, nothing else happens at the same time.
 
 It is also possible to combine this with phantom events, to create the sensation of a large hole in a character’s life.
-For instance, here is a snippet from [identity.murder](../data/elements/identity.murder):
+For instance, here is a snippet from [identity.murder](../../data/elements/identity.murder):
 ```murder
 element BirthOld
 begin
@@ -281,7 +281,7 @@ The only difference is that we tell here the program that `both` can also be int
 
 As for attributes (because, really, contacts and attributes are the same thing, just that contacts are from a character to another whereas attributes air “sticked” on a particular character), one might want to combine values.
 This is done through the notion of compatibility: the “combination”-value will be compatible with both “base”-values.
-For instance, [family.murder](../data/elements/family.murder) declares a value `True` for `FamilyRelation` in addition to all the specific values for family relations.
+For instance, [family.murder](../../data/elements/family.murder) declares a value `True` for `FamilyRelation` in addition to all the specific values for family relations.
 This value `True` is meant to describe the relation between two players of the same family that are not any of the most precise values (like `Sibling`, `Spouse`, etc.).
 It is declared as follows:
 ```murder

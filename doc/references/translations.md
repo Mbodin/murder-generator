@@ -1,5 +1,5 @@
 
-This documentation file explains how the file [translations.json](../web/translations.json) works.
+This documentation file explains how the file [translations.json](../../web/translations.json) works.
 This last file contains all the translation of the interface (graphical and text-based) of the project.
 It is a [JSON](https://en.wikipedia.org/wiki/JSON), a usual file to store informations.
 Its structure can be summarised as follows:

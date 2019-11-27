@@ -1,8 +1,8 @@
 #!/usr/bin/env sh
 set -e
 
-COLOR="" # "\e[35m"
-ROLOC="" # "\e[0m"
+COLOR=`tput setab 5`
+ROLOC=`tput sgr0`
 
 DEBUG="false"
 MOVE="false"

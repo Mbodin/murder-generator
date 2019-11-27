@@ -703,6 +703,7 @@ let main =
           let corresponds txt' =
             try Some (Re.Str.search_forward re txt' 0)
             with Not_found -> None in
+          let exact = (=) txt in
           let already_chosen =
             PSet.from_list (List.map fst (get ())) in
           let num_shown = 10 in
@@ -718,51 +719,61 @@ let main =
                   else aux ((c, a, d, t) :: acc) (PSet.add c already_seen) (n - 1) in
             aux [] PSet.empty num_shown in
           let get_partial_enum l =
-            let l =
-              Enum.filter_map (fun (c, a, n, t, ts) ->
-                (** As a help for the reader, here are the meaning of each of these values:
-                 * - [c] is the considered attribute constructor,
-                 * - [a] is the associated attribute,
-                 * - [n] its generic name,
-                 * - [t] its full translation in the current language,
-                 * - [ts] other possible translations for the current language in other contexts. **)
-                if PSet.mem a already_chosen then None
-                else
-                  let d =
-                    match Utils.list_find_map_opt corresponds (t :: ts) with
-                    | Some d -> Some (true, d)
-                    | None -> Option.map (fun d -> (false, d)) (corresponds n) in
-                  Option.map (fun d -> (c, a, d, t)) d) (List.enum l) in
-            let l = List.of_enum l in
-            let l =
-              List.sort ~cmp:(fun (_, _, (t1, d1), _) (_, _, (t2, d2), _) ->
-                if t1 && not t2 then -1
-                else if t2 && not t1 then 1
-                else compare d1 d2) l in
-            List.enum l in
+            lazy (
+              let l =
+                Utils.list_map_filter (fun (c, a, n, t, ts) ->
+                  (** As a help for the reader, here are the meaning of each of these values:
+                   * - [c] is the considered attribute constructor,
+                   * - [a] is the associated attribute,
+                   * - [n] its generic name,
+                   * - [t] its full translation in the current language,
+                   * - [ts] possible contextualised translations for the current language. **)
+                  if PSet.mem a already_chosen then None
+                  else
+                    let d =
+                      match Utils.list_find_map_opt corresponds (t :: ts) with
+                      | Some d -> Some (true, d)
+                      | None -> Option.map (fun d -> (false, d)) (corresponds n) in
+                    Option.map (fun d -> (c, a, d, t)) d) l in
+              let l =
+                List.sort ~cmp:(fun (_, _, (t1, d1), _) (_, _, (t2, d2), _) ->
+                  if t1 && not t2 then -1
+                  else if t2 && not t1 then 1
+                  else compare d1 d2) l in
+              List.enum l) in
+          let exact_match l =
+            lazy (
+              let l =
+                Utils.list_map_filter (fun (c, a, n, t, ts) ->
+                  if List.exists exact (t :: ts) then
+                    Some (c, a, d, t)
+                  else None) l in
+              List.enum l) in
           let enum =
-            Enum.concat (List.enum [
+            Enum.concat (Enum.map Lazy.force (List.enum [
+                exact_match internal_cons ;
+                exact_match main_cons ;
                 get_partial_enum main_cons ;
                 get_partial_enum internal_cons
-              ]) in
+              ])) in
           let l =
             let l = extract_enum enum in
             List.sort_uniq (fun e1 e2 -> compare (Utils.fst4 e1) (Utils.fst4 e2)) l in
           List.map (fun (c, a, _, t) -> (t, (a, c))) l in
+        let attributes =
+          List.map (fun c ->
+            let (a, _, _, t, _) = constructor_infos functions c in
+            (t, (a, c))) current in
         let getrec =
           (* This reference is frustrating: I could not find another way to make
            * the compiler accept the recursion in this case. *)
-          ref (fun _ -> []) in
+          ref (fun _ -> List.map snd attributes) in
         let node =
           let proposed =
             try
               let (_, _, _, t, _) = Utils.select_any main_cons in
               get_translation "forExample" ^ " " ^ t
             with Utils.EmptyList -> "" in
-          let attributes =
-            List.map (fun c ->
-              let (a, _, _, t, _) = constructor_infos functions c in
-              (t, (a, c))) current in
           IO.createResponsiveListInput attributes proposed
             (pick_list internal_cons main_cons getrec) in
         getrec := (fun _ -> List.map snd (node.IO.get ())) ;

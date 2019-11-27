@@ -32,6 +32,12 @@ begin
   translation eo "nenia"
 end
 
+element NoDisability
+begin
+  let any other player be with attribute Disability as None
+end
+
+
 (* * Blindness *)
 
 attribute Disability Blind

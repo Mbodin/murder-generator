@@ -140,7 +140,7 @@ begin
   provide relation from P to G as strong neutral
 end
 
-element NoGod
+unique element NoGod
 begin
   let any other player be with attribute Specy not as God
 end

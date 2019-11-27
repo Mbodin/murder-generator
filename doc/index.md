@@ -20,7 +20,8 @@ None for now.
 
 # How-to
 
-None for now.
+- [How to ensure that a character is older than another](./howto/age.md),
+- [How to provide attributes or events to all players](./howto/all.md).
 
 # References
 

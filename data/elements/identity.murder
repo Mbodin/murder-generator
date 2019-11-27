@@ -375,8 +375,17 @@ begin
   provide strict attribute Specy to P as Human
 end
 
-element AllHumans
+unique element AllHumans
 begin
+  let any other player be with attribute Specy as Human
+end
+
+unique element MostlyHumans
+begin
+  let A be player
+  let B be player
+  let C be player
+  let D be player
   let any other player be with attribute Specy as Human
 end
 

@@ -17,7 +17,6 @@ declare event Personal (* An event personally involving a character. *)
 
 declare event Description (* Simple description of a character. *)
 
-declare event Birth
 
 (* * Age *)
 
@@ -56,8 +55,8 @@ begin
 
   provide immediate phantom event to A and B
   begin
-    assume no event Birth to A before
-    assume no event Birth to B after
+    assume no event providing attribute Born to A before
+    assume no event providing attribute Born to B after
   end
 end
 
@@ -68,8 +67,8 @@ begin
 
   provide immediate phantom event to A and B
   begin
-    assume no event Birth to A before
-    assume no event Birth to B after
+    assume no event providing attribute Born to A before
+    assume no event providing attribute Born to B after
   end
 end
 
@@ -79,8 +78,6 @@ begin
 
   provide immediate event to P
   begin
-    event Birth
-
     provide strict attribute Born to P as True
 
     translation fr P:+sbeg " est né" P:+agr "."
@@ -102,8 +99,6 @@ begin
 
   provide immediate event to P
   begin
-    event Birth
-
     provide strict attribute Born to P as True
 
     translation fr P:+sbeg " est né" P:+agr "."
@@ -127,8 +122,6 @@ begin
 
   provide immediate event to P
   begin
-    event Birth
-
     provide strict attribute Born to P as True
 
     translation fr P:+sbeg " est né" P:+agr "."

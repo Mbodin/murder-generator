@@ -169,8 +169,8 @@ For instance, to express in a scenario element that a character `B` is older tha
 ```murder
   provide immediate phantom event to A and B
   begin
-    assume no event Birth to A before
-    assume no event Birth to B after
+    assume no event providing attribute Born to A before
+    assume no event providing attribute Born to B after
   end
 ```
 This event is declared `phantom` and is thus associated no translations (any translation will be rejected by the program in such an event).
@@ -248,7 +248,8 @@ begin
 
   provide immediate event to P
   begin
-    event Birth
+    provide strict attribute Born to P as True
+
     translation en P:+sbeg " is born."
   end
 
@@ -262,7 +263,7 @@ end
 To create the illusion that a character is old, an birth event is provided, then a large hole of two dozens of years with nothing, then the other events of the character start: it feels as if the life of this character started long after their birth, as if the time erased the rest.
 To create this sensation of a hole with no event, one use a `blocking` `phantom` event: as it is `phantom`, it is not displayed in character sheets, and as it is `blocking`, no other event will happen simultaneously.
 To avoid that the program fits some events to this player before the phantom event, a constraint is placed ensure that no personal event be placed before the phantom event.
-This is by the way because of this trick that the event kind `Birth` is not declared to be dependent on the event kind `Personal`: if `Birth` was `Personal` (although it morally is), one could not prevent other events to be placed before a special “beginning of actual life”-event (in this case, the blocking phantom event).
+This is by the way because of this trick that the first event is not declared to be dependent on the event kind `Personal`: if it were `Personal` (although it morally is), no event can assume `assume no event Personal to P before` afterwards, thus preventing such a blocking phantom event.
 
 # Compatibilities
 

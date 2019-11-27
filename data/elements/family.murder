@@ -161,7 +161,6 @@ begin
 
   provide immediate event to A and B
   begin
-    event Birth
     event Description
 
     provide strict attribute Born to A as True
@@ -285,7 +284,7 @@ begin
   provide event lasting minutes to A
   begin
     event Personal
-    assume event Birth to B before
+    assume event providing attribute Born to B before
 
     sentence
     begin
@@ -472,7 +471,7 @@ begin
   provide phantom event lasting days to F and M
   begin
     event Personal
-    assume no event Birth to C before
+    assume no event providing attribute Born to C before
   end
 
   provide immediate event to F and M and C
@@ -510,7 +509,7 @@ begin
   provide phantom event lasting days to A and B
   begin
     event Personal
-    assume no event Birth to C before
+    assume no event providing attribute Born to C before
   end
 
   provide immediate event to A and B and C
@@ -583,15 +582,15 @@ begin
 
   provide immediate phantom event to A
   begin
-    assume event Birth to A before
-    assume event Birth to B after
+    assume event providing attribute Born to A before
+    assume event providing attribute Born to B after
   end
 
   provide event lasting decades to B
   begin
     event Personal
     event Description
-    assume event Birth to B before
+    assume event providing attribute Born to B before
 
     sentence
     begin
@@ -658,15 +657,15 @@ begin
 
   provide immediate phantom event to B
   begin
-    assume event Birth to B before
-    assume event Birth to C after
+    assume event providing attribute Born to B before
+    assume event providing attribute Born to C after
   end
 
   provide event lasting decades to C
   begin
     event Personal
     event Description
-    assume event Birth to C before
+    assume event providing attribute Born to C before
 
     sentence
     begin
@@ -871,8 +870,8 @@ begin
   (* Making sure that B is older than A. *)
   provide immediate phantom event to A and B
   begin
-    assume no event Birth to A before
-    assume no event Birth to B after
+    assume no event providing attribute Born to A before
+    assume no event providing attribute Born to B after
   end
 
   provide event lasting years to A

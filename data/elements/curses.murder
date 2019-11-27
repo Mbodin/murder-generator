@@ -205,7 +205,7 @@ begin
   provide immediate phantom event to E
   begin
     event Personal
-    assume no event Birth to E after
+    assume no event providing attribute Born to E after
   end
 
   provide phantom event lasting decades to E
@@ -359,7 +359,7 @@ begin
   provide immediate event to E1 and E2 and E3 and P1 and P2
   begin
     event Description
-    assume no event Birth to E1 or E2 or E3 before
+    assume no event providing attribute Born to E1 or E2 or E3 before
 
     sentence
     begin

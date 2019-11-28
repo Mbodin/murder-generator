@@ -19,7 +19,8 @@ If you want to contribute, you are very welcomed to: more information can be fou
 There are various ways to contribute, and not all of them include programming.
 
 Program documentation can be found in [index.md](./doc/index.md).
-In particular, documentation about its source code can be found in [structure.md](./doc/structure.md).
+In particular, documentation about its source code can be found in [structure.md](./doc/references/structure.md).
+Documentation also includes material to write scenario elements, notably [elements.md](./doc/explanations/elements.md) for a detailed explanation, or [basic.md](./doc/tutorials/basic.md) for a simple tutorial.
 
 The program was mainly written because writing murder parties take quite a long time.
 I already have written some scenarios (which are available [here](https://github.com/Mbodin/murders)), and quickly realised how difficult it is to have a balanced scenario.

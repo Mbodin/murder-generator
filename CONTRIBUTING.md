@@ -36,7 +36,7 @@ In particular, if you used it for education purposes (for instance in a language
 
 What this program does is just combining scenario elements together to create one big scenario.
 These scenarios elements are defined in a specific `.murder` format and are stored in the [data/elements](./data/elements) folder.
-If you would like to participate in the writing, [read here](./doc/elements.md) on how to write these elements.
+If you would like to participate in the writing, [the documentation](./doc/index.md) explains how to write such elements, in particular [elements.md](./doc/explanations/elements.md) for a detailed explanation, or [basic.md](./doc/tutorials/basic.md) for a simple tutorial.
 Do not hesitate to send pull requests.
 
 Note that the elements in the [data/elements](./data/elements) folder are subject, as for the whole program, to the [Affero General Public License version 3 (AGPLv3)](./LICENSE): if you do not want your work to fall into this license, please refrain yourself from sending me a pull request.
@@ -67,7 +67,7 @@ This means that `S` and `P` could have been from the same family, which would ha
 Such constraints are easy to forget when writing scenario elements.
 Most of the strange generated scenarios can be solved by adding constraints on elements like the ones above.
 If you don’t want to write elements by yourself but would be willing to reread the already-written elements, any pull request is welcomed.
-As for writing elements, [elements.md](./doc/elements.md) can be a good read (in particular the “advanced” features) to enhance scenario elements.
+As for writing elements, [elements.md](./doc/explanations/elements.md) can be a good read (in particular the “advanced” features) to enhance scenario elements.
 
 # Translating
 
@@ -77,13 +77,15 @@ This program does not use any translation framework, unfortunately.
 The reason is that grammar plays quite an important role in the generated sentences, which makes usual translation framework less useful.
 
 There are two different things that need to be translated: the interface and the scenario elements.
-The interface’s translations are stored in [translations.json](./web/translations.json), whose content is explained in [translations.md](./doc/translations.md).
+The interface’s translations are stored in [translations.json](./web/translations.json), whose content is explained in [translations.md](./doc/references/translations.md).
 The scenario elements are present in the [data/elements](./data/elements) folder.
-See [language.md](./doc/language.md) for how the language part of these files works and on how to add a language there.
+See [language.md](./doc/explanations/language.md) for how the language part of these files works and on how to add a language there.
 
 Note that only the interface has to be fully translated to be able to use the program.
 However, if a scenario element is left untranslated, some sentences may appear as a `Missing translation` message in the output scenario, or simply never be picked by the generator.
 As for the other means of contributing, pull requests are of course very welcomed.
+
+If you would be interested in translating the documentation (or helping with the documentation), [contact me](https://github.com/Mbodin).
 
 # Adding Features
 

@@ -9,7 +9,7 @@ Here follows a list of all available documentation.
 
 # Tutorials
 
-None for now.
+- [basic.md](./tutorials/basic.md) for a basic tutorial on how to write a simple element.
 
 # Explanations
 
@@ -21,7 +21,8 @@ None for now.
 # How-to
 
 - [How to ensure that a character is older than another](./howto/age.md),
-- [How to provide attributes or events to all players](./howto/all.md).
+- [How to provide attributes or events to all players](./howto/all.md),
+- [How to space two events](./howto/space.md).
 
 # References
 

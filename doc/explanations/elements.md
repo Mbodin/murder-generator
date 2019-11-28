@@ -1,5 +1,5 @@
 
-This file aims to provide a detailed tutorial on how to write scenario elements.
+This file aims to provide a detailed explanation on how to write scenario elements.
 I strongly advise reading [memory.md](./memory.md) before reading this tutorial, as the notions of the memory model will be extensively used here.
 This file presents the fundamental features to write elements, then [advanced,md](./advanced.md) present more advanced features.
 

@@ -127,8 +127,9 @@ let empty = {
 
 let import file =
   let file = List.enum (String.split_on_char '\n' file) in
-  let file = Enum.concat (Enum.map (fun str -> List.enum (String.split_on_char '\r' str)) file) in
+  let file = Enum.concat (Enum.map (fun str -> Utils.enum_split_on_char '\r' str) file) in
   let file = Enum.filter ((<>) "") file in
+  let file = Enum.filter (fun line -> line.[0] <> '#') file in
   Enum.force file ;
   let split_at i line =
     let key = String.sub line 0 i in
@@ -136,19 +137,55 @@ let import file =
     (key, value) in
   let split line =
     Option.map (fun i -> split_at i line) (String.index_opt line ':') in
-  let get_key_value cont_then cont_else =
+  let get_key_value none cont =
     match Enum.peek file with
-    | None -> cont_else ()
+    | None -> none ()
     | Some line ->
       match split line with
-      | None -> cont_else ()
+      | None -> invalid_arg "Invalid name file: expected key value."
       | Some (key, value) ->
         Enum.junk file ;
-        cont_then key value in
+        cont key value in
+  let get_data = function
+    | "alternate" ->
+      let assoc =
+        match Utils.list_map_option split (List.of_enum file) with
+        | None -> invalid_arg "Invalid name file of kind “alternate”."
+        | Some assoc -> assoc in
+      let get key =
+        match List.assoc_opt key assoc with
+        | None ->
+          invalid_arg ("Invalid name file: missing key “" ^ key
+                       ^ "” for kind “alternate”.")
+        | Some v -> v in
+      let startV = get "startVowels" in
+      let startC = get "startConsonant" in
+      let middleV = get "middleVowels" in
+      let middleC = get "middleConsonant" in
+      let endV = get "endVowels" in
+      let endC = get "endConsonant" in
+      let size =
+        let raw = get "size" in
+        try int_of_string raw
+        with _ ->
+          invalid_arg ("Invalid name file: invalid value for key “size”"
+                       ^ " for kind “alternate”: “" ^ raw ^ "”.") in
+      createVowelConsonant size startV startC middleV middleC endV endC
+    | "list" -> List (List.of_enum file)
+    | "attributeList" ->
+      List ["TODO"] (* TODO *)
+    | k -> invalid_arg ("Invalid name file: invalid kind “" ^ k ^ "”.") in
   let rec aux tr default =
-    get_key_value
+    get_key_value (fun _ -> invalid_arg "Invalid name file: no kind given.")
       (fun lg name ->
-        if lg = "default" then
+        match lg with
+        | "" ->
+          let data = get_data name in {
+            translate = tr ;
+            data = data ;
+            default = default
+          }
+        | "default" ->
           let elements =
             if name = "" then
               PSet.empty
@@ -156,45 +193,8 @@ let import file =
               let l = String.split_on_char ',' name in
               PSet.from_list (List.map Translation.from_iso639 l) in
           aux tr (PSet.merge elements default)
-        else
+        | _ ->
           let lg = Translation.from_iso639 lg in
-          aux (Translation.add tr lg () name) default)
-      (fun _ ->
-        let data =
-          match Enum.get file with
-          | None -> invalid_arg "Invalid name file: no kind given."
-          | Some k ->
-            match k with
-            | "alternate" ->
-              let assoc =
-                match Utils.list_map_option split (List.of_enum file) with
-                | None -> invalid_arg "Invalid name file of kind “alternate”."
-                | Some assoc -> assoc in
-              let get key =
-                match List.assoc_opt key assoc with
-                | None ->
-                  invalid_arg ("Invalid name file: missing key “" ^ key
-                               ^ "” for kind “alternate”.")
-                | Some v -> v in
-              let startV = get "startVowels" in
-              let startC = get "startConsonant" in
-              let middleV = get "middleVowels" in
-              let middleC = get "middleConsonant" in
-              let endV = get "endVowels" in
-              let endC = get "endConsonant" in
-              let size =
-                let raw = get "size" in
-                try int_of_string raw
-                with _ ->
-                  invalid_arg ("Invalid name file: invalid value for key “size”"
-                               ^ " for kind “alternate”: “" ^ raw ^ "”.") in
-              createVowelConsonant size startV startC middleV middleC endV endC
-            | "list" ->
-              List (List.of_enum file)
-            | _ -> invalid_arg ("Invalid name file: invalid kind “" ^ k ^ "”.") in {
-          translate = tr ;
-          data = data ;
-          default = default
-        }) in
+          aux (Translation.add tr lg () name) default) in
   aux Translation.empty PSet.empty
 

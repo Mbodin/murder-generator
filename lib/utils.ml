@@ -1,5 +1,6 @@
 
 open ExtList
+open ExtString
 
 let _ = Random.self_init ()
 
@@ -296,4 +297,34 @@ let rec complete_string_post post s n =
   if n > String.length s then
     complete_string_post post (s ^ post) n
   else s
+
+let lazy_enum e =
+  Enum.make
+    (fun _ -> Enum.next (Lazy.force e))
+    (fun _ -> Enum.count (Lazy.force e))
+    (fun _ -> Enum.clone (Lazy.force e))
+
+let enum_split_on_char c =
+  let cs = String.make 1 c in
+  let rec create ended str =
+    let str = ref str in
+    let ended = ref ended in
+    Enum.make
+      (fun _ ->
+        if !ended then
+          raise Enum.No_more_elements
+        else (
+            try
+              let (before, after) = String.split !str cs in
+              str := after ;
+              before
+            with Invalid_string ->
+              ended := true ;
+              !str
+        ))
+      (fun _ ->
+         if !ended then 0
+         else List.length (String.split_on_char c !str))
+      (fun _ -> create !ended !str) in
+  create false
 

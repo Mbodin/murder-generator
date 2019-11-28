@@ -244,3 +244,10 @@ val complete_string_pre : string -> string -> int -> string
  * and no longer a prefix. **)
 val complete_string_post : string -> string -> int -> string
 
+(** Similar to [String.split_on_char], but returns an enumeration. **)
+val enum_split_on_char : char -> string -> string Enum.t
+
+(** Lazyness is inherent to enumerations: this function creates a lazy enumeration
+ * from a lazy value. **)
+val lazy_enum : 'a Enum.t Lazy.t -> 'a Enum.t
+

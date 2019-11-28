@@ -1,4 +1,14 @@
 
+open ExtList
+
+let test_utils _ =
+  let test_split_on_char c str =
+    assert (List.of_enum (Utils.enum_split_on_char c str) = String.split_on_char c str) in
+  test_split_on_char ':' "a:b:c:d" ;
+  test_split_on_char ':' ":::" ;
+  test_split_on_char ':' "abcd" ;
+  test_split_on_char ':' ""
+
 let get_file fileName =
   let file = open_in fileName in
   let rec aux _ =
@@ -215,6 +225,7 @@ let test_parser languages =
                    ^ Translation.iso639 lg ^ ": " ^ string_of_int n)) languages
 
 let main =
+  test_utils () ;
   let languages = test_translations () in
   test_name_generation languages ;
   test_parser languages

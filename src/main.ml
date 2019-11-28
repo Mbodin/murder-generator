@@ -713,13 +713,13 @@ let main =
               | n ->
                 match Enum.get enum with
                 | None -> acc
-                | Some (c, a, d, t) ->
+                | Some (t, (a, c)) ->
                   if PSet.mem c already_seen then
                     aux acc already_seen n
-                  else aux ((c, a, d, t) :: acc) (PSet.add c already_seen) (n - 1) in
+                  else aux ((t, (a, c)) :: acc) (PSet.add c already_seen) (n - 1) in
             aux [] PSet.empty num_shown in
           let get_partial_enum l =
-            lazy (
+            Utils.lazy_enum (lazy (
               let l =
                 Utils.list_map_filter (fun (c, a, n, t, ts) ->
                   (** As a help for the reader, here are the meaning of each of these values:
@@ -740,26 +740,26 @@ let main =
                   if t1 && not t2 then -1
                   else if t2 && not t1 then 1
                   else compare d1 d2) l in
-              List.enum l) in
+              Enum.map (fun (c, a, _, t) -> (t, (a, c))) (List.enum l))) in
           let exact_match l =
-            lazy (
-              let l =
-                Utils.list_map_filter (fun (c, a, n, t, ts) ->
-                  if List.exists exact (t :: ts) then
-                    Some (c, a, d, t)
-                  else None) l in
-              List.enum l) in
+            Enum.filter_map (fun (c, a, n, t, ts) ->
+              if List.exists exact (t :: ts) then
+                Some (t, (a, c))
+              else None) (List.enum l) in
+          let exact_name_match l =
+            Enum.filter_map (fun (c, a, n, t, ts) ->
+              if exact t then
+                Some (t, (a, c))
+              else None) (List.enum l) in
           let enum =
-            Enum.concat (Enum.map Lazy.force (List.enum [
-                exact_match internal_cons ;
+            Enum.concat (List.enum [
+                exact_name_match internal_cons ;
                 exact_match main_cons ;
                 get_partial_enum main_cons ;
                 get_partial_enum internal_cons
-              ])) in
-          let l =
-            let l = extract_enum enum in
-            List.sort_uniq (fun e1 e2 -> compare (Utils.fst4 e1) (Utils.fst4 e2)) l in
-          List.map (fun (c, a, _, t) -> (t, (a, c))) l in
+              ]) in
+          let l = extract_enum enum in
+          List.sort_uniq (fun e1 e2 -> - compare (fst e1) (fst e2)) l in
         let attributes =
           List.map (fun c ->
             let (a, _, _, t, _) = constructor_infos functions c in

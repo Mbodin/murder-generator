@@ -4,7 +4,7 @@ en:Names sounding like French
 
 default:fr
 
-alternate
+:alternate
 
 size:5
 startVowels:A,É;An;Hé,Hi,O;Ya,Xa,Ê

@@ -4,8 +4,7 @@ en:Names sounding like Portuguese
 
 default:pt
 
-alternate
-
+:alternate
 
 size:5
 startVowels:O,An;A,E,I,O;U

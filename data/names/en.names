@@ -4,7 +4,7 @@ en:Names sounding like English
 
 default:en
 
-alternate
+:alternate
 
 size:4
 startVowels:A,E,I,O,U;Au;Ho

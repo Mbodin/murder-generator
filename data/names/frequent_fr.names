@@ -6,7 +6,9 @@ default:fr
 
 :attributeList
 
-# Source: https://www.journaldesfemmes.fr/prenoms/
+# Sources:
+# - https://www.insee.fr/fr/statistiques/2540004
+# - https://www.journaldesfemmes.fr/prenoms/
 
 :attributes
 Gender:Female

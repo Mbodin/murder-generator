@@ -172,6 +172,76 @@ let empty = {
     default = PSet.empty
   }
 
+let import_altenate split file =
+  let assoc =
+    match Utils.list_map_option split file with
+    | None -> invalid_arg "Invalid name file of kind “alternate”."
+    | Some assoc -> assoc in
+  let get key =
+    match List.assoc_opt key assoc with
+    | None ->
+      invalid_arg ("Invalid name file: missing key “" ^ key
+                   ^ "” for kind “alternate”.")
+    | Some v -> v in
+  let startV = get "startVowels" in
+  let startC = get "startConsonant" in
+  let middleV = get "middleVowels" in
+  let middleC = get "middleConsonant" in
+  let endV = get "endVowels" in
+  let endC = get "endConsonant" in
+  let size =
+    let raw = get "size" in
+    try int_of_string raw
+    with _ ->
+      invalid_arg ("Invalid name file: invalid value for key “size”"
+                   ^ " for kind “alternate”: “" ^ raw ^ "”.") in
+  createVowelConsonant size startV startC middleV middleC endV endC
+
+let import_attribute_list split m file =
+  let expected e g =
+    invalid_arg ("Invalid name file of kind “attributeList”: expected “" ^ e
+                 ^ "” but got “" ^ g ^ "”.") in
+  let get_pair expect file =
+    match Enum.get file with
+    | None -> expected expect "EOF"
+    | Some line ->
+      match split line with
+      | None -> expected expect line
+      | Some (key, value) -> (key, value) in
+  let rec parse_attribute_list acc props =
+    let (key, value) = get_pair ":list" file in
+    if key = "" && value = "list" then
+      parse_list acc props
+    else
+      let c =
+        let a =
+          match Attribute.PlayerAttribute.get_attribute m key with
+          | None -> invalid_arg ("Invalid attribute “" ^ key ^ "” in name file.")
+          | Some a -> a in
+        match Attribute.PlayerAttribute.get_constructor m a value with
+        | None ->
+          invalid_arg ("Invalid constructor “" ^ value ^ "” for attribute “" ^ key
+                       ^ "” in name file.")
+        | Some c -> c in
+      parse_attribute_list acc (c :: props)
+  and parse_list acc props =
+    match Enum.get file with
+    | None -> acc
+    | Some name ->
+      if name.[0] = ':' then (
+        if name = ":attributes" then
+          parse_attribute_list acc []
+        else expected ":attributes" name
+      ) else parse_list ((name, props) :: acc) props in
+  let l =
+    if Enum.is_empty file then []
+    else
+      let (key, value) = get_pair ":attributes" file in
+      if key = "" && value = "attributes" then
+        parse_attribute_list [] []
+      else expected ":attributes" (key ^ ":" ^ value) in
+  AttrList l
+
 let import m file =
   let file = List.enum (String.split_on_char '\n' file) in
   let file = Enum.concat (Enum.map (fun str -> Utils.enum_split_on_char '\r' str) file) in
@@ -194,33 +264,9 @@ let import m file =
         Enum.junk file ;
         cont key value in
   let get_data = function
-    | "alternate" ->
-      let assoc =
-        match Utils.list_map_option split (List.of_enum file) with
-        | None -> invalid_arg "Invalid name file of kind “alternate”."
-        | Some assoc -> assoc in
-      let get key =
-        match List.assoc_opt key assoc with
-        | None ->
-          invalid_arg ("Invalid name file: missing key “" ^ key
-                       ^ "” for kind “alternate”.")
-        | Some v -> v in
-      let startV = get "startVowels" in
-      let startC = get "startConsonant" in
-      let middleV = get "middleVowels" in
-      let middleC = get "middleConsonant" in
-      let endV = get "endVowels" in
-      let endC = get "endConsonant" in
-      let size =
-        let raw = get "size" in
-        try int_of_string raw
-        with _ ->
-          invalid_arg ("Invalid name file: invalid value for key “size”"
-                       ^ " for kind “alternate”: “" ^ raw ^ "”.") in
-      createVowelConsonant size startV startC middleV middleC endV endC
+    | "alternate" -> import_altenate split (List.of_enum file)
     | "list" -> AttrList (List.of_enum (Enum.map (fun n -> (n, [])) file))
-    | "attributeList" ->
-      AttrList [("TODO", [])] (* TODO *)
+    | "attributeList" -> import_attribute_list split m file
     | k -> invalid_arg ("Invalid name file: invalid kind “" ^ k ^ "”.") in
   let rec aux tr default =
     get_key_value (fun _ -> invalid_arg "Invalid name file: no kind given.")

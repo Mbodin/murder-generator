@@ -105,14 +105,14 @@ let test_translations _ =
     failwith "Error: There were some missing translations." ;
   languages
 
-let test_name_generation languages =
+let test_name_generation languages constructor_maps =
   print_endline ("Number of name files: " ^
                  string_of_int (List.length NameFiles.files)) ;
   let read_file fileName =
     print_endline ("Reading file " ^ fileName) ;
     let file = get_file fileName in
-    let gen = Names.import file in
-    ignore (Names.generate gen) ;
+    let gen = Names.import constructor_maps file in
+    ignore (Names.generate gen PSet.empty) ;
     (fileName, gen) in
   let generators = List.map read_file NameFiles.files in
   List.iter (fun lg ->
@@ -222,11 +222,12 @@ let test_parser languages =
                 ) else true) ok (Utils.seq n)) true e.Element.events in
         if ok then 1 + n else n) elements 0 in
     print_endline ("Number of available elements for language "
-                   ^ Translation.iso639 lg ^ ": " ^ string_of_int n)) languages
+                   ^ Translation.iso639 lg ^ ": " ^ string_of_int n)) languages ;
+  constructor_maps
 
 let main =
   test_utils () ;
   let languages = test_translations () in
-  test_name_generation languages ;
-  test_parser languages
+  let constructor_maps = test_parser languages in
+  test_name_generation languages constructor_maps.Attribute.player ;
 

@@ -805,8 +805,13 @@ let main =
                            aux 100 in
                          nameNode.IO.set name ;
                          let attributes =
-                           List.map (get_responsible_list_infos attribute_functions) attributes
-                           @ attributesNode.IO.get () in
+                           let old_attributes = attributesNode.IO.get () in
+                           let new_attribute =
+                             let set = PSet.from_list old_attributes in
+                             fun a -> not (PSet.mem a set) in
+                           let attributes =
+                             List.map (get_responsible_list_infos attribute_functions) attributes in
+                           List.filter new_attribute attributes @ old_attributes in
                          attributesNode.IO.set attributes ;
                          PSet.add name avoid) PSet.empty attributeTable))
                  ] ;
@@ -815,7 +820,8 @@ let main =
                                 [(InOut.Text (get_translation "playerName"), InOut.default)],
                                 List.map (fun node ->
                                   ([], [(InOut.Node node.IO.node, InOut.default)])) table)
-                 ])
+                 ]) ;
+               InOut.P [ InOut.Text (get_translation "nameInteractions") ]
              ]))) in
       let (contactTable, contactBlock) =
         let table =

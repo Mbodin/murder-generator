@@ -766,7 +766,13 @@ let main =
                                 List.map (fun (name, attributes) ->
                                   ([], [
                                      (InOut.Node name.IO.node, InOut.default) ;
-                                     (InOut.Node attributes.IO.node, InOut.default)
+                                     (InOut.Div (InOut.Inlined, [
+                                          InOut.Node attributes.IO.node ;
+                                          InOut.Space ;
+                                          InOut.LinkContinuation (true,
+                                            get_translation "resetAttribute", fun _ ->
+                                              attributes.IO.set [])
+                                        ]), InOut.default)
                                    ])) table)
                  ])
              ]))) in

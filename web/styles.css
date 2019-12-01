@@ -242,6 +242,7 @@ table.table {
   margin-top: 1.5ex ;
   margin-left: .3em ;
   margin-right: .3em ;
+  white-space: normal ;
 }
 
 @media print {

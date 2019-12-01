@@ -78,56 +78,14 @@ let convertAlternative spec =
 (** A simple type to represent in a transition system the alternance of vowels and consonant. **)
 type vowelConsonant = int * bool option * string
 
-(** Create a transition system for vowels and consonants.
- * It takes as an argument six string specifying how the language sounds, as well
- * as the expected size of the output (in term of the given vowels and consonants).
- * Each string is a list of list separated by [,] for the inner lists and [;] for
- * the outer.
- * The inner lists (separated by [,]) commutes, whilst the outer lists represent
- * changes in probability (the first elements being more probable).
- * The six lists corresponds to:
- * - initial vowels and consonants;
- * - middle vowels and consonants;
- * - end vowels and consonants. **)
-let createVowelConsonant size initV initC middleV middleC endV endC =
-  let get_spec f strspec props =
-    let rec aux = function
-      | [] -> (1, [])
-      | l :: ls ->
-        let (weight, spec) = aux ls in
-        let spec =
-          List.map (fun str ->
-            let props = [] (* TODO *) in
-            (weight, (f str props))) l (* TODO: Remove from l the ones with incompatible properties. *)
-          @ spec in
-        (3 * weight, spec) in
-    snd (aux (List.map (String.split_on_char ',')
-      (String.split_on_char ';' strspec))) in
-  let add b e props = (b, e, props) in
-  Automaton (convertAlternative {
-      alternative_size = size ;
-      alternative_init =
-        (fun props -> get_spec (add false) initV props @ get_spec (add true) initC props) ;
-      alternative_transition = 
-        (let middleV = get_spec (add false) middleV in
-         let middleC = get_spec (add true) middleC in
-         fun props b -> (if b then middleV else middleC) props) ;
-      alternative_final = 
-        (let endV = get_spec (fun str props -> (str, props)) endV in
-         let endC = get_spec (fun str props -> (str, props)) endC in
-         fun props b -> (if b then endV else endC) props)
-    })
-
-
-let generateAutomaton data properties =
-  let rec aux str s props =
-    let (suffix, next) = data.transition s in
-    let str = str ^ suffix in
-    match next with
-    | None -> (str, props)
-    | Some (s, props') -> aux str s (props' @ props) in
-  let (s, props) = data.init properties in
-  aux "" s props
+(** Given a line, split it betwween a key and a value at the first occurrence of [:].
+ * Returns [None] if no [:] is present in the list. **)
+let split line =
+  let split_at i line =
+    let key = String.sub line 0 i in
+    let value = String.sub line (1 + i) (String.length line - i - 1) in
+    (key, value) in
+  Option.map (fun i -> split_at i line) (String.index_opt line ':')
 
 (** State whether a return value of [generate] is compatible with a preset set of properties. **)
 let compatible_with m properties =
@@ -152,6 +110,73 @@ let rec try_n n ok fallback f =
     if ok v then v
     else try_n (n - 1) ok fallback f
 
+(** Create a transition system for vowels and consonants.
+ * It takes as an argument six string specifying how the language sounds, as well
+ * as the expected size of the output (in term of the given vowels and consonants).
+ * It also takes as argument a associative list of definitions, associating each case
+ * to a list of associated constructors.
+ * Each string is a list of list separated by [,] for the inner lists and [;] for
+ * the outer.
+ * The inner lists (separated by [,]) commutes, whilst the outer lists represent
+ * changes in probability (the first elements being more probable).
+ * The six lists corresponds to:
+ * - initial vowels and consonants;
+ * - middle vowels and consonants;
+ * - end vowels and consonants.
+ * Each of the list element can be annotated by an additionnal [:] to associate it
+ * with the associated constructors defined in [definitions]. **)
+let createVowelConsonant m definitions size initV initC middleV middleC endV endC =
+  let get_spec f unf strspec props =
+    let rec aux = function
+      | [] -> (1, [])
+      | l :: ls ->
+        let (weight, spec) = aux ls in
+        let l =
+          List.map (fun str ->
+            let (str, props) =
+              match split str with
+              | None -> (str, [])
+              | Some (str, case) ->
+                match List.assoc_opt case definitions with
+                | None -> invalid_arg ("Invalid name file of kind “alternate”: the case “"
+                                       ^ case ^ "” is not defined.")
+                | Some props -> (str, props) in
+            (weight, f str props)) l in
+        let spec =
+          List.filter (fun (_, v) -> compatible_with m props (unf v)) l
+          @ spec in
+        (3 * weight, spec) in
+    snd (aux (List.map (String.split_on_char ',')
+      (String.split_on_char ';' strspec))) in
+  let add b e props = (b, e, props) in
+  let unadd (b, e, props) = ((b, e), props) in
+  Automaton (convertAlternative {
+      alternative_size = size ;
+      alternative_init =
+        (fun props ->
+          get_spec (add false) unadd initV props
+          @ get_spec (add true) unadd initC props) ;
+      alternative_transition = 
+        (let middleV = get_spec (add false) unadd middleV in
+         let middleC = get_spec (add true) unadd middleC in
+         fun props b -> (if b then middleV else middleC) props) ;
+      alternative_final = 
+        (let endV = get_spec (fun str props -> (str, props)) Utils.id endV in
+         let endC = get_spec (fun str props -> (str, props)) Utils.id endC in
+         fun props b -> (if b then endV else endC) props)
+    })
+
+
+let generateAutomaton data properties =
+  let rec aux str s props =
+    let (suffix, next) = data.transition s in
+    let str = str ^ suffix in
+    match next with
+    | None -> (str, props)
+    | Some (s, props') -> aux str s (props' @ props) in
+  let (s, props) = data.init properties in
+  aux "" s props
+
 let generateList m l properties =
   let ok = compatible_with m properties in
   let fallback _ =
@@ -172,11 +197,35 @@ let empty = {
     default = PSet.empty
   }
 
-let import_altenate split file =
+let import_alternate m file =
   let assoc =
     match Utils.list_map_option split file with
     | None -> invalid_arg "Invalid name file of kind “alternate”."
     | Some assoc -> assoc in
+  let (definitions, assoc) =
+    let rec aux defs assoc = function
+      | [] -> (defs, assoc)
+      | ("define", def) :: l ->
+        let (constructors, l) =
+          let rec aux constructors = function
+            | [] -> invalid_arg "Invalid definition in name file of kind “alternate”."
+            | ("", "end") :: l -> (constructors, l)
+            | (att, c) :: l ->
+              let a =
+                match Attribute.PlayerAttribute.get_attribute m att with
+                | None -> invalid_arg ("Invalid attribute “" ^ att ^ "” in name file.")
+                | Some a -> a in
+              let c =
+                match Attribute.PlayerAttribute.get_constructor m a c with
+                | None ->
+                  invalid_arg ("Invalid constructor “" ^ c ^ "” for attribute “" ^ att
+                               ^ "” in name file.")
+                | Some c -> c in
+              aux (c :: constructors) l in
+          aux [] l in
+        aux ((def, constructors) :: defs) assoc l
+      | (key, value) :: l -> aux defs ((key, value) :: assoc) l in
+    aux [] [] assoc in
   let get key =
     match List.assoc_opt key assoc with
     | None ->
@@ -195,9 +244,9 @@ let import_altenate split file =
     with _ ->
       invalid_arg ("Invalid name file: invalid value for key “size”"
                    ^ " for kind “alternate”: “" ^ raw ^ "”.") in
-  createVowelConsonant size startV startC middleV middleC endV endC
+  createVowelConsonant m definitions size startV startC middleV middleC endV endC
 
-let import_attribute_list split m file =
+let import_attribute_list m file =
   let expected e g =
     invalid_arg ("Invalid name file of kind “attributeList”: expected “" ^ e
                  ^ "” but got “" ^ g ^ "”.") in
@@ -248,12 +297,6 @@ let import m file =
   let file = Enum.filter ((<>) "") file in
   let file = Enum.filter (fun line -> line.[0] <> '#') file in
   Enum.force file ;
-  let split_at i line =
-    let key = String.sub line 0 i in
-    let value = String.sub line (1 + i) (String.length line - i - 1) in
-    (key, value) in
-  let split line =
-    Option.map (fun i -> split_at i line) (String.index_opt line ':') in
   let get_key_value none cont =
     match Enum.peek file with
     | None -> none ()
@@ -264,9 +307,9 @@ let import m file =
         Enum.junk file ;
         cont key value in
   let get_data = function
-    | "alternate" -> import_altenate split (List.of_enum file)
+    | "alternate" -> import_alternate m (List.of_enum file)
     | "list" -> AttrList (List.of_enum (Enum.map (fun n -> (n, [])) file))
-    | "attributeList" -> import_attribute_list split m file
+    | "attributeList" -> import_attribute_list m file
     | k -> invalid_arg ("Invalid name file: invalid kind “" ^ k ^ "”.") in
   let rec aux tr default =
     get_key_value (fun _ -> invalid_arg "Invalid name file: no kind given.")

@@ -6,11 +6,19 @@ default:fr
 
 :alternate
 
+define:fem
+Gender:Female
+:end
+
+define:mas
+Gender:Male
+:end
+
 size:5
 startVowels:A,É;An;Hé,Hi,O;Ya,Xa,Ê
 startConsonant:B,C,D,F,G,L,M,N,P,R,S,T,V,Qu;Hec
 middleVowels:a,ou,an,en,in,on;é,ai,oi;u,i,o;è,ê
 middleConsonant:l,m,n,r,ss,t,tr;s,ch,gu,ll;c,d,j,f,rt;bon,ct
-endVowels:ine,in,elle,el,e;sse
-endConsonant:d,t,re,le,nie,tier;rd,rt,ge
+endVowels:ine:fem,in:mas,elle:fem,el:mas,e;sse:fem
+endConsonant:d:mas,t:mas,re,le,ne,nie:fem,tier;rd:mas,rt:mas,ge
 

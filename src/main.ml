@@ -94,12 +94,14 @@ let get_data _ =
   else Lwt.return (Driver.parse !intermediate)
 
 (** Get and parse each name file. **)
-let get_names _ =
+let get_names data =
+  let%lwt data = data in
+  let constructor_maps = Driver.get_constructor_maps data in
   Lwt_list.map_p (fun fileName ->
     let%lwt file = IO.get_file fileName in
     add_trace ("getting " ^ fileName ^ " (" ^ file_signature file ^ ")") ;
     let generator =
-      try Names.import file
+      try Names.import constructor_maps.Attribute.player file
       with Invalid_argument str ->
         invalid_arg ("Error while parsing name file “" ^ fileName ^ "”: " ^ str) in
     Lwt.return generator) NameFiles.files
@@ -163,24 +165,24 @@ let create_player_information names get_translation parameters =
     List.take parameters.player_number player_information
   else
     List.fold_left (fun player_information _ ->
-        let name =
+        let (name, attributes) =
           (** Because the generator contains external data, one can hardly
            * assume that it can produce infinitely many different names.
            * We are thus stuck to just generate new ones until a really new
            * one appears. **)
           let rec aux fuel =
-            let name = Names.generate generator in
+            let (name, attributes) = Names.generate generator PSet.empty in
             match fuel with
-            | 0 -> name
+            | 0 -> (name, attributes)
             | n ->
               if List.exists (fun infos -> infos.name = name) player_information then
                 aux (n - 1)
-              else name in
+              else (name, attributes) in
           aux 100 in {
           name = name ;
           complexity = complexity ;
           difficulty = difficulty ;
-          attributes = [] ;
+          attributes = attributes ;
           contacts = []
         } :: player_information)
       player_information (Utils.seq (parameters.player_number - len))
@@ -256,7 +258,7 @@ let main =
         else previous @ [ InOut.Space ] @ next)) in
     (** We request the data without forcing it yet. **)
     let data = get_data () in
-    let names = get_names () in
+    let names = get_names data in
 
     let rec ask_for_languages _ parameters =
       (** Showing to the user all available languages. **)
@@ -658,42 +660,9 @@ let main =
         create_lists_cons contact_functions in
       IO.stopLoading () ;%lwt
       IO.print_block (InOut.P [ InOut.Text (get_translation "individualConstraints") ]) ;
-      let (nameTable, nameBlock) =
-        let table =
-          List.map (fun infos -> IO.createTextInput infos.name) player_information in
-        (table,
-         InOut.FoldableBlock (false, get_translation "stepNames",
-           InOut.Div (InOut.Normal, [
-               InOut.P [
-                   InOut.Text (get_translation "changingNamesManually") ;
-                   InOut.Text (get_translation "changingNamesAutomatically") ;
-                   InOut.Node changingNames.IO.node ;
-                   InOut.LinkContinuation (true, get_translation "changeNames", fun _ ->
-                     match changingNames.IO.get () with
-                     | None -> ()
-                     | Some gen ->
-                       ignore (List.fold_left (fun avoid node ->
-                         (** As the generator contains external data, one can hardly assume
-                          * that it can produce infinitely many different names.
-                          * We are thus stuck to just generate new ones until a really new
-                          * one appears. **)
-                         let name =
-                           let rec aux fuel =
-                             let name = Names.generate gen in
-                             match fuel with
-                             | 0 -> name
-                             | n -> if PSet.mem name avoid then aux (fuel - 1) else name in
-                           aux 100 in
-                         node.IO.set name ;
-                         PSet.add name avoid) PSet.empty table))
-                 ] ;
-               InOut.Div (InOut.Centered, [
-                   InOut.Table (["table"],
-                                [(InOut.Text (get_translation "playerName"), InOut.default)],
-                                List.map (fun node ->
-                                  ([], [(InOut.Node node.IO.node, InOut.default)])) table)
-                 ])
-             ]))) in
+      let get_responsible_list_infos functions c =
+        let (a, _, _, t, _) = constructor_infos functions c in
+        (t, (a, c)) in
       (** Create a responsive list for either attributes or contacts, depending whether
        * [functions] is [attribute_functions] or [contact_functions]. **)
       let create_responsive_list functions internal_cons main_cons current =
@@ -761,9 +730,7 @@ let main =
           let l = extract_enum enum in
           List.sort_uniq (fun e1 e2 -> - compare (fst e1) (fst e2)) l in
         let attributes =
-          List.map (fun c ->
-            let (a, _, _, t, _) = constructor_infos functions c in
-            (t, (a, c))) current in
+          List.map (get_responsible_list_infos functions) current in
         let getrec =
           (* This reference is frustrating: I could not find another way to make
            * the compiler accept the recursion in this case. *)
@@ -784,7 +751,6 @@ let main =
             (IO.createTextInput infos.name,
              create_responsive_list attribute_functions
                attribute_internal_cons attribute_main_cons infos.attributes)) player_information in
-        List.iter2 (fun name (name', _) -> IO.synchronise name name') nameTable table ;
         (table,
          InOut.FoldableBlock (false, get_translation "stepAttributes",
            InOut.Div (InOut.Normal, [
@@ -802,6 +768,53 @@ let main =
                                      (InOut.Node name.IO.node, InOut.default) ;
                                      (InOut.Node attributes.IO.node, InOut.default)
                                    ])) table)
+                 ])
+             ]))) in
+      let (nameTable, nameBlock) =
+        let table =
+          List.map (fun infos -> IO.createTextInput infos.name) player_information in
+        List.iter2 (fun name (name', _) -> IO.synchronise name name') table attributeTable ;
+        (table,
+         InOut.FoldableBlock (false, get_translation "stepNames",
+           InOut.Div (InOut.Normal, [
+               InOut.P [
+                   InOut.Text (get_translation "changingNamesManually") ;
+                   InOut.Text (get_translation "changingNamesAutomatically") ;
+                   InOut.Node changingNames.IO.node ;
+                   InOut.LinkContinuation (true, get_translation "changeNames", fun _ ->
+                     match changingNames.IO.get () with
+                     | None -> ()
+                     | Some gen ->
+                       ignore (List.fold_left (fun avoid (nameNode, attributesNode) ->
+                         (** As the generator contains external data, one can hardly assume
+                          * that it can produce infinitely many different names.
+                          * We are thus stuck to just generate new ones until a really new
+                          * one appears. **)
+                         let (name, attributes) =
+                           let attributes =
+                             let l = attributesNode.IO.get () in
+                             PSet.from_list (List.map (fun (_, (_, c)) -> c) l) in
+                           let rec aux fuel =
+                             let (name, attributes) = Names.generate gen attributes in
+                             match fuel with
+                             | 0 -> (name, attributes)
+                             | n ->
+                               if PSet.mem name avoid then
+                                 aux (fuel - 1)
+                               else (name, attributes) in
+                           aux 100 in
+                         nameNode.IO.set name ;
+                         let attributes =
+                           List.map (get_responsible_list_infos attribute_functions) attributes
+                           @ attributesNode.IO.get () in
+                         attributesNode.IO.set attributes ;
+                         PSet.add name avoid) PSet.empty attributeTable))
+                 ] ;
+               InOut.Div (InOut.Centered, [
+                   InOut.Table (["table"],
+                                [(InOut.Text (get_translation "playerName"), InOut.default)],
+                                List.map (fun node ->
+                                  ([], [(InOut.Node node.IO.node, InOut.default)])) table)
                  ])
              ]))) in
       let (contactTable, contactBlock) =

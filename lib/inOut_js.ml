@@ -353,17 +353,18 @@ let createInteraction node input get actual_get set lock unlock =
   let trigger set x =
     set x ;
     trigger () in
-  let triggerLock status _ =
+  let triggerLock status f _ =
     if !locked <> status then (
       locked := status ;
+      f () ;
       List.iter (fun f -> f status) !onLock
     ) in {
     node = (node :> Dom_html.element Js.t) ;
     get = actual_get ;
     set = trigger set ;
     onChange = onChange ;
-    lock = triggerLock true ;
-    unlock = triggerLock false ;
+    lock = triggerLock true lock ;
+    unlock = triggerLock false unlock ;
     locked = (fun _ -> !locked) ;
     onLockChange = onLockChange
   }
@@ -565,10 +566,10 @@ let createResponsiveListInput default placeholder get =
   let set l' =
     l := l' ;
     update_list () in
-  let lock =
+  let lock _ =
     input##.disabled := Js.bool true ;
     ul##.classList##add (Js.string "autocomplete-disabled") in
-  let unlock =
+  let unlock _ =
     input##.disabled := Js.bool false ;
     ul##.classList##remove (Js.string "autocomplete-disabled") in
   createInteraction main input get get set lock unlock

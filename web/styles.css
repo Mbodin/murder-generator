@@ -292,6 +292,13 @@ body.printable .table tr:hover {
   background-color: #babdb6 ;
 }
 
+.table td.table-hheader {
+  background-color: #5c3566 ;
+  color: #eeeeec ;
+  text-align: center ;
+  font-weight: bold ;
+}
+
 /* Timeline */
 
 table.timeline {

@@ -823,6 +823,8 @@ let main =
                            attributesNode.IO.set attributes ;
                            PSet.add name avoid) PSet.empty attributeTable))
                  ] ;
+               InOut.P [ InOut.Text (get_translation "lockNameDescription") ] ;
+               InOut.P [ InOut.Text (get_translation "nameInteractions") ] ;
                InOut.Div (InOut.Centered, [
                    InOut.Table (["table"],
                                 [(InOut.Text (get_translation "playerName"), InOut.default) ;
@@ -840,8 +842,7 @@ let main =
                                       (InOut.Node node.IO.node, InOut.default) ;
                                       (InOut.Node switch.IO.node, InOut.default)
                                     ])) table)
-                 ]) ;
-               InOut.P [ InOut.Text (get_translation "nameInteractions") ]
+                 ])
              ]))) in
       let (contactTable, contactBlock) =
         let table =
@@ -864,8 +865,11 @@ let main =
         List.iter2 IO.synchronise nameTable header ;
         let header =
           (InOut.Text (get_translation "contacts"), InOut.default)
-          :: List.map (fun node ->
-               (InOut.Node node.IO.node, InOut.default)) header in
+           :: List.map (fun node ->
+                (InOut.Node node.IO.node, InOut.default)) header
+           @ [(InOut.Text (get_translation "commands"), InOut.default)] in
+        let hsettings = { InOut.default with InOut.classes = ["table-hheader"] } in
+        let cellNA = (InOut.Space, { InOut.default with classes = ["cellNA"] }) in
         List.iter2 (fun name (name', _) -> IO.synchronise name name') nameTable table ;
         (table,
          InOut.FoldableBlock (false, get_translation "stepContacts",
@@ -878,14 +882,31 @@ let main =
                InOut.Div (InOut.Centered, [
                    InOut.Table (["table"], header,
                                 List.map (fun (name, contacts) ->
-                                  ([],
-                                   (InOut.Node name.IO.node, InOut.default)
-                                   :: List.map (function
-                                        | None ->
-                                          (InOut.Space, { InOut.default with classes = ["cellNA"] })
-                                        | Some node ->
-                                          (InOut.Node node.IO.node, InOut.default)) contacts))
-                                  table)
+                                    ([],
+                                     (InOut.Node name.IO.node, hsettings)
+                                     :: List.map (function
+                                          | None -> cellNA 
+                                          | Some node ->
+                                            (InOut.Node node.IO.node, InOut.default)) contacts
+                                     @ [(InOut.LinkContinuation (false,
+                                           get_translation "resetContactLine", fun _ ->
+                                             List.iter (function
+                                               | None -> ()
+                                               | Some node -> node.IO.set []) contacts),
+                                         InOut.default)]))
+                                  table
+                                @ [([],
+                                   (InOut.Text (get_translation "commands"), hsettings)
+                                   :: List.mapi (fun i _ ->
+                                        (InOut.LinkContinuation (false,
+                                           get_translation "resetContactColumn", fun _ ->
+                                             List.iter (fun (_, contacts) ->
+                                               match Utils.assert_option __LOC__
+                                                       (List.nth_opt contacts i) with
+                                               | None -> ()
+                                               | Some node -> node.IO.set []) table),
+                                         InOut.default)) table
+                                   @ [cellNA])])
                  ])
              ]))) in
       let (complexityDifficultyTable, complexityDifficultyBlock) =

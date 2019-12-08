@@ -325,10 +325,10 @@ let createNumberOutput n =
   let (node, set) = createTextOutput (string_of_int n) in
   (node, fun n -> set (string_of_int n))
 
-(** Given a DOM node, an internal [get] function, the actual [get] function, a [set] function,
- * and a [lock] and [unlock] functions, create an interaction.
+(** Given a DOM node, an input [input] an internal [get] function, the actual [get] function,
+ * a [set] function, and a [lock] and [unlock] functions, create an interaction.
  * The triggerring of the [onChange] functions are dealt automatically. **)
-let createInteraction node get actual_get set lock unlock =
+let createInteraction node input get actual_get set lock unlock =
   let l = ref [] in
   let locked = ref false in
   let onLock = ref [] in
@@ -344,7 +344,7 @@ let createInteraction node get actual_get set lock unlock =
     if !l = [] then (
       (** To avoid placing too many event listeners, we only add it once we know that there is
        * at least one function. **)
-      node##.onchange :=
+      input##.onchange :=
         Dom_html.handler (fun _ ->
           trigger () ;
           Js._false)
@@ -368,13 +368,13 @@ let createInteraction node get actual_get set lock unlock =
     onLockChange = onLockChange
   }
 
-(** Variant for the cases where [node] has been created using [Dom_html.createInput],
+(** Variant for the case where [node] has been created using [Dom_html.createInput],
  * and for which we can define a default [lock] and [unlock] function. **)
-let createInputInteraction (node : Dom_html.inputElement) get actual_get set =
+let createInputInteraction (node : Dom_html.inputElement Js.t) get actual_get set =
   let setLock status = node##.disabled := Js.bool status in
   let lock _ = setLock true in
   let unlock _ = setLock false in
-  createInteraction node get actual_get set lock unlock
+  createInteraction node node get actual_get set lock unlock
 
 let createNumberInput ?min:(mi = 0) ?max:(ma = max_int) d =
   let input = Dom_html.createInput ~_type:(Js.string "number") document in
@@ -399,7 +399,9 @@ let createListInput l =
   let (get, set) =
     if l = [] then (
       input##.disabled := Js.bool true ;
-      ((fun _ -> None), (fun _ -> invalid_arg "createListInput: set on an empty list."))
+      ((fun _ -> None), (function
+        | None -> ()
+        | Some _ -> invalid_arg "createListInput: set on an empty list."))
     ) else (
       List.iteri (fun i (txt, _) ->
         let i = "option_" ^ string_of_int i in
@@ -410,26 +412,31 @@ let createListInput l =
       ((fun _ ->
          let i = input##.selectedIndex in
          Option.map snd (List.nth_opt l i)),
-       (fun k ->
-         match Utils.list_associ_opt k l with
-         | None -> invalid_arg "createListInput: set on an non-existing element."
-         | Some (i, _) -> input##.selectedIndex := i))
+       (function
+        | None -> input##.selectedIndex := -1
+        | Some k ->
+          match Utils.list_associ_opt k l with
+          | None -> invalid_arg "createListInput: set on an non-existing element."
+          | Some (i, _) -> input##.selectedIndex := i))
     ) in
   let get_stro _ =
     let i = input##.selectedIndex in
     if i < 0 then None
     else Option.map fst (List.nth_opt l i) in
-  let (trigger, onChange) =
-    let (onChange, trigger) = createOnChange input get_stro in
-    (trigger, fun f ->
-      onChange (function
-        | None -> ()
-        | Some x -> f x)) in {
-    node = (input :> Dom_html.element Js.t) ;
-    get = get ;
-    set = trigger set ;
-    onChange = onChange
-  }
+  let lock _ = input##.disabled := Js.bool true in
+  let unlock _ = if l <> [] then input##.disabled := Js.bool false in
+  createInteraction input input get_stro get set lock unlock
+
+(* TODO: Make this cleaner. *)
+let createListInput l =
+  let i = createListInput l in
+  { i with
+      set = (fun a -> i.set (Some a)) ;
+      onChange =
+        (fun f ->
+          i.onChange (fun a ->
+            let a = Utils.assert_option __LOC__ a in
+            f a)) }
 
 let createResponsiveListInput default placeholder get =
   let main = Dom_html.createDiv document in
@@ -558,12 +565,13 @@ let createResponsiveListInput default placeholder get =
   let set l' =
     l := l' ;
     update_list () in
-  let (onChange, trigger) = createOnChange input get in {
-    node = (main :> Dom_html.element Js.t) ;
-    get = get ;
-    set = trigger set ;
-    onChange = onChange
-  }
+  let lock =
+    input##.disabled := Js.bool true ;
+    ul##.classList##add (Js.string "autocomplete-disabled") in
+  let unlock =
+    input##.disabled := Js.bool false ;
+    ul##.classList##remove (Js.string "autocomplete-disabled") in
+  createInteraction main input get get set lock unlock
 
 let createPercentageInput d =
   let maxv = 1_000_000 in
@@ -611,13 +619,14 @@ let createSwitch text descr texton textoff b =
   let set b = (Js.Unsafe.coerce input)##.checked := Js.bool b in
   set b ;
   let get _ = Js.to_bool (Js.Unsafe.coerce input)##.checked in
-  createInputInteraction input get get set
+  let lock _ = input##.disabled := Js.bool true in
+  let unlock _ = input##.disabled := Js.bool false in
+  createInteraction label input get get set lock unlock
 
 let createFileImport extensions prepare =
   let input = Dom_html.createInput ~_type:(Js.string "file") document in
   if extensions <> [] then
-    ignore (input##setAttribute (Js.string "accept")
-      (Js.string (String.concat ", " (List.map (fun e -> "." ^ e) extensions)))) ;
+    input##.accept := Js.string (String.concat ", " (List.map (fun e -> "." ^ e) extensions)) ;
   ((input :> Dom_html.element Js.t), fun _ ->
     prepare () ;%lwt
     match Js.Optdef.to_option input##.files with

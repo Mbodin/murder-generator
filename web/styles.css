@@ -716,6 +716,10 @@ button.autocomplete-close {
   cursor: pointer ;
 }
 
+.autocomplete-disabled button.autocomplete-close {
+  display: none ;
+}
+
 .autocomplete > input[type="text"] {
   width: 100% ;
   border: 1px solid #75507b ;

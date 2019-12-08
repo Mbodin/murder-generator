@@ -56,22 +56,30 @@ let convertAlternative spec =
       else if size < spec.alternative_size / 4 then
         decide () || decide ()
       else decide () || Random.int 5 = 0
-    ) else decide () in {
+    ) else decide () in
+  let empty props = ((0, None, "", props), []) in {
     init = (fun props ->
-      let (s, str, props') = Utils.select (spec.alternative_init props) in
-      ((spec.alternative_size, Some s, str, props), props')) ;
+      let l = spec.alternative_init props in
+      if l = [] then empty props
+      else
+        let (s, str, props') = Utils.select l in
+        ((spec.alternative_size, Some s, str, props), props')) ;
     transition = fun (size, s, str, props) ->
       (let add_props =
-        List.fold_left (fun props c -> PSet.add c props) props in
+         List.fold_left (fun props c -> PSet.add c props) props in
        match s with
        | None -> (str, None)
        | Some s ->
          (str,
-           if halt size then
-             let (str, props') = Utils.select (spec.alternative_final props s) in
-             Some ((0, None, str, add_props props'), props')
+           let final = spec.alternative_final props s in
+           let normal = spec.alternative_transition props s in
+           if (halt size && final <> []) || normal = [] then
+             if final = [] then Some (empty props)
+             else
+               let (str, props') = Utils.select final in
+               Some ((0, None, str, add_props props'), props')
            else
-             let (s, str, props') = Utils.select (spec.alternative_transition props s) in
+             let (s, str, props') = Utils.select normal in
              Some ((size - 1, Some s, str, add_props props'), props')))
   }
 
@@ -146,8 +154,12 @@ let createVowelConsonant m definitions size initV initC middleV middleC endV end
           List.filter (fun (_, v) -> compatible_with m props (unf v)) l
           @ spec in
         (3 * weight, spec) in
-    snd (aux (List.map (String.split_on_char ',')
-      (String.split_on_char ';' strspec))) in
+    match strspec with
+    | "" -> []
+    | "," | ";" -> [(1, f "" [])]
+    | _ ->
+      snd (aux (List.map (String.split_on_char ',')
+        (String.split_on_char ';' strspec))) in
   let add b e props = (b, e, props) in
   let unadd (b, e, props) = ((b, e), props) in
   Automaton (convertAlternative {

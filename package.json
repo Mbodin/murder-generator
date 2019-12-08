@@ -28,10 +28,11 @@
     "@opam/uuseg": "*",
     "@opam/ppx_deriving": "*",
     "@opam/lwt_ppx": "*",
-    "@opam/js_of_ocaml": "*",
+    "@opam/js_of_ocaml": "3.5.1",
     "@opam/js_of_ocaml-lwt": "*",
     "@opam/js_of_ocaml-ppx": "*",
     "@opam/js_of_ocaml-ppx_deriving_json": "*",
+    "@opam/ocamlgraph": "*",
     "ocaml": "~4.7.0"
   }
 }

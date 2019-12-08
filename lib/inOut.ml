@@ -88,7 +88,11 @@ module type T = sig
       node : node ;
       get : unit -> 'b ;
       set : 'a -> unit ;
-      onChange : ('a -> unit) -> unit
+      onChange : ('a -> unit) -> unit ;
+      lock : unit -> unit ;
+      unlock : unit -> unit ;
+      locked : unit -> bool ;
+      onLockChange : (bool -> unit) -> unit
     }
   type 'a sinteraction = ('a, 'a) interaction
 

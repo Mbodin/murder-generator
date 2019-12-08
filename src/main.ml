@@ -762,17 +762,15 @@ let main =
                InOut.Div (InOut.Centered, [
                    InOut.Table (["table"],
                                 [(InOut.Text (get_translation "playerName"), InOut.default) ;
-                                 (InOut.Text (get_translation "attributes"), InOut.default)],
+                                 (InOut.Text (get_translation "attributes"), InOut.default) ;
+                                 (InOut.Text (get_translation "commands"), InOut.default)],
                                 List.map (fun (name, attributes) ->
                                   ([], [
                                      (InOut.Node name.IO.node, InOut.default) ;
-                                     (InOut.Div (InOut.Inlined, [
-                                          InOut.Node attributes.IO.node ;
-                                          InOut.Space ;
-                                          InOut.LinkContinuation (true,
-                                            get_translation "resetAttribute", fun _ ->
-                                              attributes.IO.set [])
-                                        ]), InOut.default)
+                                     (InOut.Node attributes.IO.node, InOut.default) ;
+                                     (InOut.LinkContinuation (false,
+                                        get_translation "resetAttribute", fun _ ->
+                                          attributes.IO.set []), InOut.default)
                                    ])) table)
                  ])
              ]))) in
@@ -792,40 +790,56 @@ let main =
                      | None -> ()
                      | Some gen ->
                        ignore (List.fold_left (fun avoid (nameNode, attributesNode) ->
-                         (** As the generator contains external data, one can hardly assume
-                          * that it can produce infinitely many different names.
-                          * We are thus stuck to just generate new ones until a really new
-                          * one appears. **)
-                         let (name, attributes) =
+                         if nameNode.IO.locked () then
+                           avoid
+                         else
+                           (** As the generator contains external data, one can hardly assume
+                            * that it can produce infinitely many different names.
+                            * We are thus stuck to just generate new ones until a really new
+                            * one appears. **)
+                           let (name, attributes) =
+                             let attributes =
+                               let l = attributesNode.IO.get () in
+                               PSet.from_list (List.map (fun (_, (_, c)) -> c) l) in
+                             let rec aux fuel =
+                               let (name, attributes) = Names.generate gen attributes in
+                               match fuel with
+                               | 0 -> (name, attributes)
+                               | n ->
+                                 if PSet.mem name avoid then
+                                   aux (fuel - 1)
+                                 else (name, attributes) in
+                             aux 100 in
+                           nameNode.IO.set name ;
                            let attributes =
-                             let l = attributesNode.IO.get () in
-                             PSet.from_list (List.map (fun (_, (_, c)) -> c) l) in
-                           let rec aux fuel =
-                             let (name, attributes) = Names.generate gen attributes in
-                             match fuel with
-                             | 0 -> (name, attributes)
-                             | n ->
-                               if PSet.mem name avoid then
-                                 aux (fuel - 1)
-                               else (name, attributes) in
-                           aux 100 in
-                         nameNode.IO.set name ;
-                         let attributes =
-                           let old_attributes = attributesNode.IO.get () in
-                           let new_attribute =
-                             let set = PSet.from_list old_attributes in
-                             fun a -> not (PSet.mem a set) in
-                           let attributes =
-                             List.map (get_responsible_list_infos attribute_functions) attributes in
-                           List.filter new_attribute attributes @ old_attributes in
-                         attributesNode.IO.set attributes ;
-                         PSet.add name avoid) PSet.empty attributeTable))
+                             let old_attributes = attributesNode.IO.get () in
+                             let new_attribute =
+                               let set = PSet.from_list old_attributes in
+                               fun a -> not (PSet.mem a set) in
+                             let attributes =
+                               List.map (get_responsible_list_infos attribute_functions)
+                                 attributes in
+                             List.filter new_attribute attributes @ old_attributes in
+                           attributesNode.IO.set attributes ;
+                           PSet.add name avoid) PSet.empty attributeTable))
                  ] ;
                InOut.Div (InOut.Centered, [
                    InOut.Table (["table"],
-                                [(InOut.Text (get_translation "playerName"), InOut.default)],
+                                [(InOut.Text (get_translation "playerName"), InOut.default) ;
+                                 (InOut.Text (get_translation "commands"), InOut.default)],
                                 List.map (fun node ->
-                                  ([], [(InOut.Node node.IO.node, InOut.default)])) table)
+                                  let switch =
+                                    IO.createSwitch "" None
+                                      (Some (get_translation "unlockName"))
+                                      (Some (get_translation "lockName"))
+                                      false in
+                                  switch.IO.onChange (function
+                                    | true -> node.IO.lock ()
+                                    | false -> node.IO.unlock ()) ;
+                                  ([], [
+                                      (InOut.Node node.IO.node, InOut.default) ;
+                                      (InOut.Node switch.IO.node, InOut.default)
+                                    ])) table)
                  ]) ;
                InOut.P [ InOut.Text (get_translation "nameInteractions") ]
              ]))) in

@@ -61,9 +61,15 @@ let get_file url =
   request##.onreadystatechange :=
     Js.wrap_callback (fun _ ->
       if request##.readyState = XmlHttpRequest.DONE then (
-        if request##.status = 200 then
-          Lwt.wakeup_later w (Js.to_string request##.responseText)
-        else
+        if request##.status = 200 then (
+          match Js.Opt.to_option request##.responseText with
+          | Some txt -> Lwt.wakeup_later w (Js.to_string txt)
+          | None ->
+            Lwt.wakeup_later_exn w (Invalid_argument
+                 ("Error when fetching " ^ url
+                  ^ ": correct status request, but no provided response: "
+                  ^ Js.to_string request##.statusText))
+        ) else
           Lwt.wakeup_later_exn w (Invalid_argument
                ("Error when fetching " ^ url ^ ". "
                 ^ string_of_int request##.status ^ " :"
@@ -141,15 +147,26 @@ type ('a, 'b) interaction = {
     node : node ;
     get : unit -> 'b ;
     set : 'a -> unit ;
-    onChange : ('a -> unit) -> unit
+    onChange : ('a -> unit) -> unit ;
+    lock : unit -> unit ;
+    unlock : unit -> unit ;
+    locked : unit -> bool ;
+    onLockChange : (bool -> unit) -> unit
   }
 
 type 'a sinteraction = ('a, 'a) interaction
 
+(** Similar to [lock] and [unlock], but from a boolean. **)
+let lockMatch n = function
+  | true -> n.lock ()
+  | false -> n.unlock ()
+
 let synchronise i1 i2 =
   i2.set (i1.get ()) ;
   i1.onChange i2.set ;
-  i2.onChange i1.set
+  i2.onChange i1.set ;
+  i1.onLockChange (lockMatch i2) ;
+  i2.onLockChange (lockMatch i1)
 
 let document = Dom_html.window##.document
 
@@ -308,10 +325,14 @@ let createNumberOutput n =
   let (node, set) = createTextOutput (string_of_int n) in
   (node, fun n -> set (string_of_int n))
 
-(** Given a node and a get function, create a field [onChange] of the type [interaction],
- * as well as a function to triggerring all changes to be applied on the [set] function. **)
-let createOnChange node get =
+(** Given a DOM node, an internal [get] function, the actual [get] function, a [set] function,
+ * and a [lock] and [unlock] functions, create an interaction.
+ * The triggerring of the [onChange] functions are dealt automatically. **)
+let createInteraction node get actual_get set lock unlock =
   let l = ref [] in
+  let locked = ref false in
+  let onLock = ref [] in
+  let onLockChange f = onLock := f :: !onLock in
   let current = ref (get ()) in
   let trigger _ =
     let v = get () in
@@ -332,7 +353,28 @@ let createOnChange node get =
   let trigger set x =
     set x ;
     trigger () in
-  (onChange, trigger)
+  let triggerLock status _ =
+    if !locked <> status then (
+      locked := status ;
+      List.iter (fun f -> f status) !onLock
+    ) in {
+    node = (node :> Dom_html.element Js.t) ;
+    get = actual_get ;
+    set = trigger set ;
+    onChange = onChange ;
+    lock = triggerLock true ;
+    unlock = triggerLock false ;
+    locked = (fun _ -> !locked) ;
+    onLockChange = onLockChange
+  }
+
+(** Variant for the cases where [node] has been created using [Dom_html.createInput],
+ * and for which we can define a default [lock] and [unlock] function. **)
+let createInputInteraction (node : Dom_html.inputElement) get actual_get set =
+  let setLock status = node##.disabled := Js.bool status in
+  let lock _ = setLock true in
+  let unlock _ = setLock false in
+  createInteraction node get actual_get set lock unlock
 
 let createNumberInput ?min:(mi = 0) ?max:(ma = max_int) d =
   let input = Dom_html.createInput ~_type:(Js.string "number") document in
@@ -343,24 +385,14 @@ let createNumberInput ?min:(mi = 0) ?max:(ma = max_int) d =
     input##.value := Js.string (string_of_int d) in
   set d ;
   let get _ = min ma (max mi (int_of_string (Js.to_string input##.value))) in
-  let (onChange, trigger) = createOnChange input get in {
-    node = (input :> Dom_html.element Js.t) ;
-    get = get ;
-    set = trigger set ;
-    onChange = onChange
-  }
+  createInputInteraction input get get set
 
 let createTextInput txt =
   let input = Dom_html.createInput ~_type:(Js.string "text") document in
   input##.value := Js.string txt ;
   let get _ = Js.to_string input##.value in
   let set str = input##.value := Js.string str in
-  let (onChange, trigger) = createOnChange input get in {
-    node = (input :> Dom_html.element Js.t) ;
-    get = get ;
-    set = trigger set ;
-    onChange = onChange
-  }
+  createInputInteraction input get get set
 
 let createListInput l =
   let input = Dom_html.createSelect document in
@@ -544,12 +576,7 @@ let createPercentageInput d =
     input##.value := Js.string (string_of_int (int_of_float (maxvf *. d))) in
   set d ;
   let get _ = (max 0. (min maxvf (float_of_string (Js.to_string input##.value)))) /. maxvf in
-  let (onChange, trigger) = createOnChange input get in {
-    node = (input :> Dom_html.element Js.t) ;
-    get = get ;
-    set = trigger set ;
-    onChange = onChange
-  }
+  createInputInteraction input get get set
 
 let createDateInput d =
   let input = Dom_html.createInput ~_type:(Js.string "date") document in
@@ -557,12 +584,7 @@ let createDateInput d =
     input##.value := Js.string (Date.iso8601 d) in
   set d ;
   let get _ = Date.from_iso8601 (Js.to_string input##.value) in
-  let (onChange, trigger) = createOnChange input get in {
-    node = (input :> Dom_html.element Js.t) ;
-    get = get ;
-    set = trigger set ;
-    onChange = onChange
-  }
+  createInputInteraction input get get set
 
 let createSwitch text descr texton textoff b =
   let label = Dom_html.createLabel document in
@@ -589,12 +611,7 @@ let createSwitch text descr texton textoff b =
   let set b = (Js.Unsafe.coerce input)##.checked := Js.bool b in
   set b ;
   let get _ = Js.to_bool (Js.Unsafe.coerce input)##.checked in
-  let (onChange, trigger) = createOnChange input get in {
-    node = (label :> Dom_html.element Js.t) ;
-    get = get ;
-    set = trigger set ;
-    onChange = onChange
-  }
+  createInputInteraction input get get set
 
 let createFileImport extensions prepare =
   let input = Dom_html.createInput ~_type:(Js.string "file") document in

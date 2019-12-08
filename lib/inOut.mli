@@ -102,7 +102,12 @@ module type T = sig
       node : node (** The node itself **) ;
       get : unit -> 'b (** Getting its value **) ;
       set : 'a -> unit (** Setting its value **) ;
-      onChange : ('a -> unit) -> unit (** Calling a callback each time the value is changed. **)
+      onChange : ('a -> unit) -> unit (** Calling a callback each time the value is changed **) ;
+      lock : unit -> unit (** Lock the node: no one can change its value **) ;
+      unlock : unit -> unit (** Unlock the node **) ;
+      locked : unit -> bool (** Current lock status **) ;
+      onLockChange : (bool -> unit) -> unit
+        (** Calling a callback each time the node is locked or unlocked. **)
     }
 
   (** The type of safe interactions. **)

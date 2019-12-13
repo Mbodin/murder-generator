@@ -1,7 +1,14 @@
 (** Module InOut
  * Specifies an interface for inputs and outputs. **)
 
-(** Specifies the different properties of div elements. **)
+(** The different kinds of link styles **)
+type link =
+  | Simple (** A usual text-based link. **)
+  | Button of bool
+    (** A link stylised as a button.
+     * The boolean states whether it is the main button or a secondary one. **)
+
+(** The different kinds of div elements. **)
 type layout =
   | Normal (** No special layout. **)
   | Centered (** Its content is centered. **)
@@ -10,7 +17,7 @@ type layout =
 (** Specific options for cells in tables. **)
 type cell_option = {
     row : int
-      (** This interger enables rows to be merged: for each cells, it indicates
+      (** This integer enables rows to be merged: for each cells, it indicates
        * how many rows are merged with the current cell.  If the integer is [1],
        * the cell is a normal cell, but if it is more than [1], the cell has
        * been merged with cells below.**) ;
@@ -33,15 +40,16 @@ type 'node block =
   | FoldableBlock of bool * string * 'node block
       (** A title that can hide a node.
        * The boolean states whether the block should be unfolded by default. **)
-  | Link of string * string (** A link and its associated address. **)
-  | LinkContinuation of bool * string * (unit -> unit)
+  | LinkExtern of link * string * string
+    (** A style, the link text, and its associated address. **)
+  | LinkContinuation of bool * link * string * (unit -> unit)
       (** A link and its associated continuation.
        * The boolean indicates whether the arrow is forwards. **)
-  | LinkFile of string * string * string * bool * (unit -> string)
+  | LinkFile of link * string * string * string * bool * (unit -> string)
       (** Creates a link to a file whose content is computed.
        * The first argument is the link text, the second the file name,
        * the third the mime type, and the fifth its content.
-       * The fourth indicates wether newlines should be adapted to the
+       * The fourth indicates whether newlines should be adapted to the
        * host’s operating system or not. **)
   | Table of string list
              * ('node block * cell_option) list

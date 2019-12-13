@@ -250,7 +250,8 @@ let main =
         | None -> []
         | Some f ->
           let t = Lwt.task () in
-          [ InOut.LinkContinuation (dir, get_translation p text, jump (f t)) ] in
+          [ InOut.LinkContinuation (dir, Button dir,
+                                    get_translation p text, jump (f t)) ] in
       let previous = createListButton false previousText previous in
       let next = createListButton true nextText next in
       IO.print_block (InOut.Div (InOut.Centered,
@@ -271,7 +272,7 @@ let main =
         IO.print_block (InOut.Div (InOut.Normal, List.map (fun lg ->
           let get_translation = get_translation_language lg in
           InOut.Div (InOut.Centered, [
-            InOut.P [ InOut.LinkContinuation (true, get_translation "name",
+            InOut.P [ InOut.LinkContinuation (true, InOut.Button true, get_translation "name",
               fun _ ->
                 IO.clear_response () ;
                 errorTranslations :=
@@ -290,12 +291,12 @@ let main =
       IO.print_block (InOut.P [
           InOut.Text (get_translation "description") ;
           InOut.Text (get_translation "openSource") ;
-          InOut.Link (get_translation "there", webpage_link)
+          InOut.LinkExtern (InOut.Simple, get_translation "there", webpage_link)
         ]) ;
       (** Start a new scenario. **)
       IO.print_block (InOut.P [
           InOut.Text (get_translation "createNewScenario") ;
-          InOut.LinkContinuation (true, get_translation "startGeneration",
+          InOut.LinkContinuation (true, InOut.Button true, get_translation "startGeneration",
             fun _ ->
               Lwt.wakeup_later w (fun _ ->
                 IO.clear_response () ;
@@ -307,7 +308,7 @@ let main =
           InOut.P [ InOut.Text (get_translation "fastCreation") ] ;
           InOut.Div (InOut.Centered, [
               InOut.Node numberOfPlayers.IO.node ;
-              InOut.LinkContinuation (true, get_translation "startFastGeneration",
+              InOut.LinkContinuation (true, InOut.Button true, get_translation "startFastGeneration",
                 fun _ ->
                   Lwt.wakeup_later w (fun _ ->
                     let parameters =
@@ -332,7 +333,7 @@ let main =
           InOut.P [ InOut.Text (get_translation "importFileShortcut") ] ;
           InOut.Div (InOut.Centered, [
               InOut.Node shortcut ;
-              InOut.LinkContinuation (true, get_translation "shortcutGeneration",
+              InOut.LinkContinuation (true, InOut.Button false, get_translation "shortcutGeneration",
                 fun _ ->
                   Lwt.wakeup_later w (fun _ ->
                     let%lwt (fileName, str) = readShortcut () in
@@ -386,7 +387,7 @@ let main =
         ])) ;
       IO.stopLoading () ;%lwt
       next_button ~nextText:"startGeneration" w parameters (fun _ -> parameters)
-        (Some ask_for_languages) (Some ask_for_basic) ;
+        (Some ask_for_languages) None ;
       let%lwt cont = cont in cont ()
 
     and ask_for_basic (cont, w) parameters =
@@ -478,7 +479,7 @@ let main =
               InOut.Text (string_of_int p ^ get_translation "percent" ^ ".") ;
                InOut.Text (get_translation "lookingForContribution") ;
                InOut.Text (get_translation "participate") ;
-               InOut.Link (get_translation "there", webpage_link)
+               InOut.LinkExtern (InOut.Simple, get_translation "there", webpage_link)
             ]) in
       let translate_categories =
         let translate_categories =
@@ -543,12 +544,12 @@ let main =
       IO.print_block (InOut.Div (InOut.Normal, [
           InOut.P [ InOut.Text (get_translation "unselectCategories") ] ;
           InOut.Div (InOut.Centered, [
-              InOut.LinkContinuation (false, get_translation "noCategories",
+              InOut.LinkContinuation (false, InOut.Simple, get_translation "noCategories",
                 fun _ ->
                   PMap.iter (fun _ (e, _) -> e.IO.set false) categoriesButtons ;
                   update_element_number ()) ;
               InOut.Space ;
-              InOut.LinkContinuation (true, get_translation "allCategories",
+              InOut.LinkContinuation (true, InOut.Simple, get_translation "allCategories",
                 fun _ ->
                   PMap.iter (fun _ (e, _) -> e.IO.set true) categoriesButtons ;
                   update_element_number ()) ;
@@ -712,12 +713,16 @@ let main =
               Enum.map (fun (c, a, _, t) -> (t, (a, c))) (List.enum l))) in
           let exact_match l =
             Enum.filter_map (fun (c, a, n, t, ts) ->
-              if List.exists exact (t :: ts) then
+              if PSet.mem a already_chosen then
+                None
+              else if List.exists exact (t :: ts) then
                 Some (t, (a, c))
               else None) (List.enum l) in
           let exact_name_match l =
             Enum.filter_map (fun (c, a, n, t, ts) ->
-              if exact t then
+              if PSet.mem a already_chosen then
+                None
+              else if exact t then
                 Some (t, (a, c))
               else None) (List.enum l) in
           let enum =
@@ -768,7 +773,7 @@ let main =
                                   ([], [
                                      (InOut.Node name.IO.node, InOut.default) ;
                                      (InOut.Node attributes.IO.node, InOut.default) ;
-                                     (InOut.LinkContinuation (false,
+                                     (InOut.LinkContinuation (false, InOut.Simple,
                                         get_translation "resetAttribute", fun _ ->
                                           attributes.IO.set []), InOut.default)
                                    ])) table)
@@ -785,43 +790,44 @@ let main =
                    InOut.Text (get_translation "changingNamesManually") ;
                    InOut.Text (get_translation "changingNamesAutomatically") ;
                    InOut.Node changingNames.IO.node ;
-                   InOut.LinkContinuation (true, get_translation "changeNames", fun _ ->
-                     match changingNames.IO.get () with
-                     | None -> ()
-                     | Some gen ->
-                       ignore (List.fold_left (fun avoid (nameNode, attributesNode) ->
-                         if nameNode.IO.locked () then
-                           avoid
-                         else
-                           (** As the generator contains external data, one can hardly assume
-                            * that it can produce infinitely many different names.
-                            * We are thus stuck to just generate new ones until a really new
-                            * one appears. **)
-                           let (name, attributes) =
+                   InOut.LinkContinuation (true,  InOut.Button false, get_translation "changeNames",
+                     fun _ ->
+                       match changingNames.IO.get () with
+                       | None -> ()
+                       | Some gen ->
+                         ignore (List.fold_left (fun avoid (nameNode, attributesNode) ->
+                           if nameNode.IO.locked () then
+                             avoid
+                           else
+                             (** As the generator contains external data, one can hardly assume
+                              * that it can produce infinitely many different names.
+                              * We are thus stuck to just generate new ones until a really new
+                              * one appears. **)
+                             let (name, attributes) =
+                               let attributes =
+                                 let l = attributesNode.IO.get () in
+                                 PSet.from_list (List.map (fun (_, (_, c)) -> c) l) in
+                               let rec aux fuel =
+                                 let (name, attributes) = Names.generate gen attributes in
+                                 match fuel with
+                                 | 0 -> (name, attributes)
+                                 | n ->
+                                   if PSet.mem name avoid then
+                                     aux (fuel - 1)
+                                   else (name, attributes) in
+                               aux 100 in
+                             nameNode.IO.set name ;
                              let attributes =
-                               let l = attributesNode.IO.get () in
-                               PSet.from_list (List.map (fun (_, (_, c)) -> c) l) in
-                             let rec aux fuel =
-                               let (name, attributes) = Names.generate gen attributes in
-                               match fuel with
-                               | 0 -> (name, attributes)
-                               | n ->
-                                 if PSet.mem name avoid then
-                                   aux (fuel - 1)
-                                 else (name, attributes) in
-                             aux 100 in
-                           nameNode.IO.set name ;
-                           let attributes =
-                             let old_attributes = attributesNode.IO.get () in
-                             let new_attribute =
-                               let set = PSet.from_list old_attributes in
-                               fun a -> not (PSet.mem a set) in
-                             let attributes =
-                               List.map (get_responsible_list_infos attribute_functions)
-                                 attributes in
-                             List.filter new_attribute attributes @ old_attributes in
-                           attributesNode.IO.set attributes ;
-                           PSet.add name avoid) PSet.empty attributeTable))
+                               let old_attributes = attributesNode.IO.get () in
+                               let new_attribute =
+                                 let set = PSet.from_list old_attributes in
+                                 fun a -> not (PSet.mem a set) in
+                               let attributes =
+                                 List.map (get_responsible_list_infos attribute_functions)
+                                   attributes in
+                               List.filter new_attribute attributes @ old_attributes in
+                             attributesNode.IO.set attributes ;
+                             PSet.add name avoid) PSet.empty attributeTable))
                  ] ;
                InOut.P [ InOut.Text (get_translation "lockNameDescription") ] ;
                InOut.P [ InOut.Text (get_translation "nameInteractions") ] ;
@@ -888,7 +894,7 @@ let main =
                                           | None -> cellNA 
                                           | Some node ->
                                             (InOut.Node node.IO.node, InOut.default)) contacts
-                                     @ [(InOut.LinkContinuation (false,
+                                     @ [(InOut.LinkContinuation (false, InOut.Simple,
                                            get_translation "resetContactLine", fun _ ->
                                              List.iter (function
                                                | None -> ()
@@ -898,7 +904,7 @@ let main =
                                 @ [([],
                                    (InOut.Text (get_translation "commands"), hsettings)
                                    :: List.mapi (fun i _ ->
-                                        (InOut.LinkContinuation (false,
+                                        (InOut.LinkContinuation (false, InOut.Simple,
                                            get_translation "resetContactColumn", fun _ ->
                                              List.iter (fun (_, contacts) ->
                                                match Utils.assert_option __LOC__
@@ -1023,7 +1029,7 @@ let main =
       if Lwt.state state = Lwt.Sleep then
         IO.print_block (InOut.P [
           InOut.Text (get_translation "backgroundGeneration") ;
-          InOut.Link (get_translation "there", webpage_link) ]) ;
+          InOut.LinkExtern (InOut.Simple, get_translation "there", webpage_link) ]) ;
       let exportButtons =
         List.map (fun (name, descr) ->
             let node =
@@ -1095,8 +1101,8 @@ let main =
               let fileName = "murder" ^ if ext = "" then "" else ("." ^ ext) in
               let node =
                 InOut.Div (InOut.Inlined, [
-                    InOut.LinkFile (get_translation "downloadAs"
-                                    ^ " " ^ get_translation name,
+                    InOut.LinkFile (InOut.Button false,
+                                    get_translation "downloadAs" ^ " " ^ get_translation name,
                                     fileName, mime, native, fun _ -> file) ;
                     InOut.Text (get_translation descr)
                   ]) in
@@ -1125,7 +1131,7 @@ let main =
       IO.print_block (InOut.P [
           InOut.Text (get_translation "lookingForContribution") ;
           InOut.Text (get_translation "participate") ;
-          InOut.Link (get_translation "there", webpage_link)
+          InOut.LinkExtern (InOut.Simple, get_translation "there", webpage_link)
         ]) ;
       next_button w parameters (fun _ -> parameters)
         (Some (choose_formats (Lwt.return state))) None ;
@@ -1148,7 +1154,7 @@ let main =
       let get_translation = get_translation parameters in
       IO.print_block (InOut.P [
           InOut.Text (get_translation "linkJumped") ;
-          InOut.LinkContinuation (true, get_translation "jumpBack",
+          InOut.LinkContinuation (true, InOut.Simple, get_translation "jumpBack",
             fun _ ->
               Lwt.wakeup_later w (fun _ ->
                 IO.clear_response () ;
@@ -1229,7 +1235,7 @@ let main =
       IO.print_block ~error:true (InOut.Div (InOut.Normal, [
           InOut.P [
               InOut.Text errorOccurred ; InOut.Text reportIt ;
-              InOut.Link (there, webpage_issues)
+              InOut.LinkExtern (InOut.Simple, there, webpage_issues)
             ] ;
           InOut.P [
               InOut.Text errorDetails ;

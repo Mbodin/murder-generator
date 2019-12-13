@@ -167,6 +167,33 @@ a:hover::before {
   transition-timing-function: linear;
 }
 
+a.mainButton, a.secondaryButton {
+  display: inline-block ;
+  border-radius: 1ex ;
+  padding: 0.5ex 1ex ;
+  transition-duration: 0.3s ;
+  font-weight: bold ;
+}
+
+a.mainButton {
+  background-color: #75507b ;
+  color: #eeeeec ;
+}
+
+a.mainButton:hover {
+  background-color: #ad7fa8 ;
+}
+
+a.secondaryButton {
+  background-color: #d3d7cf ;
+  color: #2e3436 ;
+}
+
+a.secondaryButton:hover {
+  background-color: #babdb6 ;
+}
+
+
 /* Foldable sections */
 
 .foldable > h3 {

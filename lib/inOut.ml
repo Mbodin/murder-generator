@@ -1,4 +1,8 @@
 
+type link =
+  | Simple
+  | Button of bool
+
 type layout =
   | Normal
   | Centered
@@ -23,9 +27,9 @@ type 'node block =
   | Space
   | Text of string
   | FoldableBlock of bool * string * 'node block
-  | Link of string * string
-  | LinkContinuation of bool * string * (unit -> unit)
-  | LinkFile of string * string * string * bool * (unit -> string)
+  | LinkExtern of link * string * string
+  | LinkContinuation of bool * link * string * (unit -> unit)
+  | LinkFile of link * string * string * string * bool * (unit -> string)
   | Table of string list
              * ('node block * cell_option) list
              * (string list * ('node block * cell_option) list) list
@@ -39,7 +43,7 @@ let rec add_spaces =
     | Space -> false
     | Text _ -> true
     | FoldableBlock _ -> true
-    | Link _ -> true
+    | LinkExtern _ -> true
     | LinkContinuation _ -> true
     | LinkFile _ -> true
     | Table _ -> false

@@ -170,6 +170,16 @@ let synchronise i1 i2 =
 
 let document = Dom_html.window##.document
 
+(** Return a list of CSS classes corresponding to the style of a button. **)
+let link_to_class = function
+  | InOut.Simple -> []
+  | InOut.Button b ->
+    [if b then "mainButton" else "secondaryButton"]
+
+(** Add the CSS classes to a node. **)
+let add_class_link a s =
+  List.iter (fun c -> a##.classList##add (Js.string c)) (link_to_class s)
+
 let rec block_node =
   let appendChilds f e =
     List.iter (fun b -> Dom.appendChild e (f (block_node b))) in
@@ -228,24 +238,26 @@ let rec block_node =
     Dom.appendChild div inner ;
     Dom.appendChild inner (block_node node) ;
     (div :> Dom_html.element Js.t)
-  | InOut.Link (text, link) ->
+  | InOut.LinkExtern (style, text, link) ->
     let a = Dom_html.createA document in
+    add_class_link a style ;
     let text = Dom_html.document##createTextNode (Js.string text) in
     Dom.appendChild a text ;
     a##.href := Js.string link ;
     (a :> Dom_html.element Js.t)
-  | InOut.LinkContinuation (forwards, text, cont) ->
-    let a = block_node (Link (text, "javascript:void(42)")) in
+  | InOut.LinkContinuation (forwards, style, text, cont) ->
+    let a = block_node (InOut.LinkExtern (style, text, "javascript:void(42)")) in
     if not forwards then
-      a##.classList##add  (Js.string "previous") ;
+      a##.classList##add (Js.string "previous") ;
     Lwt.async (fun _ ->
       Lwt_js_events.clicks a (fun _ _ -> Lwt.return (cont ()))) ;
     a
-  | InOut.LinkFile (text, fileName, mime, native, cont) ->
+  | InOut.LinkFile (style, text, fileName, mime, native, cont) ->
     let endings = if native then `Native else `Transparent in
     let blob = File.blob_from_string ~contentType:mime ~endings:endings (cont ()) in
-    let url = Dom_html.window##._URL##createObjectURL (blob) in
-    let a = block_node (Link (text, Js.to_string url)) in
+    let url = Dom_html.window##._URL##createObjectURL blob in
+    let a = block_node (InOut.LinkExtern (style, text, Js.to_string url)) in
+    add_class_link a style ;
     ignore (a##setAttribute (Js.string "download") (Js.string fileName)) ;
     a
   | InOut.Table (classes, headers, content) ->
@@ -452,7 +464,7 @@ let createResponsiveListInput default placeholder get =
     List.iter (fun (str, _) ->
       let li = Dom_html.createLi document in
       Dom.appendChild ul li ;
-      Dom.appendChild li (block_node (Text str)) ;
+      Dom.appendChild li (block_node (InOut.Text str)) ;
       let close = Dom_html.createButton document in
       close##.onclick :=
         Dom_html.handler (fun _ ->
@@ -501,7 +513,7 @@ let createResponsiveListInput default placeholder get =
           Dom_html.handler (fun _ ->
             apply () ;
             Js._true) ;
-        Dom.appendChild item (block_node (Text str)) ;
+        Dom.appendChild item (block_node (InOut.Text str)) ;
         (item, apply)) (get (Js.to_string input##.value)) in
     List.iter (Dom.appendChild div) (List.rev_map fst autocompletions) ;
     autocompletions in
@@ -603,16 +615,16 @@ let createSwitch text descr texton textoff b =
   let span = Dom_html.createSpan document in
   span##.classList##add (Js.string "slider") ;
   Dom.appendChild label span ;
-  let text = block_node (Text text) in
+  let text = block_node (InOut.Text text) in
   text##.classList##add (Js.string "switch_text") ;
   Dom.appendChild label text ;
   Option.may (fun text ->
-    Dom.appendChild label (block_node (Text " ")) ;
-    Dom.appendChild label (block_node (Text text))) descr ;
+    Dom.appendChild label (block_node (InOut.Text " ")) ;
+    Dom.appendChild label (block_node (InOut.Text text))) descr ;
   let addText textClass =
     Option.may (fun text ->
-      Dom.appendChild label (block_node (Text " ")) ;
-      let node = block_node (Text text) in
+      Dom.appendChild label (block_node (InOut.Text " ")) ;
+      let node = block_node (InOut.Text text) in
       node##.classList##add (Js.string textClass) ;
       Dom.appendChild label node) in
   addText "textswitchon" texton ;

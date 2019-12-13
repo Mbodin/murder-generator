@@ -404,28 +404,32 @@ let rec block_node b =
       Print.print str) (String.split_on_char ' ' str)
   | InOut.FoldableBlock (visible, title, node) ->
     let visible = ref visible in
-    let node = block_node  node in fun link ->
+    let node = block_node node in fun link ->
     Print.clearline () ;
     Print.print ((if !visible then "-" else "+") ^ " ") ;
     Print.push_prefix "  " ;
     let text_link = link (fun _ -> visible := not !visible; print_newline ()) in
-    block_node (Text (text_link ^ " " ^ title)) link ;
+    block_node (InOut.Text (text_link ^ " " ^ title)) link ;
     if !visible then (
       Print.newline () ;
       node link
     ) ;
     Print.pop ()
-  | InOut.Link (text, address) -> fun link ->
-    let text_link = link (fun _ -> print_endline address) in
-    block_node (Text (text ^ " " ^ text_link)) link
-  | InOut.LinkContinuation (forward, text, cont) -> fun link ->
+  | InOut.LinkContinuation (forward, style, text, cont) -> fun link ->
     let text_link = link cont in
+    let text =
+      match style with
+      | InOut.Simple -> text
+      | InOut.Button _ -> "[[" ^ text ^ "]]" in
     let str =
       if forward then text ^ " " ^ text_link
       else text_link ^ " " ^ text in
-    block_node (Text str) link
-  | InOut.LinkFile (text, fileName, mime, newlines, content) -> fun link ->
-    block_node (LinkContinuation (true, text, fun _ ->
+    block_node (InOut.Text str) link
+  | InOut.LinkExtern (style, text, address) ->
+    let cont _ = print_endline address in
+    block_node (InOut.LinkContinuation (true, style, text, cont))
+  | InOut.LinkFile (style, text, fileName, mime, newlines, content) -> fun link ->
+    block_node (InOut.LinkContinuation (true, style, text, fun _ ->
       print_string ("[" ^ fileName ^ "] > ") ;
       flush stdout ;
       let fileName =
@@ -682,7 +686,7 @@ let createSwitch text descr texton textoff b =
       ^ Option.map_default (fun str -> " " ^ str) "" descr
       ^ Option.map_default (fun str -> " " ^ str) ""
           (if !b then texton else textoff) ^ " " in
-    block_node (Text text) link in
+    block_node (InOut.Text text) link in
   let set b' = b := b' in
   create node get set
 

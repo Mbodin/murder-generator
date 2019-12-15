@@ -37,7 +37,7 @@ To compile the program, you will need to install `npm` and `esy`.
 On Debian, this would look like that:
 ```bash
 sudo apt install npm
-npm install --global esy@0.5.6
+npm install --global esy
 ```
 
 To compile this project, you will need to install some dependencies.

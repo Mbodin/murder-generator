@@ -141,7 +141,7 @@ module type T = sig
   (** Create a text output as a number which can be later reset. **)
   val createNumberOutput : int -> node * (int -> unit)
 
-  (** Create a text output as a number which can be later reset. **)
+  (** Create a text output as a string which can be later reset. **)
   val createTextOutput : string -> node * (string -> unit)
 
 
@@ -152,7 +152,10 @@ module type T = sig
   val createTextInput : string -> string sinteraction
 
   (** Create a drop-down list where the user can choose one of its items. **)
-  val createListInput : (string * 'a) list -> (string, 'a option) interaction
+  val createListInput : (string * 'a) list -> (string, (string * 'a) option) interaction
+
+  (** Synchronise two drop-down lists. **)
+  val synchroniseListInput : (string, (string * 'a) option) interaction -> (string, (string * 'a) option) interaction -> unit
 
   (** Create a text input meant to return a list of things.
    * Each time that the user type a string, it is fed to its argument function.

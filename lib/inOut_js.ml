@@ -424,7 +424,7 @@ let createListInput l =
         Dom.appendChild input o) l ;
       ((fun _ ->
          let i = input##.selectedIndex in
-         Option.map snd (List.nth_opt l i)),
+         List.nth_opt l i),
        (function
         | None -> input##.selectedIndex := -1
         | Some k ->
@@ -438,11 +438,7 @@ let createListInput l =
     else Option.map fst (List.nth_opt l i) in
   let lock _ = input##.disabled := Js.bool true in
   let unlock _ = if l <> [] then input##.disabled := Js.bool false in
-  createInteraction input input get_stro get set lock unlock
-
-(* TODO: Make this cleaner. *)
-let createListInput l =
-  let i = createListInput l in
+  let i = createInteraction input input get_stro get set lock unlock in
   { i with
       set = (fun a -> i.set (Some a)) ;
       onChange =
@@ -450,6 +446,15 @@ let createListInput l =
           i.onChange (fun a ->
             let a = Utils.assert_option __LOC__ a in
             f a)) }
+
+let synchroniseListInput i1 i2 =
+  (match i1.get () with
+   | None -> ()
+   | Some (k, _) -> i2.set k) ;
+  i1.onChange i2.set ;
+  i2.onChange i1.set ;
+  i1.onLockChange (lockMatch i2) ;
+  i2.onLockChange (lockMatch i1)
 
 let createResponsiveListInput default placeholder get =
   let main = Dom_html.createDiv document in

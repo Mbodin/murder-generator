@@ -579,7 +579,7 @@ let createListInput l =
     }
   else
     let index = ref 0 in
-    let get _ = Option.map snd (List.nth_opt l !index) in
+    let get _ = List.nth_opt l !index in
     let get_str _ =
       match List.nth_opt l !index with
       | Some (k, _) -> k
@@ -600,6 +600,16 @@ let createListInput l =
       | None -> invalid_arg "createListInput: set on an non-existing element."
       | Some (i, _) -> index := i in
     create node get set
+
+let synchroniseListInput i1 i2 =
+  (match i1.get () with
+   | None -> ()
+   | Some (k, _) -> i2.set k) ;
+  i1.onChange i2.set ;
+  i2.onChange i1.set ;
+  i1.onLockChange (lockMatch i2) ;
+  i2.onLockChange (lockMatch i1)
+
 
 let createResponsiveListInput default _ get_possibilities =
   let l = ref default in

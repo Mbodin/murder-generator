@@ -599,17 +599,6 @@ let main =
           (urltag_power, string_of_float parameters.computation_power) ;
           (urltag_categories, categories)
         ] ;
-      let changingNames =
-        let lg = get_language parameters in
-        let (default, non_default) = List.partition (fun g -> Names.is_default g lg) names in
-        let names = default @ non_default in
-        let l =
-          Utils.list_map_filter (fun g ->
-            let tr = Names.translate g in
-            Option.map (fun txt -> (txt, g))
-              (Translation.translate tr lg ())) names in
-        let node = IO.createListInput l in
-        node in
       let player_information = create_player_information names get_translation parameters in
       let constructor_maps = Driver.get_constructor_maps data in
       let translation = Driver.get_translations data in
@@ -780,6 +769,20 @@ let main =
                  ])
              ]))) in
       let (nameTable, nameBlock) =
+        let (changingNames, bunchNames) =
+          let lg = get_language parameters in
+          let (default, non_default) = List.partition (fun g -> Names.is_default g lg) names in
+          let names = default @ non_default in
+          let l =
+            Utils.list_map_filter (fun g ->
+              let tr = Names.translate g in
+              Option.map (fun txt -> (txt, g))
+                (Translation.translate tr lg ())) names in
+          let create _ = IO.createListInput l in
+          (create (), create ()) in
+        IO.synchroniseListInput changingNames bunchNames ;
+        let (bunchResult, bunchResultSet) = IO.createTextOutput "" in
+        let bunchNumber = IO.createNumberInput ~min:1 (max 100 (3 * parameters.player_number)) in
         let table =
           List.map (fun infos -> IO.createTextInput infos.name) player_information in
         List.iter2 (fun name (name', _) -> IO.synchronise name name') table attributeTable ;
@@ -794,7 +797,7 @@ let main =
                      fun _ ->
                        match changingNames.IO.get () with
                        | None -> ()
-                       | Some gen ->
+                       | Some (_, gen) ->
                          ignore (List.fold_left (fun avoid (nameNode, attributesNode) ->
                            if nameNode.IO.locked () then
                              avoid
@@ -848,7 +851,27 @@ let main =
                                       (InOut.Node node.IO.node, InOut.default) ;
                                       (InOut.Node switch.IO.node, InOut.default)
                                     ])) table)
-                 ])
+                 ]) ;
+               InOut.P [
+                   InOut.Text (get_translation "bunchOfNames") ;
+                   InOut.Node bunchNames.IO.node ;
+                   InOut.Node bunchNumber.IO.node ;
+                   InOut.LinkContinuation (true,  InOut.Button false,
+                     get_translation "generateBunchOfNames",
+                     fun _ ->
+                       match bunchNames.IO.get () with
+                       | None -> ()
+                       | Some (_, gen) ->
+                         let names =
+                           let rec aux acc = function
+                             | 0 -> acc
+                             | n ->
+                               let name = fst (Names.generate gen PSet.empty) in
+                               aux (name :: acc) (n - 1) in
+                           aux [] (bunchNumber.IO.get ()) in
+                         bunchResultSet (print_list (get_translation "and") names)) ;
+                 ] ;
+               InOut.P [ InOut.Node bunchResult ]
              ]))) in
       let (contactTable, contactBlock) =
         let table =

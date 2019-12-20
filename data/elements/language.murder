@@ -23,7 +23,7 @@ declare translation fr:plu (* Plural *)
 declare translation fr:mas (* Masculine *)
 declare translation fr:fem (* Feminine *)
 
-declare translation fr:agr (* Agreement (“e” for feminine) *)
+declare translation fr:agr (* Agreement (“e” for female, nothing for male) *)
 
 declare internal attribute GrammarFR
 begin

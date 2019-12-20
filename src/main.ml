@@ -869,7 +869,7 @@ let main =
                                let name = fst (Names.generate gen PSet.empty) in
                                aux (name :: acc) (n - 1) in
                            aux [] (bunchNumber.IO.get ()) in
-                         bunchResultSet (print_list (get_translation "and") names)) ;
+                         bunchResultSet (print_list (get_translation "and") names ^ ".")) ;
                  ] ;
                InOut.P [ InOut.Node bunchResult ]
              ]))) in

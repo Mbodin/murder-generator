@@ -46,5 +46,5 @@ For instance, it might not be easy to always rephrase a given value so that the 
 It might also be completely messed up in languages that write right-to-left.
 If you want run into problems when translating a particular key, please [contact me](https://github.com/Mbodin).
 
-After translating the interface for a new language, you may want to also translate the scenario elements: see [language.md](./language.md) for instructions.
+After translating the interface for a new language, you may want to also translate the scenario elements: see [language.md](../explanations/language.md) for instructions.
 

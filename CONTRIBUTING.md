@@ -98,7 +98,7 @@ For instance, there is currently no extractor to LaTeX or Patoline: if you have 
 
 Pull requests for other features are also welcomed.
 Examples of features that could be added to the program:
-- instead of just writing repeatitive sentences, maybe one could reuse [some recent advances in machine learning](https://openai.com/blog/better-language-models/) (see [this website](https://talktotransformer.com/) for an interactive version) to generate ever changing-scenarios.
+- instead of just writing repeatitive sentences, maybe one could reuse [some recent advances in machine learning](https://openai.com/blog/better-language-models/) (see [this website](https://talktotransformer.com/) or [this one](https://colab.research.google.com/github/nickwalton/AIDungeon/blob/master/AIDungeon_2.ipynb) for interactive versions) to generate ever changing-scenarios.
 - actually generate proper character sheets in a relevant format.
 - currently, `.murder` files are parsed client-side, which means that the client has to include a full parser for these files.  Maybe it would be worth trying to preparse these files and send a small `.json` file instead, removing the need to send the parser to the user and thus preserving bandwidth.
 - there are currently no program to help people that would like to write new scenario elements: maybe an editor or editor-features would be interesting.

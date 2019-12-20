@@ -40,7 +40,7 @@ Organising the files is thus just a matter of dividing each notions into files t
 The two keywords `begin` and `end` define a block that describes the defined category.
 In its block, a category block defines how its name should be translated into the available languages, and includes a description of it.
 The `translation` and `description` keywords are very similar in syntax: they are followed by a language-code, then a string of characters between `"`.
-The language code is a two-letter or three-letter code associated to the language in [translations.json](../../web/translations.json) (see [translations.md](./translations.md)).
+The language code is a two-letter or three-letter code associated to the language in [translations.json](../../web/translations.json) (see [translations.md](../references/translations.md)).
 It is not necessary to have a translation in all available languages, but having translations in as many languages as possible is better.
 
 In addition to the `translation` and `description` declarations, a category can also be marked as being dependent of another category.

@@ -78,7 +78,7 @@ val partition : ('a -> bool) -> 'a t -> 'a t * 'a t
 
 (** Same as [partition], but the predicate maps each value to
  * a different type whether they satisfy the predicate. **)
-val partition_map : ?comparel:('b -> 'b -> int) -> ?comparer:('c -> 'c -> int) -> ('a -> ('b, 'c) Utils.plus) -> 'a t -> 'b t * 'c t
+val partition_map : ?comparel:('b -> 'b -> int) -> ?comparer:('c -> 'c -> int) -> ('a -> ('b, 'c) Utils.sum) -> 'a t -> 'b t * 'c t
 
 (** Convert a list into a set. **)
 val from_list : ?compare:('a -> 'a -> int) -> 'a list -> 'a t

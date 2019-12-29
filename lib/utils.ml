@@ -26,7 +26,7 @@ let assert_option err = function
   | None -> failwith ("This option-type should not be [None]. " ^ err)
   | Some v -> v
 
-type ('a, 'b) plus =
+type ('a, 'b) sum =
   | Left of 'a
   | Right of 'b
 

@@ -3,8 +3,16 @@
 
 type character = State.character
 
+(** References to characters and objects in an element are done using this type.
+ * [Left i] corresponds to the [i]th character of the element, and [Right i] to
+ * the [i]th object.
+ * The type [id option] is also frequently used in this file.  In such case, [None]
+ * means that it targets all the other characters of the element (declared as
+ * [let any other player] in the data files). **)
+type id = (int, int) Utils.sum
+
 (** A constraint on a character **)
-type character_constraint =
+type cconstraint =
   | Attribute of Attribute.PlayerAttribute.attribute
                  * Attribute.PlayerAttribute.constructor State.attribute_value
     (** The given attribute value is provided by the element.
@@ -13,20 +21,19 @@ type character_constraint =
       * this value, but also [State.Fixed_value], where the element actually
       * provides an explanation for it. **)
   | Contact of Attribute.ContactAttribute.attribute
-               * int option (** If this number is [None], this contact is meant
-                              * towards all other players than the ones declared
-                              * in the element. **)
+               * id option
                * Attribute.ContactAttribute.constructor State.attribute_value
     (** The given contact (identified in the local array) is provided by the
      * element. **)
 
 (** All the changes applied by an elements to players are summed up in this type. **)
 type cell = {
-    constraints : character_constraint list
-      (** The constraints on this player. **) ;
+    constraints : cconstraint list
+      (** The constraints on this character. **) ;
     relations : Relation.t array
-      (** The relations that would be added to this player,  for each characters.
-       * This array can be less than the number of players  in this element
+      (** The relations that would be added to this character, for each other
+       * characters of the element.
+       * This array can be less than the number of players in this element
        * ([Neutral] is then assumed for all other cells). **) ;
     added_objective : State.objective
       (** Some difficulty or complexity, provided in addition
@@ -34,10 +41,12 @@ type cell = {
   }
 
 (** Each players considered by the element are represented as a cell.
- * A list of constraints given to other players is also given
+ * A list of constraints given to other characters is also given
  * (it corresponds to the [let any other player] declarations.
  * Events are stored as a list, characters being represented by their
  * index in the cell array.
+ * In addition to characters declaration, an element also containts
+ * object declarations, associated with their constraints.
  * Events must not be directly contradictory: if an event has a
  * constraint preventing an event of a given kind to be after this
  * event, it must not be after it in the list.
@@ -45,7 +54,8 @@ type cell = {
 type t = {
     status : History.status ;
     players : cell array ;
-    others : character_constraint list ;
+    others : cconstraint list ;
+    objects : cconstraint list array ;
     events : int Events.t list ;
     id : Id.t
   }

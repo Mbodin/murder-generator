@@ -24,12 +24,12 @@ val apply_option : 'a option -> ('a -> 'b) -> 'b option
 val assert_option : string -> 'a option -> 'a
 
 (** The sum type of two types. **)
-type ('a, 'b) plus =
+type ('a, 'b) sum =
     | Left of 'a
     | Right of 'b
 
 (** The following function considers the Left-constructor to represent an error. **)
-val error_monad : ('a, 'b) plus -> ('b -> ('a, 'c) plus) -> ('a, 'c) plus
+val error_monad : ('a, 'b) sum -> ('b -> ('a, 'c) sum) -> ('a, 'c) sum
 
 (** A value associated with some cache. **)
 type ('value, 'cache) cached
@@ -126,7 +126,7 @@ val list_find_map_opt : ('a -> 'b option) -> 'a list -> 'b option
 
 (** Same as [List.partition], but the predicate maps each value to
  * a different type whether they satisfy the predicate. **)
-val list_partition_map : ('a -> ('b, 'c) plus) -> 'a list -> 'b list * 'c list
+val list_partition_map : ('a -> ('b, 'c) sum) -> 'a list -> 'b list * 'c list
 
 (** Return the index and associated value of the pair with first element equal
  * to the first argument, or raise [Not_found] if not present. **)

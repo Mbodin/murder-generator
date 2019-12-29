@@ -4,15 +4,17 @@ open ExtList
 
 type character = Id.t
 
-type character_constraint =
+type id = (int, int) Utils.sum
+
+type cconstraint =
   | Attribute of Attribute.PlayerAttribute.attribute
                  * Attribute.PlayerAttribute.constructor State.attribute_value
   | Contact of Attribute.ContactAttribute.attribute
-               * int option
+               * id option
                * Attribute.ContactAttribute.constructor State.attribute_value
 
 type cell = {
-    constraints : character_constraint list ;
+    constraints : cconstraint list ;
     relations : Relation.t array ;
     added_objective : State.objective
   }
@@ -20,7 +22,8 @@ type cell = {
 type t = {
     status : History.status ;
     players : cell array ;
-    others : character_constraint list ;
+    others : cconstraint list ;
+    objects : cconstraint list array ;
     events : int Events.t list ;
     id : Id.t
   }
@@ -135,10 +138,14 @@ let check_contact m inst st c con cha v1 =
         Attribute.ContactAttribute.is_compatible m.Attribute.contact con in
       compatible_and_progress_attribute_value compatible v1 v2 in
   match cha with
-  | Some cha ->
+  | Some (Utils.Left cha) ->
     if Utils.assert_defend then assert (cha < Array.length inst) ;
     let cha = inst.(cha) in
     check cha
+  | Some (Utils.Right _) ->
+    (* As objects are allocated on demand, they do not impose any constraint
+     * on the element. *)
+    Some (lazy false)
   | None ->
     List.fold_left (fun acc cha ->
         merge_progress acc (lazy (check cha)))
@@ -366,10 +373,12 @@ let apply m state e inst =
       apply_attribute_constructor m state diff c a v1
     | Contact (con, cha, v1) ->
       match cha with
-      | Some cha ->
+      | Some (Utils.Left cha) ->
         if Utils.assert_defend then assert (cha < Array.length inst) ;
         let cha = inst.(cha) in
         apply_contact_constructor m state diff c con cha v1
+      | Some (Utils.Right obj) ->
+        failwith "[Element.apply] Not implemented: objects."
       | None ->
         List.fold_left (fun (state, diff) cha ->
             apply_contact_constructor m state diff c con cha v1)

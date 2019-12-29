@@ -943,7 +943,7 @@ let parse_element st element_name status block =
      * The [ok] function filters these out. **)
     let ok p =
       match c with
-      | Element.Contact (_, Some p', _) -> p <> p'
+      | Element.Contact (_, Some p', _) -> Utils.Left p <> p'
       | _ -> true in
     List.iter (fun p ->
       if ok p then
@@ -1046,7 +1046,7 @@ let parse_element st element_name status block =
             pc.Ast.contact_value in
         let c p2 =
           Element.Contact (aid, Option.map (fun p ->
-              Id.to_array p) p2,
+              Utils.Left (Id.to_array p)) p2,
             State.Fixed_value (cid, pc.Ast.contact_strictness)) in
         (** Call the function [add] on all requested destinations,
          * except [p1] if there.
@@ -1123,7 +1123,7 @@ let parse_element st element_name status block =
                           st.import_information.constructor_maps.contact aid) in
                     List.filter (fun c -> not (List.mem c cid)) all
                   ) else cid in
-                let p' = Option.map get_player_array p' in
+                let p' = Option.map (fun p' -> Utils.Left (get_player_array p')) p' in
                 add_constraint
                   (Element.Contact (aid, p', State.One_value_of cid)) ;
                 intersect_with_constructor_dependencies_list deps
@@ -1292,6 +1292,7 @@ let parse_element st element_name status block =
   ({ Element.status = status ;
      Element.players = elementBase ;
      Element.others = !otherPlayers ;
+     Element.objects = [| |] ;
      Element.events = evs ;
      Element.id = element_id () }, deps)
 

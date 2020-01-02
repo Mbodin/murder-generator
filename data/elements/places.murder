@@ -1,0 +1,14 @@
+
+declare object Place
+begin
+  translation fr "Lieu"
+  translation en "Place"
+  translation eo "Loko"
+end
+
+element EverybodyKnowsTheCurrentPlace
+begin
+  let P be Place
+  let any other player be with contact Know to P as True
+end
+

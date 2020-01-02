@@ -11,7 +11,7 @@ type attribute_kind =
   | Contact
 
 (** Constraints over players (in a let-be declaration). **)
-type player_constraint =
+type cconstraint =
   | HasAttribute of string * bool * string list
     (** States that the attribute described by the string should
      * be one of the constructors in the list (if the boolean is [false]).
@@ -60,7 +60,10 @@ type add = Translation.language * Translation.tag
 (** Declare a player with some constraints.
  * If the player is [None], then these constraints apply to any
  * other player than the ones declared in the element. **)
-type let_player = string option * player_constraint list
+type let_player = string option * cconstraint list
+
+(** Declare an object of a given kind and name with some constraints. **)
+type let_object = string * string * cconstraint list
 
 (** Provide a relation between two players. **)
 type provide_relation = string target_destination * Relation.t
@@ -124,6 +127,7 @@ type command =
      * [provide compatible] command, but the given constructor
      * is present instead, then one can still apply this element. **)
   | LetPlayer of let_player
+  | LetObject of let_object
   | ProvideRelation of provide_relation
   | ProvideAttribute of provide_attribute
   | ProvideContact of provide_contact
@@ -163,6 +167,9 @@ type declaration =
      * The boolean states whether the constructor is internal.
      * Accepts the following commands: [OfCategory], [Translation],
      * [Add], and [CompatibleWith]. **)
+  | DeclareObject of string * block
+    (** Declare an object kind.
+     * Only expects commands of the form [OfCategory] and [Translation]. **)
   | DeclareCategory of string * block
     (** Declare a category of this name.
      * Only expects commands of the form [OfCategory] and [Translation]. **)

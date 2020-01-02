@@ -164,10 +164,14 @@ type constructor_maps = {
     contact : ContactAttribute.constructor_map
   }
 
-let empty_constructor_maps = {
-    player = PlayerAttribute.empty_constructor_map ;
-    contact = ContactAttribute.empty_constructor_map
-  }
+let (empty_constructor_maps, object_type) =
+  let m = PlayerAttribute.empty_constructor_map in
+  let (object_type, m) = PlayerAttribute.declare_attribute m "__ object type __" true in
+  let m = {
+      player = m ;
+      contact = ContactAttribute.empty_constructor_map
+    } in
+  (m, object_type)
 
 type attribute =
   | PlayerAttribute of PlayerAttribute.attribute

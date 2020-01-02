@@ -31,7 +31,7 @@ rule read = parse
 
   | "begin"                 { BEGIN }
   | "end"                   { END }
-  
+
   | "category"              { CATEGORY }
   | "element"               { ELEMENT }
   | "attribute"             { ATTRIBUTE }
@@ -39,6 +39,7 @@ rule read = parse
   | "relation"              { RELATION }
   | "player"                { PLAYER }
   | "event"                 { EVENT }
+  | "object"                { OBJECT }
 
   | "internal"              { INTERNAL }
 

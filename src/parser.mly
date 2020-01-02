@@ -14,7 +14,7 @@ open Ast
 %token          BEGIN END
 %token          CATEGORY ELEMENT EVENT
 %token          ATTRIBUTE CONTACT RELATION
-%token          PLAYER
+%token          PLAYER OBJECT
 %token          DECLARE PROVIDE LET BE ASSUME ADD REMOVE
 %token          INTERNAL
 %token          WITH AND OR NOT NO FROM TO BETWEEN AS ANY OTHER
@@ -45,6 +45,8 @@ declaration:
   | internal = boption (INTERNAL); k = attribute_kind;
     attr = UIDENT; constructor = UIDENT; b = block
     { DeclareConstructor (k, attr, constructor, internal, b) }
+  | DECLARE; OBJECT; name = UIDENT ; b = block
+    { DeclareObject (name, b) }
   | CATEGORY; name = UIDENT; c = block
     { DeclareCategory (name, c) }
   | s = status; ELEMENT; name = UIDENT; c = block
@@ -68,17 +70,17 @@ status:
 language:
   | lang = LIDENT   { lang }
   (* Any two- or three-characters identifier can be a language. *)
+  | ADD             { "add" }
   | AND             { "and" }
-  | OR              { "or" }
-  | NOT             { "not" }
-  | NO              { "no" }
   | ANY             { "any" }
+  | AS              { "as" }
+  | BE              { "be" }
   | END             { "end" }
   | LET             { "let" }
-  | BE              { "be" }
+  | NO              { "no" }
+  | NOT             { "not" }
+  | OR              { "or" }
   | TO              { "to" }
-  | AS              { "as" }
-  | ADD             { "add" }
 
 tag_modifier:
     modifier = option ( PLUS   { true }
@@ -111,11 +113,14 @@ command:
   | COMPATIBLE; WITH; v = UIDENT
     { CompatibleWith v }
   | LET; v = UIDENT; BE; PLAYER;
-    l = list (player_constraint)
+    l = list (cconstraint)
     { LetPlayer (Some v, l) }
   | LET; ANY; OTHER; PLAYER; BE;
-    l = nonempty_list (player_constraint)
+    l = nonempty_list (cconstraint)
     { LetPlayer (None, l) }
+  | LET; v = UIDENT; BE; t = UIDENT;
+    l = list (cconstraint)
+    { LetObject (t, v, l) }
   | PROVIDE; RELATION;
     d = target_destination (UIDENT);
     AS; r = relation
@@ -176,7 +181,7 @@ destination:
   | ANY; OTHER; PLAYER  { AllOtherPlayers }
   | ANY; PLAYER         { AllPlayers }
 
-player_constraint:
+cconstraint:
   | WITH; ATTRIBUTE; a = UIDENT;
     n = boption (NOT { }); AS; v = separated_list (OR, UIDENT)
     { HasAttribute (a, n, v) }

@@ -72,7 +72,7 @@ module type Attribute = sig
 
   end
 
-(** A module to express attributes and constructors for players. **)
+(** A module to express attributes and constructors for players and objects. **)
 module PlayerAttribute : Attribute
 
 (** A module to express attributes and constructors for contacts between players. **)
@@ -86,6 +86,9 @@ type constructor_maps = {
 
 (** An empty structure. **)
 val empty_constructor_maps : constructor_maps
+
+(** A special internal attribute for objects. **)
+val object_type : PlayerAttribute.constructor
 
 (** A generic attribute type for modules who don’t need to precisely
  * understand how attributes work, merging both kinds of attributes. **)

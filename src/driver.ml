@@ -893,9 +893,8 @@ let parse_element st element_name status block =
             | Some id -> not (event_exists st id)) block.event_kind in
         raise (Undeclared ("event kind", k, element_name))
       with Not_found -> assert false in
-  (** Before anything, we get the number and names of each declared players. **)
-  (* TODO: Also inspect [block.let_object]. *)
-  let n = List.length block.let_player in
+  (** Before anything, we get the number and names of each declared players and objects. **)
+  let nb_players = List.length block.let_player in
   let player_names =
     List.fold_left (fun player_names name ->
         if Id.get_id player_names name <> None then
@@ -908,8 +907,32 @@ let parse_element st element_name status block =
     | None -> raise (Undeclared ("player", p, element_name))
     | Some i -> i in
   let get_player_array p = Id.to_array (get_player p) in
+  let nb_objects = List.length block.let_object in
+  let object_names =
+    List.fold_left (fun object_names name ->
+        if Id.get_id object_names name <> None then
+          raise (DefinedTwice ("object", name, element_name)) ;
+        if Id.get_id player_names name <> None then
+          raise (DefinedTwice ("player and object", name, element_name)) ;
+        Id.map_insert player_names name)
+      (Id.map_create ())
+      (List.map (fun (_, name, _) -> name) block.let_object) in
+  let get_po_name po =
+    match Id.map_inverse player_names po with
+    | Some p -> Utils.Left p
+    | None ->
+      match Id.map_inverse object_names po with
+      | Some o -> Utils.Right o
+      | None -> assert false in
   let get_player_name p =
-    Utils.assert_option __LOC__ (Id.map_inverse player_names p) in
+    match get_po_name p with
+    | Utils.Left p -> p
+    | Utils.Right _ -> assert false in
+  let get_object_name o =
+    match get_po_name o with
+    | Utils.Left _ -> assert false
+    | Utils.Right o -> o in
+  (* TODO: Continue the update from here. *)
   (** We pre-parse the events, as they might contain declarations. **)
   let events =
     List.map (fun (bl, ph, t, l, b) ->
@@ -923,7 +946,7 @@ let parse_element st element_name status block =
      * Each index is associated with its greatest non-[neutral] index plus one,
      * or [0] is the entire array is filled with [neutral]. **)
     let triangle =
-      Array.init n (fun i -> (Array.make i Relation.neutral, 0)) in
+      Array.init nb_players (fun i -> (Array.make i Relation.neutral, 0)) in
     let write i j r =
       if r <> Relation.neutral then (
         if i = j then (
@@ -1002,7 +1025,7 @@ let parse_element st element_name status block =
       | _ -> true in
     List.iter (fun p ->
       if ok p then
-        add_constraint (Id.from_array p) c) (Utils.seq n) ;
+        add_constraint (Id.from_array p) c) (Utils.seq nb_players) ;
     add_constraint_other c in
   (** Retrieve the attribute identifier given by this name.
    * At this stage, it has to be defined.
@@ -1113,7 +1136,7 @@ let parse_element st element_name status block =
           | Ast.DestinationPlayer p2 -> add_single (get_player p2)
           | Ast.AllOtherPlayers -> add None
           | Ast.AllPlayers ->
-            List.iter add_single (List.map Id.from_array (Utils.seq n)) ;
+            List.iter add_single (List.map Id.from_array (Utils.seq nb_players)) ;
             add None in
         let add = function
           | Ast.DestinationPlayer p1n ->
@@ -1128,7 +1151,7 @@ let parse_element st element_name status block =
             List.iter (fun p1 ->
                 let p1 = Id.from_array p1 in
                 add_except (Some p1) (fun p2 -> add_constraint p1 (c p2)) p2)
-              (Utils.seq n) ;
+              (Utils.seq nb_players) ;
             add_except None (fun p2 -> add_constraint_other (c p2)) p2 in
         let _ =
           match pc.Ast.contact_destination with
@@ -1307,7 +1330,7 @@ let parse_element st element_name status block =
         Events.event_id = event_id () ;
         Events.event_type = t ;
         Events.event_attendees = PSet.from_list attendees ;
-        Events.all_attendees = Utils.seq n ;
+        Events.all_attendees = Utils.seq nb_players ;
         Events.event_kinds = kinds ;
         Events.constraints_none = constraints_none ;
         Events.constraints_some = constraints_some ;

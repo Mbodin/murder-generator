@@ -217,6 +217,7 @@ let get_all_contacts_character st c =
 
 type t = {
     characters : character_state ;
+    (* TODO: objects : object_state ; with object_state = _ DynArray.t *)
     relations : relation_state ;
     history : History.t
   }

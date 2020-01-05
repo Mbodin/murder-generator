@@ -6,7 +6,7 @@ begin
   translation eo "Loko"
 end
 
-element EverybodyKnowsTheCurrentPlace
+unique element EverybodyKnowsTheCurrentPlace
 begin
   let P be Place
   let any other player be with contact Know to P as True

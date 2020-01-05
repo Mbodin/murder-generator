@@ -49,12 +49,12 @@ declaration:
     { DeclareObject (name, b) }
   | CATEGORY; name = UIDENT; c = block
     { DeclareCategory (name, c) }
+  | DECLARE; EVENT; event = UIDENT; b = block
+    { DeclareEventKind (event, b) }
   | s = status; ELEMENT; name = UIDENT; c = block
     { DeclareElement (s, name, c) }
   | DECLARE; TRANSLATION; lang = language; COLON; tag = LIDENT
     { DeclareCase (Translation.from_iso639 lang, Translation.get_tag tag) }
-  | DECLARE; EVENT; event = UIDENT; b = block
-    { DeclareEventKind (event, b) }
 
 attribute_kind:
   | ATTRIBUTE   { Attribute }

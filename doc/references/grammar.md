@@ -192,9 +192,11 @@ with attribute <Attribute name> as <Attribute constructor name> or <...> or <Att
 with attribute <Attribute name> not as <Attribute constructor name>
 with attribute <Attribute name> not as <Attribute constructor name> or <...> or <Attribute constructor name>
 with contact <Contact name> to <Character name> as <Contact constructor name>
-with contact <Contact name> to <Character name> as <Contact constructor name> or <...> or <Contact constructor name>
+with contact <Contact name> to <Object name> as <Contact constructor name>
+with contact <Contact name> to <Character or object name> as <Contact constructor name> or <...> or <Contact constructor name>
 with contact <Contact name> to <Character name> not as <Contact constructor name>
-with contact <Contact name> to <Character name> not as <Contact constructor name> or <...> <Contact constructor name>
+with contact <Contact name> to <Object name> not as <Contact constructor name>
+with contact <Contact name> to <Character or object name> not as <Contact constructor name> or <...> <Contact constructor name>
 with contact <Contact name> to any other player as <Contact constructor name>
 with contact <Contact name> to any other player as <Contact constructor name> or <...> or <Contact constructor name>
 ```
@@ -226,7 +228,7 @@ provide relation from <Character name> to <Character name> as <relation>
 
 Variant:
 ```murder
-provide relation between <Character name> and <Character name> as <relation>
+provide relation between <Character name> to <Character name> as <relation>
 ```
 
 In this command, `<relation>` can be any of the followings:
@@ -253,12 +255,13 @@ provide attribute <Attribute name> to <Character name> as <Attribute constructor
 
 Variants:
 ```murder
-provide attribute <Attribute name> to <Character name> as <Attribute constructor name> or <...> or <Attribute constructor name>
+provide attribute <Attribute name> to <Object name> as <Attribute constructor name>
+provide attribute <Attribute name> to <Character or object name> as <Attribute constructor name> or <...> or <Attribute constructor name>
 provide attribute <Attribute name> to any other player as <Attribute constructor name>
 provide attribute <Attribute name> to any other player as <Attribute constructor name> or <...> or <Attribute constructor name>
 provide attribute <Attribute name> to any player as <Attribute constructor name>
 provide attribute <Attribute name> to any player as <Attribute constructor name> or <...> or <Attribute constructor name>
-provide strict attribute <Attribute name> to <Character name> as <Attribute constructor name>
+provide strict attribute <Attribute name> to <Character or object name> as <Attribute constructor name>
 provide strict attribute <Attribute name> to any other player as <Attribute constructor name>
 provide strict attribute <Attribute name> to any other player as <Attribute constructor name> or <...> or <Attribute constructor name>
 provide strict attribute <Attribute name> to any player as <Attribute constructor name>
@@ -268,18 +271,18 @@ provide strict attribute <Attribute name> to any player as <Attribute constructo
 ### Contact
 
 ```murder
-provide contact <Contact name> from <Character name> to <Character name> as <Contact constructor name>
+provide contact <Contact name> from <Character or object name> to <Character or object name> as <Contact constructor name>
 ```
 
 Variants:
 ```murder
-provide contact <Contact name> from <Character name> to <Character name> as <Contact constructor name> or <...> or <Attribute constructor name>
-provide contact <Contact name> between <Character name> and <Character name> as <Contact constructor name>
-provide contact <Contact name> between <Character name> and <Character name> as <Contact constructor name> or <...> or <Attribute constructor name>
-provide strict contact <Contact name> from <Character name> to <Character name> as <Contact constructor name>
-provide strict contact <Contact name> from <Character name> to <Character name> as <Contact constructor name> or <...> or <Attribute constructor name>
-provide strict contact <Contact name> between <Character name> and <Character name> as <Contact constructor name>
-provide strict contact <Contact name> between <Character name> and <Character name> as <Contact constructor name> or <...> or <Attribute constructor name>
+provide contact <Contact name> from <Character or object name> to <Character or object name> as <Contact constructor name> or <...> or <Attribute constructor name>
+provide contact <Contact name> between <Character or object name> and <Character or object name> as <Contact constructor name>
+provide contact <Contact name> between <Character or object name> and <Character or object name> as <Contact constructor name> or <...> or <Attribute constructor name>
+provide strict contact <Contact name> from <Character or object name> to <Character or object name> as <Contact constructor name>
+provide strict contact <Contact name> from <Character or object name> to <Character or object name> as <Contact constructor name> or <...> or <Attribute constructor name>
+provide strict contact <Contact name> between <Character or object name> and <Character or object name> as <Contact constructor name>
+provide strict contact <Contact name> between <Character or object name> and <Character or object name> as <Contact constructor name> or <...> or <Attribute constructor name>
 ```
 
 ### Event

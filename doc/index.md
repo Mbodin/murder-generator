@@ -28,6 +28,7 @@ Here follows a list of all available documentation.
 
 Actually, most of the code-related reference can be found in `.mli` files in the [src](../src) folder.
 In addition, the following are available:
+- [grammar.md](./references/grammar.md) describes the grammar of the data files.
 - [structure.md](./references/structure.md) explains how the source code of the program is structured.
 - [translations.md](./references/translations.md) explains how the file [translations.json](../web/translations.json) works.
 

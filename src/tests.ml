@@ -181,31 +181,34 @@ let test_parser languages =
       if Translation.translate td lg c = None then
         warn "category description"
           (Translation.force_translate t Translation.generic c)) categories ;
-    let check_constructors m constructor_attribute get_attribute get_constructor constructors =
+    let check_constructors m constructor_attribute get_attribute get_constructor constructors only =
       let ta = translations.Translation.attribute in
       let tc = translations.Translation.constructor in
       let base = PSet.singleton Translation.base in
       List.iter (fun c ->
           let a = Utils.assert_option __LOC__ (constructor_attribute m c) in
-          let a = get_attribute a in
-          if Translation.translate ta lg a = None then
-            warn "attribute" (Translation.force_translate ta Translation.generic a) ;
-          let c = get_constructor c in
-          if Translation.gtranslate tc lg c base = None then
-            warn "attribute" (fst (Translation.gforce_translate tc Translation.generic c base)))
+          if only a c then (
+            let a = get_attribute a in
+            if Translation.translate ta lg a = None then
+              warn "attribute" (Translation.force_translate ta Translation.generic a) ;
+            let c = get_constructor c in
+            if Translation.gtranslate tc lg c base = None then
+              warn "attribute" (fst (Translation.gforce_translate tc Translation.generic c base))))
         constructors in
     check_constructors
       constructor_maps.Attribute.player
       Attribute.PlayerAttribute.constructor_attribute
       (fun a -> Attribute.PlayerAttribute a)
       (fun c -> Attribute.PlayerConstructor c)
-      constructors_player ;
+      constructors_player
+      (fun a _ -> a <> Attribute.object_type) ;
     check_constructors
       constructor_maps.Attribute.contact
       Attribute.ContactAttribute.constructor_attribute
       (fun a -> Attribute.ContactAttribute a)
       (fun c -> Attribute.ContactConstructor c)
-      constructors_contact ;
+      constructors_contact
+      (fun _ _ -> true) ;
     let n =
       PMap.foldi (fun id e n ->
         let name = Utils.assert_option __LOC__ (Driver.get_element_name s id) in

@@ -28,11 +28,10 @@ type cconstraint =
 
 (** A type to express destinations.
  * The most important constructor is the first one: this type can be
- * tought as just a fancy type for string at first read. **)
+ * thought as just a fancy type for string at first read. **)
 type destination =
-  | DestinationPlayer of string (** To a player reprensented by this variable. **)
-  | AllOtherPlayers
-      (** To all other players (than the ones declared in the element). **)
+  | DestinationPlayer of string (** To a character reprensented by this variable. **)
+  | AllOtherPlayers (** To all other players (than the ones declared in the element). **)
   | AllPlayers (** To all players (including the declared ones). **)
 
 (** Describes a direction of a relation or a contact.

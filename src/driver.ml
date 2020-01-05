@@ -706,6 +706,11 @@ let prepare_declaration i =
             | _ ->
               raise (TranslationError ("object", name, tr))) items) in
         Translation.add translations lg id str) translations block.translation in
+    (** In addition to the object name, we declare a special attribute constructor
+     * for the dummy attribute [Attribute.object_type]. **)
+    let state = (intermediary_constructor_maps i).Attribute.player in
+    let (idp, state) =
+      Attribute.PlayerAttribute.declare_constructor state Attribute.object_type name true in
     { i with
         categories_to_be_defined = categories_to_be_defined ;
         current_state =
@@ -714,6 +719,10 @@ let prepare_declaration i =
               object_names = object_names ;
               object_dependencies =
                 PMap.add id deps i.current_state.object_dependencies ;
+              import_information =
+                { i.current_state.import_information with
+                    constructor_maps =
+                      { (intermediary_constructor_maps i) with Attribute.player = state } } ;
               translations =
                 { i.current_state.translations with
                     Translation.objects = translations } } }
@@ -902,11 +911,6 @@ let parse_element st element_name status block =
         Id.map_insert player_names name)
       (Id.map_create ())
       (Utils.list_map_filter fst block.let_player) in
-  let get_player p =
-    match Id.get_id player_names p with
-    | None -> raise (Undeclared ("player", p, element_name))
-    | Some i -> i in
-  let get_player_array p = Id.to_array (get_player p) in
   let nb_objects = List.length block.let_object in
   let object_names =
     List.fold_left (fun object_names name ->
@@ -914,25 +918,37 @@ let parse_element st element_name status block =
           raise (DefinedTwice ("object", name, element_name)) ;
         if Id.get_id player_names name <> None then
           raise (DefinedTwice ("player and object", name, element_name)) ;
-        Id.map_insert player_names name)
+        Id.map_insert object_names name)
       (Id.map_create ())
       (List.map (fun (_, name, _) -> name) block.let_object) in
-  let get_po_name po =
-    match Id.map_inverse player_names po with
-    | Some p -> Utils.Left p
-    | None ->
-      match Id.map_inverse object_names po with
-      | Some o -> Utils.Right o
-      | None -> assert false in
+  (** Getting the name of players and objects from their identifier. **)
   let get_player_name p =
-    match get_po_name p with
-    | Utils.Left p -> p
-    | Utils.Right _ -> assert false in
+    Utils.assert_option __LOC__ (Id.map_inverse player_names p) in
   let get_object_name o =
-    match get_po_name o with
-    | Utils.Left _ -> assert false
-    | Utils.Right o -> o in
-  (* TODO: Continue the update from here. *)
+    Utils.assert_option __LOC__ (Id.map_inverse object_names o) in
+  let get_name = function
+    | Utils.Left p -> get_player_name p
+    | Utils.Right o -> get_object_name o in
+  (** Getting an identifier for players and objects from their name. **)
+  let get_player_option p = Id.get_id player_names p in
+  let get_player p =
+    match get_player_option p with
+    | Some p -> p
+    | None -> raise (Undeclared ("player", p, element_name)) in
+  let get_player_array p = Id.to_array (get_player p) in
+  let get_object_option o = Id.get_id object_names o in
+  let get_object o =
+    match get_object_option o with
+    | Some o -> o
+    | None -> raise (Undeclared ("object", o, element_name)) in
+  let get_object_array o = Id.to_array (get_object o) in
+  let get_po_id po =
+    match get_player_option po with
+    | Some p -> Utils.Left (Id.to_array p)
+    | None ->
+      match get_object_option po with
+      | Some o -> Utils.Right (Id.to_array o)
+      | None -> raise (Undeclared ("player or object", po, element_name)) in
   (** We pre-parse the events, as they might contain declarations. **)
   let events =
     List.map (fun (bl, ph, t, l, b) ->
@@ -983,6 +999,7 @@ let parse_element st element_name status block =
         Element.added_objective = State.zero_objective
       }) relations in
   let otherPlayers = ref [] in
+  let elementObjects = Array.make nb_objects [] in
   let (_, deps) =
     try category_names_to_dep_dep true st block.of_category
     with Not_found ->
@@ -1009,10 +1026,13 @@ let parse_element st element_name status block =
   (** Now that we have all the basic information, we can add any constraint
    * using this function with side effects. **)
   let add_constraint p c =
-    let p = Id.to_array p in
-    elementBase.(p) <-
-      { elementBase.(p) with Element.constraints =
-                               c :: elementBase.(p).Element.constraints } in
+    match p with
+    | Utils.Left p ->
+      elementBase.(p) <-
+        { elementBase.(p) with Element.constraints =
+                                 c :: elementBase.(p).Element.constraints }
+    | Utils.Right o ->
+      elementObjects.(o) <- c :: elementObjects.(o) in
   let add_constraint_other c =
     otherPlayers := c :: !otherPlayers in
   let add_constraint_all c =
@@ -1025,7 +1045,7 @@ let parse_element st element_name status block =
       | _ -> true in
     List.iter (fun p ->
       if ok p then
-        add_constraint (Id.from_array p) c) (Utils.seq nb_players) ;
+        add_constraint (Utils.Left p) c) (Utils.seq nb_players) ;
     add_constraint_other c in
   (** Retrieve the attribute identifier given by this name.
    * At this stage, it has to be defined.
@@ -1104,7 +1124,7 @@ let parse_element st element_name status block =
             State.Fixed_value (cid, pa.Ast.attribute_strictness)) in
         let _ =
           match pa.Ast.attribute_player with
-          | Ast.DestinationPlayer p -> add_constraint (get_player p) c
+          | Ast.DestinationPlayer p -> add_constraint (get_po_id p) c
           | Ast.AllOtherPlayers -> add_constraint_other c
           | Ast.AllPlayers -> add_constraint_all c in
         merge_with_constructor_dependencies_list deps
@@ -1122,9 +1142,8 @@ let parse_element st element_name status block =
         let cid =
           List.map (get_constructor_id contact_functions aid)
             pc.Ast.contact_value in
-        let c p2 =
-          Element.Contact (aid, Option.map (fun p ->
-              Utils.Left (Id.to_array p)) p2,
+        let constr p2 =
+          Element.Contact (aid, p2,
             State.Fixed_value (cid, pc.Ast.contact_strictness)) in
         (** Call the function [add] on all requested destinations,
          * except [p1] if there.
@@ -1133,26 +1152,26 @@ let parse_element st element_name status block =
         let add_except p1 add =
           let add_single p2 =
             if p1 <> Some p2 then add (Some p2) in function
-          | Ast.DestinationPlayer p2 -> add_single (get_player p2)
+          | Ast.DestinationPlayer p2 -> add_single (get_po_id p2)
           | Ast.AllOtherPlayers -> add None
           | Ast.AllPlayers ->
-            List.iter add_single (List.map Id.from_array (Utils.seq nb_players)) ;
+            List.iter add_single (List.map (fun p -> Utils.Left p) (Utils.seq nb_players)) ;
             add None in
         let add = function
           | Ast.DestinationPlayer p1n ->
-            let p1 = get_player p1n in
+            let p1 = get_po_id p1n in
             add_except None (fun p2 ->
               if p2 = Some p1 then
                 raise (SelfRelation (p1n, element_name)) ;
-              add_constraint p1 (c p2))
+              add_constraint p1 (constr p2))
           | Ast.AllOtherPlayers ->
-            add_except None (fun p2 -> add_constraint_other (c p2))
+            add_except None (fun p2 -> add_constraint_other (constr p2))
           | Ast.AllPlayers -> fun p2 ->
             List.iter (fun p1 ->
-                let p1 = Id.from_array p1 in
-                add_except (Some p1) (fun p2 -> add_constraint p1 (c p2)) p2)
+                let p1 = Utils.Left p1 in
+                add_except (Some p1) (fun p2 -> add_constraint p1 (constr p2)) p2)
               (Utils.seq nb_players) ;
-            add_except None (fun p2 -> add_constraint_other (c p2)) p2 in
+            add_except None (fun p2 -> add_constraint_other (constr p2)) p2 in
         let _ =
           match pc.Ast.contact_destination with
           | Ast.FromTo (p1, p2) -> add p1 p2
@@ -1169,50 +1188,62 @@ let parse_element st element_name status block =
         merge_with_constructor_dependencies_list deps
           (List.map (fun id -> Attribute.ContactConstructor id) cid))
       deps contacts in
-  (** We then consider player constraints. **)
+  (** We then consider player and object constraints. **)
+  let consider_constraints add_constraint =
+    List.fold_left (fun deps -> function
+        | Ast.HasAttribute (a, n, c) ->
+          let aid = get_attribute_id attribute_functions a in
+          let cid = List.map (get_constructor_id attribute_functions aid) c in
+          let cid =
+            if n then (
+              (** At this stage, all the constructors have been defined. **)
+              let all =
+                Utils.assert_option __LOC__
+                  (Attribute.PlayerAttribute.constructors
+                    st.import_information.constructor_maps.player aid) in
+              List.filter (fun c -> not (List.mem c cid)) all
+            ) else cid in
+          add_constraint (Element.Attribute (aid, State.One_value_of cid)) ;
+          intersect_with_constructor_dependencies_list deps
+            (List.map (fun id -> Attribute.PlayerConstructor id) cid)
+        | Ast.HasContact (a, p', n, c) ->
+          let aid = get_attribute_id contact_functions a in
+          let cid = List.map (get_constructor_id contact_functions aid) c in
+          let cid =
+            if n then (
+              (** At this stage, all the constructors have been defined. **)
+              let all =
+                Utils.assert_option __LOC__
+                  (Attribute.ContactAttribute.constructors
+                    st.import_information.constructor_maps.contact aid) in
+              List.filter (fun c -> not (List.mem c cid)) all
+            ) else cid in
+          let p' = Option.map get_po_id p' in
+          add_constraint
+            (Element.Contact (aid, p', State.One_value_of cid)) ;
+          intersect_with_constructor_dependencies_list deps
+            (List.map (fun id ->
+              Attribute.ContactConstructor id) cid)) deps in
   let deps =
     List.fold_left (fun deps (p, pc) ->
-        let consider_constraints add_constraint =
-          List.fold_left (fun deps -> function
-              | Ast.HasAttribute (a, n, c) ->
-                let aid = get_attribute_id attribute_functions a in
-                let cid = List.map (get_constructor_id attribute_functions aid) c in
-                let cid =
-                  if n then (
-                    (** At this stage, all the constructors have been defined. **)
-                    let all =
-                      Utils.assert_option __LOC__
-                        (Attribute.PlayerAttribute.constructors
-                          st.import_information.constructor_maps.player aid) in
-                    List.filter (fun c -> not (List.mem c cid)) all
-                  ) else cid in
-                add_constraint (Element.Attribute (aid, State.One_value_of cid)) ;
-                intersect_with_constructor_dependencies_list deps
-                  (List.map (fun id -> Attribute.PlayerConstructor id) cid)
-              | Ast.HasContact (a, p', n, c) ->
-                let aid = get_attribute_id contact_functions a in
-                let cid = List.map (get_constructor_id contact_functions aid) c in
-                let cid =
-                  if n then (
-                    (** At this stage, all the constructors have been defined. **)
-                    let all =
-                      Utils.assert_option __LOC__
-                        (Attribute.ContactAttribute.constructors
-                          st.import_information.constructor_maps.contact aid) in
-                    List.filter (fun c -> not (List.mem c cid)) all
-                  ) else cid in
-                let p' = Option.map (fun p' -> Utils.Left (get_player_array p')) p' in
-                add_constraint
-                  (Element.Contact (aid, p', State.One_value_of cid)) ;
-                intersect_with_constructor_dependencies_list deps
-                  (List.map (fun id ->
-                    Attribute.ContactConstructor id) cid)) deps pc in
         match p with
-        | None -> consider_constraints add_constraint_other
+        | None -> consider_constraints add_constraint_other pc
         | Some p ->
-          consider_constraints (add_constraint (get_player p)))
+          consider_constraints (add_constraint (Utils.Left (get_player_array p))) pc)
       deps block.let_player in
+  let deps =
+    List.fold_left (fun deps (kind, o, pc) ->
+        let add_constraint = add_constraint (Utils.Right (get_object_array o)) in
+        let kind_id =
+          let m = st.import_information.constructor_maps.Attribute.player in
+          match Attribute.PlayerAttribute.get_constructor m Attribute.object_type kind with
+          | Some id -> id
+          | None -> raise (Undeclared ("object kind", kind, element_name)) in
+        add_constraint (Element.Attribute (Attribute.object_type, State.One_value_of [kind_id])) ;
+        consider_constraints add_constraint pc)
+      deps block.let_object in
   (** We finally consider events. **)
+  (* TODO: Update for objects. *)
   let evs =
     List.mapi (fun i (blocking, phantom, t, attendees, block) ->
       let event_name = element_name ^ "#" ^ string_of_int i in
@@ -1370,7 +1401,7 @@ let parse_element st element_name status block =
   ({ Element.status = status ;
      Element.players = elementBase ;
      Element.others = !otherPlayers ;
-     Element.objects = [| |] ;
+     Element.objects = elementObjects ;
      Element.events = evs ;
      Element.id = element_id () }, deps)
 

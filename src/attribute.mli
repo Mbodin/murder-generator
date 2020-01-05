@@ -88,7 +88,7 @@ type constructor_maps = {
 val empty_constructor_maps : constructor_maps
 
 (** A special internal attribute for objects. **)
-val object_type : PlayerAttribute.constructor
+val object_type : PlayerAttribute.attribute
 
 (** A generic attribute type for modules who don’t need to precisely
  * understand how attributes work, merging both kinds of attributes. **)

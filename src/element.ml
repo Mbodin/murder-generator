@@ -378,7 +378,8 @@ let apply m state e inst =
         let cha = inst.(cha) in
         apply_contact_constructor m state diff c con cha v1
       | Some (Utils.Right obj) ->
-        failwith "[Element.apply] Not implemented: objects."
+        (* TODO: failwith "[Element.apply] Not implemented: objects." *)
+        (state, diff) (* FIXME: This is only temporary. *)
       | None ->
         List.fold_left (fun (state, diff) cha ->
             apply_contact_constructor m state diff c con cha v1)

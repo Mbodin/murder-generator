@@ -6,9 +6,68 @@ begin
   translation eo "Loko"
 end
 
+(* * Attributes and Contacts *)
+
+(* ** Access *)
+
+declare contact HasAccess
+begin
+  translation fr "A accès à"
+  translation en "Has access to"
+  translation eo "Alirpovas al"
+end
+
+contact HasAccess True
+begin
+  translation fr "oui"
+  translation en "yes"
+  translation eo "jes"
+end
+
+internal contact HasAccess False
+begin
+  translation fr "non"
+  translation en "no"
+  translation eo "ne"
+end
+
+(* ** Public and Private Places *)
+
+declare attribute Public
+begin
+  translation fr "Lieu publique"
+  translation en "Public place"
+  translation eo "Publikejo"
+end
+
+attribute Public True
+begin
+  translation fr "oui"
+  translation en "yes"
+  translation eo "jes"
+end
+
+attribute Public False
+begin
+  translation fr "non"
+  translation en "no"
+  translation eo "ne"
+end
+
+(* * Elements *)
+
 unique element EverybodyKnowsTheCurrentPlace
 begin
   let P be Place
   let any other player be with contact Know to P as True
+                          with contact HasAccess to P as True
+end
+
+duplicable element AccessToPublicPlace
+begin
+  let P be Place with attribute Public as True
+  let C be player
+
+  provide contact HasAccess from C to P as True
 end
 

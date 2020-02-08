@@ -215,15 +215,15 @@ begin
     sentence
     begin
       translation eo A:+sbeg " bone memoras kiam " A:+pro " vidis " B:+acc " por la unua fojo."
-      translation fr A:+sbeg " se souviens très bien du moment où " A:+pro " a vu " B " pour la première fois."
+      translation fr A:+sbeg " se souvient très bien du moment où " A:+pro " a vu " B " pour la première fois."
       translation en A:+sbeg " remembers well how " A:+pro " saw " B " for the first time."
     end
 
     sentence
     begin
       translation eo "Nu, " A:+pro " ĉefe memoras pri " B:+pro ", fakte."
-      translation fr "Enfin, " A:+pro " se souviens surtout de " B:mas:+cli ", pour être honnête."
-      translation fr "Enfin, " A:+pro " se souviens surtout d’" B:+cli ", pour être honnête."
+      translation fr "Enfin, " A:+pro " se souvient surtout de " B:mas:+cli ", pour être honnête."
+      translation fr "Enfin, " A:+pro " se souvient surtout d’" B:+cli ", pour être honnête."
       translation en "To be honest " A:+pro " mostly remembers about " B:+cli "."
     end
 

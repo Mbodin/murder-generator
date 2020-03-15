@@ -278,6 +278,7 @@ let main =
                 errorTranslations :=
                   (get_translation "error", get_translation "report",
                    get_translation "there", get_translation "errorDetails") ;
+                add_trace ("language chosen: " ^ Translation.iso639 lg) ;
                 Lwt.wakeup_later w lg) ]])) languages)) ;
         IO.stopLoading () ;%lwt
         cont in

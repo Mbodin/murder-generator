@@ -157,7 +157,10 @@ let empty_state = {
         event_kinds = PMap.empty
       } ;
     category_dependencies = PMap.empty ;
-    attribute_dependencies = PMap.empty ;
+    attribute_dependencies =
+      (** The attribute constructor [Attribute.object_type] is always present
+         and has no dependencies. **)
+      PMap.add (Attribute.PlayerAttribute Attribute.object_type) PSet.empty PMap.empty ;
     constructor_dependencies = PMap.empty ;
     object_dependencies = PMap.empty ;
     elements_dependencies = PMap.empty ;
@@ -711,6 +714,7 @@ let prepare_declaration i =
     let state = (intermediary_constructor_maps i).Attribute.player in
     let (idp, state) =
       Attribute.PlayerAttribute.declare_constructor state Attribute.object_type name true in
+    let idp = Attribute.PlayerConstructor idp in
     { i with
         categories_to_be_defined = categories_to_be_defined ;
         current_state =
@@ -719,6 +723,8 @@ let prepare_declaration i =
               object_names = object_names ;
               object_dependencies =
                 PMap.add id deps i.current_state.object_dependencies ;
+              constructor_dependencies =
+                PMap.add idp deps i.current_state.constructor_dependencies ;
               import_information =
                 { i.current_state.import_information with
                     constructor_maps =
@@ -868,13 +874,16 @@ let prepare_declarations i l =
   List.fold_left prepare_declaration i l
 
 let get_category_dependencies s id =
-  PMap.find id s.category_dependencies
+  try PMap.find id s.category_dependencies
+  with Not_found -> assert false
 
 let get_attribute_dependencies s id =
-  PMap.find id s.attribute_dependencies
+  try PMap.find id s.attribute_dependencies
+  with Not_found -> assert false
 
 let get_constructor_dependencies s id =
-  PMap.find id s.constructor_dependencies
+  try PMap.find id s.constructor_dependencies
+  with Not_found -> assert false
 
 (** Fill the [Events.event_id] identifier. **)
 let event_id = Id.new_id_function ()
@@ -926,7 +935,7 @@ let parse_element st element_name status block =
     Utils.assert_option __LOC__ (Id.map_inverse player_names p) in
   let get_object_name o =
     Utils.assert_option __LOC__ (Id.map_inverse object_names o) in
-  let get_name = function
+  let _get_name = function
     | Utils.Left p -> get_player_name p
     | Utils.Right o -> get_object_name o in
   (** Getting an identifier for players and objects from their name. **)
@@ -1448,7 +1457,8 @@ let get_element_name s =
   Id.map_inverse s.element_names
 
 let get_element_dependencies s e =
-  PMap.find e s.elements_dependencies
+  try PMap.find e s.elements_dependencies
+  with Not_found -> assert false
 
 let get_all_elements s lg cats maxPlayers =
   PMap.foldi (fun e deps el ->

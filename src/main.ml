@@ -64,6 +64,7 @@ let get_data _ =
   Lwt_list.iter_p (fun fileName ->
     let%lwt file = IO.get_file fileName in
     add_trace ("getting " ^ fileName ^ " (" ^ file_signature file ^ ")") ;
+    let file = Export.recode file in
     let lexbuf = Lexing.from_string file in
     let file = Driver.parse_lexbuf fileName lexbuf in
     intermediate := Driver.prepare_declarations !intermediate file ;
@@ -227,10 +228,16 @@ let main =
     IO.clear_response () ;
     let%lwt (translation, languages) = get_translations () in
     add_trace "Translations ready" ;
-    let get_translation_language lg key =
+    let get_translation_language_direct lg key =
       Utils.assert_option ("No key `" ^ key ^ "' found for language `"
-                           ^ (Translation.iso639 lg) ^ "' at " ^ __LOC__ ^ ".")
+                           ^ Translation.iso639 lg ^ "' at " ^ __LOC__ ^ ".")
         (Translation.translate translation lg key) in
+    let get_translation_language lg key =
+      match Translation.translate translation lg key with
+      | Some tr -> tr
+      | None ->
+        let missing = get_translation_language_direct lg "missing" in
+        "<" ^ missing ^ " `" ^ key ^ "'>" in
     let get_language p = Utils.assert_option __LOC__ p.language in
     let get_translation p = get_translation_language (get_language p) in
     (** Adds a “next” and “previous” buttons and call them when needed.
@@ -346,8 +353,7 @@ let main =
                     ) else (
                       let%lwt data = data in
                       let (names, state) =
-                        Export.from_json (Driver.get_import_information data)
-                          fileName str in
+                        Export.from_json (Driver.get_import_information data) fileName str in
                       let informations =
                         List.mapi (fun c name ->
                           let c = Id.from_array c in

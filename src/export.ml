@@ -726,7 +726,21 @@ let to_json s =
                     (e.History.event.Events.all_attendees)))
         ]) (State.get_history_final state))) ])
 
+let recode ?encoding src =
+  let rec loop d e = match Uutf.decode d with
+  | `Uchar _ as u -> ignore (Uutf.encode e u); loop d e
+  | `End -> ignore (Uutf.encode e `End)
+  | `Malformed _ -> ignore (Uutf.encode e (`Uchar Uutf.u_rep)); loop d e
+  | `Await -> assert false in
+  let nln = Some (`NLF (Uchar.of_char '\n')) in
+  let d = Uutf.decoder ?nln ?encoding (`String src) in
+  let dst = Buffer.create (String.length src) in
+  let e = Uutf.encoder `UTF_8 (`Buffer dst) in
+  loop d e ;
+  Buffer.contents dst
+
 let from_json i fileName fileContent =
+  let fileContent = recode fileContent in
   let get_field_string fld l =
     try match List.assoc fld l with
     | `String name -> name

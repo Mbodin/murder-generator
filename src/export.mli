@@ -45,3 +45,8 @@ val from_json : Driver.import_information -> string -> string -> string list * S
  * converted to suits the host’s operating system. **)
 val all_production : (string * string * string * string * bool * (t -> string)) list
 
+(** Recode a string into UTF-8, removing any trailing BOM.
+ * If the current encoding of the string is not given, it will be guessed
+ * using the first characters. **)
+val recode : ?encoding:Uutf.encoding -> string -> string
+

@@ -191,6 +191,8 @@ else
   DEBUGFLAG=""
 fi
 
+PACKAGES=unix,extlib,yojson,re,uutf,lwt,lwt_ppx,ppx_deriving
+
 if [ $JS = "true" ]
 then
   ADDITIONALPACKAGES=",js_of_ocaml,js_of_ocaml-lwt,js_of_ocaml-ppx,js_of_ocaml-ppx.deriving,js_of_ocaml.deriving"
@@ -203,7 +205,7 @@ fi
 # Compile to bytecode
 echo "${COLOR}Compiling to bytecode as ${TARGET}.${EXT}…${ROLOC}"
 ocamlbuild -use-ocamlfind -Is src,lib,dummy \
-           -pkgs unix,extlib,yojson,re,lwt,lwt_ppx,ppx_deriving${ADDITIONALPACKAGES} \
+           -pkgs ${PACKAGES}${ADDITIONALPACKAGES} \
            -use-menhir -menhir "menhir --explain" \
            -tags "optimize(3)${DEBUGFLAG}${ADDITIONALFLAGS}" \
            ${TARGET}.${EXT}

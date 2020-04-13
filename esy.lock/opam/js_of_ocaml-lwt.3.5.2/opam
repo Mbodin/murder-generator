@@ -11,23 +11,21 @@ It makes it possible to run pure OCaml programs in JavaScript
 environment like browsers and Node.js
 """
 
-name: "js_of_ocaml"
-
 build: [["dune" "build" "-p" name "-j" jobs]]
 
 depends: [
   "ocaml" {>= "4.02.0"}
   "dune" {>= "1.11.1"}
-  "ocaml-migrate-parsetree" {>= "1.4"}
-  "ppx_tools_versioned" {>= "5.2.3"}
-  "uchar"
-  "js_of_ocaml-compiler" {= version}
+  "lwt" {>= "2.4.4"}
+  "js_of_ocaml" {= version}
+  "js_of_ocaml-ppx" {= version}
 ]
+depopts: [ "graphics" "lwt_log" ]
 url {
   src:
-    "https://github.com/ocsigen/js_of_ocaml/releases/download/3.5.1/js_of_ocaml-3.5.1.tbz"
+    "https://github.com/ocsigen/js_of_ocaml/releases/download/3.5.2/js_of_ocaml-3.5.2.tbz"
   checksum: [
-    "sha256=3a050eb9507058164431c8e1f1c86b3c61e30a5d0b0cf2c5f48b959b87eaade9"
-    "sha512=0bbca03ac220f28adf060d4c2d8f726801bce80461aa73724a6c53b4979af919c820cc723b0a7e9bda93270cef5c0485aea942aa527010a3c386a13b7e2d4842"
+    "sha256=8275a923385e87a33183d35fe5a8d9c1f88780b05069fa39046bb65ecd9cecb7"
+    "sha512=5e31ff9d74841241b090d7f385953a46480987bbdd2fe59934c517b3e4ba345a5a6cd590a8305ebdb4040d737f751b3e926664bfea8069a5c92a45f8c1fe8201"
   ]
 }

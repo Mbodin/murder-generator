@@ -191,7 +191,7 @@ else
   DEBUGFLAG=""
 fi
 
-PACKAGES=unix,extlib,yojson,re,uutf,lwt,lwt_ppx,ppx_deriving
+PACKAGES=libutils,unix,extlib,yojson,re,uutf,lwt,lwt_ppx,ppx_deriving
 
 if [ $JS = "true" ]
 then

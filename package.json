@@ -33,6 +33,10 @@
     "@opam/js_of_ocaml-ppx": "*",
     "@opam/js_of_ocaml-ppx_deriving_json": "*",
     "@opam/ocamlgraph": "*",
-    "ocaml": "~4.7.0"
-  }
+    "ocaml": "~4.7.0",
+		"libutils": "*"
+  },
+	"resolutions": {
+		"libutils": "github:Mbodin/libutils#3c4b6124a3dde03e6a6fc23460b765e8260c7b05"
+	}
 }

@@ -1,6 +1,8 @@
 (** Module Element
  * Data structure and functions about story elements. **)
 
+open Libutils
+
 type character = State.character
 
 (** References to characters and objects in an element are done using this type.

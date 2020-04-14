@@ -4,3 +4,5 @@
 	(libraries libutils unix extlib yojson re uutf lwt lwt_ppx ppx_deriving)
 	(modules_without_implementation ast))
 
+(env (dev (flags (:standard -w -50))))
+

@@ -1,4 +1,6 @@
 
+open Libutils
+
 (** There are two kinds of kinds: user defined and kinds from attributes. **)
 type 'character kind =
   | Kind of Id.t (** A user-defined kind. **)

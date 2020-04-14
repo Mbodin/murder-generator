@@ -1,6 +1,8 @@
 (** Module State
  * Describes the state of the solver. **)
 
+open Libutils
+
 type character = History.character
 
 (** The target difficulty and simplicity measures for each player.

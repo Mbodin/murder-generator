@@ -2,6 +2,8 @@
  * This module treats the abstract syntax tree produced by the Parser module
  * into something that can be used later on. **)
 
+open Libutils
+
 (** From the file name and the lexing buffer, calls the parser. **)
 val parse_lexbuf : string -> Lexing.lexbuf -> Ast.declaration list
 

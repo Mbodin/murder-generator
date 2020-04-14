@@ -1,6 +1,8 @@
 (** Module History
  * Stores the timeline of characters. **)
 
+open Libutils
+
 type character = Id.t
 
 (** This type enriches [Events.t] with a date and duration. **)

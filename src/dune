@@ -6,3 +6,23 @@
 
 (env (dev (flags (:standard -w -50))))
 
+(rule
+	(targets "murderFiles.ml")
+	(action
+		(run echo "let files = [\n`find ../data/ -type f | grep '\\.murder$' | sed -e 's/\\(.*\\)/    \"\\1\" ;/'`\n  ]\n" > murderFiles.ml)))
+
+(rule
+	(targets "nameFiles.ml")
+	(action
+		(run echo "let files = [\n`find ../data/ -type f | grep '\\.names$' | sed -e 's/\\(.*\\)/    \"\\1\" ;/'`\n  ]\n" > nameFiles.ml)))
+
+(rule
+	(targets "usedTranslations.ml")
+	(action
+    (run echo "let used = [\n`grep -o 'get_translation \"[^\"]*\"' main.ml | sed -e 's/get_translation \\(\"[^\"]*\"\\)/    \\1 ;/'`\n  ]\n" > usedTranslations.ml)))
+
+(rule
+	(targets "version.ml")
+	(action
+    (run echo "let version = \"`git rev-parse HEAD`\"\n" > version.ml)))
+

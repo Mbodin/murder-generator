@@ -15,9 +15,6 @@ install:
   - npm install --global esy@0.5.6
   - esy install
 
-before_script:
-  - esy local
-
 script:
   - esy test
   - esy js

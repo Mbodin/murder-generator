@@ -1,0 +1,6 @@
+(executable
+	(public_name murder_generator)
+  (name main)
+	(libraries libutils unix extlib yojson re uutf lwt lwt_ppx ppx_deriving)
+	(modules_without_implementation ast))
+

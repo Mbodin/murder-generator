@@ -1,5 +1,5 @@
 {
-  "checksum": "ca203388c551ffedf91c8b31c35f5a15",
+  "checksum": "4645d1078ac95e419f7024789d0cd18b",
   "root": "murder-generator@link-dev:./package.json",
   "node": {
     "ocaml@4.7.1004@d41d8cd9": {
@@ -41,7 +41,7 @@
         "@opam/js_of_ocaml-ppx@opam:3.5.2@db6331d4",
         "@opam/js_of_ocaml-lwt@opam:3.5.2@6ea3e3c2",
         "@opam/js_of_ocaml@opam:3.5.1@67dc2e92",
-        "@opam/extlib@opam:1.7.6@1be3fdd1"
+        "@opam/extlib@opam:1.7.6@1be3fdd1", "@opam/dune@opam:2.5.0@aef1678b"
       ],
       "devDependencies": []
     },

@@ -1,6 +1,8 @@
 (** Module Events
  * Describes events as used by the History module. **)
 
+open Libutils
+
 (** Each event is associated an event type, which describes whether
  * two events can be at the same time: two events of the same type
  * can not be at the same time. **)

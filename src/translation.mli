@@ -1,6 +1,8 @@
 (** Module Translation.
  * Provides utilities to store and deal with translations. **)
 
+open Libutils
+
 (** The type of language. **)
 type language
 

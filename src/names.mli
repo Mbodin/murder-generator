@@ -1,6 +1,8 @@
 (** Module Names
  * This module deals with name generation. **)
 
+open Libutils
+
 (** The type of name generator. **)
 type t
 

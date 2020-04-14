@@ -7,6 +7,7 @@ The file [elements.md](../explanations/elements.md) provides a more detailed exp
 
 Before actually defining our own scenario element, why would you want to define a scenario element?
 This program is generating scenarios by combining scenario elements: the more diverse and interesting scenario elements are, the better the generated scenarios.
+Think of scenario elements as storylets: they represent some kind of scene that will bring something to the overall story.
 
 Great!
 So let us define a scenario element.

@@ -1,5 +1,5 @@
 {
-  "checksum": "4645d1078ac95e419f7024789d0cd18b",
+  "checksum": "53468bc4cf87eb1141b1f00c46f1970c",
   "root": "murder-generator@link-dev:./package.json",
   "node": {
     "ocaml@4.7.1004@d41d8cd9": {
@@ -28,7 +28,7 @@
       "overrides": [],
       "dependencies": [
         "ocaml@4.7.1004@d41d8cd9",
-        "libutils@github:Mbodin/libutils#3c4b6124a3dde03e6a6fc23460b765e8260c7b05@d41d8cd9",
+        "libutils@github:Mbodin/libutils#388f659ccd57aabd0513205d2ced18860ae950cf@d41d8cd9",
         "@opam/yojson@opam:1.7.0@7056d985", "@opam/uutf@opam:1.0.2@4440868f",
         "@opam/uuseg@opam:13.0.0@f60712a7", "@opam/re@opam:1.9.0@d4d5e13d",
         "@opam/ppx_deriving@opam:4.4.1@208c6c8f",
@@ -45,16 +45,16 @@
       ],
       "devDependencies": []
     },
-    "libutils@github:Mbodin/libutils#3c4b6124a3dde03e6a6fc23460b765e8260c7b05@d41d8cd9": {
+    "libutils@github:Mbodin/libutils#388f659ccd57aabd0513205d2ced18860ae950cf@d41d8cd9": {
       "id":
-        "libutils@github:Mbodin/libutils#3c4b6124a3dde03e6a6fc23460b765e8260c7b05@d41d8cd9",
+        "libutils@github:Mbodin/libutils#388f659ccd57aabd0513205d2ced18860ae950cf@d41d8cd9",
       "name": "libutils",
       "version":
-        "github:Mbodin/libutils#3c4b6124a3dde03e6a6fc23460b765e8260c7b05",
+        "github:Mbodin/libutils#388f659ccd57aabd0513205d2ced18860ae950cf",
       "source": {
         "type": "install",
         "source": [
-          "github:Mbodin/libutils#3c4b6124a3dde03e6a6fc23460b765e8260c7b05"
+          "github:Mbodin/libutils#388f659ccd57aabd0513205d2ced18860ae950cf"
         ]
       },
       "overrides": [],

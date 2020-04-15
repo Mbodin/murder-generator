@@ -15,7 +15,7 @@
     "server": "python -m SimpleHTTPServer"
   },
   "dependencies": {
-    "@opam/dune": ">=1.11",
+    "@opam/dune": ">=2.0",
     "@opam/ocamlfind": "*",
     "@opam/ocamlbuild": "*",
     "@opam/extlib": "*",

@@ -113,7 +113,7 @@ let get_event st e =
 
 (** Given a function [dir] being either [fst] or [snd], get the set of all
  * successors/predecessors in this direction. **)
-let rec all_successors dir st e =
+let all_successors dir st e =
   let rec aux visited = function
     | [] -> visited
     | e :: l ->
@@ -213,8 +213,7 @@ let get_full_constraints st el =
   aux constraints_before constraints_after el
 
 let lcompatible_and_progress st el =
-  if Utils.assert_defend then
-    assert (Utils.is_uniq (List.map (fun e -> e.Events.event_id) el)) ;
+  Utils.assert_ __LOC__ (Utils.is_uniq (List.map (fun e -> e.Events.event_id) el)) ;
   if List.exists (fun e ->
        Id.get_id st.events e <> None
        || PSet.fold (fun c b ->
@@ -279,8 +278,7 @@ let lapply st status el =
     { st with events = events ;
               graph =
                 List.fold_left (fun graph (id, _) ->
-                  if Utils.assert_defend then
-                    assert (not (PMap.mem id graph)) ;
+                  Utils.assert_ __LOC__ (not (PMap.mem id graph)) ;
                   PMap.add id ([], []) graph) st.graph idl ;
               kind_map =
                 List.fold_left (fun map (id, e) ->
@@ -476,8 +474,7 @@ let finalise st now =
           let (before, after) =
             try PMap.find e st.graph
             with Not_found -> ([], []) in
-          if Utils.assert_defend then
-            assert (List.for_all (fun e -> PSet.mem e seen) after) ;
+          Utils.assert_ __LOC__ (List.for_all (fun e -> PSet.mem e seen) after) ;
           aux (e :: acc) (PSet.add e seen) (before @ next) l) in
     let start =
       Id.map_fold (fun _ e l ->
@@ -543,7 +540,7 @@ let unfinalise l =
     List.sort (fun (_, e1) (_, e2) ->
       Date.compare e1.event_begin e2.event_begin) l in
   let state =
-    let rec aux state = function
+    let aux state = function
       | [] -> state
       | (e, ev) :: l ->
         let rec fetch_first_after = function

@@ -2,6 +2,8 @@
  * Deals with a pool of current elements, prioritising elements
  * that can explain the currently needed attributes. **)
 
+open Libutils
+
 (** In this file, elements are supposed to be given as identifiers. **)
 type element = Id.t
 

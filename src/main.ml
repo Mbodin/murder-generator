@@ -2,6 +2,7 @@
  * This file is the one compiled to JavaScript, then fetched and executed
  * to run the whole program. **)
 
+open Libutils
 open ExtList
 open ExtString
 

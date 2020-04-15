@@ -1,6 +1,8 @@
 (** Module Export
  * Provides various functions to translate states into files. **)
 
+open Libutils
+
 (** Each function in this file takes an argument of this type.
  * It contains all the information needed to generate any file. **)
 type state = {

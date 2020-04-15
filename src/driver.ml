@@ -1,4 +1,6 @@
 
+open Libutils
+
 let parse_lexbuf fileName lexbuf =
   lexbuf.Lexing.lex_curr_p <- {
       Lexing.pos_fname = fileName ;

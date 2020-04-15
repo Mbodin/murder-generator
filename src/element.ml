@@ -140,7 +140,7 @@ let check_contact m inst st c con cha v1 =
       compatible_and_progress_attribute_value compatible v1 v2 in
   match cha with
   | Some (Utils.Left cha) ->
-    if Utils.assert_defend then assert (cha < Array.length inst) ;
+    Utils.assert_ __LOC__ (cha < Array.length inst) ;
     let cha = inst.(cha) in
     check cha
   | Some (Utils.Right _) ->
@@ -364,8 +364,7 @@ let apply_contact_constructor m state diff c con cha v1 =
   (state, diff)
 
 let apply m state e inst =
-  if Utils.assert_defend then
-    assert (compatible_and_progress m state e inst <> None) ;
+  Utils.assert_ __LOC__ (compatible_and_progress m state e inst <> None) ;
   let evs = instantiate_events e inst in
   let diff = empty_difference in
   let other_players = other_players state inst in
@@ -375,7 +374,7 @@ let apply m state e inst =
     | Contact (con, cha, v1) ->
       match cha with
       | Some (Utils.Left cha) ->
-        if Utils.assert_defend then assert (cha < Array.length inst) ;
+        Utils.assert_ __LOC__ (cha < Array.length inst) ;
         let cha = inst.(cha) in
         apply_contact_constructor m state diff c con cha v1
       | Some (Utils.Right obj) ->

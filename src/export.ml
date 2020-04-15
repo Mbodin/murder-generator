@@ -1,4 +1,6 @@
 
+open Libutils
+
 (* LATER: There would be a lot of possible factorisations in this file. *)
 
 let webpage_address_base = "github.com/Mbodin/murder-generator"
@@ -438,8 +440,7 @@ let to_block s =
             | (_, d', _) :: l ->
               if before d' d || f d' > f d then num
               else (
-                if Utils.assert_defend then
-                  assert (f d' = f d) ;
+                Utils.assert_ __LOC__ (f d' = f d) ;
                 aux f before (1 + num) l) in
           let rec duration n = function
             | [] -> n
@@ -496,8 +497,7 @@ let to_block s =
                    InOut.classes = ["time"]
                   })], fusion) in
               let string_of_month n =
-                if Utils.assert_defend then
-                  assert (n > 0 && n <= 12) ;
+                Utils.assert_ __LOC__ (n > 0 && n <= 12) ;
                 get_translation ("Month" ^ string_of_int n) in
               let (ty, y) =
                 if y = 0 then

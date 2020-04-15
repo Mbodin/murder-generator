@@ -1,4 +1,6 @@
 
+open Libutils
+
 (** Cache is used a lot in this file.
  * We thus introduce the following shortcuts functions to manipulate it. **)
 let getv = Utils.get_value
@@ -71,7 +73,7 @@ let grade g o s e =
       let new_relations =
         Element.apply_relations (State.get_relation_state (getv s)) e inst in
       let ev = evaluate o new_relations in
-      if Utils.assert_defend then (
+      if Utils.assert_defend () then (
         let (s', m) =
           Element.safe_apply g.constructor_informations (getv s) e inst in
         assert (ev = evaluate_state o s')) ;
@@ -125,7 +127,7 @@ let high_get_branch g d mi ma =
  * information about the applied events (event identifier, instantiatiation,
  * and grades), as well as a set of unapplyable events. **)
 let step g o optimistic greedy (s, evs) p =
-  if Utils.assert_defend then assert (evs = evaluate_state o (getv s)) ;
+  Utils.assert_ __LOC__ (evs = evaluate_state o (getv s)) ;
   (** Extracts [n] elements from the pool, filtering out the ones that don’t
    * apply, and calling [f] on the ones that does whilst increasing the
    * evaluation.
@@ -186,7 +188,7 @@ let weighted_step g o parameter (s, evs) p =
  * are just the first ones.
  * Returns the new global [g] with its [all_elements] updated. **)
 let add_random g o optimistic (s, evs) =
-  if Utils.assert_defend then assert (evs = evaluate_state o (getv s)) ;
+  Utils.assert_ __LOC__ (evs = evaluate_state o (getv s)) ;
   let (g, l) =
     let rec aux g acc = function
       | 0 -> (g, acc)
@@ -388,7 +390,7 @@ let wider_step pause g (s, evs) o m =
         float_of_int iteration /. float_of_int estimate in
       let pause _ = pause progress in
       pause () ;%lwt
-      if Utils.assert_defend then assert (evs = evaluate_state o (getv s)) ;
+      Utils.assert_ __LOC__ (evs = evaluate_state o (getv s)) ;
       let rec compute g (s, evs) = function
         | 0 -> Lwt.return []
         | i ->

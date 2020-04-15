@@ -1,6 +1,8 @@
 (** Module InOut
  * Specifies an interface for inputs and outputs. **)
 
+open Libutils
+
 (** The different kinds of link styles **)
 type link =
   | Simple (** A usual text-based link. **)

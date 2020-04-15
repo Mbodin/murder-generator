@@ -1,6 +1,8 @@
 (** Module InOut_native
  * An implementation of [InOut.T] for native programs. **)
 
+open Libutils
+
 (** Length of utf-8-encoded string. **)
 let unicode_length =
   Uuseg_string.fold_utf_8 `Grapheme_cluster (fun x _ -> x + 1) 0

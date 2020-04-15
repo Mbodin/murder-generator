@@ -1,17 +1,22 @@
 (executable
 	(public_name murder_generator)
   (name main_native)
-	(libraries libutils unix extlib yojson re uutf lwt lwt_ppx ppx_deriving uuseg.string lwt.unix)
+	(libraries libutils unix extlib yojson re uutf lwt uuseg.string lwt.unix)
+	(preprocess (pps lwt_ppx ppx_deriving))
 	(modules_without_implementation ast)
 	(modes native))
 
 ; (executable
 ; 	(name main_js)
-; 	(libraries libutils unix extlib yojson re uutf lwt lwt_ppx ppx_deriving js_of_ocaml js_of_ocaml-lwt js_of_ocaml-ppx js_of_ocaml-ppx.deriving js_of_ocaml.deriving)
+; 	(libraries libutils unix extlib yojson re uutf lwt js_of_ocaml js_of_ocaml-lwt js_of_ocaml.deriving)
+; (preprocess (pps lwt_ppx ppx_deriving js_of_ocaml-ppx js_of_ocaml-ppx.deriving))
 ; 	(modules_without_implementation ast)
 ; 	(modes js))
 
 (env (dev (flags (:standard -w -50))))
+
+(ocamllex lexer)
+(menhir (modules parser))
 
 (rule
  (target "version.ml")

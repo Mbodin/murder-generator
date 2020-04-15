@@ -1,28 +1,54 @@
 (executable
 	(public_name murder_generator)
-  (name main)
-	(libraries libutils unix extlib yojson re uutf lwt lwt_ppx ppx_deriving)
-	(modules_without_implementation ast))
+  (name main_native)
+	(libraries libutils unix extlib yojson re uutf lwt lwt_ppx ppx_deriving uuseg.string lwt.unix)
+	(modules_without_implementation ast)
+	(modes native))
+
+; (executable
+; 	(name main_js)
+; 	(libraries libutils unix extlib yojson re uutf lwt lwt_ppx ppx_deriving js_of_ocaml js_of_ocaml-lwt js_of_ocaml-ppx js_of_ocaml-ppx.deriving js_of_ocaml.deriving)
+; 	(modules_without_implementation ast)
+; 	(modes js))
 
 (env (dev (flags (:standard -w -50))))
 
 (rule
-	(targets "murderFiles.ml")
-	(action
-		(run echo "let files = [\n`find ../data/ -type f | grep '\\.murder$' | sed -e 's/\\(.*\\)/    \"\\1\" ;/'`\n  ]\n" > murderFiles.ml)))
+ (target "version.ml")
+ (action
+	(with-stdout-to %{target}
+	 (chdir ..
+		(progn
+		 (echo "let version = \"")
+		 (run git rev-parse HEAD) ; FIXME: There is an unwanted end-of-line here.
+		 (echo "\"\n"))))))
 
 (rule
-	(targets "nameFiles.ml")
-	(action
-		(run echo "let files = [\n`find ../data/ -type f | grep '\\.names$' | sed -e 's/\\(.*\\)/    \"\\1\" ;/'`\n  ]\n" > nameFiles.ml)))
+ (target "murderFiles.ml")
+ (action
+	(with-stdout-to %{target}
+	 (chdir ..
+		(progn
+		 (echo "let files = [\n")
+		 (bash "find data/ -type f | grep '\\.murder$' | sed -e 's/\\(.*\\)/    \"\\1\" ;/'") ; FIXME: Not very portable.
+		 (echo "  ]\n"))))))
 
 (rule
-	(targets "usedTranslations.ml")
+	(target "nameFiles.ml")
 	(action
-    (run echo "let used = [\n`grep -o 'get_translation \"[^\"]*\"' main.ml | sed -e 's/get_translation \\(\"[^\"]*\"\\)/    \\1 ;/'`\n  ]\n" > usedTranslations.ml)))
+	(with-stdout-to %{target}
+	 (chdir ..
+		(progn
+		 (echo "let files = [\n")
+		 (bash "find data/ -type f | grep '\\.names$' | sed -e 's/\\(.*\\)/    \"\\1\" ;/'") ; FIXME: Not very portable.
+		 (echo "  ]\n"))))))
 
 (rule
-	(targets "version.ml")
-	(action
-    (run echo "let version = \"`git rev-parse HEAD`\"\n" > version.ml)))
+ (target "usedTranslations.ml")
+ (action
+	(with-stdout-to %{target}
+	 (progn
+		(echo "let used = [\n")
+		(bash "grep -o 'get_translation \"[^\"]*\"' main.ml | sed -e 's/get_translation \\(\"[^\"]*\"\\)/    \\1 ;/'") ; FIXME: Not very portable.
+		(echo "  ]\n")))))
 

@@ -2,6 +2,13 @@
 open Libutils
 open ExtList
 
+let get_file fileName =
+  let file = open_in fileName in
+  let rec aux _ =
+    try let str = input_line file in str :: aux ()
+    with End_of_file -> [] in
+  String.concat "\n" (aux ())
+
 let test_utils _ =
   let test_split_on_char c str =
     assert (List.of_enum (Utils.enum_split_on_char c str) = String.split_on_char c str) in
@@ -9,13 +16,6 @@ let test_utils _ =
   test_split_on_char ':' ":::" ;
   test_split_on_char ':' "abcd" ;
   test_split_on_char ':' ""
-
-let get_file fileName =
-  let file = open_in fileName in
-  let rec aux _ =
-    try let str = input_line file in str :: aux ()
-    with End_of_file -> [] in
-  String.concat "\n" (aux ())
 
 let _test_date _ =
   let test d =
@@ -35,27 +35,27 @@ let _test_pool _ =
   let g = Pool.register_element g e2 [] in
   let g = Pool.register_element g e3 [] in
   let p = Pool.empty g in
-  print_endline ("is_empty empty = " ^ string_of_bool (Pool.is_empty p)) ;
-  print_endline ("pick empty = " ^ match Pool.pick p with None, _ -> "None" | Some _, _ -> "Some") ;
-  print_endline ("pop empty = " ^ match Pool.pop p with None, _ -> "None" | Some _, _ -> "Some") ;
+  print_endline ("string_of_bool (Pool.is_empty p)") ; (* [%expect {| true |}] ; *)
+  print_endline (match Pool.pick p with None, _ -> "None" | Some _, _ -> "Some") ; (* [%expect {| None |}] ; *)
+  print_endline (match Pool.pop p with None, _ -> "None" | Some _, _ -> "Some") ; (* [%expect {| None |}] ; *)
   let p = Pool.add p e1 in
   let p = Pool.add p e2 in
   let p = Pool.add p e3 in
-  print_endline ("is_empty [e1; e2; e3] = " ^ string_of_bool (Pool.is_empty p)) ;
-  let rec foo p =
+  print_endline (string_of_bool (Pool.is_empty p)) ; (* [%expect {| false |}] ; *)
+  let rec popn p =
     let o, p = Pool.pop p in
     match o with
     | None -> "[]"
-    | Some _ -> ";" ^ foo p in
-  print_endline ("pop* [e1; e2; e3] = " ^ foo p) ;
-  let rec bar i p =
+    | Some _ -> ";" ^ popn p in
+  print_endline (popn p) ; (* [%expect {| ;;;[] |}] ; *)
+  let rec pickn i p =
     if i = 0 then "-"
     else
       let o, p = Pool.pick p in
       match o with
       | None -> "[]"
-      | Some _ -> ";" ^ bar (i - 1) p in
-  print_endline ("pick^10 [e1; e2; e3] = " ^ bar 10 p)
+      | Some _ -> ";" ^ pickn (i - 1) p in
+  print_endline (pickn 10 p) (* ; [%expect {| ;;;[][][][][][][]- |}] *)
 
 let _test_relations _ =
   let open Relation in

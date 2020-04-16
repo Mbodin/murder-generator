@@ -31,6 +31,7 @@
     "@opam/js_of_ocaml-ppx": "*",
     "@opam/js_of_ocaml-ppx_deriving_json": "*",
     "@opam/ocamlgraph": "*",
+    "@opam/ppx_expect": "*",
     "ocaml": "~4.7.0",
 		"libutils": "*"
   },

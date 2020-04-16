@@ -1,8 +1,10 @@
+
 (library
   (name murder_generator)
 	(libraries libutils unix extlib yojson re uutf lwt)
-	(preprocess (pps lwt_ppx ppx_deriving))
+	(preprocess (pps lwt_ppx ppx_deriving ppx_expect))
 	(modules_without_implementation ast)
+	(inline_tests)
 	(modes byte native))
 
 (env (dev (flags (:standard -w -50))))

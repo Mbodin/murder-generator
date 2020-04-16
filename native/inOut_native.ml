@@ -40,7 +40,7 @@ let get_file fileName =
 let get_parameters =
   let rec aux = function
     | [] -> []
-    | str :: l when String.length str = 0 -> assert false
+    | str :: _ when String.length str = 0 -> assert false
     | key :: value :: l when key.[0] = '-' ->
       let key = String.sub key 1 (String.length key - 1) in
       (key, value) :: aux l
@@ -397,9 +397,9 @@ let rec block_node b =
         Print.clearline () ;
         b link
       )) l
-  | InOut.Space -> fun link ->
+  | InOut.Space -> fun _link ->
     Print.breakpoint ~normal:"  " ()
-  | InOut.Text str -> fun link ->
+  | InOut.Text str -> fun _link ->
     (* LATER: Use [Uuseg_string.fold_utf_8 `Line_break]
      * instead of [split_on_char]. *)
     List.iteri (fun i str ->
@@ -431,7 +431,7 @@ let rec block_node b =
   | InOut.LinkExtern (style, text, address) ->
     let cont _ = print_endline address in
     block_node (InOut.LinkContinuation (true, style, text, cont))
-  | InOut.LinkFile (style, text, fileName, mime, newlines, content) -> fun link ->
+  | InOut.LinkFile (style, text, fileName, _mime, _newlines, content) -> fun link ->
     block_node (InOut.LinkContinuation (true, style, text, fun _ ->
       print_string ("[" ^ fileName ^ "] > ") ;
       flush stdout ;
@@ -441,7 +441,7 @@ let rec block_node b =
       let channel = open_out fileName in
       output_string channel (content ()) ;
       close_out channel)) link
-  | InOut.Table (classes, headers, content) -> fun link ->
+  | InOut.Table (_classes, headers, content) -> fun link ->
     let print_line l =
       Print.push_prefix ("-") ;
       Print.push_suffix ("-") ;
@@ -465,7 +465,7 @@ let rec block_node b =
     Print.separator '=' ;
     Print.clearline () ;
     Print.separator '=' ;
-    List.iter (fun (classes, line) ->
+    List.iter (fun (_classes, line) ->
       print_line line ;
       Print.clearline () ;
       Print.separator '=') content ;
@@ -570,7 +570,7 @@ let createTextInput str =
 
 let createListInput l =
   if l = [] then
-    let node link = Print.print " <>" in {
+    let node _link = Print.print " <>" in {
       node = node ;
       get = (fun _ -> None) ;
       set = (fun _ -> invalid_arg "createListInput: set on an empty list.") ;
@@ -729,7 +729,7 @@ let clear_response _ =
 
 let createTextOutput str =
   let txt = ref str in
-  let node link = Print.print !txt in
+  let node _link = Print.print !txt in
   (node, fun str -> txt := str)
 
 let createNumberOutput n =

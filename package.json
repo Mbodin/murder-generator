@@ -35,6 +35,6 @@
 		"libutils": "*"
   },
 	"resolutions": {
-		"libutils": "github:Mbodin/libutils#388f659ccd57aabd0513205d2ced18860ae950cf"
+		"libutils": "github:Mbodin/libutils#09753414c52061db7f9882e6f394914c8fef9ccc"
 	}
 }

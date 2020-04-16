@@ -1,7 +1,7 @@
 (executable
 	(public_name murder_generator)
   (name main_native)
-	(libraries libutils unix extlib yojson re uutf lwt uuseg.string lwt.unix)
-	(preprocess (pps lwt_ppx ppx_deriving))
+	(libraries murder_generator uuseg.string lwt.unix)
+	(preprocess (pps lwt_ppx))
 	(modes native))
 

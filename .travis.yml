@@ -16,9 +16,8 @@ install:
   - esy install
 
 script:
+  - esy build
   - esy test
-  - esy js
-  - esy native
 
 deploy:
   provider: pages

@@ -1,6 +1,7 @@
 (** Module InOut_js
  * An implementation of [InOut.T] for JavaScript. **)
 
+open Libutils
 open Js_of_ocaml
 open Js_of_ocaml_lwt
 

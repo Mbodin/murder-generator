@@ -1,0 +1,6 @@
+(executable
+	(name main_js)
+	(libraries libutils unix extlib yojson re uutf lwt js_of_ocaml js_of_ocaml-lwt js_of_ocaml.deriving)
+	(preprocess (pps lwt_ppx ppx_deriving js_of_ocaml-ppx js_of_ocaml-ppx.deriving))
+	(modes js))
+

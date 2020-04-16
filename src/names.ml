@@ -46,8 +46,8 @@ type 'a alternative = {
 let convertAlternative spec =
   (** Decides whether it is time to halt the generation. **)
   let halt size =
-    (** The basic decide function is simple, but we may want to alter
-     * its distribution.**)
+    (** The basic decide function is simple, but we want to alter
+     * its distribution to get more natural outputs. **)
     let decide () =
       size <= 0 || Random.int size = 0 in
     if size > spec.alternative_size * 3 / 2 then
@@ -84,9 +84,6 @@ let convertAlternative spec =
              let (s, str, props') = Utils.select normal in
              Some ((size - 1, Some s, str, add_props props'), props')))
   }
-
-(** A simple type to represent in a transition system the alternance of vowels and consonant. **)
-type vowelConsonant = int * bool option * string
 
 (** Given a line, split it betwween a key and a value at the first occurrence of [:].
  * Returns [None] if no [:] is present in the list. **)

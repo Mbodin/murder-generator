@@ -127,12 +127,12 @@ let force_translate ?(debug = fun _ -> None) m lg o =
 (** Given a set of tags and a tree, explores the tree following the path
  * indicated by the set.
  * It then returns the found list. **)
-let rec naive_search_tree tags = function
+let rec _naive_search_tree tags = function
   | Leaf l -> l
   | Node (t, t1, t2) ->
     if PSet.mem t tags then
-      naive_search_tree tags t1
-    else naive_search_tree tags t2
+      _naive_search_tree tags t1
+    else _naive_search_tree tags t2
 
 (** Most of the time, we absolutely want a result and we need to backtrack.
  * It is safe to return a result associated with less tags than provided.
@@ -165,7 +165,7 @@ let apply_tree tags f =
   aux []
 
 (** Just adds a value to the list naturally given by [naive_search_tree]. **)
-let add_tree tags v =
+let _add_tree tags v =
   apply_tree tags (fun _ l -> Leaf (v :: l))
 
 exception ConflictingCommands of command * command

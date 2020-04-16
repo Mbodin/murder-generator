@@ -313,7 +313,7 @@ let update_difference (m, w, l) a d =
   (PMap.add a (d_old + d) m, w + d,
     if d_old < 0 && d_old + d >= 0 then List.remove l a else l)
 
-let merge_attribute_differences (m1, s1, l1) (m2, s2, l2) =
+let merge_attribute_differences (m1, s1, l1) (m2, s2, _l2) =
   let (m, li, lo) =
     PMap.foldi (fun a v2 (m, li, lo) ->
       let v1 = difference_for_attribute (m1, s1, l1) a in
@@ -378,7 +378,7 @@ let apply m state e inst =
         let cha = inst.(cha) in
         apply_contact_constructor m state diff c con cha v1
       | Some (Utils.Right obj) ->
-        (* TODO: failwith "[Element.apply] Not implemented: objects." *)
+        ignore obj ; (* TODO: failwith "[Element.apply] Not implemented: objects." *)
         (state, diff) (* FIXME: This is only temporary. *)
       | None ->
         List.fold_left (fun (state, diff) cha ->
@@ -436,7 +436,7 @@ let apply_contacts m state c c' =
       with _ -> None)) (Some (state, empty_difference))
 
 let is_translatable e lg =
-  Utils.list_fold_lefti (fun id ok e ->
+  Utils.list_fold_lefti (fun _id ok e ->
     let (n, t) = e.Events.translation in
     List.fold_left (fun ok i ->
       ok &&

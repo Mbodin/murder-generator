@@ -1068,8 +1068,8 @@ let parse_element st element_name status block =
     | None -> raise (Undeclared (en, name, element_name))
     | Some id -> id in
   (** Similar to [get_attribute_id], but for constructors. **)
-  let get_constructor_id (_, _, get_attribute, get_constructor, _, get_state,
-        _, _ , _, en, _) aid name =
+  let get_constructor_id (_, _, _, get_constructor, _, get_state, _, _ , _, en, _)
+      aid name =
     match get_constructor
             (get_state st.import_information.constructor_maps) aid name with
     | None -> raise (Undeclared (en ^ " constructor", name, element_name))
@@ -1237,10 +1237,12 @@ let parse_element st element_name status block =
               Attribute.ContactConstructor id) cid)) deps in
   let deps =
     List.fold_left (fun deps (p, pc) ->
-        match p with
-        | None -> consider_constraints add_constraint_other pc
-        | Some p ->
-          consider_constraints (add_constraint (Utils.Left (get_player_array p))) pc)
+        let add_constraint =
+          match p with
+          | None -> add_constraint_other
+          | Some p -> add_constraint (Utils.Left (get_player_array p)) in
+        let deps' = consider_constraints add_constraint pc in
+        PSet.merge deps deps')
       deps block.let_player in
   let deps =
     List.fold_left (fun deps (kind, o, pc) ->
@@ -1251,7 +1253,8 @@ let parse_element st element_name status block =
           | Some id -> id
           | None -> raise (Undeclared ("object kind", kind, element_name)) in
         add_constraint (Element.Attribute (Attribute.object_type, State.One_value_of [kind_id])) ;
-        consider_constraints add_constraint pc)
+        let deps' = consider_constraints add_constraint pc in
+        PSet.merge deps deps')
       deps block.let_object in
   (** We finally consider events. **)
   (* TODO: Update for objects. *)

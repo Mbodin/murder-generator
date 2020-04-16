@@ -96,7 +96,7 @@ let translation_players s final =
         List.fold_left (fun m p ->
           match State.get_attribute_character_final final p a with
           | None -> m
-          | Some (c', fixed) ->
+          | Some (c', _fixed) ->
             if c = c' then (
               let sp =
                 try PMap.find p m
@@ -110,7 +110,7 @@ let translation_players s final =
       let c = Id.from_array c in
       let att = State.get_all_attributes_character_final final c in
       let tr = Translation.gadd Translation.gempty s.language [] () name in
-      PMap.foldi (fun a (c, fixed) tr ->
+      PMap.foldi (fun _a (c, _fixed) tr ->
           let c = Attribute.PlayerConstructor c in
           Translation.gfold (fun tr tags str added removed ->
             if not (List.mem Translation.base tags) then (
@@ -153,7 +153,7 @@ let xml_block enclosing str =
   "<" ^ enclosing ^ ">" ^ str ^ "</" ^ enclosing ^ ">"
 
 (** Create an XML comment. **)
-let xml_comment str =
+let _xml_comment str =
   "<!-- " ^ xml_escape str ^ " -->"
 
 let process s =
@@ -190,7 +190,7 @@ let to_graphviz_relation s =
         let c = Id.from_array c in
         "  " ^ player_node c ^ " [label=\"{"
         ^ escape name ^ "|"
-        ^ String.concat "|" (PMap.foldi (fun a (v, fixed) l ->
+        ^ String.concat "|" (PMap.foldi (fun a (v, _fixed) l ->
               if is_internal_attribute s a v then l
               else
                 let tra = translate_attribute_player s a in
@@ -202,7 +202,7 @@ let to_graphviz_relation s =
       String.concat "\n" (List.concat (List.mapi (fun c _ ->
         let c = Id.from_array c in
         PMap.foldi (fun c' lv l ->
-            Utils.list_map_filter (fun (a, (v, fixed)) ->
+            Utils.list_map_filter (fun (a, (v, _fixed)) ->
               if is_internal_contact s a v then None
               else
                 let converse =
@@ -239,7 +239,7 @@ let to_graphviz_event s =
     try PMap.find id translated_events
     with Not_found -> assert false in
   let graph =
-    History.fold_graph (fun l ev id (before, after) ->
+    History.fold_graph (fun l ev id (_before, after) ->
       let color =
         let v =
           let v = List.length after in
@@ -486,7 +486,7 @@ let to_block s =
           List.fold_left (fun m t ->
             PMap.add t 0 m) PMap.empty Events.all_event_type in
         Array.make (List.length s.given.names) m in
-      let (_, _, active, content) =
+      let (_, _, _, content) =
         List.fold_left (fun ((y, m, d, h), activity, active, l)
                             ((year, month, day, hour), dur, beg, date, e) ->
             let (time, timetable) =
@@ -563,7 +563,7 @@ let to_block s =
     InOut.Table (["timeline"], header, content) in
   let print_attributes c =
     InOut.List (true,
-      PMap.foldi (fun a (v, fixed) l ->
+      PMap.foldi (fun a (v, _fixed) l ->
           if is_internal_attribute s.given a v then l
           else
             let tra = translate_attribute_player s.given a in
@@ -576,7 +576,7 @@ let to_block s =
           InOut.FoldableBlock (true,
             get_translation "contactTo" ^ " " ^ get_name s.given c',
               InOut.List (true,
-                Utils.list_map_filter (fun (a, (v, fixed)) ->
+                Utils.list_map_filter (fun (a, (v, _fixed)) ->
                     if is_internal_contact s.given a v then None
                     else Some (
                       let tra = translate_attribute_contact s.given a in
@@ -636,7 +636,7 @@ let to_org s =
              String.make (1 + n) ' ' ^ "- [X] " ^ get_name s.given c)
            (PSet.to_list e.History.event.Events.event_attendees)) in
   let print_attributes n c =
-    PMap.foldi (fun a (v, fixed) l ->
+    PMap.foldi (fun a (v, _fixed) l ->
         if is_internal_attribute s.given a v then l
         else
           let tra = translate_attribute_player s.given a in
@@ -647,7 +647,7 @@ let to_org s =
     PMap.foldi (fun c' lv l ->
         (String.make n '*' ^ " " ^ get_translation "contactTo"
          ^ " " ^ get_name s.given c')
-        :: Utils.list_map_filter (fun (a, (v, fixed)) ->
+        :: Utils.list_map_filter (fun (a, (v, _fixed)) ->
              if is_internal_contact s.given a v then None
              else Some (
                let tra = translate_attribute_contact s.given a in
@@ -698,7 +698,7 @@ let to_json s =
                 let trv = if fixed then trv else ("?" ^ trv) in
                 (tra, `String trv) :: l)
               (State.get_all_attributes_character_final state c) [])) ;
-           ("contacts", `List (PMap.foldi (fun c' lv l ->
+           ("contacts", `List (PMap.foldi (fun _c' lv l ->
               `Assoc (List.map (fun (a, (v, fixed)) ->
                   let tra = translate_attribute_contact s a in
                   let trv = translate_value_contact s v in

@@ -142,7 +142,7 @@ let urltag_categories = "cats"
 exception InvalidUrlArgument
 
 (** Update player informations from the parameters such that it matches the [player_number] data. **)
-let create_player_information names get_translation parameters =
+let create_player_information names _get_translation parameters =
   let lg = Utils.assert_option __LOC__ parameters.language in
   let generator =
     let l = List.filter (fun g -> Names.is_default g lg) names in
@@ -709,14 +709,14 @@ let main =
                   else compare d1 d2) l in
               Enum.map (fun (c, a, _, t) -> (t, (a, c))) (List.enum l))) in
           let exact_match l =
-            Enum.filter_map (fun (c, a, n, t, ts) ->
+            Enum.filter_map (fun (c, a, _n, t, ts) ->
               if PSet.mem a already_chosen then
                 None
               else if List.exists exact (t :: ts) then
                 Some (t, (a, c))
               else None) (List.enum l) in
           let exact_name_match l =
-            Enum.filter_map (fun (c, a, n, t, ts) ->
+            Enum.filter_map (fun (c, a, _n, t, _ts) ->
               if PSet.mem a already_chosen then
                 None
               else if exact t then
@@ -822,9 +822,9 @@ let main =
                                  let (name, attributes) = Names.generate gen attributes in
                                  match fuel with
                                  | 0 -> (name, attributes)
-                                 | n ->
+                                 | fuel ->
                                    if PSet.mem name avoid then
-                                     aux (fuel - 1)
+                                     aux fuel
                                    else (name, attributes) in
                                aux 100 in
                              nameNode.IO.set name ;

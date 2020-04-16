@@ -30,7 +30,7 @@ let create_relation_state n =
      Array.make (i + 1) Relation.neutral),
    Array.make n zero_objective)
 
-let rec read_relation_state (a, _) c1 c2 =
+let read_relation_state (a, _) c1 c2 =
   let c1 = Id.to_array c1 in
   let c2 = Id.to_array c2 in
   if c1 = c2 then Relation.neutral
@@ -174,7 +174,7 @@ type character_state_final =
    Attribute.ContactAttribute.constructor * bool) generic_character_state
 
 let create_character_state n =
-  Array.init n (fun i -> (PMap.empty, PMap.empty))
+  Array.init n (fun _ -> (PMap.empty, PMap.empty))
 
 let get_all_attributes_character st c =
   fst st.(Id.to_array c)
@@ -270,7 +270,7 @@ type final =
 (** Convert a value into a final value,
  * picking a particular possibility and marking whether the value has been fixed. **)
 let select_value = function
-  | Fixed_value (l, strict) -> (Utils.select_any l, true)
+  | Fixed_value (l, _strict) -> (Utils.select_any l, true)
   | One_value_of l -> (Utils.select_any l, false)
 
 let finalise st d =

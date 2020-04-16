@@ -399,7 +399,7 @@ let lapply st status el =
           let (st, after) = aux true st in
           let (st, before) = aux false st in
           (st, before, after)) ev.Events.constraints_some (st, before, after) in
-      let (st, before, after) =
+      let (st, _, _) =
         (** Considering already present constraints. **)
         PMap.foldi (fun c ks (st, before, after) ->
           let m =
@@ -446,7 +446,7 @@ let create_state n = {
 type final = event list
 
 (** Returns the list of all players. **)
-let all_players st =
+let _all_players st =
   PMap.foldi (fun c _ l -> c :: l) st []
 
 let finalise st now =
@@ -458,7 +458,7 @@ let finalise st now =
         else (
           let (ready, not_ready) =
             List.partition (fun e ->
-              let (before, after) =
+              let (_before, after) =
                 try PMap.find e st.graph
                 with Not_found -> ([], []) in
               List.for_all (fun e -> PSet.mem e seen) after) next in
@@ -478,7 +478,7 @@ let finalise st now =
           aux (e :: acc) (PSet.add e seen) (before @ next) l) in
     let start =
       Id.map_fold (fun _ e l ->
-        let (before, after) =
+        let (_before, after) =
           try PMap.find e st.graph
           with Not_found -> ([], []) in
         if after = [] then e :: l else l) [] st.events in
@@ -487,7 +487,7 @@ let finalise st now =
   let (l, _) =
     List.fold_left (fun (acc, state) e ->
       let ev = get_event st e in
-      let (before, after) =
+      let (_before, after) =
         try PMap.find e st.graph
         with Not_found -> ([], []) in
       let t =

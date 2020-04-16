@@ -74,7 +74,7 @@ let grade g o s e =
         Element.apply_relations (State.get_relation_state (getv s)) e inst in
       let ev = evaluate o new_relations in
       if Utils.assert_defend () then (
-        let (s', m) =
+        let (s', _m) =
           Element.safe_apply g.constructor_informations (getv s) e inst in
         assert (ev = evaluate_state o s')) ;
       (inst, progress, ev))
@@ -108,7 +108,7 @@ let get_branch g mi ma =
  * amount of power.
  * This function returns [d] at low power, otherwise returns a number
  * between [mi] and [ma]. **)
-let high_get_branch g d mi ma =
+let _high_get_branch g d mi ma =
   if g.branch_exploration < 0.5 then d
   else get_branch { g with branch_exploration =
                              2. *. (g.branch_exploration -. 0.5) } mi ma
@@ -155,14 +155,14 @@ let step g o optimistic greedy (s, evs) p =
     aux [] PSet.empty (fun callback unapplyable _ e inst progress ev ->
       let (p, l, unapplyable) = callback unapplyable in
       (p, (e, inst, (progress, ev)) :: l, unapplyable)) p optimistic in
-  match Utils.argmax (fun (e1, inst1, g1) (e2, inst2, g2) ->
+  match Utils.argmax (fun (_e1, _inst1, g1) (_e2, _inst2, g2) ->
           compare_grade evs g1 g2) l with
-  | Some (e, inst, (progress, ev)) ->
+  | Some (e, inst, (_progress, ev)) ->
     let (s', m) = Element.safe_apply g.constructor_informations (getv s) e inst in
     (p, Some ((updatec s s', m), ev), unapplyable)
   | None ->
     (** We then move the the greedy pick. **)
-    aux None unapplyable (fun _ unapplyable p e inst progress ev ->
+    aux None unapplyable (fun _ unapplyable p e inst _progress ev ->
         let (s', m) =
           Element.safe_apply g.constructor_informations (getv s) e inst in
         (p, Some ((updatec s s', m), ev),
@@ -205,9 +205,9 @@ let add_random g o optimistic (s, evs) =
           | Some (inst, progress, ev) ->
             aux g ((e, inst, (progress, ev)) :: acc) (n - 1) in
     aux g [] optimistic in
-  match Utils.argmax (fun (e1, inst1, g1) (e2, inst2, g2) ->
+  match Utils.argmax (fun (_e1, _inst1, g1) (_e2, _inst2, g2) ->
           compare_grade evs g1 g2) l with
-  | Some (e, inst, (progress, ev)) ->
+  | Some (e, inst, (_progress, ev)) ->
     let (s', m) = Element.safe_apply g.constructor_informations (getv s) e inst in
     (g, (updatec s s', m), ev)
   | None -> (g, (s, Element.empty_difference), evs)
@@ -302,7 +302,7 @@ let final g (s, evs) o m =
     | e :: l ->
       match grade g o s e with
       | None -> aux g (s, evs) m acc l
-      | Some (inst, progress, evs') ->
+      | Some (inst, _progress, evs') ->
         if evs' < evs then
           aux g (s, evs) m acc l
         else (
@@ -407,7 +407,7 @@ let wider_step pause g (s, evs) o m =
           let%lwt l = compute g (s, evs) (i - 1) in
           Lwt.return ((g, (s', evs'), m) :: l) in
       let%lwt l = compute g (s, evs) (get_branch g 3 6) in
-      match Utils.argmax (fun (_, (s1, evs1), _) (_, (s2, evs2), _) ->
+      match Utils.argmax (fun (_, (_s1, evs1), _) (_, (_s2, evs2), _) ->
               compare evs1 evs2) l with
       | Some (g, (s', evs'), m) ->
         let temperature = next_temperature_evs g temperature m evs evs' in
@@ -423,7 +423,7 @@ let solve_with_difference pause g s m o =
     BidirectionalList.from_list (Utils.shuffle
       (BidirectionalList.to_list g.all_elements)) } in
   let s = Utils.cached s Element.empty_cache in
-  let%lwt (g, (s, _), m) = wider_step pause g (s, evaluate_state o (getv s)) o m in
+  let%lwt (_g, (s, _), _m) = wider_step pause g (s, evaluate_state o (getv s)) o m in
   Lwt.return (getv s)
 
 let solve pause g o =

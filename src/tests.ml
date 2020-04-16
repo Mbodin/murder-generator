@@ -17,7 +17,7 @@ let get_file fileName =
     with End_of_file -> [] in
   String.concat "\n" (aux ())
 
-let test_date _ =
+let _test_date _ =
   let test d =
     assert (Date.compare d (Date.from_rfc2445 (Date.rfc2445 d)) = 0) in
   test Date.now ;
@@ -25,7 +25,7 @@ let test_date _ =
   test (Date.add_days Date.now (Random.int 100 - 50)) ;
   test (Date.add_minutes Date.now (Random.int 100 - 50))
 
-let test_pool _ =
+let _test_pool _ =
   let new_id = Id.new_id_function () in
   let g = Pool.empty_global in
   let e1 = new_id () in
@@ -57,7 +57,7 @@ let test_pool _ =
       | Some _ -> ";" ^ bar (i - 1) p in
   print_endline ("pick^10 [e1; e2; e3] = " ^ bar 10 p)
 
-let test_relations _ =
+let _test_relations _ =
   let open Relation in
   let b = [ Neutral; Hate; Trust; Chaotic; Undetermined; Avoidance ] in
   let l =
@@ -229,7 +229,7 @@ let test_parser languages =
                    ^ Translation.iso639 lg ^ ": " ^ string_of_int n)) languages ;
   constructor_maps
 
-let main =
+let _ =
   test_utils () ;
   let languages = test_translations () in
   let constructor_maps = test_parser languages in

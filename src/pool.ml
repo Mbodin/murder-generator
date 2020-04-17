@@ -221,3 +221,35 @@ let definitely_remove p e =
 let definitely_remove_set =
   PSet.fold (fun e p -> definitely_remove p e)
 
+let%test_unit _ =
+  let new_id = Id.new_id_function () in
+  let g = empty_global in
+  let e1 = new_id () in
+  let e2 = new_id () in
+  let e3 = new_id () in
+  let g = register_element g e1 [] in
+  let g = register_element g e2 [] in
+  let g = register_element g e3 [] in
+  let p = empty g in
+  assert (is_empty p) ;
+  assert (fst (pick p) = None) ;
+  assert (fst (pop p) = None) ;
+  let p = add p e1 in
+  let p = add p e2 in
+  let p = add p e3 in
+  assert (not (is_empty p)) ;
+  let rec popn p =
+    let o, p = pop p in
+    match o with
+    | None -> "[]"
+    | Some _ -> ";" ^ popn p in
+  assert (popn p = ";;;[]") ;
+  let rec pickn i p =
+    if i = 0 then "-"
+    else
+      let o, p = pick p in
+      match o with
+      | None -> "[]"
+      | Some _ -> ";" ^ pickn (i - 1) p in
+  assert (pickn 10 p = ";;;;;;;;;;-")
+

@@ -3,59 +3,9 @@ open Libutils
 open ExtList
 
 let get_file fileName =
-  let file = open_in fileName in
-  let rec aux _ =
-    try let str = input_line file in str :: aux ()
-    with End_of_file -> [] in
-  String.concat "\n" (aux ())
-
-let test_utils _ =
-  let test_split_on_char c str =
-    assert (List.of_enum (Utils.enum_split_on_char c str) = String.split_on_char c str) in
-  test_split_on_char ':' "a:b:c:d" ;
-  test_split_on_char ':' ":::" ;
-  test_split_on_char ':' "abcd" ;
-  test_split_on_char ':' ""
-
-let _test_date _ =
-  let test d =
-    assert (Date.compare d (Date.from_rfc2445 (Date.rfc2445 d)) = 0) in
-  test Date.now ;
-  test (Date.add_years Date.now (Random.int 100 - 50)) ;
-  test (Date.add_days Date.now (Random.int 100 - 50)) ;
-  test (Date.add_minutes Date.now (Random.int 100 - 50))
-
-let _test_pool _ =
-  let new_id = Id.new_id_function () in
-  let g = Pool.empty_global in
-  let e1 = new_id () in
-  let e2 = new_id () in
-  let e3 = new_id () in
-  let g = Pool.register_element g e1 [] in
-  let g = Pool.register_element g e2 [] in
-  let g = Pool.register_element g e3 [] in
-  let p = Pool.empty g in
-  print_endline ("string_of_bool (Pool.is_empty p)") ; (* [%expect {| true |}] ; *)
-  print_endline (match Pool.pick p with None, _ -> "None" | Some _, _ -> "Some") ; (* [%expect {| None |}] ; *)
-  print_endline (match Pool.pop p with None, _ -> "None" | Some _, _ -> "Some") ; (* [%expect {| None |}] ; *)
-  let p = Pool.add p e1 in
-  let p = Pool.add p e2 in
-  let p = Pool.add p e3 in
-  print_endline (string_of_bool (Pool.is_empty p)) ; (* [%expect {| false |}] ; *)
-  let rec popn p =
-    let o, p = Pool.pop p in
-    match o with
-    | None -> "[]"
-    | Some _ -> ";" ^ popn p in
-  print_endline (popn p) ; (* [%expect {| ;;;[] |}] ; *)
-  let rec pickn i p =
-    if i = 0 then "-"
-    else
-      let o, p = Pool.pick p in
-      match o with
-      | None -> "[]"
-      | Some _ -> ";" ^ pickn (i - 1) p in
-  print_endline (pickn 10 p) (* ; [%expect {| ;;;[][][][][][][]- |}] *)
+  let fileName = "../" ^ fileName in
+  print_endline ("Reading file " ^ fileName) ;
+  Std.input_file fileName
 
 let _test_relations _ =
   let open Relation in
@@ -84,8 +34,7 @@ let _test_relations _ =
 
 let test_translations _ =
   let f = "web/translations.json" in
-  print_endline ("Reading file " ^ f) ;
-  let content = Std.input_file f in
+  let content = get_file f in
   let (translations, languages) = Translation.from_json f content in
   let ok = ref true in
   let translate key lg =
@@ -110,7 +59,6 @@ let test_name_generation languages constructor_maps =
   print_endline ("Number of name files: " ^
                  string_of_int (List.length NameFiles.files)) ;
   let read_file fileName =
-    print_endline ("Reading file " ^ fileName) ;
     let file = get_file fileName in
     let gen = Names.import constructor_maps file in
     ignore (Names.generate gen PSet.empty) ;
@@ -132,6 +80,7 @@ let test_parser languages =
   print_endline ("Number of murder files: " ^
                  string_of_int (List.length MurderFiles.files)) ;
   let read_file f =
+    let f = "../" ^ f in
     print_endline ("Reading file " ^ f) ;
     let buf = Lexing.from_channel (open_in f) in
     Driver.parse_lexbuf f buf in
@@ -230,7 +179,6 @@ let test_parser languages =
   constructor_maps
 
 let _ =
-  test_utils () ;
   let languages = test_translations () in
   let constructor_maps = test_parser languages in
   test_name_generation languages constructor_maps.Attribute.player ;

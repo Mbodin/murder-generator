@@ -4,3 +4,15 @@
 	(preprocess (pps lwt_ppx js_of_ocaml-ppx))
 	(modes js))
 
+(rule
+	(target "main.js")
+	(deps "main_js.bc.js")
+	(action
+		(with-stdout-to %{target}
+			(progn
+				(echo "/* @license magnet:?xt=urn:btih:0b31508aeb0634b347b8270c7bee4d411b5d4109&dn=agpl-3.0.txt AGPL-v3-or-Later */\n")
+				(echo "/* The source code of this compiled program is available at https://github.com/Mbodin/murder-generator */\n")
+				(cat %{deps})
+				(echo "\n/* @license-end */\n")
+				(echo "//# sourceURL=main.js\n")))))
+

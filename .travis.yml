@@ -12,15 +12,19 @@ cache:
     - ${HOME}/.esy
 
 install:
-  - npm install --global esy@0.5.6
+  - npm install --global esy@0.6.2
   - esy install
 
 script:
   - esy build
   - esy test
 
+before_deploy:
+  - ./server.sh
+
 deploy:
   provider: pages
+  local_dir: web
   skip-cleanup: true
   github-token: $GITHUB_TOKEN
   target-branch: gh-pages

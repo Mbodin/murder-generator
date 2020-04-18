@@ -37,7 +37,7 @@ let file_signature file =
 (** Getting and parsing the translations file. **)
 let get_translations _ =
   let%lwt (translation, languages) =
-    let translations_file = "web/translations.json" in
+    let translations_file = "translations.json" in
     let%lwt translations = IO.get_file translations_file in
     add_trace ("getting translation file (" ^ file_signature translations_file ^ ")") ;
     Lwt.return (Translation.from_json translations_file translations) in

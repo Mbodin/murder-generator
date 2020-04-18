@@ -9,14 +9,18 @@
 
 (env (dev (flags (:standard -w -50))))
 
+(documentation)
+
 (ocamllex lexer)
-(menhir (modules parser))
+(menhir
+	(modules parser)
+	(flags ("--explain")))
 
 (rule
 	(target "version.ml")
 	(action
 		(with-stdout-to %{target}
-			(chdir ..
+			(chdir %{project_root}
 				(progn
 					(echo "let version = \"")
 					(run git rev-parse HEAD) ; FIXME: There is an unwanted end-of-line here.
@@ -26,9 +30,9 @@
 	(target "murderFiles.ml")
 	(action
 		(with-stdout-to %{target}
-		(chdir ..
-			(progn
-				(echo "let files = [\n")
+			(chdir %{project_root}
+				(progn
+					(echo "let files = [\n")
 					(bash "find data/ -type f | grep '\\.murder$' | sed -e 's/\\(.*\\)/    \"\\1\" ;/'") ; FIXME: Not very portable.
 					(echo "  ]\n"))))))
 
@@ -36,7 +40,7 @@
 	(target "nameFiles.ml")
 	(action
 		(with-stdout-to %{target}
-			(chdir ..
+			(chdir %{project_root}
 				(progn
 					(echo "let files = [\n")
 					(bash "find data/ -type f | grep '\\.names$' | sed -e 's/\\(.*\\)/    \"\\1\" ;/'") ; FIXME: Not very portable.
@@ -44,10 +48,11 @@
 
 (rule
 	(target "usedTranslations.ml")
+	(deps "main.ml")
 	(action
 		(with-stdout-to %{target}
 			(progn
 				(echo "let used = [\n")
-					(bash "grep -o 'get_translation \"[^\"]*\"' main.ml | sed -e 's/get_translation \\(\"[^\"]*\"\\)/    \\1 ;/'") ; FIXME: Not very portable.
-					(echo "  ]\n")))))
+				(bash "grep -o 'get_translation \"[^\"]*\"' %{deps} | sed -e 's/get_translation \\(\"[^\"]*\"\\)/    \\1 ;/'") ; FIXME: Not very portable.
+				(echo "  ]\n")))))
 

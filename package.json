@@ -4,15 +4,14 @@
 	"description": "A program to generate random murder parties",
 	"license": "AGPL-3.0-or-later",
 	"esy": {
-		"build": "dune build @all",
+		"build": "dune build --profile release @all",
 		"buildsInSource": "_build"
 	},
 	"scripts": {
-		"clean": "rm -R _build *.byte *.native *.js",
+		"clean": "rm -R _build *.byte *.native *.js web/main.js web/doc",
 		"test": "dune runtest",
-		"js": "./build.sh move main.js",
-		"native": "./build.sh main.native",
-		"server": "python -m SimpleHTTPServer"
+		"run": "_build/install/default/bin/murder_generator",
+		"server": "./server.sh run"
 	},
 	"dependencies": {
 		"@opam/dune": ">=2.0",
@@ -31,6 +30,7 @@
 		"@opam/js_of_ocaml-ppx": "*",
 		"@opam/js_of_ocaml-ppx_deriving_json": "*",
 		"@opam/ocamlgraph": "*",
+		"@opam/odoc": "*",
 		"@opam/ppx_inline_test": "*",
 		"ocaml": "~4.7.0",
 		"libutils": "*"

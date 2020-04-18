@@ -15,8 +15,8 @@ type state = {
     date : Date.t (** The date of the final scenario. **) ;
     translation : Translation.element (** The translation objects. **) ;
     generic_translation : string Translation.t
-      (** Generic translations, defined in [web/translations.json]
-       * instead of files in [data/]. **) ;
+      (** Generic translations, defined in [translations.json]
+       * instead of the ones defined in the files in [data/]. **) ;
     constructor_maps : Attribute.constructor_maps
       (** Informations about constructors **) ;
     state : State.t (** The generated state. **)
@@ -41,7 +41,7 @@ val to_block : t -> 'node InOut.block
 val from_json : Driver.import_information -> string -> string -> string list * State.t
 
 (** All the functions of this file are resumed in the following list.
- * Each function is associated two identifiers in [web/translations.json]
+ * Each function is associated two identifiers in [translations.json]
  * (one for the name and one for the description), a mime type, a boolean,
  * and an extension.  The boolean indicates whether newlines should be
  * converted to suits the host’s operating system. **)

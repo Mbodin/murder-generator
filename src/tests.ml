@@ -33,7 +33,7 @@ let _test_relations _ =
   done
 
 let test_translations _ =
-  let f = "web/translations.json" in
+  let f = "translations.json" in
   let content = get_file f in
   let (translations, languages) = Translation.from_json f content in
   let ok = ref true in

@@ -19,9 +19,7 @@ script:
   - esy build
   - esy test
   - esy doc
-
-before_deploy:
-  - esy ./server.sh
+  - esy ./server.sh copy
 
 deploy:
   provider: pages

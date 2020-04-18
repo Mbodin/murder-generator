@@ -3,7 +3,7 @@ This file describes how the source code of this project is organised.
 This program is written in OCaml.
 Signature files `.mli` are commented, but `.ml` files only documents what is not present in the corresponding `.mli` file.
 The command `esy doc` generates the file `_build/default/_doc/_html/index.html` that presents this documentation in a form that may be easier to read.
-Pre-generated in-source documentation files are available at [this address](https://github.com/Mbodin/murder-generator/doc).
+Pre-generated in-source documentation files are available at [this address](https://mbodin.github.io/murder-generator/doc/).
 
 The project is divided into several folders:
 - [src/](../../src) contains all the source code of the generator, but the user-interface.  This is packaged as a library for the interfaces.

@@ -12,5 +12,7 @@
 *.exe
 *.js
 web/main.js
+web/translations.json
 web/doc
+web/data
 

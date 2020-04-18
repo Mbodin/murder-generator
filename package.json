@@ -8,9 +8,10 @@
 		"buildsInSource": "_build"
 	},
 	"scripts": {
-		"clean": "rm -R _build *.byte *.native *.js web/main.js web/doc",
+		"clean": "rm -R _build web/main.js web/doc",
 		"test": "dune runtest",
 		"run": "_build/install/default/bin/murder_generator",
+		"doc": "dune build @doc",
 		"server": "./server.sh run"
 	},
 	"dependencies": {

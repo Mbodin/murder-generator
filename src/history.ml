@@ -65,54 +65,54 @@ let compatible_events e1 e2 =
 
 
 type t = {
-    number_of_character : int (** The number of characters in the state. **) ;
+    number_of_character : int (** The number of characters in the state. *) ;
     events : character Events.t Id.map
       (** Events are not stored directly in the timeline,
-       * but through identifiers. **) ;
+         but through identifiers. *) ;
     kind_map : (character Events.kind * character, Id.t PSet.t) PMap.t
       (** For each kind and character, returns a set of event identifiers
-       * satisfying them. **) ;
+         satisfying them. *) ;
     graph : (Id.t, Id.t list * Id.t list) PMap.t
       (** The graph of event constraints.
-       * Each event is associated two sets of events:
-       * - the events that have to happen before this particular event,
-       * - the events that have to happen after this particular event.
-       * This graph is guaranteed to be without cycle.
-       * The transitive closure is not stored, though: to get the set of all
-       * event after a particular one, one has to recursively explore the
-       * graph.
-       * This graph is guaranteed to be symmetrical: if [e] must be after [e'],
-       * then [e'] must be before [e]. **) ;
+         Each event is associated two sets of events:
+         - the events that have to happen before this particular event,
+         - the events that have to happen after this particular event.
+         This graph is guaranteed to be without cycle.
+         The transitive closure is not stored, though: to get the set of all
+         event after a particular one, one has to recursively explore the
+         graph.
+         This graph is guaranteed to be symmetrical: if [e] must be after [e'],
+         then [e'] must be before [e]. *) ;
     constraints_none :
       (character, (character Events.kind, Id.t PSet.t * Id.t PSet.t) PMap.t) PMap.t
       (** For each event character and kind, provides two sets:
-       * - the set for which no event of this kind can be before the provided event,
-       * - the set for which no event of this kind can be after the provided event.
-       * These sets are kept to a minimum: if an event is before another,
-       * and that both prevents any event of a given kind to be placed after them,
-       * then only the latter really have to prevent any such event to happen. **) ;
+         - the set for which no event of this kind can be before the provided event,
+         - the set for which no event of this kind can be after the provided event.
+         These sets are kept to a minimum: if an event is before another,
+         and that both prevents any event of a given kind to be placed after them,
+         then only the latter really have to prevent any such event to happen. *) ;
     constraints_some :
       (character, (character Events.kind, Id.t PSet.t * Id.t PSet.t) PMap.t) PMap.t
       (** Same as [constraints_none], but enforce that there is at least one event
-       * of the given kind before/after them.
-       * Elements of these sets are naturally removed when their constraints have
-       * been met. **) ;
+         of the given kind before/after them.
+         Elements of these sets are naturally removed when their constraints have
+         been met. *) ;
     already_declared_events : (Id.t * character) PSet.t
       (** A given event can’t be reused twice for the same character.
-       * As a consequence, we store the event identifiers (from the field
-       * [Events.event_id], not from the history identifier) for each character:
-       * they are not allowed to appear twice for a given character. **)
+         As a consequence, we store the event identifiers (from the field
+         [Events.event_id], not from the history identifier) for each character:
+         they are not allowed to appear twice for a given character. *)
   }
 
-(** As the type is pure, one can safely return it. **)
+(** As the type is pure, one can safely return it. *)
 let copy = Utils.id
 
-(** Fetch an event from a state given its identifier. **)
+(** Fetch an event from a state given its identifier. *)
 let get_event st e =
   Utils.assert_option __LOC__ (Id.map_inverse st.events e)
 
 (** Given a function [dir] being either [fst] or [snd], get the set of all
- * successors/predecessors in this direction. **)
+   successors/predecessors in this direction. *)
 let all_successors dir st e =
   let rec aux visited = function
     | [] -> visited
@@ -127,17 +127,17 @@ let all_successors dir st e =
   aux PSet.empty [e]
 
 (** Same than [all_successors], but where given a set instead of a single
- * element. **)
+   element. *)
 let all_successors_set dir st =
   PSet.fold (fun e -> PSet.merge (all_successors dir st e)) PSet.empty
 
 (** Given a graph and an event, returns two sets of events identifiers
- * corresponding to the events that must be before and after this event.
- * This function should only consider the immediate ones: the function
- * [all_successors_set] will be called afterwards. **)
+   corresponding to the events that must be before and after this event.
+   This function should only consider the immediate ones: the function
+   [all_successors_set] will be called afterwards. *)
 let get_constraints st e =
   PSet.fold (fun c (before, after) ->
-    (** We first consider the constraints from the state. **)
+    (** We first consider the constraints from the state. *)
     let (before, after) =
       let none =
         try PMap.find c st.constraints_none
@@ -150,15 +150,15 @@ let get_constraints st e =
           try PMap.find k none
           with Not_found -> (PSet.empty, PSet.empty) in
         (** Note how we merge the events not meant to be before…
-         * in the [before] list.  This may seem counter-intuitive.
-         * This is due to the fact that [no_before] means that
-         * the referenced event can’t have the current event
-         * before them.  If we shift the point of view to the
-         * current event, this means that these event must be
-         * before the current event. **)
+           in the [before] list.  This may seem counter-intuitive.
+           This is due to the fact that [no_before] means that
+           the referenced event can’t have the current event
+           before them.  If we shift the point of view to the
+           current event, this means that these event must be
+           before the current event. *)
         (PSet.merge no_before before,
          PSet.merge no_after after)) (before, after) k in
-    (** We then consider the constraints from the event. **)
+    (** We then consider the constraints from the event. *)
     let (before, after) =
       let (no_before, no_after) =
         try PMap.find c e.Events.constraints_none
@@ -170,28 +170,28 @@ let get_constraints st e =
       let no_before = get no_before in
       let no_after = get no_after in
       (** Here, [no_after] and [no_before] are defined from
-       * the point of view of the current event and there
-       * is no need for counter-intuitive inversion. **)
+         the point of view of the current event and there
+         is no need for counter-intuitive inversion. *)
       (PSet.merge no_after before, PSet.merge no_before after) in
     (before, after)) (PSet.empty, PSet.empty) e.Events.event_attendees
 
 (** Generalizes [get_constraints]: given a list of events [el],
- * returns a list a sets [before] and [after] corresponding to
- * the full constraints of the list (the order of the elements
- * of the lists being conserved).
- * The function [all_successors_set] has already been called on
- * these sets.
- * As a third element of each tuple, the corresponding event is
- * returned for convenience. **)
+   returns a list a sets [before] and [after] corresponding to
+   the full constraints of the list (the order of the elements
+   of the lists being conserved).
+   The function [all_successors_set] has already been called on
+   these sets.
+   As a third element of each tuple, the corresponding event is
+   returned for convenience. *)
 let get_full_constraints st el =
   (** The before list is parsed from left to right, but the after
-   * list is parsed from right to left. **)
+     list is parsed from right to left. *)
   let constraints = List.map (get_constraints st) el in
   (** In the following function, [f] and [f'] are the same function,
-   * either [fst] or [snd].  However, these functions are polymorphic
-   * and as we are using them with a different type instantiation, we
-   * have to differentiate them for the type checker to accept this
-   * function. **)
+     either [fst] or [snd].  However, these functions are polymorphic
+     and as we are using them with a different type instantiation, we
+     have to differentiate them for the type checker to accept this
+     function. *)
   let rec full f f' sacc acc = function
     | [] -> acc
     | s :: l ->
@@ -203,7 +203,7 @@ let get_full_constraints st el =
     List.rev (full fst fst PSet.empty [] constraints) in
   let constraints_after =
     full snd snd PSet.empty [] (List.rev constraints) in
-  (** Once computed, these constraints are wrapped in a single list. **)
+  (** Once computed, these constraints are wrapped in a single list. *)
   let rec aux lb la el =
     match lb, la, el with
     | [], [], [] -> []
@@ -219,18 +219,18 @@ let lcompatible_and_progress st el =
        || PSet.fold (fun c b ->
               b || PSet.mem (e.Events.event_id, c) st.already_declared_events)
             false e.Events.event_attendees) el then
-    (** An instantiated event can only be declared once. **)
+    (** An instantiated event can only be declared once. *)
     None
   else
     let rec aux r = function
       | [] -> Some r
       | (sb, sa, e) :: l ->
         if not (PSet.is_empty (PSet.inter sb sa)) then
-          (** Adding this event would create a loop in the graph. **)
+          (** Adding this event would create a loop in the graph. *)
           None
         else
           (** There is no conflict for this event: we can check whether
-           * it would make things progress. **)
+             it would make things progress. *)
           aux (lazy (Lazy.force r || PMap.foldi (fun c ks r ->
             r || let m =
                    try PMap.find c st.constraints_some
@@ -246,7 +246,7 @@ let lcompatible_and_progress st el =
 
 let compatible_and_progress st e = lcompatible_and_progress st [e]
 
-(** Returns a new state [st] where [e1] is assured to be before [e2]. **)
+(** Returns a new state [st] where [e1] is assured to be before [e2]. *)
 let make_before st e1 e2 =
   if e1 = e2 then st
   else
@@ -268,7 +268,7 @@ let make_before st e1 e2 =
 
 let lapply st status el =
   (* LATER: This function could be factorised. *)
-  (** Registering the new events. **)
+  (** Registering the new events. *)
   let (events, idl) =
     List.fold_left (fun (events, idl) e ->
       let (id, events) = Id.map_insert_t events e in
@@ -306,7 +306,7 @@ let lapply st status el =
                           PSet.add (e.Events.event_id, c) set)
                         set (all_players_length st.number_of_character))
                   st.already_declared_events idl } in
-  (** Registering the new constraints. **)
+  (** Registering the new constraints. *)
   let rec intermediate_constraints st = function
     | [] | _ :: [] -> st
     | (e1, _) :: (e2, ev2) :: l ->
@@ -318,7 +318,7 @@ let lapply st status el =
       let st = PSet.fold (fun e' st -> make_before st e' e) st before in
       let st = PSet.fold (fun e' st -> make_before st e e') st after in
       st) st constraints idl in
-  (** Optimizing [st.constraints_none] by removing useless elements. **)
+  (** Optimizing [st.constraints_none] by removing useless elements. *)
   let constraints_none =
     List.fold_left (fun constraints_none (e, ev) ->
       let (eb, ea) =
@@ -357,12 +357,12 @@ let lapply st status el =
           PMap.add c none constraints_none)
         constraints_none ev.Events.event_attendees) st.constraints_none idl in
   let st = { st with constraints_none = constraints_none } in
-  (** Trying to match as many requirements of [st.constraints_some] as possible. **)
+  (** Trying to match as many requirements of [st.constraints_some] as possible. *)
   let st =
     List.fold_left (fun st (e, ev) ->
       let (before, after) = (all_successors fst st e, all_successors snd st e) in
       let (st, before, after) =
-        (** Considering constraints of the current event. **)
+        (** Considering constraints of the current event. *)
         PMap.foldi (fun c (do_before, do_after) (st, before, after) ->
           let aux forwards st =
             let (dir, oppdir) = if forwards then (snd, fst) else (fst, snd) in
@@ -374,7 +374,7 @@ let lapply st status el =
               let rec aux = function
                 | [] ->
                   (** No event fitting the constraint are present in the current
-                   * history: we add it in the list of future constraints. **)
+                     history: we add it in the list of future constraints. *)
                   let st =
                     let m =
                       try PMap.find c st.constraints_some
@@ -400,7 +400,7 @@ let lapply st status el =
           let (st, before) = aux false st in
           (st, before, after)) ev.Events.constraints_some (st, before, after) in
       let (st, _, _) =
-        (** Considering already present constraints. **)
+        (** Considering already present constraints. *)
         PMap.foldi (fun c ks (st, before, after) ->
           let m =
             try PMap.find c st.constraints_some
@@ -445,12 +445,12 @@ let create_state n = {
 
 type final = event list
 
-(** Returns the list of all players. **)
+(** Returns the list of all players. *)
 let _all_players st =
   PMap.foldi (fun c _ l -> c :: l) st []
 
 let finalise st now =
-  (** We first perform a topological sort of all events. **)
+  (** We first perform a topological sort of all events. *)
   let sorted =
     let rec aux acc seen next = function
       | [] ->
@@ -483,7 +483,7 @@ let finalise st now =
           with Not_found -> ([], []) in
         if after = [] then e :: l else l) [] st.events in
     aux [] PSet.empty [] start in
-  (** We then assign timetables to this list. **)
+  (** We then assign timetables to this list. *)
   let (l, _) =
     List.fold_left (fun (acc, state) e ->
       let ev = get_event st e in

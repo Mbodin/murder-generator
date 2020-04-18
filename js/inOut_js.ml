@@ -1,5 +1,5 @@
 (** Module InOut_js
- * An implementation of [InOut.T] for JavaScript. **)
+   An implementation of [InOut.T] for JavaScript. *)
 
 open Murder_generator
 open Libutils
@@ -9,7 +9,7 @@ open Js_of_ocaml_lwt
 
 let pause _ = Lwt_js.sleep 0.02
 
-(** Whether the loading animation is currently running. **)
+(** Whether the loading animation is currently running. *)
 let loading = ref true
 let loadingProgress = ref 0.2
 
@@ -80,7 +80,7 @@ let get_file url =
   res
 
 let url_replacements = [
-    ('_', 'o') (** Must be the first one as we use it to encode all the rest. **) ;
+    ('_', 'o') (** Must be the first one as we use it to encode all the rest. *) ;
     (';', 's') ;
     ('=', 'e') ;
     ('+', 'p') ;
@@ -158,7 +158,7 @@ type ('a, 'b) interaction = {
 
 type 'a sinteraction = ('a, 'a) interaction
 
-(** Similar to [lock] and [unlock], but from a boolean. **)
+(** Similar to [lock] and [unlock], but from a boolean. *)
 let lockMatch n = function
   | true -> n.lock ()
   | false -> n.unlock ()
@@ -172,13 +172,13 @@ let synchronise i1 i2 =
 
 let document = Dom_html.window##.document
 
-(** Return a list of CSS classes corresponding to the style of a button. **)
+(** Return a list of CSS classes corresponding to the style of a button. *)
 let link_to_class = function
   | InOut.Simple -> []
   | InOut.Button b ->
     [if b then "mainButton" else "secondaryButton"]
 
-(** Add the CSS classes to a node. **)
+(** Add the CSS classes to a node. *)
 let add_class_link a s =
   List.iter (fun c -> a##.classList##add (Js.string c)) (link_to_class s)
 
@@ -301,12 +301,12 @@ let rec block_node =
     (table :> Dom_html.element Js.t)
   | InOut.Node n -> n
 
-(** Return the [response] div from the main webpage. **)
+(** Return the [response] div from the main webpage. *)
 let get_response _ =
   Js.Opt.get (Dom_html.document##getElementById (Js.string "response")) (fun _ ->
     failwith "The element [response] has not been found in the webpage.")
 
-(** Remove all the child of a node. **)
+(** Remove all the child of a node. *)
 let rec clear_node n =
   match Js.Opt.to_option n##.firstChild with
   | Some c ->
@@ -340,8 +340,8 @@ let createNumberOutput n =
   (node, fun n -> set (string_of_int n))
 
 (** Given a DOM node, an input [input] an internal [get] function, the actual [get] function,
- * a [set] function, and a [lock] and [unlock] functions, create an interaction.
- * The triggerring of the [onChange] functions are dealt automatically. **)
+   a [set] function, and a [lock] and [unlock] functions, create an interaction.
+   The triggerring of the [onChange] functions are dealt automatically. *)
 let createInteraction node input get actual_get set lock unlock =
   let l = ref [] in
   let locked = ref false in
@@ -357,7 +357,7 @@ let createInteraction node input get actual_get set lock unlock =
   let onChange f =
     if !l = [] then (
       (** To avoid placing too many event listeners, we only add it once we know that there is
-       * at least one function. **)
+         at least one function. *)
       input##.onchange :=
         Dom_html.handler (fun _ ->
           trigger () ;
@@ -384,7 +384,7 @@ let createInteraction node input get actual_get set lock unlock =
   }
 
 (** Variant for the case where [node] has been created using [Dom_html.createInput],
- * and for which we can define a default [lock] and [unlock] function. **)
+   and for which we can define a default [lock] and [unlock] function. *)
 let createInputInteraction (node : Dom_html.inputElement Js.t) get actual_get set =
   let setLock status = node##.disabled := Js.bool status in
   let lock _ = setLock true in

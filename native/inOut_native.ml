@@ -1,10 +1,10 @@
 (** Module InOut_native
- * An implementation of [InOut.T] for native programs. **)
+   An implementation of [InOut.T] for native programs. *)
 
 open Murder_generator
 open Libutils
 
-(** Length of utf-8-encoded string. **)
+(** Length of utf-8-encoded string. *)
 let unicode_length =
   Uuseg_string.fold_utf_8 `Grapheme_cluster (fun x _ -> x + 1) 0
 
@@ -58,58 +58,58 @@ let log msg =
 let languages =
   Option.map_default (fun l -> [l]) [] (Sys.getenv_opt "LANG")
 
-(** A module to print on screen with potential breaking points. **)
+(** A module to print on screen with potential breaking points. *)
 module type PrintType =
   sig
 
-    (** The current screen size. **)
+    (** The current screen size. *)
     val screen_size : unit -> int
 
-    (** Update the current screen size. **)
+    (** Update the current screen size. *)
     val set_screen_size : int -> unit
 
-    (** Print the following string. **)
+    (** Print the following string. *)
     val print : string -> unit
 
-    (** Print a new line. **)
+    (** Print a new line. *)
     val newline : unit -> unit
 
-    (** Make sure that the current line is empty by printing a newline if needed. **)
+    (** Make sure that the current line is empty by printing a newline if needed. *)
     val clearline : unit -> unit
 
     (** Insert a breakpoint: if further printing go beyond the
-     * length limit, this breakpoint will be replaced by a new line.
-     * Two strings can be given: one to be printed at this place
-     * when the breakpoint is not replaced by a newline, and one
-     * to be printed if it has been replaced by a newline.
-     * In the later case, two strings must be provided: one printed
-     * before the newline, and one after.
-     * No character “\n” or “\r” should appear in these strings. **)
+       length limit, this breakpoint will be replaced by a new line.
+       Two strings can be given: one to be printed at this place
+       when the breakpoint is not replaced by a newline, and one
+       to be printed if it has been replaced by a newline.
+       In the later case, two strings must be provided: one printed
+       before the newline, and one after.
+       No character “\n” or “\r” should appear in these strings. *)
     val breakpoint : ?normal:string -> ?break:(string * string) -> unit -> unit
 
-    (** Insert a space, which may break into a newline. **)
+    (** Insert a space, which may break into a newline. *)
     val space : unit -> unit
 
-    (** Fill the rest of the line with this character. **)
+    (** Fill the rest of the line with this character. *)
     val separator : char -> unit
 
     (** Start a context: any further newlines will start by this string
-     * (in addition to the ones provided by outer contexts). **)
+       (in addition to the ones provided by outer contexts). *)
     val push_prefix : string -> unit
 
-    (** Add a context: any further content will end by this string. **)
+    (** Add a context: any further content will end by this string. *)
     val push_suffix : string -> unit
 
-    (** Add a context: any further content will be centered. **)
+    (** Add a context: any further content will be centered. *)
     val push_center : unit -> unit
 
     (** Remove the last provided context.
-     * Each [pop] must corresponds to exactly a [push_*]. **)
+       Each [pop] must corresponds to exactly a [push_*]. *)
     val pop : unit -> unit
 
   end
 
-(** Implemenation of [PrintType]. **)
+(** Implemenation of [PrintType]. *)
 module Print : PrintType =
   struct
 
@@ -120,22 +120,22 @@ module Print : PrintType =
         screen_size := max 0 size in
       (get, set)
 
-    (** A type to store contexts. **)
+    (** A type to store contexts. *)
     type context =
-      | Prefix of string (** A prefix is added to each string. **)
-      | Suffix of string (** A suffix is added to each string. **)
-      | Center (** Each string is centered. **)
+      | Prefix of string (** A prefix is added to each string. *)
+      | Suffix of string (** A suffix is added to each string. *)
+      | Center (** Each string is centered. *)
 
-    (** The current context, and how much space it takes. **)
+    (** The current context, and how much space it takes. *)
     let context = ref ([], 0)
 
-    (** How much space a given context takes. **)
+    (** How much space a given context takes. *)
     let context_size = function
       | Prefix str -> unicode_length str
       | Suffix str -> unicode_length str
       | Center -> 0
 
-    (** Push a context. **)
+    (** Push a context. *)
     let push ctx =
       let (l, size) = !context in
       context := (ctx :: l, size + context_size ctx)
@@ -150,7 +150,7 @@ module Print : PrintType =
       | ctx :: l ->
         context := (l, snd !context - context_size ctx)
 
-    (** Print the following string, going through all the current context. **)
+    (** Print the following string, going through all the current context. *)
     let print_line context str =
       let rec aux taken = function
         | [] -> str
@@ -165,35 +165,35 @@ module Print : PrintType =
             String.make (size / 2) ' ' ^ str ^ String.make (size - size / 2) ' ' in
       print_endline (aux 0 (List.rev (fst context)))
 
-    (** A type for breakpoints. **)
+    (** A type for breakpoints. *)
     type breakpoint = {
         normal : string (** What is meant to be displayed if the breakpoint
-                         * does not break the line. **) ;
+                           does not break the line. *) ;
         break_before : string (** If the breakpoint breaks the line, what is
-                               * meant to be displayed before the line break. **) ;
+                                 meant to be displayed before the line break. *) ;
         break_after : string (** If the breakpoint breaks the line, what is
-                              * meant to be displayed after the line break. **)
+                                meant to be displayed after the line break. *)
       }
 
-    (** An empty breakpoint. **)
+    (** An empty breakpoint. *)
     let empty_breakpoint = {
         normal = "" ;
         break_before = "" ;
         break_after = ""
       }
 
-    (** A structure containing the current state of the printer. **)
+    (** A structure containing the current state of the printer. *)
     type state = {
         state_context : context list * int (** Value of [!context] when
-                                            * the line started. **) ;
+                                              the line started. *) ;
         text_before : string (** Text written in the current line,
-                              * before the current breakpoint. **) ;
-        breakpoint : breakpoint (** Current breakpoint. **) ;
+                                before the current breakpoint. *) ;
+        breakpoint : breakpoint (** Current breakpoint. *) ;
         text_after : string (** Text written in the current line,
-                             * after the current breakpoint. **)
+                               after the current breakpoint. *)
       }
 
-    (** The state as it is after a new line. **)
+    (** The state as it is after a new line. *)
     let empty_state _ = {
         state_context = !context ;
         text_before = "" ;
@@ -201,7 +201,7 @@ module Print : PrintType =
         text_after = ""
       }
 
-    (** The current state of the printer. **)
+    (** The current state of the printer. *)
     let state = ref (empty_state ())
 
     let separator c =
@@ -215,7 +215,7 @@ module Print : PrintType =
       state := empty_state ()
 
     (** Indicate that we aim to print a string of the given size on the same
-     * line, and break the line if needed and possible. **)
+       line, and break the line if needed and possible. *)
     let reserve_for size =
       if unicode_length !state.text_before
          + unicode_length !state.breakpoint.normal
@@ -235,9 +235,9 @@ module Print : PrintType =
       )
 
     (** Consider whether the state should be partially printed because its
-     * breakpoint has been activated, and do so if needed.
-     * This function should be called whenever the state is modified with
-     * a non-empty breakpoint. **)
+       breakpoint has been activated, and do so if needed.
+       This function should be called whenever the state is modified with
+       a non-empty breakpoint. *)
     let normalize _ =
       reserve_for 0
 
@@ -280,11 +280,11 @@ module Print : PrintType =
 
 
 (** A node is just a function to print this node.
- * It takes as a argument a link printer: whenever the node item wants
- * to print a link, it calls this function, which will insert a specific
- * string for the user to know how to call this particular link.
- * This function is itself given a function to update the value of
- * the node item. **)
+   It takes as a argument a link printer: whenever the node item wants
+   to print a link, it calls this function, which will insert a specific
+   string for the user to know how to call this particular link.
+   This function is itself given a function to update the value of
+   the node item. *)
 type node =
   ((unit -> unit) -> string) -> unit
 
@@ -301,7 +301,7 @@ type ('a, 'b) interaction = {
 
 type 'a sinteraction = ('a, 'a) interaction
 
-(** Similar to [lock] and [unlock], but from a boolean. **)
+(** Similar to [lock] and [unlock], but from a boolean. *)
 let lockMatch n = function
   | true -> n.lock ()
   | false -> n.unlock ()
@@ -314,8 +314,8 @@ let synchronise i1 i2 =
   i2.onLockChange (lockMatch i1)
 
 (** Creates a menu and an interaction-creating function.
- * The menu is a wrapper around link to call the functions given to [onChange] each time
- * the link is activated before calling the corresponding function. **)
+   The menu is a wrapper around link to call the functions given to [onChange] each time
+   the link is activated before calling the corresponding function. *)
 let createMenu get =
   let l = ref [] in
   let onChange f = l := f :: !l in
@@ -401,7 +401,7 @@ let rec block_node b =
     Print.breakpoint ~normal:"  " ()
   | InOut.Text str -> fun _link ->
     (* LATER: Use [Uuseg_string.fold_utf_8 `Line_break]
-     * instead of [split_on_char]. *)
+       instead of [split_on_char]. *)
     List.iteri (fun i str ->
       if i <> 0 then Print.space () ;
       Print.print str) (String.split_on_char ' ' str)
@@ -473,19 +473,19 @@ let rec block_node b =
     Print.pop ()
   | InOut.Node node -> node
 
-(** Actions linked to each link. **)
+(** Actions linked to each link. *)
 let links = ref []
 
-(** Registered nodes to be printed at each screen. **)
+(** Registered nodes to be printed at each screen. *)
 let registered_nodes = ref BidirectionalList.empty
 
-(** The default [link] function. **)
+(** The default [link] function. *)
 let link f =
   let n = List.length !links in
   links := !links @ [f] ;
   "[" ^ string_of_int n ^ "]"
 
-(** Ask for a number from the user. **)
+(** Ask for a number from the user. *)
 let numberInput get set =
   print_string (string_of_int (get ()) ^ " -> ") ;
   flush stdout ;
@@ -495,19 +495,19 @@ let numberInput get set =
     with _ -> print_endline "Invalid value."; get () in
   set v
 
-(** Clear the registered links. **)
+(** Clear the registered links. *)
 let clear_links _ =
   links := [fun _ -> numberInput Print.screen_size Print.set_screen_size]
 
-(** Starting the server. **)
+(** Starting the server. *)
 let _ =
   Print.push_prefix "=" ;
   Print.push_suffix "=" ;
   let rec aux _ =
     clear_links () ;
-    (** Print all registered nodes. **)
+    (** Print all registered nodes. *)
     List.iter (fun b -> b link) (BidirectionalList.to_list !registered_nodes) ;
-    (** Wait for user input. **)
+    (** Wait for user input. *)
     match%lwt Lwt_io.read_line_opt Lwt_io.stdin with
     | None -> exit 0
     | Some str ->

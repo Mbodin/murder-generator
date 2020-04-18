@@ -22,9 +22,9 @@ let zero_objective = {
   }
 
 (** Relation states have as little cells as possible: [n - 1] for the
- * first counter, and [i + 1] for the second.
- * To get the relation between characters [c1] and [c2], with [c1 < c2],
- * one has to check the array at [.(c2 - 1).(c1)]. **)
+   first counter, and [i + 1] for the second.
+   To get the relation between characters [c1] and [c2], with [c1 < c2],
+   one has to check the array at [.(c2 - 1).(c1)]. *)
 let create_relation_state n =
   (Array.init (n - 1) (fun i ->
      Array.make (i + 1) Relation.neutral),
@@ -62,8 +62,8 @@ let write_relation_state (a, rs) c1 c2 r =
 
 let add_relation_state a c1 c2 r =
   (** As [Relation.neutral] is neutral for [Relation.compose] and that it
-   * happens frequently, we first check whether we really need to update
-   * anything. **)
+     happens frequently, we first check whether we really need to update
+     anything. *)
   if r <> Relation.neutral then
     let r' = read_relation_state a c1 c2 in
     write_relation_state a c1 c2 (Relation.compose r' r)
@@ -148,17 +148,17 @@ let attribute_value_can_progress = function
 
 
 (** Mapping from attribute to its value (either [PlayerAttribute.constructor]
- * or [PlayerAttribute.constructor attribute_value]. **)
+   or [PlayerAttribute.constructor attribute_value]. *)
 type 'value attribute_map =
   (Attribute.PlayerAttribute.attribute, 'value) PMap.t
 
 (** Mapping for contacts to their values (either [ContactAttribute.constructor]
- * or [ContactAttribute.constructor attribute_value]. **)
+   or [ContactAttribute.constructor attribute_value]. *)
 type 'value contact_map =
   (character, (Attribute.ContactAttribute.attribute, 'value) PMap.t) PMap.t
 
 (** A generic map, to be either instantiated by [character_state] when
- * solving the constraints or by [character_state_final] once solved. **)
+   solving the constraints or by [character_state_final] once solved. *)
 type ('player, 'contact) generic_character_state =
   ('player attribute_map * 'contact contact_map) array
 
@@ -167,8 +167,8 @@ type character_state =
    Attribute.ContactAttribute.constructor attribute_value) generic_character_state
 
 (** Same as [character_state], but without any doubt on the actual constructor.
- * A boolean is however added to state whether its value is fixed ([true]), or
- * whether is was just assigned this value by default ([false]) **)
+   A boolean is however added to state whether its value is fixed ([true]), or
+   whether is was just assigned this value by default ([false]) *)
 type character_state_final =
   (Attribute.PlayerAttribute.constructor * bool,
    Attribute.ContactAttribute.constructor * bool) generic_character_state
@@ -268,7 +268,7 @@ type final =
   character_state_final * relation_state * History.final
 
 (** Convert a value into a final value,
- * picking a particular possibility and marking whether the value has been fixed. **)
+   picking a particular possibility and marking whether the value has been fixed. *)
 let select_value = function
   | Fixed_value (l, _strict) -> (Utils.select_any l, true)
   | One_value_of l -> (Utils.select_any l, false)

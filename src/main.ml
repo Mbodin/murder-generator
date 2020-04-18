@@ -1,6 +1,6 @@
 (** Module Main.
- * This file is the one compiled to JavaScript, then fetched and executed
- * to run the whole program. **)
+   This file is the one compiled to JavaScript, then fetched and executed
+   to run the whole program. *)
 
 open Libutils
 open ExtList
@@ -8,40 +8,40 @@ open ExtString
 
 
 (** This entire file is parameterised by an interface as specified in the
- * InOut Module. **)
+   InOut Module. *)
 module Main (IO : InOut.T) = struct
 
 let webpage_link = "https://github.com/Mbodin/murder-generator"
 let webpage_issues = "https://github.com/Mbodin/murder-generator/issues"
 
 
-(** A trace of the menu function to help debugging. **)
+(** A trace of the menu function to help debugging. *)
 let trace = ref ["init"]
 
-(** Adding a message in the trace **)
+(** Adding a message in the trace *)
 let add_trace msg = trace := msg :: !trace
 
-(** Get the full trace. **)
+(** Get the full trace. *)
 let get_trace _ = List.rev !trace
 
-(** The default error messages. **)
+(** The default error messages. *)
 let errorTranslationsDefault =
   ("An error occurred!", "Please report it", "there", "Error details:")
 
-(** The translations needed to print error messages. **)
+(** The translations needed to print error messages. *)
 let errorTranslations = ref errorTranslationsDefault
 
 let file_signature file =
   string_of_int (Hashtbl.hash file)
 
-(** Getting and parsing the translations file. **)
+(** Getting and parsing the translations file. *)
 let get_translations _ =
   let%lwt (translation, languages) =
     let translations_file = "translations.json" in
     let%lwt translations = IO.get_file translations_file in
     add_trace ("getting translation file (" ^ file_signature translations_file ^ ")") ;
     Lwt.return (Translation.from_json translations_file translations) in
-  (** Shuffling languages, but putting the user languages on top. **)
+  (** Shuffling languages, but putting the user languages on top. *)
   let (matching, nonmatching) =
     List.partition (fun lg ->
       let lg = Translation.iso639 lg in
@@ -49,8 +49,8 @@ let get_translations _ =
   Lwt.return (translation, Utils.shuffle matching @ Utils.shuffle nonmatching)
 
 (** Prints a list of strings, [andw] being the word for “and”
- * in the current language.
- * This function makes use of the Oxford comma. **)
+   in the current language.
+   This function makes use of the Oxford comma. *)
 let print_list andw = function
   | [] -> "none"
   | a :: [] -> a
@@ -59,7 +59,7 @@ let print_list andw = function
     let (l, r) = Utils.assert_option __LOC__ (Utils.list_match_right l) in
     String.concat ", " l ^ ", " ^ andw ^ " " ^ r
 
-(** Get and parse each data file. **)
+(** Get and parse each data file. *)
 let get_data _ =
   let intermediate = ref Driver.empty_intermediary in
   Lwt_list.iter_p (fun fileName ->
@@ -95,7 +95,7 @@ let get_data _ =
        ^ missing "language tags" tags)))
   else Lwt.return (Driver.parse !intermediate)
 
-(** Get and parse each name file. **)
+(** Get and parse each name file. *)
 let get_names data =
   let%lwt data = data in
   let constructor_maps = Driver.get_constructor_maps data in
@@ -108,16 +108,16 @@ let get_names data =
         invalid_arg ("Error while parsing name file “" ^ fileName ^ "”: " ^ str) in
     Lwt.return generator) NameFiles.files
 
-(** A type to store player information **)
+(** A type to store player information *)
 type player_information = {
     name : string (** Character name *) ;
-    complexity : int (** Complexity **) ;
-    difficulty : int (** Difficulty **) ;
-    attributes : Attribute.PlayerAttribute.constructor list (** Preset attributes **) ;
-    contacts : Attribute.ContactAttribute.constructor list list (** Preset contacts **)
+    complexity : int (** Complexity *) ;
+    difficulty : int (** Difficulty *) ;
+    attributes : Attribute.PlayerAttribute.constructor list (** Preset attributes *) ;
+    contacts : Attribute.ContactAttribute.constructor list list (** Preset contacts *)
   }
 
-(** A type to store what each page of the menu provides. **)
+(** A type to store what each page of the menu provides. *)
 type parameters = {
     language : Translation.language option ;
     player_number : int ;
@@ -127,10 +127,10 @@ type parameters = {
     computation_power : float ;
     categories : Id.t PSet.t option ;
     player_information : player_information list ;
-    chosen_productions : string PSet.t (** The name of each chosen production. **)
+    chosen_productions : string PSet.t (** The name of each chosen production. *)
   }
 
-(** URL tags **)
+(** URL tags *)
 let urltag_lang = "lang"
 let urltag_number = "num"
 let urltag_level = "level"
@@ -141,7 +141,7 @@ let urltag_categories = "cats"
 
 exception InvalidUrlArgument
 
-(** Update player informations from the parameters such that it matches the [player_number] data. **)
+(** Update player informations from the parameters such that it matches the [player_number] data. *)
 let create_player_information names _get_translation parameters =
   let lg = Utils.assert_option __LOC__ parameters.language in
   let generator =
@@ -169,9 +169,9 @@ let create_player_information names _get_translation parameters =
     List.fold_left (fun player_information _ ->
         let (name, attributes) =
           (** Because the generator contains external data, one can hardly
-           * assume that it can produce infinitely many different names.
-           * We are thus stuck to just generate new ones until a really new
-           * one appears. **)
+             assume that it can produce infinitely many different names.
+             We are thus stuck to just generate new ones until a really new
+             one appears. *)
           let rec aux fuel =
             let (name, attributes) = Names.generate generator PSet.empty in
             match fuel with
@@ -189,21 +189,21 @@ let create_player_information names _get_translation parameters =
         } :: player_information)
       player_information (Utils.seq (parameters.player_number - len))
 
-(** Get the categories from the parameters, but return the default value if not defined. **)
+(** Get the categories from the parameters, but return the default value if not defined. *)
 let get_categories data parameters =
   match parameters.categories with
   | Some s -> s
   | None -> PSet.from_list (Driver.all_categories data)
 
-(** Get all elements corresponding to these settings. **)
+(** Get all elements corresponding to these settings. *)
 let get_all_elements data parameters =
   let lg = Utils.assert_option __LOC__ parameters.language in
   let categories = get_categories data parameters in
   Driver.get_all_elements data lg categories parameters.player_number
 
 (** In order to factorise between attributes and contact, the following two declarations
- * defines some functions in common between the two structures, so that subfunctions can
- * be reused for both. **)
+   defines some functions in common between the two structures, so that subfunctions can
+   be reused for both. *)
 let attribute_functions =
   (Attribute.PlayerAttribute.all_constructors,
    Attribute.PlayerAttribute.constructor_attribute,
@@ -223,7 +223,7 @@ let contact_functions =
    (fun c -> Attribute.ContactAttribute c),
    (fun c -> Attribute.ContactConstructor c))
 
-(** The main script. **)
+(** The main script. *)
 let main =
   try%lwt
     IO.clear_response () ;
@@ -242,12 +242,12 @@ let main =
     let get_language p = Utils.assert_option __LOC__ p.language in
     let get_translation p = get_translation_language (get_language p) in
     (** Adds a “next” and “previous” buttons and call them when needed.
-     * This function waits for the user to either click on the previous or
-     * next button, then calls the function to get the parameters, and
-     * finally calls the appropriate function.
-     * Both functions are given as option-types: if [None] is given, the
-     * corresponding button doesn’t appear.
-     * The text (more precisely, its key) for each button can be changed. **)
+       This function waits for the user to either click on the previous or
+       next button, then calls the function to get the parameters, and
+       finally calls the appropriate function.
+       Both functions are given as option-types: if [None] is given, the
+       corresponding button doesn’t appear.
+       The text (more precisely, its key) for each button can be changed. *)
     let next_button ?(previousText = "previous") ?(nextText = "next")
         w p get_parameters previous next =
       let jump f _ =
@@ -265,12 +265,12 @@ let main =
       IO.print_block (InOut.Div (InOut.Centered,
         if previous = [] || next = [] then previous @ next
         else previous @ [ InOut.Space ] @ next)) in
-    (** We request the data without forcing it yet. **)
+    (** We request the data without forcing it yet. *)
     let data = get_data () in
     let names = get_names data in
 
     let rec ask_for_languages _ parameters =
-      (** Showing to the user all available languages. **)
+      (** Showing to the user all available languages. *)
       add_trace "ask_for_languages" ;
       IO.set_parameters [] ;
       errorTranslations := errorTranslationsDefault ;
@@ -293,7 +293,7 @@ let main =
       load_or_create (Lwt.task ()) { parameters with language = Some language }
 
     and load_or_create (cont, w) parameters =
-      (** Describing the project to the user. **)
+      (** Describing the project to the user. *)
       add_trace "load_or_create" ;
       IO.set_parameters [(urltag_lang, Translation.iso639 (get_language parameters))] ;
       let get_translation = get_translation parameters in
@@ -302,7 +302,7 @@ let main =
           InOut.Text (get_translation "openSource") ;
           InOut.LinkExtern (InOut.Simple, get_translation "there", webpage_link)
         ]) ;
-      (** Start a new scenario. **)
+      (** Start a new scenario. *)
       IO.print_block (InOut.P [
           InOut.Text (get_translation "createNewScenario") ;
           InOut.LinkContinuation (true, InOut.Button true, get_translation "startGeneration",
@@ -310,7 +310,7 @@ let main =
               Lwt.wakeup_later w (fun _ ->
                 IO.clear_response () ;
                 ask_for_basic (Lwt.task ()) parameters)) ]) ;
-      (** Suggest to shortcut the questions. **)
+      (** Suggest to shortcut the questions. *)
       let numberOfPlayers =
         IO.createNumberInput ~min:1 parameters.player_number in
       IO.print_block (InOut.Div (InOut.Normal, [
@@ -332,7 +332,7 @@ let main =
                     generate (Lwt.task ()) parameters))
             ])
         ])) ;
-      (** Suggest to shortcut the generation by importing a file. **)
+      (** Suggest to shortcut the generation by importing a file. *)
       let (shortcut, readShortcut) =
         IO.createFileImport ["json"] (fun _ ->
           IO.clear_response () ;
@@ -399,7 +399,7 @@ let main =
       let%lwt cont = cont in cont ()
 
     and ask_for_basic (cont, w) parameters =
-      (** Asking the first basic questions about the murder party. **)
+      (** Asking the first basic questions about the murder party. *)
       add_trace "ask_for_basic" ;
       let get_translation = get_translation parameters in
       let playerNumber =
@@ -455,7 +455,7 @@ let main =
       let%lwt cont = cont in cont ()
 
     and ask_for_categories (cont, w) parameters =
-      (** Asking about categories. **)
+      (** Asking about categories. *)
       add_trace "ask_for_categories" ;
       IO.set_parameters [
           (urltag_lang, Translation.iso639 (get_language parameters)) ;
@@ -466,7 +466,7 @@ let main =
           (urltag_power, string_of_float parameters.computation_power)
         ] ;
       let get_translation = get_translation parameters in
-      (** Forcing the data to be loaded. **)
+      (** Forcing the data to be loaded. *)
       (if Lwt.state data = Lwt.Sleep then (
          IO.setLoading 0.2 ;%lwt
          IO.startLoading ()
@@ -582,7 +582,7 @@ let main =
       let%lwt cont = cont in cont ()
 
     and ask_for_player_constraints (cont, w) parameters =
-      (** Asking about individual player constraints. **)
+      (** Asking about individual player constraints. *)
       add_trace "ask_for_player_constraints" ;
       let get_translation = get_translation parameters in
       let%lwt data = data in
@@ -612,12 +612,12 @@ let main =
       let translation = Driver.get_translations data in
       let all_players = Utils.seq (List.length player_information) in
       (** Given either [attribute_functions] or [contact_functions], return some information
-       * about all constructors:
-       * - the associated attribute,
-       * - whether it is internal,
-       * - its generic name,
-       * - its translation,
-       * - all its possible translations. **)
+         about all constructors:
+         - the associated attribute,
+         - whether it is internal,
+         - its generic name,
+         - its translation,
+         - all its possible translations. *)
       let constructor_infos (_, constructor_attribute, attribute_name, constructor_name,
           is_internal, proj, consa, consc) c =
         let m = proj constructor_maps in
@@ -637,8 +637,8 @@ let main =
             (get_language parameters) (consc c) in
         (a, is_internal m a c, name, translated, all_translations) in
       (** Given either [attribute_functions] or [contact_functions], fetch the constructors
-       * that are effectively chosen in the current settings, and return two lists of constructors,
-       * one for internal constructors and the other for the normal ones. **)
+         that are effectively chosen in the current settings, and return two lists of constructors,
+         one for internal constructors and the other for the normal ones. *)
       let create_lists_cons functions =
         let (all, _, _, _, _, proj, _, cons) = functions in
         let m = proj constructor_maps in
@@ -662,7 +662,7 @@ let main =
         let (a, _, _, t, _) = constructor_infos functions c in
         (t, (a, c)) in
       (** Create a responsive list for either attributes or contacts, depending whether
-       * [functions] is [attribute_functions] or [contact_functions]. **)
+         [functions] is [attribute_functions] or [contact_functions]. *)
       let create_responsive_list functions internal_cons main_cons current =
         let pick_list internal_cons main_cons get txt =
           let get = !get in
@@ -690,11 +690,11 @@ let main =
               let l =
                 Utils.list_map_filter (fun (c, a, n, t, ts) ->
                   (** As a help for the reader, here are the meaning of each of these values:
-                   * - [c] is the considered attribute constructor,
-                   * - [a] is the associated attribute,
-                   * - [n] its generic name,
-                   * - [t] its full translation in the current language,
-                   * - [ts] possible contextualised translations for the current language. **)
+                     - [c] is the considered attribute constructor,
+                     - [a] is the associated attribute,
+                     - [n] its generic name,
+                     - [t] its full translation in the current language,
+                     - [ts] possible contextualised translations for the current language. *)
                   if PSet.mem a already_chosen then None
                   else
                     let d =
@@ -735,7 +735,7 @@ let main =
           List.map (get_responsible_list_infos functions) current in
         let getrec =
           (* This reference is frustrating: I could not find another way to make
-           * the compiler accept the recursion in this case. *)
+             the compiler accept the recursion in this case. *)
           ref (fun _ -> List.map snd attributes) in
         let node =
           let proposed =
@@ -811,9 +811,9 @@ let main =
                              avoid
                            else
                              (** As the generator contains external data, one can hardly assume
-                              * that it can produce infinitely many different names.
-                              * We are thus stuck to just generate new ones until a really new
-                              * one appears. **)
+                                that it can produce infinitely many different names.
+                                We are thus stuck to just generate new ones until a really new
+                                one appears. *)
                              let (name, attributes) =
                                let attributes =
                                  let l = attributesNode.IO.get () in
@@ -1000,7 +1000,7 @@ let main =
       let%lwt cont = cont in cont ()
 
     and generate task parameters =
-      (** Starting the generation. **)
+      (** Starting the generation. *)
       add_trace "generate" ;
       let get_translation = get_translation parameters in
       IO.setLoading 0. ;%lwt
@@ -1052,7 +1052,7 @@ let main =
       choose_formats state task parameters
 
     and choose_formats state (cont, w) parameters =
-      (** Asking the user to what formats we should export the scenario. **)
+      (** Asking the user to what formats we should export the scenario. *)
       add_trace "choose_formats" ;
       IO.unset_printing_mode () ;
       IO.stopLoading () ;%lwt
@@ -1093,7 +1093,7 @@ let main =
       let%lwt cont = cont in cont ()
 
     and display state (cont, w) parameters =
-      (** Exporting the generated state to various formats. **)
+      (** Exporting the generated state to various formats. *)
       add_trace "display" ;
       let get_translation = get_translation parameters in
       let%lwt data = data in
@@ -1168,7 +1168,7 @@ let main =
         (Some (choose_formats (Lwt.return state))) None ;
       let%lwt cont = cont in cont () in
 
-    (** Setting the environment. **)
+    (** Setting the environment. *)
     let parameters = {
         language = None ;
         player_number = 7 ;
@@ -1192,12 +1192,12 @@ let main =
                 ask_for_languages (Lwt.task ()) parameters))
         ]) in
     match List.assoc_opt urltag_lang arguments with
-    | None -> (** No language is provided. **)
+    | None -> (** No language is provided. *)
       ask_for_languages (Lwt.task ()) parameters
     | Some lg ->
       let lg = Translation.from_iso639 lg in
       match Translation.translate translation lg "iso639" with
-      | None -> (** Invalid language. **)
+      | None -> (** Invalid language. *)
         ask_for_languages (Lwt.task ()) parameters
       | Some _ ->
         let parameters = { parameters with language = Some lg } in
@@ -1259,7 +1259,7 @@ let main =
         | _ ->
           load_or_create (cont, w) parameters
 
-  (** Reporting errors. **)
+  (** Reporting errors. *)
   with e ->
     try%lwt
       let (errorOccurred, reportIt, there, errorDetails) = !errorTranslations in
@@ -1280,7 +1280,7 @@ let main =
       IO.stopLoading () ;%lwt
       Lwt.return ()
     with e' -> (** If there have been an error when printing the error,
-                * we failback to the console. **)
+                  we failback to the console. *)
       IO.log "Unfortunately, a important error happened." ;
       IO.log ("Please report it to " ^ webpage_issues) ;
       IO.log ("Primary error details: " ^ Printexc.to_string e) ;

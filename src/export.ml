@@ -20,53 +20,53 @@ type t = {
     given : state ;
     translated_events : (History.character Events.t, string list) PMap.t Lazy.t
       (** A map of translations for each event in [State.get_history_final st].
-       * These translations are made using the current language and consist,
-       * for each event, to a list of strings.
-       * This list of translated events help maintaining consistency between
-       * different instances of the same event. **) ;
-    final : State.final Lazy.t (** The finalised state. **)
+         These translations are made using the current language and consist,
+         for each event, to a list of strings.
+         This list of translated events help maintaining consistency between
+         different instances of the same event. *) ;
+    final : State.final Lazy.t (** The finalised state. *)
   }
 
 (** As the state [s], but there the translation language has moved to
- * the “generic” language. **)
+   the “generic” language. *)
 let generic s = { s with language = Translation.generic }
 
-(** A shortcut to [is_internal] for attributes. **)
+(** A shortcut to [is_internal] for attributes. *)
 let is_internal_attribute s a v =
   Attribute.PlayerAttribute.is_internal s.constructor_maps.Attribute.player a v
 
-(** A shortcut to [is_internal] for contacts. **)
+(** A shortcut to [is_internal] for contacts. *)
 let is_internal_contact s a v =
   Attribute.ContactAttribute.is_internal s.constructor_maps.Attribute.contact a v
 
-(** Provide a human-readable version of the attribute. **)
+(** Provide a human-readable version of the attribute. *)
 let translate_attribute s a =
   let tr = s.translation.Translation.attribute in
   Translation.force_translate tr s.language a
 
 (** The following two functions instantiate [translate_attribute]
- * to player and contact attributes. **)
+   to player and contact attributes. *)
 let translate_attribute_player s a =
   translate_attribute s (Attribute.PlayerAttribute a)
 let translate_attribute_contact s a =
   translate_attribute s (Attribute.ContactAttribute a)
 
 (** Provide a human-readable version of the constructor.
- * The function [f] is either [State.PlayerConstructor] or
- * [State.ContactConstructor]. **)
+   The function [f] is either [State.PlayerConstructor] or
+   [State.ContactConstructor]. *)
 let translate_value s f v =
   let tr = s.translation.Translation.constructor in
   fst (Translation.gforce_translate tr s.language (f v)
         (PSet.singleton Translation.base))
 
 (** The following two functions instantiate [translate_value]
- * to player and contact attributes. **)
+   to player and contact attributes. *)
 let translate_value_player s =
   translate_value s (fun v -> Attribute.PlayerConstructor v)
 let translate_value_contact s =
   translate_value s (fun v -> Attribute.ContactConstructor v)
 
-(** Translate an event from a translation object [trp] for player. **)
+(** Translate an event from a translation object [trp] for player. *)
 let translate_event s trp e =
   let (nb_sentence, tr) = e.Events.translation in
   let tr =
@@ -81,7 +81,7 @@ let translate_event s trp e =
     ["<Empty translation for " ^ Events.print_event e ^ ">"]
   else l
 
-(** Generate a translation object for player for [translate_event]. **)
+(** Generate a translation object for player for [translate_event]. *)
 let translation_players s final =
   let read_tags =
     let tags =
@@ -127,32 +127,32 @@ let translation_players s final =
     Translation.gtranslate tr_player.(Id.to_array c) s.language () in
   (read_tags, translate)
 
-(** Return the name of a character [c]. **)
+(** Return the name of a character [c]. *)
 let get_name s c =
   Utils.assert_option __LOC__ (List.nth_opt s.names (Id.to_array c))
 
-(** Replace the characters '"' by '\"' and '\' by '\\'. **)
+(** Replace the characters '"' by '\"' and '\' by '\\'. *)
 let escape_quote str =
   let replace input = Re.Str.global_replace (Re.Str.regexp_string input) in
   replace "\"" "\\\"" (replace "\\" "\\\\" str)
 
-(** Replace the characters '<' and '{' by ']' and '>' and '}' by ']'. **)
+(** Replace the characters '<' and '{' by ']' and '>' and '}' by ']'. *)
 let escape_angle_brackets str =
   let replace2 in1 in2 =
     Re.Str.global_replace (Re.Str.regexp (in1 ^ "\\|" ^ in2)) in
   replace2 "{" "<" "[" (replace2 "}" ">" "]" str)
 
-(** Replace the characters '<' by "&lt;" and '>' by "&gt;". **)
+(** Replace the characters '<' by "&lt;" and '>' by "&gt;". *)
 let xml_escape str =
   let replace input = Re.Str.global_replace (Re.Str.regexp_string input) in
   replace "<" "&lt;" (replace ">" "&gt;" str)
 
-(** Given an XML block name and its content, create the enclosing block. **)
+(** Given an XML block name and its content, create the enclosing block. *)
 let xml_block enclosing str =
   let enclosing = xml_escape enclosing in
   "<" ^ enclosing ^ ">" ^ str ^ "</" ^ enclosing ^ ">"
 
-(** Create an XML comment. **)
+(** Create an XML comment. *)
 let _xml_comment str =
   "<!-- " ^ xml_escape str ^ " -->"
 
@@ -170,9 +170,9 @@ let process s =
     final = final
   }
 
-(** The functions that follow are all declared in the [all_production] list. **)
+(** The functions that follow are all declared in the [all_production] list. *)
 
-(** Produce a Graphviz representation of relations. **)
+(** Produce a Graphviz representation of relations. *)
 let to_graphviz_relation s =
   let final = Lazy.force s.final in
   let s = s.given in
@@ -185,7 +185,7 @@ let to_graphviz_relation s =
       "digraph {" ; "" ;
       "  // Generated from " ^ webpage_address ; "" ;
       "  node [shape=record]" ; "" ;
-      (** Declaring each player **)
+      (** Declaring each player *)
       String.concat "\n" (List.mapi (fun c name ->
         let c = Id.from_array c in
         "  " ^ player_node c ^ " [label=\"{"
@@ -198,7 +198,7 @@ let to_graphviz_relation s =
                 ("{" ^ escape tra ^ "|" ^ escape trv ^ "}") :: l)
             (State.get_all_attributes_character_final final c) [])
         ^ "}\"]") s.names) ; "" ;
-      (** Declaring their relations **)
+      (** Declaring their relations *)
       String.concat "\n" (List.concat (List.mapi (fun c _ ->
         let c = Id.from_array c in
         PMap.foldi (fun c' lv l ->
@@ -229,7 +229,7 @@ let to_graphviz_relation s =
       "}" ; ""
     ]
 
-(** Produce a Graphviz representation of events. **)
+(** Produce a Graphviz representation of events. *)
 let to_graphviz_event s =
   let event_node id = "event" ^ string_of_int (Id.to_array id) in
   let end_file = ["}" ; ""] in
@@ -264,7 +264,7 @@ let to_graphviz_event s =
       :: "  node [shape=record] ;" :: "  rankdir=LR ;" :: ""
       :: graph)
 
-(** Produce an iCalendar file. **)
+(** Produce an iCalendar file. *)
 let to_icalendar s =
   let state = Lazy.force s.final in
   let rec split = function
@@ -320,7 +320,7 @@ let to_icalendar s =
     @ "END:VCALENDAR"
     :: []))
 
-(** Produce a timeline file. **)
+(** Produce a timeline file. *)
 let to_timeline s =
   let state = Lazy.force s.final in
   let get_name = get_name s.given in
@@ -351,7 +351,7 @@ let to_timeline s =
               | Events.Very_short_term_event -> (114, 159, 207)
               | Events.Immediate_event -> (173, 127, 168) in
             string_of_int r ^ "," ^ string_of_int g ^ "," ^ string_of_int b) in
-        (** We duplicate the event for each of its attendees. **)
+        (** We duplicate the event for each of its attendees. *)
         let create c =
           xml_block "event" (
             xml_block "start" (xml_escape (Date.timeline e.History.event_begin))
@@ -394,7 +394,7 @@ let to_timeline s =
     )
 
 (** Produce a block, which can then be translated into either HTML
- * or printed on a terminal through the InOut module. **)
+   or printed on a terminal through the InOut module. *)
 let to_block s =
   let state = Lazy.force s.final in
   let translated_events = Lazy.force s.translated_events in
@@ -428,8 +428,8 @@ let to_block s =
       @ [wrapt "eventDescription" "description"] in
     let content =
       (** We first determine how many “events” each event lasts,
-       * counting the number of events with the same year, month, and day.
-       * Furthermore, we cound how many events this event overlaps. **)
+         counting the number of events with the same year, month, and day.
+         Furthermore, we cound how many events this event overlaps. *)
       let rec get_event_sharing = function
         | [] -> []
         | (beg, d, e) :: l ->
@@ -460,8 +460,8 @@ let to_block s =
           :: get_event_sharing l in
       let evs =
         (** This function splits the list of events into a list of event
-         * begin and ends, each with a boolean indicating whether the event
-         * starts or ends, a date, and the corresponding event. **)
+           begin and ends, each with a boolean indicating whether the event
+           starts or ends, a date, and the corresponding event. *)
         let rec split_begin_end waiting_end = function
           | [] -> waiting_end
           | e :: l ->
@@ -481,7 +481,7 @@ let to_block s =
         get_event_sharing (split_begin_end [] l) in
       let activity =
         (** The activity of each line in the timeline: for each player and
-         * event type, how many turns are they going to stay here. **)
+           event type, how many turns are they going to stay here. *)
         let m =
           List.fold_left (fun m t ->
             PMap.add t 0 m) PMap.empty Events.all_event_type in
@@ -613,7 +613,7 @@ let to_block s =
                    else None) (State.get_history_final state)))
              ]))) s.given.names)
 
-(** Produce an org-mode file. **)
+(** Produce an org-mode file. *)
 let to_org s =
   let state = Lazy.force s.final in
   let translated_events = Lazy.force s.translated_events in
@@ -683,7 +683,7 @@ let to_org s =
                   Some (print_event 3 e)
                 else None) (State.get_history_final state))) s.given.names)
 
-(** Produce a JSON file. **)
+(** Produce a JSON file. *)
 let to_json s =
   let state = Lazy.force s.final in
   let s = generic s.given in

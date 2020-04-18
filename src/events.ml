@@ -1,13 +1,13 @@
 
 open Libutils
 
-(** There are two kinds of kinds: user defined and kinds from attributes. **)
+(** There are two kinds of kinds: user defined and kinds from attributes. *)
 type 'character kind =
-  | Kind of Id.t (** A user-defined kind. **)
+  | Kind of Id.t (** A user-defined kind. *)
   | ProvidePlayerAttribute of Attribute.PlayerAttribute.attribute
-      (** An event that provide this attribute **)
+      (** An event that provide this attribute *)
   | ProvideContactAttribute of Attribute.ContactAttribute.attribute * 'character
-      (** An event that provide this contact to this character. **)
+      (** An event that provide this contact to this character. *)
 
 let print_kind f = function
   | Kind id -> "Kind " ^ string_of_int (Id.to_array id)

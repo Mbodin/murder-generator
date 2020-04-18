@@ -29,22 +29,22 @@ module AttributeInst () =
     type constructor = Id.t
 
     type constructor_map = {
-        name : string Id.map (** Attribute names **) ;
+        name : string Id.map (** Attribute names *) ;
         map : (attribute * string) Id.map
           (** The map storing each constructor.
-           * The attribute is part of the constructor, with the constructor
-           * name. **) ;
+             The attribute is part of the constructor, with the constructor
+             name. *) ;
         association : (attribute, constructor list) PMap.t
-          (** Which constructors is associated to which attribute. **) ;
+          (** Which constructors is associated to which attribute. *) ;
         compatibility : (attribute, (constructor, constructor list) PMap.t) PMap.t
-          (** For each constructor, what is its compatibility list. **) ;
+          (** For each constructor, what is its compatibility list. *) ;
         internal : (attribute, (constructor PSet.t) option) PMap.t
             (** For each attribute, what is its internal status.
-             * This status is expressed as an option type:
-             * - [None] means that every constructor of this attribute
-             *   are internal,
-             * - [Some] means that only the ones in the associated set
-             *   are internal. **)
+               This status is expressed as an option type:
+               - [None] means that every constructor of this attribute
+                 are internal,
+               - [Some] means that only the ones in the associated set
+                 are internal. *)
       }
 
     let empty_constructor_map = {

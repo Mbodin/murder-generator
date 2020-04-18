@@ -11,5 +11,6 @@
 *.native
 *.exe
 *.js
-!web/main.js
+web/main.js
+web/doc
 

@@ -2,12 +2,13 @@
 This file describes how the source code of this project is organised.
 This program is written in OCaml.
 Signature files `.mli` are commented, but `.ml` files only documents what is not present in the corresponding `.mli` file.
+The command `esy doc` generates the file `_build/default/_doc/_html/index.html` that presents this documentation in a form that may be easier to read.
+Pre-generated in-source documentation files are available at [this address](https://github.com/Mbodin/murder-generator/doc).
 
 The project is divided into several folders:
-- [src/](../../src) contains all the source code of the generator specific to this project.
-- [lib/](../../lib) contains all the source code of the generator that is not specific to this project, and could thus be reused in other projects.
+- [src/](../../src) contains all the source code of the generator, but the user-interface.  This is packaged as a library for the interfaces.
+- [native/](../../native) and [js/](../../js) contains both user-interfaces for the project.  Both these interfaces are using the main [source code](../../src) as a library, instantiating it to a particular interface (native or web).
 - [data/](../../data) contains all the data used by the program, in particular the scenario elements in its subfolder [elements](../../data/elements).  The generator uses these scenario elements to combine them and create a fully-fledged scenario.  In particular, [language.murder](../../data/elements/language.murder) describes how languages features are implemented, and is described in [language.md](./language.md).
-- [dummy](../../dummy) contains source files that are meant to be updated at each compilation.  These files are created by the [build.sh](../../build.sh) script.  These files are not meant to be manually changed or committed.
 - [web](../../web) contains resources for the online interface.
 
 Here follows a description of the most important files of the [src/](../../src) folder.

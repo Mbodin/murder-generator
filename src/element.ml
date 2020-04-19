@@ -1,4 +1,5 @@
 
+open Libutils
 open ExtList
 
 
@@ -29,24 +30,24 @@ type t = {
   }
 
 (** To avoid having to check players that can’t fit a particular role for an event,
- * we cache the computed sets for each events.
- * The way in which we look for instantiations guarantees that if a player doesn’t
- * respect the constraints of an element in a state, then any further application of
- * elements won’t change the fact that this player doesn’t respect the constraints
- * of this element.
- * In other words, the possible player instantiation for each role can only shrink
- * along state applications. **)
+   we cache the computed sets for each events.
+   The way in which we look for instantiations guarantees that if a player doesn’t
+   respect the constraints of an element in a state, then any further application of
+   elements won’t change the fact that this player doesn’t respect the constraints
+   of this element.
+   In other words, the possible player instantiation for each role can only shrink
+   along state applications. *)
 type cache_cell = {
     possible_other : character list ;
     possible_players : character list array
   }
 
-(** For each element identifier, we store the cache sets. **)
+(** For each element identifier, we store the cache sets. *)
 type cache = (Id.t, cache_cell) PMap.t
 
 let empty_cache = PMap.empty
 
-(** Returns the list of attributes provided by this constraint. **)
+(** Returns the list of attributes provided by this constraint. *)
 let provided_attributes_constraint =
   let aux a = function
     | State.Fixed_value _ -> PSet.singleton a
@@ -63,28 +64,28 @@ let provided_attributes e =
     (provided_attributes_constraint_list PSet.empty e.others) e.players)
 
 (** States whether [v1] and [v2] are compatible and make some progress.
- * The return value is expressed as for [compatible_and_progress]:
- * [None] means that it is not compatible, [Some (lazy true)] that it is
- * compatible and progress, and [Some (lazy false)] that it is compatible
- * but does not progress.
- * As for [State.compose_attribute_value], is takes as an argument a
- * function stating whether two base value are compatible. **)
+   The return value is expressed as for [compatible_and_progress]:
+   [None] means that it is not compatible, [Some (lazy true)] that it is
+   compatible and progress, and [Some (lazy false)] that it is compatible
+   but does not progress.
+   As for [State.compose_attribute_value], is takes as an argument a
+   function stating whether two base value are compatible. *)
 let compatible_and_progress_attribute_value compatible v1 v2 =
   Utils.apply_option (State.compose_attribute_value compatible v1 v2)
     (fun v' -> lazy (State.attribute_value_progress v1 v'))
 
 (** Merges two results of [compatible_and_progress].
- * The second argument is meant to be lazily evaluated. **)
+   The second argument is meant to be lazily evaluated. *)
 let merge_progress b1 b2 =
   Utils.if_option b1 (fun b1 ->
     Utils.apply_option (Lazy.force b2) (fun b2 ->
       lazy (Lazy.force b1 || Lazy.force b2)))
 
 (** Checks whether the constraints [conss] are valid for the
- * character [c] in the state [st].
- * The contact case is given as argument as the function [f].
- * The argument [m] is of type [State.constructor_maps] and
- * is an argument of most functions in this file. **)
+   character [c] in the state [st].
+   The contact case is given as argument as the function [f].
+   The argument [m] is of type [State.constructor_maps] and
+   is an argument of most functions in this file. *)
 let respect_constraints_base f m st conss c =
   let cst = State.get_character_state st in
   List.fold_left (fun b cons ->
@@ -101,9 +102,9 @@ let respect_constraints_base f m st conss c =
         f con cha v))) (Some (lazy false)) conss
 
 (** Checks whether the constraints [conss] are valid for the
- * character [c] in the state [st].
- * In addition to [respect_constraints_base], this
- * function also checks events constraints [evs]. **)
+   character [c] in the state [st].
+   In addition to [respect_constraints_base], this
+   function also checks events constraints [evs]. *)
 let respect_constraints_events f m st conss evs c =
   let hst = State.get_history_state st in
   merge_progress
@@ -111,20 +112,20 @@ let respect_constraints_events f m st conss evs c =
     (lazy (History.lcompatible_and_progress hst evs))
 
 (** Checks whether the constraints [conss] are locally valid for the
- * character [c] in the character state [cst].
- * Events are also checked to be addable to the characters’s events.
- * Only local constraints are considered: no constraint depending on the
- * instantiation are checked at this point. **)
+   character [c] in the character state [cst].
+   Events are also checked to be addable to the characters’s events.
+   Only local constraints are considered: no constraint depending on the
+   instantiation are checked at this point. *)
 let respect_constraints =
   respect_constraints_events (fun _ _ _ -> Some (lazy false))
 
 (** Returns all the players of the state [st] that are not in the
- * instantiation [inst]. **)
+   instantiation [inst]. *)
 let other_players st inst =
   List.filter (fun i -> not (Array.exists ((=) i) inst)) (State.all_players st)
 
 (** A function to be given to [respect_constraints_events] to deal with the
- * instantiation-dependent contacts. **)
+   instantiation-dependent contacts. *)
 let check_contact m inst st c con cha v1 =
   let cst = State.get_character_state st in
   let check cha =
@@ -133,18 +134,18 @@ let check_contact m inst st c con cha v1 =
     | Some v2 ->
       let compatible =
         (* TODO: No longer check compatibility of constructors there.
-         * Instead, directly replace any compatible addition of a constructor
-         * by the whole list of compatible attributes. *)
+           Instead, directly replace any compatible addition of a constructor
+           by the whole list of compatible attributes. *)
         Attribute.ContactAttribute.is_compatible m.Attribute.contact con in
       compatible_and_progress_attribute_value compatible v1 v2 in
   match cha with
   | Some (Utils.Left cha) ->
-    if Utils.assert_defend then assert (cha < Array.length inst) ;
+    Utils.assert_ __LOC__ (cha < Array.length inst) ;
     let cha = inst.(cha) in
     check cha
   | Some (Utils.Right _) ->
     (* As objects are allocated on demand, they do not impose any constraint
-     * on the element. *)
+       on the element. *)
     Some (lazy false)
   | None ->
     List.fold_left (fun acc cha ->
@@ -152,11 +153,11 @@ let check_contact m inst st c con cha v1 =
       (Some (lazy false)) (other_players st inst)
 
 (** As [respect_constraints], but takes an instanciation and thus also checks
- * global constraints. **)
+   global constraints. *)
 let respect_constraints_inst m inst st conss evs c =
   respect_constraints_events (check_contact m inst st c) m st conss evs c
 
-(** Returns an instantiated list of events with the given instantiation. **)
+(** Returns an instantiated list of events with the given instantiation. *)
 let instantiate_events e inst =
   Utils.assert_option __LOC__ (Utils.list_map_option
     (Events.instantiate (fun i -> Some (inst.(i)))) e.events)
@@ -185,7 +186,7 @@ let search_instantiation m stc e =
         possible_players = Array.map (fun _ -> all_players) e.players
       } in
   let cache_changed = ref false in
-  (** Players that can be placed as [e.others]. **)
+  (** Players that can be placed as [e.others]. *)
   let possible_other_list =
     List.filter (fun c ->
       let b =
@@ -211,11 +212,11 @@ let search_instantiation m stc e =
       (List.map fst progress, List.map fst no_progress)) e.players in
   let possible_players =
     (** Possible players for each variable.
-     * Players that make the state progress are always put forwards. **)
+       Players that make the state progress are always put forwards. *)
     Array.map (fun (p, np) ->
       Utils.shuffle p @ Utils.shuffle np) possible_players_progress_no_progress in
   (** The following array indicates which player variables should be considered
-   * first: the one with the fewest number of possibilities. **)
+     first: the one with the fewest number of possibilities. *)
   let redirection_array =
     let redirection_array = Utils.seq_array (Array.length e.players) in
     Array.sort (fun i j ->
@@ -239,12 +240,12 @@ let search_instantiation m stc e =
     | i :: redirection_list ->
       let possible = possible_players.(i) in
       let partial_instantiation_set = PSet.from_list partial_instantiation in
-      (** We remove already chosen players (a player can’t be chosen twice). **)
+      (** We remove already chosen players (a player can’t be chosen twice). *)
       let possible =
         List.filter (fun j -> not (PSet.mem j partial_instantiation_set))
           possible in
       (** We filter out possibilities that would make further instantiations
-       * impossible to satisfy the constraints on [e.others]. **)
+         impossible to satisfy the constraints on [e.others]. *)
       let possible =
         let possible_future =
           PSet.flatten (PSet.from_list (List.map (fun i ->
@@ -257,10 +258,10 @@ let search_instantiation m stc e =
               || PSet.mem p (PSet.remove j possible_future))
             all_players) possible in
       let rec aux' = function
-        | [] -> None (** No instantiation led to a compatible state. **)
+        | [] -> None (** No instantiation led to a compatible state. *)
         | j :: l ->
           let no_choice_yet' =
-            (** If the tail is non-empty, we are making a choice here. **)
+            (** If the tail is non-empty, we are making a choice here. *)
             if l = [] then no_choice_yet else false in
           match aux no_choice_yet' (j :: partial_instantiation)
                   redirection_list with
@@ -268,10 +269,10 @@ let search_instantiation m stc e =
           | None ->
             if no_choice_yet then (
               (** In this case, we haven’t made a real choice in the previous player
-               * instantiations, and we just learnt that [j] is not a valid
-               * instantiation for the [i]th player of the element [e].
-               * This means that we can rule out [j] definitely in this position
-               * in future choices. **)
+                 instantiations, and we just learnt that [j] is not a valid
+                 instantiation for the [i]th player of the element [e].
+                 This means that we can rule out [j] definitely in this position
+                 in future choices. *)
               possible_players.(i) <- List.remove possible_players.(i) j ;
               cache_changed := true
             ) ;
@@ -287,13 +288,13 @@ let search_instantiation m stc e =
   r
 
 (** This type represents the difference of attributes that have been fixed with
- * the ones that have been created, as a number for each attribute.
- * For instance, if an instantiation defines an attribute [a] that was to be defined
- * (that is, for which [State.attribute_value_can_progress] returned [true]),
- * it will associate [1] to [a]; if it adds an attribute to be defined, it will
- * associate [-1] instead.
- * The total sum of this map is also stored, as well as the list of elements
- * associated with a negative number. **)
+   the ones that have been created, as a number for each attribute.
+   For instance, if an instantiation defines an attribute [a] that was to be defined
+   (that is, for which [State.attribute_value_can_progress] returned [true]),
+   it will associate [1] to [a]; if it adds an attribute to be defined, it will
+   associate [-1] instead.
+   The total sum of this map is also stored, as well as the list of elements
+   associated with a negative number. *)
 type attribute_differences =
   (Attribute.attribute, int) PMap.t * int * Attribute.attribute list
 
@@ -312,7 +313,7 @@ let update_difference (m, w, l) a d =
   (PMap.add a (d_old + d) m, w + d,
     if d_old < 0 && d_old + d >= 0 then List.remove l a else l)
 
-let merge_attribute_differences (m1, s1, l1) (m2, s2, l2) =
+let merge_attribute_differences (m1, s1, l1) (m2, s2, _l2) =
   let (m, li, lo) =
     PMap.foldi (fun a v2 (m, li, lo) ->
       let v1 = difference_for_attribute (m1, s1, l1) a in
@@ -321,7 +322,7 @@ let merge_attribute_differences (m1, s1, l1) (m2, s2, l2) =
        (if v1 < 0 && v1 + v2 >= 0 then a :: lo else lo))) m2 (m1, [], []) in
   (m, s1 + s2, li @ List.filter (fun a -> not (List.mem a lo)) l1)
 
-(** Applies the value [v1] for the attribute [a] for player [c] in this context. **)
+(** Applies the value [v1] for the attribute [a] for player [c] in this context. *)
 let apply_attribute_constructor m state diff c a v1 =
   let cst = State.get_character_state state in
   let compatible =
@@ -342,7 +343,7 @@ let apply_attribute_constructor m state diff c a v1 =
   (state, diff)
 
 (** Applies the value [v1] for the contact [con] from character [c] to [cha]
- * in this context. **)
+   in this context. *)
 let apply_contact_constructor m state diff c con cha v1 =
   let cst = State.get_character_state state in
   let compatible =
@@ -363,8 +364,7 @@ let apply_contact_constructor m state diff c con cha v1 =
   (state, diff)
 
 let apply m state e inst =
-  if Utils.assert_defend then
-    assert (compatible_and_progress m state e inst <> None) ;
+  Utils.assert_ __LOC__ (compatible_and_progress m state e inst <> None) ;
   let evs = instantiate_events e inst in
   let diff = empty_difference in
   let other_players = other_players state inst in
@@ -374,11 +374,11 @@ let apply m state e inst =
     | Contact (con, cha, v1) ->
       match cha with
       | Some (Utils.Left cha) ->
-        if Utils.assert_defend then assert (cha < Array.length inst) ;
+        Utils.assert_ __LOC__ (cha < Array.length inst) ;
         let cha = inst.(cha) in
         apply_contact_constructor m state diff c con cha v1
       | Some (Utils.Right obj) ->
-        (* TODO: failwith "[Element.apply] Not implemented: objects." *)
+        ignore obj ; (* TODO: failwith "[Element.apply] Not implemented: objects." *)
         (state, diff) (* FIXME: This is only temporary. *)
       | None ->
         List.fold_left (fun (state, diff) cha ->
@@ -436,7 +436,7 @@ let apply_contacts m state c c' =
       with _ -> None)) (Some (state, empty_difference))
 
 let is_translatable e lg =
-  Utils.list_fold_lefti (fun id ok e ->
+  Utils.list_fold_lefti (fun _id ok e ->
     let (n, t) = e.Events.translation in
     List.fold_left (fun ok i ->
       ok &&

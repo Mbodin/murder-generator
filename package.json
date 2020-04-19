@@ -1,38 +1,42 @@
 {
-  "name": "murder-generator",
-  "version": "1.0",
-  "description": "A program to generate random murder parties",
-  "license": "AGPL-3.0-or-later",
-  "esy": {
-    "build": "./build.sh",
-    "buildsInSource": "_build"
-  },
-  "scripts": {
-    "clean": "rm -R _build *.byte *.native *.js",
-    "local": "./build.sh local",
-    "test": "./build.sh tests",
-    "js": "./build.sh check move main.js",
-    "force_js": "./build.sh move main.js",
-    "native": "./build.sh main.native",
-    "checkout": "./build.sh checkout",
-    "server": "python -m SimpleHTTPServer"
-  },
-  "dependencies": {
-    "@opam/ocamlfind": "*",
-    "@opam/ocamlbuild": "*",
-    "@opam/extlib": "*",
-    "@opam/menhir": "*",
-    "@opam/yojson": "*",
-    "@opam/re": "*",
-    "@opam/uutf": "*",
-    "@opam/uuseg": "*",
-    "@opam/ppx_deriving": "*",
-    "@opam/lwt_ppx": "*",
-    "@opam/js_of_ocaml": "3.5.1",
-    "@opam/js_of_ocaml-lwt": "*",
-    "@opam/js_of_ocaml-ppx": "*",
-    "@opam/js_of_ocaml-ppx_deriving_json": "*",
-    "@opam/ocamlgraph": "*",
-    "ocaml": "~4.7.0"
-  }
+	"name": "murder-generator",
+	"version": "1.0",
+	"description": "A program to generate random murder parties",
+	"license": "AGPL-3.0-or-later",
+	"esy": {
+		"build": "dune build --profile release @all",
+		"buildsInSource": "_build"
+	},
+	"scripts": {
+		"clean": "rm -R _build web/main.js web/doc",
+		"test": "dune runtest",
+		"run": "_build/install/default/bin/murder_generator",
+		"doc": "dune build @doc",
+		"server": "./server.sh run"
+	},
+	"dependencies": {
+		"@opam/dune": ">=2.0",
+		"@opam/ocamlfind": "*",
+		"@opam/ocamlbuild": "*",
+		"@opam/extlib": "*",
+		"@opam/menhir": "*",
+		"@opam/yojson": "*",
+		"@opam/re": "*",
+		"@opam/uutf": "*",
+		"@opam/uuseg": "*",
+		"@opam/ppx_deriving": "*",
+		"@opam/lwt_ppx": "*",
+		"@opam/js_of_ocaml": "3.5.1",
+		"@opam/js_of_ocaml-lwt": "*",
+		"@opam/js_of_ocaml-ppx": "*",
+		"@opam/js_of_ocaml-ppx_deriving_json": "*",
+		"@opam/ocamlgraph": "*",
+		"@opam/odoc": "*",
+		"@opam/ppx_inline_test": "*",
+		"ocaml": "~4.7.0",
+		"libutils": "*"
+	},
+	"resolutions": {
+		"libutils": "github:Mbodin/libutils#58c0f9694b4d77ab787030674b23fffbe5d3218f"
+	}
 }

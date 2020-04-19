@@ -1,0 +1,7 @@
+(executable
+	(public_name murder_generator)
+  (name main_native)
+	(libraries murder_generator uuseg.string lwt.unix)
+	(preprocess (pps lwt_ppx))
+	(modes native))
+

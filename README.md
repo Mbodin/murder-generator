@@ -47,44 +47,45 @@ esy install
 ```
 All commands cited below may take a much longer time the first time that they are run.
 
-The [dummy](./dummy) folder contains OCaml files meant to be instantiated some actual usage of files in the repository.  The following command will update them.
-This command should be called every time one updates the repository.
+To compile the project, do the following.
+Simply typing `esy` is an alias for `esy install` followed by `esy build`.
 ```bash
-esy local
+esy build
 ```
+This created (among others) two files, corresponding to the two ways to run this program:
+- `_build/default/js/main.js` for the web interface;
+- `_build/install/default/bin/murder_generator` for the native interface.
 
-To compile the project into JavaScript and update the file [main.js](./web/main.js), do the following.
+The web interface is prettier, but it is significantly slower than the native version.
+To run the native version, run `_build/install/default/bin/murder_generator`, or simpler:
 ```bash
-esy js
+esy run
 ```
+You get a terminal interface similar to the web interface.
+The interface wait for a number input, corresponding to one of the displayed links.
+For instance, if it is displayed `[3]`, then typing `3` then enter would activate this link.
+One can also change the width of the display by typing `0` and entering the new width.
+To exit, emit an end-of-file message to the terminal (which is usually done by simultaneously typing the control and `d` keys).
 
-At this stage, you can open the file `index.html` on a browser and enjoy the generator.  Note that this requires to set up a server.
+To locally run the web interface (available at [this address](https://mbodin.github.io/murder-generator/)), you need to set up a local server.
 This README does not aim at explaining how to set it up; if you are using Github, you can push these changes online and access the corresponding [github.io](https://github.io) address.
-If you have Python 2 installed, typing `esy server` will set up a local server: accessing `localhost:8000` should then do it.
+If you have Python 2 installed, typing `esy server` will set up a local server: accessing `localhost:8000` should open the website.
 
-The JavaScript webpage is (relatively) pretty, but its generation is significantly slower than a native version.
-Such a native version can be built and run through the following commands.
+One can generate documentation from the source as follows:
 ```bash
-esy native
+esy doc
 ```
-
-Once the native program has been built, you can run it using `./main.native` or on some system `esy ./main.native`.
-You get a terminal interface similar to the web interface.  The interface wait for a number input, corresponding to one of the displayed links.  For instance, if it is displayed `[3]`, then typing `3` then enter would activate this link.
-One can also change the width of the display by typing `0` and entering the new width.  To exist, emit an end-of-file message to the terminal (which is usually done by simultaneously typing the control and `d` keys).
+This should create `_build/default/_doc/_html/index.html` containing the in-source documentation.
+More documentation can be found in [index.md](./doc/index.md).
 
 Optionally, one can perform some tests using the following command.
 ```bash
 esy test
 ```
 
-Note that the `esy local` and `esy js` commands above are updating committed files!  To revert them, type the following command.  Please do it before committing anything.
-```bash
-esy checkout # To be done before any commit.
-```
-
 # Licence
 
-Copyright © 2019 Martin Constantino–Bodin
+Copyright © 2019,2020 Martin Constantino–Bodin
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 

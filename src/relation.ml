@@ -1,4 +1,6 @@
 
+open Libutils
+
 type basic =
   | Neutral
   | Hate
@@ -99,7 +101,7 @@ let simplify r =
   in let l =
     List.sort_uniq compare (List.filter (fun r -> extract r <> Neutral) (aux [] r)) in
   (* LATER: Maybe it would be better to first consider all relations that pairs
-   * (for which next_exact returns something), and in a second pass, consider the rest. *)
+     (for which next_exact returns something), and in a second pass, consider the rest. *)
   match l with
   | x :: l ->
     let different_type x y =
@@ -241,8 +243,8 @@ let rec compose_relation r1 r2 =
     let (ra, sa) = compose_relation r1a r2a in
     let (rb, sb) = compose_relation r1b r2b in
     let r1 = simplify (Explosive (ra, rb)) in
-    let (rc, sc) = compose_relation r1a r2b in
-    let (rd, sd) = compose_relation r1b r2a in
+    let (_rc, sc) = compose_relation r1a r2b in
+    let (_rd, sd) = compose_relation r1b r2a in
     let r2 = simplify (Explosive (ra, rb)) in
     let r =
       if relation_complexity r1 > relation_complexity r2
@@ -282,14 +284,14 @@ let rec asymmetrical_relation r1 r2 =
     else Asymmetrical (b1, b2)
   | Asymmetrical (b1, b2), Basic b3 ->
     if b3 = Neutral then r1
-    else Explosive (Asymmetrical (b1, b3), Basic b3)
+    else Explosive (Asymmetrical (b1, b2), Basic b3)
   | Basic b1, Asymmetrical (b2, b3) ->
-    (** We have to reverse [b2] and [b3] here. **)
+    (** We have to reverse [b2] and [b3] here. *)
     let r2 = Asymmetrical (b3, b2) in
     if b1 = Neutral then r2
     else Explosive (Basic b3, r2)
   | Asymmetrical (b1, b2), Asymmetrical (b3, b4) ->
-    (** Tricky case, there are two inversions here. **)
+    (** Tricky case, there are two inversions here. *)
     Explosive (Asymmetrical (b1, b4), Asymmetrical (b2, b3))
 
 let asymmetrical (r1, s1) (r2, s2) =

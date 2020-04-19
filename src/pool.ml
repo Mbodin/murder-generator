@@ -1,12 +1,14 @@
 
+open Libutils
+
 type element = Id.t
 
 (** These two maps store how elements are linked to attributes:
-  * - [all_elements] is a map from elements to lists of attributes
-  *   (the attributes that the elements provide);
-  * - [element_attribute] is a map from attributes to lists of
-  *   elements (the elements that provide this attribute).
-  * They are not supposed to be changed once pools are created. **)
+    - [all_elements] is a map from elements to lists of attributes
+      (the attributes that the elements provide);
+    - [element_attribute] is a map from attributes to lists of
+      elements (the elements that provide this attribute).
+    They are not supposed to be changed once pools are created. *)
 type global = {
     all_elements : (element, Attribute.attribute list) PMap.t ;
     element_attribute : (Attribute.attribute, element list) PMap.t
@@ -17,17 +19,17 @@ let empty_global = {
     element_attribute = PMap.empty ;
   }
 
-(** Returns the list of attributes associated to an element. **)
+(** Returns the list of attributes associated to an element. *)
 let get_attributes g e =
   try PMap.find e g.all_elements
   with Not_found -> assert false
 
-(** Internal function for function reading a global when being changed. **)
+(** Internal function for function reading a global when being changed. *)
 let get_elements_from_element_attribute element_attribute a =
   try PMap.find a element_attribute
   with Not_found -> []
 
-(** Returns the list of elements associated to an attribute. **)
+(** Returns the list of elements associated to an attribute. *)
 let get_elements g a =
   get_elements_from_element_attribute g.element_attribute a
 
@@ -60,14 +62,14 @@ let filter_global g f =
 
 type t = {
     current_elements : element PSet.t
-      (** The set of the current elements in the pool. **) ;
+      (** The set of the current elements in the pool. *) ;
     pool : element BidirectionalList.t
       (** The pool.
-       * Each element is present at most once in the pool. **) ;
+         Each element is present at most once in the pool. *) ;
     filtered_out_elements : element PSet.t
-      (** Elements meant to be removed from the pool. **) ;
+      (** Elements meant to be removed from the pool. *) ;
     global : global
-      (** The associated global values. **)
+      (** The associated global values. *)
   }
 
 let empty g = {
@@ -78,15 +80,15 @@ let empty g = {
   }
 
 (** To avoid a costly iteration over the pool when removing elements relative
- * to a particular attribute, the removing is done lazily.
- * When removing an attribute, its associated elements are only stored in the set
- * [filtered_out_elements].
- * This function states whether an element is meant to be ignored by this
- * mechanism. **)
+   to a particular attribute, the removing is done lazily.
+   When removing an attribute, its associated elements are only stored in the set
+   [filtered_out_elements].
+   This function states whether an element is meant to be ignored by this
+   mechanism. *)
 let to_be_ignored p e = PSet.mem e p.filtered_out_elements
 
 (** The following operation actually performs the removal of the to-be-removed
- * elements of a pool. **)
+   elements of a pool. *)
 let normalize p =
   let rec aux = function
     | [] -> (PSet.empty, [])
@@ -102,8 +104,8 @@ let normalize p =
   }
 
 (** We often don’t want to fully normalize a pool, but to only ensure that
- * the next element is not to be ignored.
- * The following function deals with that. **)
+   the next element is not to be ignored.
+   The following function deals with that. *)
 let partial_normalize p =
   let rec aux l =
     match BidirectionalList.match_left l with
@@ -125,12 +127,12 @@ let quick_length p =
   BidirectionalList.length p.pool
 
 (** The interesting case of [add] is when adding an element which is marked
- * as an element to be ignored: this mean that the previous note stating
- * that this element should be ignored is no longer up to date.
- * To fix this, we have to empty the set of attributes to be ignored.
- * This is done through normalisation.
- * Note that we do not add an element if already present in the pool, to
- * avoid breaking the invariant that elements are present at most once in it. **)
+   as an element to be ignored: this mean that the previous note stating
+   that this element should be ignored is no longer up to date.
+   To fix this, we have to empty the set of attributes to be ignored.
+   This is done through normalisation.
+   Note that we do not add an element if already present in the pool, to
+   avoid breaking the invariant that elements are present at most once in it. *)
 let add p e =
   let p =
     if to_be_ignored p e then normalize p
@@ -188,18 +190,18 @@ let filter p f =
   in aux (BidirectionalList.to_list p.pool)
 
 (** Filters a pool [p] from a function [f] taking the attributes of each element
- * and a global attribute.
- * The function [f] is meant to be instantiated either with
- * [fun a l -> List.mem a l] or [fun a l -> not (List.mem a l)]. **)
+   and a global attribute.
+   The function [f] is meant to be instantiated either with
+   [fun a l -> List.mem a l] or [fun a l -> not (List.mem a l)]. *)
 let filter_attribute f p a =
   filter p (fun e -> f a (get_attributes p.global e))
 
 let restrict = filter_attribute (fun a l -> List.mem a l)
 
 (** A naive implementation of [filter_out] could be
- * [filter_attribute (fun a l -> not (List.mem a l))].
- * We here chose to be lazy (assuming that the pool is large)
- * and simply rely on the [filtered_out_elements] mechanism. **)
+   [filter_attribute (fun a l -> not (List.mem a l))].
+   We here chose to be lazy (assuming that the pool is large)
+   and simply rely on the [filtered_out_elements] mechanism. *)
 let filter_out p a =
   { p with filtered_out_elements =
         List.fold_left (fun s e -> PSet.add e s)
@@ -218,4 +220,36 @@ let definitely_remove p e =
 
 let definitely_remove_set =
   PSet.fold (fun e p -> definitely_remove p e)
+
+let%test_unit _ =
+  let new_id = Id.new_id_function () in
+  let g = empty_global in
+  let e1 = new_id () in
+  let e2 = new_id () in
+  let e3 = new_id () in
+  let g = register_element g e1 [] in
+  let g = register_element g e2 [] in
+  let g = register_element g e3 [] in
+  let p = empty g in
+  assert (is_empty p) ;
+  assert (fst (pick p) = None) ;
+  assert (fst (pop p) = None) ;
+  let p = add p e1 in
+  let p = add p e2 in
+  let p = add p e3 in
+  assert (not (is_empty p)) ;
+  let rec popn p =
+    let o, p = pop p in
+    match o with
+    | None -> "[]"
+    | Some _ -> ";" ^ popn p in
+  assert (popn p = ";;;[]") ;
+  let rec pickn i p =
+    if i = 0 then "-"
+    else
+      let o, p = pick p in
+      match o with
+      | None -> "[]"
+      | Some _ -> ";" ^ pickn (i - 1) p in
+  assert (pickn 10 p = ";;;;;;;;;;-")
 

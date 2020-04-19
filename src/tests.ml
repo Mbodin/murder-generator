@@ -1,62 +1,13 @@
 
+open Libutils
 open ExtList
 
-let test_utils _ =
-  let test_split_on_char c str =
-    assert (List.of_enum (Utils.enum_split_on_char c str) = String.split_on_char c str) in
-  test_split_on_char ':' "a:b:c:d" ;
-  test_split_on_char ':' ":::" ;
-  test_split_on_char ':' "abcd" ;
-  test_split_on_char ':' ""
-
 let get_file fileName =
-  let file = open_in fileName in
-  let rec aux _ =
-    try let str = input_line file in str :: aux ()
-    with End_of_file -> [] in
-  String.concat "\n" (aux ())
+  let fileName = "../" ^ fileName in
+  print_endline ("Reading file " ^ fileName) ;
+  Std.input_file fileName
 
-let test_date _ =
-  let test d =
-    assert (Date.compare d (Date.from_rfc2445 (Date.rfc2445 d)) = 0) in
-  test Date.now ;
-  test (Date.add_years Date.now (Random.int 100 - 50)) ;
-  test (Date.add_days Date.now (Random.int 100 - 50)) ;
-  test (Date.add_minutes Date.now (Random.int 100 - 50))
-
-let test_pool _ =
-  let new_id = Id.new_id_function () in
-  let g = Pool.empty_global in
-  let e1 = new_id () in
-  let e2 = new_id () in
-  let e3 = new_id () in
-  let g = Pool.register_element g e1 [] in
-  let g = Pool.register_element g e2 [] in
-  let g = Pool.register_element g e3 [] in
-  let p = Pool.empty g in
-  print_endline ("is_empty empty = " ^ string_of_bool (Pool.is_empty p)) ;
-  print_endline ("pick empty = " ^ match Pool.pick p with None, _ -> "None" | Some _, _ -> "Some") ;
-  print_endline ("pop empty = " ^ match Pool.pop p with None, _ -> "None" | Some _, _ -> "Some") ;
-  let p = Pool.add p e1 in
-  let p = Pool.add p e2 in
-  let p = Pool.add p e3 in
-  print_endline ("is_empty [e1; e2; e3] = " ^ string_of_bool (Pool.is_empty p)) ;
-  let rec foo p =
-    let o, p = Pool.pop p in
-    match o with
-    | None -> "[]"
-    | Some _ -> ";" ^ foo p in
-  print_endline ("pop* [e1; e2; e3] = " ^ foo p) ;
-  let rec bar i p =
-    if i = 0 then "-"
-    else
-      let o, p = Pool.pick p in
-      match o with
-      | None -> "[]"
-      | Some _ -> ";" ^ bar (i - 1) p in
-  print_endline ("pick^10 [e1; e2; e3] = " ^ bar 10 p)
-
-let test_relations _ =
+let _test_relations _ =
   let open Relation in
   let b = [ Neutral; Hate; Trust; Chaotic; Undetermined; Avoidance ] in
   let l =
@@ -64,7 +15,7 @@ let test_relations _ =
     List.concat (List.map (fun r1 -> List.map (fun r2 -> Asymmetrical (r1, r2), false) b) b) @
     List.concat (List.map (fun r1 -> List.map (fun r2 -> Explosive (Basic r1, Basic r2), false) b) b)
   in
-  for i = 0 to 5 do
+  for _ = 0 to 5 do
     let r1 = Utils.select_any l in
     let r2 = Utils.select_any l in
     let r = compose r1 r2 in
@@ -82,9 +33,8 @@ let test_relations _ =
   done
 
 let test_translations _ =
-  let f = "web/translations.json" in
-  print_endline ("Reading file " ^ f) ;
-  let content = Std.input_file f in
+  let f = "translations.json" in
+  let content = get_file f in
   let (translations, languages) = Translation.from_json f content in
   let ok = ref true in
   let translate key lg =
@@ -109,7 +59,6 @@ let test_name_generation languages constructor_maps =
   print_endline ("Number of name files: " ^
                  string_of_int (List.length NameFiles.files)) ;
   let read_file fileName =
-    print_endline ("Reading file " ^ fileName) ;
     let file = get_file fileName in
     let gen = Names.import constructor_maps file in
     ignore (Names.generate gen PSet.empty) ;
@@ -131,6 +80,7 @@ let test_parser languages =
   print_endline ("Number of murder files: " ^
                  string_of_int (List.length MurderFiles.files)) ;
   let read_file f =
+    let f = "../" ^ f in
     print_endline ("Reading file " ^ f) ;
     let buf = Lexing.from_channel (open_in f) in
     Driver.parse_lexbuf f buf in
@@ -228,8 +178,7 @@ let test_parser languages =
                    ^ Translation.iso639 lg ^ ": " ^ string_of_int n)) languages ;
   constructor_maps
 
-let main =
-  test_utils () ;
+let _ =
   let languages = test_translations () in
   let constructor_maps = test_parser languages in
   test_name_generation languages constructor_maps.Attribute.player ;

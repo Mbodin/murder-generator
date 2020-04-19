@@ -1,11 +1,13 @@
 
-(** There are two kinds of kinds: user defined and kinds from attributes. **)
+open Libutils
+
+(** There are two kinds of kinds: user defined and kinds from attributes. *)
 type 'character kind =
-  | Kind of Id.t (** A user-defined kind. **)
+  | Kind of Id.t (** A user-defined kind. *)
   | ProvidePlayerAttribute of Attribute.PlayerAttribute.attribute
-      (** An event that provide this attribute **)
+      (** An event that provide this attribute *)
   | ProvideContactAttribute of Attribute.ContactAttribute.attribute * 'character
-      (** An event that provide this contact to this character. **)
+      (** An event that provide this contact to this character. *)
 
 let print_kind f = function
   | Kind id -> "Kind " ^ string_of_int (Id.to_array id)
@@ -65,7 +67,7 @@ let get_attendees_list e =
   List.filter (fun c -> PSet.mem c e.event_attendees) e.all_attendees
 
 let print_event e =
-  let (nb_sentence, tr) = e.translation in
+  let (_nb_sentence, tr) = e.translation in
   let tr = Translation.sforce_translate tr Translation.generic in
   fst (tr (fun _ -> PSet.empty) (fun _ _ -> None) (-1) PSet.empty)
 

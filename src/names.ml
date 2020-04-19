@@ -1,20 +1,22 @@
+
+open Libutils
 open ExtList
 
 type property = Attribute.PlayerAttribute.constructor
 
 (** A specification of the language sounds.
- * This type works like an automaton, the parameterised type being the state system.
- * Each step can fire properties: the final property has to be the whole set of properties. **)
+   This type works like an automaton, the parameterised type being the state system.
+   Each step can fire properties: the final property has to be the whole set of properties. *)
 type 'a automaton = {
-    init : property PSet.t -> 'a * property list (** The initial state. **) ;
+    init : property PSet.t -> 'a * property list (** The initial state. *) ;
     transition : 'a -> string * ('a * property list) option
       (** A transition.
-       * It takes as argument the current set of properties.
-       * It returns the next step and the set of properties added to the character.
-       * Returning [None] means that the transition halted. **)
+         It takes as argument the current set of properties.
+         It returns the next step and the set of properties added to the character.
+         Returning [None] means that the transition halted. *)
   }
 
-(** All the possible data stored in a name file. **)
+(** All the possible data stored in a name file. *)
 type data =
   | Automaton : 'a automaton -> data
   | AttrList of (string * property list) list
@@ -30,22 +32,22 @@ let translate g = g.translate
 
 let is_default g lg = PSet.mem lg g.default
 
-(** A more furnished automaton. **)
+(** A more furnished automaton. *)
 type 'a alternative = {
-    alternative_size : int ; (** Expected size of the resulting words. **)
+    alternative_size : int ; (** Expected size of the resulting words. *)
     alternative_init : property PSet.t -> (int * ('a * string * property list)) list
-      (** Wheighed list of initial states. **) ;
+      (** Wheighed list of initial states. *) ;
     alternative_transition : property PSet.t -> 'a -> (int * ('a * string * property list)) list
-      (** Wheighed list of transitions. **) ;
+      (** Wheighed list of transitions. *) ;
     alternative_final : property PSet.t -> 'a -> (int * (string * property list)) list
-      (** Wheighed list of final states. **)
+      (** Wheighed list of final states. *)
   }
 
 let convertAlternative spec =
-  (** Decides whether it is time to halt the generation. **)
+  (** Decides whether it is time to halt the generation. *)
   let halt size =
-    (** The basic decide function is simple, but we may want to alter
-     * its distribution.**)
+    (** The basic decide function is simple, but we want to alter
+       its distribution to get more natural outputs. *)
     let decide () =
       size <= 0 || Random.int size = 0 in
     if size > spec.alternative_size * 3 / 2 then
@@ -83,11 +85,8 @@ let convertAlternative spec =
              Some ((size - 1, Some s, str, add_props props'), props')))
   }
 
-(** A simple type to represent in a transition system the alternance of vowels and consonant. **)
-type vowelConsonant = int * bool option * string
-
 (** Given a line, split it betwween a key and a value at the first occurrence of [:].
- * Returns [None] if no [:] is present in the list. **)
+   Returns [None] if no [:] is present in the list. *)
 let split line =
   let split_at i line =
     let key = String.sub line 0 i in
@@ -95,7 +94,7 @@ let split line =
     (key, value) in
   Option.map (fun i -> split_at i line) (String.index_opt line ':')
 
-(** State whether a return value of [generate] is compatible with a preset set of properties. **)
+(** State whether a return value of [generate] is compatible with a preset set of properties. *)
 let compatible_with m properties =
   let get_attribute c =
     Utils.assert_option __LOC__
@@ -109,7 +108,7 @@ let compatible_with m properties =
   ok
 
 (** Try [n] times to call [f] and to get a result compatible with [ok], then call [fallback]
- * if none is found. **)
+   if none is found. *)
 let rec try_n n ok fallback f =
   if n = 0 then
     fallback ()
@@ -119,20 +118,20 @@ let rec try_n n ok fallback f =
     else try_n (n - 1) ok fallback f
 
 (** Create a transition system for vowels and consonants.
- * It takes as an argument six string specifying how the language sounds, as well
- * as the expected size of the output (in term of the given vowels and consonants).
- * It also takes as argument a associative list of definitions, associating each case
- * to a list of associated constructors.
- * Each string is a list of list separated by [,] for the inner lists and [;] for
- * the outer.
- * The inner lists (separated by [,]) commutes, whilst the outer lists represent
- * changes in probability (the first elements being more probable).
- * The six lists corresponds to:
- * - initial vowels and consonants;
- * - middle vowels and consonants;
- * - end vowels and consonants.
- * Each of the list element can be annotated by an additionnal [:] to associate it
- * with the associated constructors defined in [definitions]. **)
+   It takes as an argument six string specifying how the language sounds, as well
+   as the expected size of the output (in term of the given vowels and consonants).
+   It also takes as argument a associative list of definitions, associating each case
+   to a list of associated constructors.
+   Each string is a list of list separated by [,] for the inner lists and [;] for
+   the outer.
+   The inner lists (separated by [,]) commutes, whilst the outer lists represent
+   changes in probability (the first elements being more probable).
+   The six lists corresponds to:
+   - initial vowels and consonants;
+   - middle vowels and consonants;
+   - end vowels and consonants.
+   Each of the list element can be annotated by an additionnal [:] to associate it
+   with the associated constructors defined in [definitions]. *)
 let createVowelConsonant m definitions size initV initC middleV middleC endV endC =
   let get_spec f unf strspec props =
     let rec aux = function

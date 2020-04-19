@@ -1,4 +1,6 @@
 
+open Libutils
+
 type language = string
 
 type tag = string
@@ -17,19 +19,19 @@ let base = get_tag "<base>"
 
 type 'a t = ('a * language, string) PMap.t
 
-(** A decision tree for translations. **)
+(** A decision tree for translations. *)
 type 'a tree =
   | Leaf of 'a list
     (** A leaf: the only possible translations at this stage.
-     * There may be more than one: one is then taken randomly. **)
+       There may be more than one: one is then taken randomly. *)
   | Node of tag * 'a tree * 'a tree
     (** When reaching this node, we divide the set of translations
-     * in two subsets: the one where the tag is present (first subset)
-     * and the one where is it not present (second subset). **)
+       in two subsets: the one where the tag is present (first subset)
+       and the one where is it not present (second subset). *)
 
 (** Each translation item is associated its actual translation,
- * as well as a set of tag that has been added and a set of tag that
- * has been removed. **)
+   as well as a set of tag that has been added and a set of tag that
+   has been removed. *)
 type 'a gt =
   ('a * language, (string * tag PSet.t * tag PSet.t) tree) PMap.t
 
@@ -47,7 +49,7 @@ let sitem_map_option f = function
     Utils.apply_option (f x) (fun x -> Variable (x, constr, added, removed))
 
 (** Splits the commands into a list of constraints (conserving the ordering),
- * a set of added tags, and a set of removed tags. **)
+   a set of added tags, and a set of removed tags. *)
 let splits_commands commands =
   let (tags, diff) =
     Utils.list_partition_map (fun (c, tag) ->
@@ -64,7 +66,7 @@ let variable x commands =
   Variable (x, PSet.from_list tags, added, removed)
 
 (** Similar to type [gt], the first set is the set of added tags and the second
- * of removed tags. **)
+   of removed tags. *)
 type ('a, 'b) st =
   ('a * language, ('b sitem list * tag PSet.t * tag PSet.t) tree) PMap.t
 
@@ -103,9 +105,9 @@ let translate m lg o =
   with Not_found -> None
 
 (** Produces a [force_] alternative to a translation function by trying
- * the [generic] language if the given one failed.
- * It also takes as an argument a return with an empty string and a way
- * to map each strings in a result. **)
+   the [generic] language if the given one failed.
+   It also takes as an argument a return with an empty string and a way
+   to map each strings in a result. *)
 let fallback_to_generic lg f d change =
   match f lg with
   | Some r -> r
@@ -123,21 +125,21 @@ let force_translate ?(debug = fun _ -> None) m lg o =
 
 
 (** Given a set of tags and a tree, explores the tree following the path
- * indicated by the set.
- * It then returns the found list. **)
-let rec naive_search_tree tags = function
+   indicated by the set.
+   It then returns the found list. *)
+let rec _naive_search_tree tags = function
   | Leaf l -> l
   | Node (t, t1, t2) ->
     if PSet.mem t tags then
-      naive_search_tree tags t1
-    else naive_search_tree tags t2
+      _naive_search_tree tags t1
+    else _naive_search_tree tags t2
 
 (** Most of the time, we absolutely want a result and we need to backtrack.
- * It is safe to return a result associated with less tags than provided.
- * This alternative function thus explores more of the set by looking at
- * negative branches (the opposite is however not safe in general).
- * More precisely, it returns two things: a list of results, and a list of
- * subtrees to look for it the first list is not satisfactory. **)
+   It is safe to return a result associated with less tags than provided.
+   This alternative function thus explores more of the set by looking at
+   negative branches (the opposite is however not safe in general).
+   More precisely, it returns two things: a list of results, and a list of
+   subtrees to look for it the first list is not satisfactory. *)
 let search_tree tags =
   let rec aux ts = function
     | Leaf l -> (l, ts)
@@ -148,9 +150,9 @@ let search_tree tags =
   aux []
 
 (** Given a set of tags and a function, finds the corresponding list
- * and apply the function to this list.
- * This function is given the list of tags seen when traversing the tree
- * in the order they were given. **)
+   and apply the function to this list.
+   This function is given the list of tags seen when traversing the tree
+   in the order they were given. *)
 let apply_tree tags f =
   let rec aux seen = function
   | Leaf l -> f (List.rev seen) l
@@ -162,8 +164,8 @@ let apply_tree tags f =
     Node (t, t1, t2) in
   aux []
 
-(** Just adds a value to the list naturally given by [naive_search_tree]. **)
-let add_tree tags v =
+(** Just adds a value to the list naturally given by [naive_search_tree]. *)
+let _add_tree tags v =
   apply_tree tags (fun _ l -> Leaf (v :: l))
 
 exception ConflictingCommands of command * command
@@ -184,7 +186,7 @@ let gadd m lg commands o str =
 
 let sadd = gadd
 
-(** Removes and adds the requested tags. **)
+(** Removes and adds the requested tags. *)
 let apply_patch tags added removed =
   PSet.merge added (PSet.diff tags removed)
 
@@ -224,14 +226,14 @@ let stranslate m lg tgv trv o tags =
                  Utils.if_option (trv x tags) (fun (tr, tags) ->
                    if PSet.incl constrs tags then
                      (* LATER: We are here just checking whether the added
-                      * constraints are compatible with the previous ones.
-                      * In some ways, this means that the “added” constraints
-                      * actually behaves as normal ones.
-                      * This is not what we want: we would like these added
-                      * constraints to overwrite the ones traditionally
-                      * associated to [x] (think of the French “une personne”
-                      * which may represent a male person, but whose gender
-                      * will grammatically overwrite the person’s gender). *)
+                        constraints are compatible with the previous ones.
+                        In some ways, this means that the “added” constraints
+                        actually behaves as normal ones.
+                        This is not what we want: we would like these added
+                        constraints to overwrite the ones traditionally
+                        associated to [x] (think of the French “une personne”
+                        which may represent a male person, but whose gender
+                        will grammatically overwrite the person’s gender). *)
                      Some tr
                    else None)) l with
         | Some l ->

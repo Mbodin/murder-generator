@@ -1,0 +1,57 @@
+
+(library
+	(public_name murder-generator)
+	(name murder_generator)
+	(libraries libutils unix extlib yojson re uutf lwt)
+	(preprocess (pps lwt_ppx ppx_deriving ppx_inline_test))
+	(modules_without_implementation ast)
+	(inline_tests)
+	(modes byte native))
+
+(env (dev (flags (:standard -w -50))))
+
+(ocamllex lexer)
+(menhir
+	(modules parser)
+	(flags ("--explain")))
+
+(rule
+	(target version.ml)
+	(action
+		(with-stdout-to %{target}
+			(chdir %{project_root}
+				(progn
+					(echo "let version = \"")
+					(run git rev-parse HEAD) ; FIXME: There is an unwanted end-of-line here.
+					(echo "\"\n"))))))
+
+(rule
+	(target murderFiles.ml)
+	(action
+		(with-stdout-to %{target}
+			(chdir %{project_root}
+				(progn
+					(echo "let files = [\n")
+					(bash "find data/ -type f | grep '\\.murder$' | sed -e 's/\\(.*\\)/    \"\\1\" ;/'") ; FIXME: Not very portable.
+					(echo "  ]\n"))))))
+
+(rule
+	(target nameFiles.ml)
+	(action
+		(with-stdout-to %{target}
+			(chdir %{project_root}
+				(progn
+					(echo "let files = [\n")
+					(bash "find data/ -type f | grep '\\.names$' | sed -e 's/\\(.*\\)/    \"\\1\" ;/'") ; FIXME: Not very portable.
+					(echo "  ]\n"))))))
+
+(rule
+	(target usedTranslations.ml)
+	(deps main.ml)
+	(action
+		(with-stdout-to %{target}
+			(progn
+				(echo "let used = [\n")
+				(bash "grep -o 'get_translation \"[^\"]*\"' %{deps} | sed -e 's/get_translation \\(\"[^\"]*\"\\)/    \\1 ;/'") ; FIXME: Not very portable.
+				(echo "  ]\n")))))
+

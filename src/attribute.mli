@@ -1,4 +1,4 @@
-(**  odule Attribute
+(** Module Attribute
    Describes the player and contact attributes used thorough this development. *)
 
 (** A signature for the various attribute/constructor structures.
@@ -12,6 +12,13 @@ module type Attribute = sig
     (** The type of constructors. *)
     type constructor
 
+    (** Attribute kinds.
+       It describes to which objects this attribute can be applied. *)
+    type kind
+
+    (** The maximum kind: it is a supertype of any kind. *)
+    val any : kind
+
     (** Values are just constructor identifiers.
        Each attribute is associated with a given set of possible constructors
        (which are really just names).
@@ -23,6 +30,9 @@ module type Attribute = sig
 
     (** Return the name of an attribute. *)
     val attribute_name : constructor_map -> attribute -> string option
+
+    (** Return the kind of an attribute. *)
+    val attribute_kind : constructor_map -> attribute -> kind option
 
     (** Return the name of a constructor. *)
     val constructor_name : constructor_map -> constructor -> string option
@@ -41,7 +51,7 @@ module type Attribute = sig
        it is internal.
        If already declared, its previously-set identifier is still returned,
        but its internal status is updated. *)
-    val declare_attribute : constructor_map -> string -> bool -> attribute * constructor_map
+    val declare_attribute : constructor_map -> string -> bool -> kind -> attribute * constructor_map
 
     (** Declare a new constructor for an attribute.
        The string is the name of the constructor and the boolean states whether
@@ -72,11 +82,53 @@ module type Attribute = sig
 
   end
 
-(** A module to express attributes and constructors for players and objects. *)
-module PlayerAttribute : Attribute
+(** The type of object constructors, and in particular of the constructors
+   corresponding to the [object_type] attribute. *)
+type object_constructor
 
-(** A module to express attributes and constructors for contacts between players. *)
+(** This type describes to whom an attribute can be attached. *)
+type attribute_kind =
+  | Player (** Can only be applied to a player. *)
+  | AnyObject (** Any object *)
+  | Object of object_constructor (** Can only be applied to this kind of object. *)
+
+(** Contacts are attached between a starting object and a destination:
+   this type describes which can appear as target and destination. *)
+type contact_kind = {
+    kind_from : attribute_kind ;
+    kind_to : attribute_kind
+  }
+
+(** State whether the first kind is a subtype of the second. *)
+val attribute_sub : attribute_kind -> attribute_kind -> bool
+
+(** Lifting of the function [attribute_sub] to disjunctive lists. *)
+val attributes_sub : attribute_kind list -> attribute_kind list -> bool
+
+(** As for [attribute_sub], but for contact kinds. *)
+val contact_sub : contact_kind -> contact_kind -> bool
+
+(** Lifting of the function [contact_sub] to disjunctive lists. *)
+val contacts_sub : contact_kind list -> contact_kind list -> bool
+
+(** The attribute kind applying to any player or object:
+   it is a supertype of any attribute type. *)
+val attribute_any : attribute_kind list
+
+(** The contact kind starting and ending from any player or object:
+   it is a supertype of any contact type. *)
+val contact_any : contact_kind list
+
+(** A module to express attributes and constructors for players and objects.
+   Its kind is given through a disjunctive list of kinds. *)
+module PlayerAttribute : Attribute
+  with type constructor = object_constructor
+   and type kind = attribute_kind list
+
+(** A module to express attributes and constructors for contacts between players.
+   As for [PlayerAttribute], the [kind] type is a disjunctive list. *)
 module ContactAttribute : Attribute
+  with type kind = contact_kind list
 
 (** This data structure stores all the informations about constructors. *)
 type constructor_maps = {

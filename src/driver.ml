@@ -441,6 +441,7 @@ let attribute_functions =
    Attribute.PlayerAttribute.get_attribute,
    Attribute.PlayerAttribute.get_constructor,
    Attribute.PlayerAttribute.declare_compatibility,
+   Attribute.PlayerAttribute.any,
    (fun m -> m.Attribute.player),
    (fun i state -> { i with Attribute.player = state }),
    (fun id -> Attribute.PlayerAttribute id),
@@ -453,6 +454,7 @@ let contact_functions =
    Attribute.ContactAttribute.get_attribute,
    Attribute.ContactAttribute.get_constructor,
    Attribute.ContactAttribute.declare_compatibility,
+   Attribute.ContactAttribute.any,
    (fun m -> m.Attribute.contact),
    (fun i state -> { i with Attribute.contact = state }),
    (fun id -> Attribute.ContactAttribute id),
@@ -518,11 +520,12 @@ let prepare_declaration i =
   (** Declare attribute and contact instances.
      See the declarations [attribute_functions] and [contact_functions]
      to understand the large tuple argument. *)
-  let declare_instance (declare, _, _, _, _, extract, update, constructor, _, en, _)
+  let declare_instance (declare, _, _, _, _, any, extract, update, constructor, _, en, _)
       name internal block =
     let block = convert_block name [OfCategory; Translation] block in
+    let kind = (* TODO *) any in
     let (id, state) =
-      declare (extract (intermediary_constructor_maps i)) name internal in
+      declare (extract (intermediary_constructor_maps i)) name internal kind in
     let id = constructor id in
     if attribute_exists i.current_state id then
       raise (DefinedTwice (en, name, "")) ;
@@ -574,14 +577,15 @@ let prepare_declaration i =
      Similar to [declare_instance], see the declarations [attribute_functions] and
      [contact_functions] to understand the large tuple argument. *)
   let declare_constructor (declare, declare_constructor, _, _,
-        declare_compatibility, extract, update,
+        declare_compatibility, any, extract, update,
         attribute_constructor, constructor_constructor, en, get_player_attribute)
       attribute_name constructor internal block =
     let block =
       convert_block attribute_name [OfCategory; Translation; Add;
                                     CompatibleWith] block in
+    let kind = (* TODO *) any in
     let (attribute, state) =
-      declare (extract (intermediary_constructor_maps i)) attribute_name false in
+      declare (extract (intermediary_constructor_maps i)) attribute_name false kind in
     let (idp, state) = declare_constructor state attribute constructor internal in
     let id = constructor_constructor idp in
     let constructors_to_be_defined =
@@ -1062,13 +1066,13 @@ let parse_element st element_name status block =
      At this stage, it has to be defined.
      See the declarations [attribute_functions] and [contact_functions] to
      understand the large tuple argument.**)
-  let get_attribute_id (_, _, get_attribute, _, _, get_state, _, _ , _, en, _)
+  let get_attribute_id (_, _, get_attribute, _, _, _, get_state, _, _ , _, en, _)
       name =
     match get_attribute (get_state st.import_information.constructor_maps) name with
     | None -> raise (Undeclared (en, name, element_name))
     | Some id -> id in
   (** Similar to [get_attribute_id], but for constructors. *)
-  let get_constructor_id (_, _, _, get_constructor, _, get_state, _, _ , _, en, _)
+  let get_constructor_id (_, _, _, get_constructor, _, _, get_state, _, _ , _, en, _)
       aid name =
     match get_constructor
             (get_state st.import_information.constructor_maps) aid name with

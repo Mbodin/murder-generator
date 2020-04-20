@@ -4,15 +4,18 @@ open Libutils
 module type Attribute = sig
     type attribute
     type constructor
+    type kind
     type constructor_map
 
+    val any : kind
     val empty_constructor_map : constructor_map
     val attribute_name : constructor_map -> attribute -> string option
+    val attribute_kind : constructor_map -> attribute -> kind option
     val constructor_name : constructor_map -> constructor -> string option
     val constructor_attribute : constructor_map -> constructor -> attribute option
     val constructors : constructor_map -> attribute -> constructor list option
     val all_constructors : constructor_map -> constructor list
-    val declare_attribute : constructor_map -> string -> bool -> attribute * constructor_map
+    val declare_attribute : constructor_map -> string -> bool -> kind -> attribute * constructor_map
     val declare_constructor : constructor_map -> attribute -> string -> bool -> constructor * constructor_map
     val get_attribute : constructor_map -> string -> attribute option
     val get_constructor : constructor_map -> attribute -> string -> constructor option
@@ -22,8 +25,13 @@ module type Attribute = sig
     val is_internal : constructor_map -> attribute -> constructor -> bool
   end
 
-module AttributeInst () =
+module AttributeInst (K : sig
+      type kind
+      val any : kind
+    end) =
   struct
+
+    include K
 
     type attribute = Id.t
     type constructor = Id.t
@@ -34,6 +42,8 @@ module AttributeInst () =
           (** The map storing each constructor.
              The attribute is part of the constructor, with the constructor
              name. *) ;
+        kinds : (attribute, kind) PMap.t
+          (** The kind of each attributes *) ;
         association : (attribute, constructor list) PMap.t
           (** Which constructors is associated to which attribute. *) ;
         compatibility : (attribute, (constructor, constructor list) PMap.t) PMap.t
@@ -50,6 +60,7 @@ module AttributeInst () =
     let empty_constructor_map = {
         name = Id.map_create () ;
         map = Id.map_create () ;
+        kinds = PMap.empty ;
         association = PMap.empty ;
         compatibility = PMap.empty ;
         internal = PMap.empty
@@ -57,6 +68,10 @@ module AttributeInst () =
 
     let attribute_name m a =
       Id.map_inverse m.name a
+
+    let attribute_kind m a =
+      try Some (PMap.find a m.kinds)
+      with Not_found -> None
 
     let constructor_name m c =
       Option.map snd (Id.map_inverse m.map c)
@@ -74,13 +89,14 @@ module AttributeInst () =
           | Some s -> PSet.mem c s
       with Not_found -> false
 
-    let declare_attribute m a internal =
+    let declare_attribute m a internal k =
       let (a, mn) = Id.map_insert_t m.name a in
       (a, { m with name = mn ;
                    association =
                      if PMap.mem a m.association then
                        m.association
                      else PMap.add a [] m.association ;
+                   kinds = PMap.add a k m.kinds ;
                    internal =
                      if internal then
                        PMap.add a None m.internal
@@ -157,9 +173,54 @@ module AttributeInst () =
 
   end
 
-module PlayerAttribute = AttributeInst ()
+type object_constructor = Id.t
 
-module ContactAttribute = AttributeInst ()
+type attribute_kind =
+  | Player
+  | AnyObject
+  | Object of object_constructor
+
+type contact_kind = {
+    kind_from : attribute_kind ;
+    kind_to : attribute_kind
+  }
+
+let attribute_any = [Player; AnyObject]
+
+let contact_any =
+  let build f t = {
+      kind_from = f ;
+      kind_to = t
+    } in
+  List.concat (List.map (fun f -> List.map (build f) attribute_any) attribute_any)
+
+let attribute_sub k1 k2 =
+  match k1, k2 with
+  | Object _, AnyObject -> true
+  | _, _ -> k1 = k2
+
+let contact_sub k1 k2 =
+  attribute_sub k1.kind_from k2.kind_from
+  && attribute_sub k1.kind_to k2.kind_to
+
+let lift f l1 l2 =
+  List.for_all (fun k -> List.exists (f k) l2) l1
+
+let attributes_sub = lift attribute_sub
+
+let contacts_sub = lift contact_sub
+
+module PlayerAttribute =
+  AttributeInst (struct
+      type kind = attribute_kind list
+      let any = attribute_any
+    end)
+
+module ContactAttribute =
+  AttributeInst (struct
+      type kind = contact_kind list
+      let any = contact_any
+    end)
 
 type constructor_maps = {
     player : PlayerAttribute.constructor_map ;
@@ -168,7 +229,7 @@ type constructor_maps = {
 
 let (empty_constructor_maps, object_type) =
   let m = PlayerAttribute.empty_constructor_map in
-  let (object_type, m) = PlayerAttribute.declare_attribute m "__ object type __" true in
+  let (object_type, m) = PlayerAttribute.declare_attribute m "__ object type __" true [AnyObject] in
   let m = {
       player = m ;
       contact = ContactAttribute.empty_constructor_map

@@ -15,6 +15,8 @@ begin
   translation fr "A accès à"
   translation en "Has access to"
   translation eo "Alirpovas al"
+
+	contact from player to Place
 end
 
 contact HasAccess True
@@ -38,6 +40,8 @@ begin
   translation fr "Lieu publique"
   translation en "Public place"
   translation eo "Publikejo"
+
+	attribute of Place
 end
 
 attribute Public True

@@ -111,6 +111,22 @@ type event_constraint = {
          considered period.  If [false], there should be none. *)
   }
 
+(** An equivalent of [Attribute.attribute_kind] where object identifiers are just strings. *)
+type kind =
+  | Any (** Any player or object. *)
+  | AnyObject (** Any object *)
+  | Player (** Any player *)
+  | Object of string (** This particular object kind. *)
+
+(** Restrict the kind of an attribute. *)
+type attribute_of = kind list
+
+(** Restrict the kind of a contact.
+   This type will then be converted into [Attribute.contact_kind list]. *)
+type contact_from_to =
+  kind list (** Source player or object. *)
+  * kind list (** Target player or object. *)
+
 (** The possible commands present in a block. *)
 type command =
   | OfCategory of string
@@ -139,6 +155,8 @@ type command =
   | EventKind of string (** The event is of this particular kind. *)
   | ProvideEvent of provide_event
   | EventConstraint of event_constraint
+  | AttributeOf of attribute_of
+  | ContactFromTo of contact_from_to
 
 (** Provide an event of this kind to these players. *)
 and provide_event =

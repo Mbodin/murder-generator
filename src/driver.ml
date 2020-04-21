@@ -52,7 +52,9 @@ type block = {
     add_complexity : (bool * string) list ;
     event_kind : string list ;
     provide_event : Ast.provide_event list ;
-    event_constraint : Ast.event_constraint list
+    event_constraint : Ast.event_constraint list ;
+    attribute_of : Ast.attribute_of list ;
+    contact_from_to : Ast.contact_from_to list
   }
 
 let empty_block = {
@@ -71,7 +73,9 @@ let empty_block = {
     add_complexity = [] ;
     event_kind = [] ;
     provide_event = [] ;
-    event_constraint = []
+    event_constraint = [] ;
+    attribute_of = [] ;
+    contact_from_to = []
   }
 
 type import_information = {
@@ -267,6 +271,8 @@ type command_type =
   | EventKind
   | ProvideEvent
   | EventConstraint
+  | AttributeOf
+  | ContactFromTo
 
 (** Converts command types to string, for easier-to-understand error messages. *)
 let command_type_to_string = function
@@ -286,6 +292,8 @@ let command_type_to_string = function
   | EventKind -> "event kind declaration"
   | ProvideEvent -> "event provision"
   | EventConstraint -> "event constraint"
+  | AttributeOf -> "attribute kind"
+  | ContactFromTo -> "contact kind"
 
 exception UnexpectedCommandInBlock of string * string
 
@@ -329,7 +337,9 @@ let convert_block block_name expected =
       add_complexity = List.rev acc.add_complexity ;
       event_kind = List.rev acc.event_kind ;
       provide_event = List.rev acc.provide_event ;
-      event_constraint = List.rev acc.event_constraint
+      event_constraint = List.rev acc.event_constraint ;
+      attribute_of = List.rev acc.attribute_of ;
+      contact_from_to = List.rev acc.contact_from_to
     }
   | c :: l ->
     aux
@@ -383,7 +393,13 @@ let convert_block block_name expected =
         { acc with provide_event = p :: acc.provide_event }
       | Ast.EventConstraint p ->
         check EventConstraint ;
-        { acc with event_constraint = p :: acc.event_constraint }) l in
+        { acc with event_constraint = p :: acc.event_constraint }
+      | Ast.AttributeOf k ->
+        check AttributeOf ;
+        { acc with attribute_of = k :: acc.attribute_of }
+      | Ast.ContactFromTo k ->
+        check ContactFromTo ;
+        { acc with contact_from_to = k :: acc.contact_from_to }) l in
   aux empty_block
 
 (** Take a list of category names and return a set of category identifiers,
@@ -432,6 +448,34 @@ let event_names_to_dep_dep throw state l =
   let (event_names, s) = event_names_to_id_set state l in
   (event_names, event_dependencies_of_dependencies throw state s)
 
+(** Converts a [Ast.kind] to a [Attribute.attribute_kind list]. *)
+let kind_to_attribute_kind = function
+  | Ast.Any -> Attribute.attribute_any
+  | Ast.AnyObject -> [Attribute.AnyObject]
+  | Ast.Player -> [Attribute.Player]
+  (* TODO: | Ast.Object id -> [Attribute.Object ??] *)
+
+(** Use the [attribute_of] field of blocks to provide an attribute kind. *)
+let get_kind_attribute b =
+  let l = b.attribute_of in
+  if l = [] then Attribute.attribute_any
+  else List.concat (List.concat (List.map (List.map kind_to_attribute_kind) l))
+
+(** Use the [contact_from_to] field of blocks to provide a contact kind. *)
+let get_kind_contact b =
+  let l = b.contact_from_to in
+  if l = [] then Attribute.contact_any
+  else
+    let aux (f, t) =
+      let f = List.concat (List.map kind_to_attribute_kind f) in
+      let t = List.concat (List.map kind_to_attribute_kind t) in
+      List.concat (List.map (fun f ->
+        List.map (fun t -> {
+            Attribute.kind_from = f ;
+            Attribute.kind_to = t
+          }) t) f) in
+    List.concat (List.map aux l)
+
 (** Some subfunctions of [prepare_declaration] and [parse_element] use similar
    functions, only depending on whether called on attributes or contacts.
    The following tuples store each instantiations of the needed functions. *)
@@ -447,7 +491,8 @@ let attribute_functions =
    (fun id -> Attribute.PlayerAttribute id),
    (fun id -> Attribute.PlayerConstructor id),
    "attribute",
-   (fun _ -> Utils.id))
+   (fun _ -> Utils.id),
+   get_kind_attribute)
 let contact_functions =
   (Attribute.ContactAttribute.declare_attribute,
    Attribute.ContactAttribute.declare_constructor,
@@ -460,7 +505,8 @@ let contact_functions =
    (fun id -> Attribute.ContactAttribute id),
    (fun id -> Attribute.ContactConstructor id),
    "contact",
-   (fun name _ -> raise (UnexpectedCommandInBlock (name, "add"))))
+   (fun name _ -> raise (UnexpectedCommandInBlock (name, "add"))),
+   get_kind_contact)
 
 (** State whether a category has been defined. *)
 let category_exists state id =
@@ -520,10 +566,10 @@ let prepare_declaration i =
   (** Declare attribute and contact instances.
      See the declarations [attribute_functions] and [contact_functions]
      to understand the large tuple argument. *)
-  let declare_instance (declare, _, _, _, _, any, extract, update, constructor, _, en, _)
+  let declare_instance (declare, _, _, _, _, any, extract, update, constructor, _, en, _, get_kind)
       name internal block =
     let block = convert_block name [OfCategory; Translation] block in
-    let kind = (* TODO *) any in
+    let kind = (* TODO: get_kind *) any in
     let (id, state) =
       declare (extract (intermediary_constructor_maps i)) name internal kind in
     let id = constructor id in
@@ -578,7 +624,7 @@ let prepare_declaration i =
      [contact_functions] to understand the large tuple argument. *)
   let declare_constructor (declare, declare_constructor, _, _,
         declare_compatibility, any, extract, update,
-        attribute_constructor, constructor_constructor, en, get_player_attribute)
+        attribute_constructor, constructor_constructor, en, get_player_attribute, _)
       attribute_name constructor internal block =
     let block =
       convert_block attribute_name [OfCategory; Translation; Add;
@@ -1066,13 +1112,13 @@ let parse_element st element_name status block =
      At this stage, it has to be defined.
      See the declarations [attribute_functions] and [contact_functions] to
      understand the large tuple argument.**)
-  let get_attribute_id (_, _, get_attribute, _, _, _, get_state, _, _ , _, en, _)
+  let get_attribute_id (_, _, get_attribute, _, _, _, get_state, _, _ , _, en, _, _)
       name =
     match get_attribute (get_state st.import_information.constructor_maps) name with
     | None -> raise (Undeclared (en, name, element_name))
     | Some id -> id in
   (** Similar to [get_attribute_id], but for constructors. *)
-  let get_constructor_id (_, _, _, get_constructor, _, _, get_state, _, _ , _, en, _)
+  let get_constructor_id (_, _, _, get_constructor, _, _, get_state, _, _ , _, en, _, _)
       aid name =
     match get_constructor
             (get_state st.import_information.constructor_maps) aid name with

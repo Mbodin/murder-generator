@@ -54,15 +54,16 @@ rule read = parse
   | "add"                   { ADD }
   | "remove"                { REMOVE }
 
-  | "with"                  { WITH }
   | "and"                   { AND }
-  | "or"                    { OR }
-  | "not"                   { NOT }
-  | "no "                   { NO }
-  | "from"                  { FROM }
-  | "to"                    { TO }
-  | "between"               { BETWEEN }
   | "as"                    { AS }
+  | "between"               { BETWEEN }
+  | "from"                  { FROM }
+  | "no "                   { NO }
+  | "not"                   { NOT }
+  | "of"                    { OF }
+  | "or"                    { OR }
+  | "to"                    { TO }
+  | "with"                  { WITH }
 
   | "strict"                { STRICT }
   | "compatible"            { COMPATIBLE }

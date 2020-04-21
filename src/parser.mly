@@ -17,7 +17,8 @@ open Ast
 %token          PLAYER OBJECT
 %token          DECLARE PROVIDE LET BE ASSUME ADD REMOVE
 %token          INTERNAL
-%token          WITH AND OR NOT NO FROM TO BETWEEN AS ANY OTHER
+%token          ANY OTHER
+%token          AND AS BETWEEN FROM NO NOT OF OR TO WITH
 %token          STRICT COMPATIBLE
 %token          DUPLICABLE UNIQUE
 %token          PHANTOM BLOCKING
@@ -60,6 +61,12 @@ attribute_kind:
   | ATTRIBUTE   { Attribute }
   | CONTACT     { Contact }
 
+object_kind:
+  | ANY         { Any }
+  | ANY; OBJECT { AnyObject }
+  | PLAYER      { Player }
+  | id = UIDENT { Object id }
+
 block: l = loption (BEGIN; l = list (command); END { l })   { l }
 
 status:
@@ -79,6 +86,7 @@ language:
   | LET             { "let" }
   | NO              { "no" }
   | NOT             { "not" }
+  | OF              { "of" }
   | OR              { "or" }
   | TO              { "to" }
 
@@ -165,6 +173,13 @@ command:
     { e true }
   | e = event_constraint (NO, OR)
     { e false }
+  | ATTRIBUTE; OF; l = separated_nonempty_list (AND, object_kind)
+    { AttributeOf l }
+  | CONTACT; FROM; f = separated_nonempty_list (AND, object_kind);
+    TO; t = separated_nonempty_list (AND, object_kind)
+    { ContactFromTo (f, t) }
+  | CONTACT; BETWEEN; l = separated_list2m (AND, object_kind)
+    { ContactFromTo (l, l) }
 
 add_remove:
   | ADD     { true }
@@ -173,8 +188,8 @@ add_remove:
 target_destination (player):
   | FROM; p1 = player; TO; p2 = player
     { FromTo (p1, p2) }
-  | BETWEEN; p = player; AND; l = separated_nonempty_list (AND, player)
-    { Between (p :: l) }
+  | BETWEEN; l = separated_list2m (AND, player)
+    { Between l }
 
 destination:
   | p = UIDENT          { DestinationPlayer p }
@@ -260,4 +275,8 @@ duration:
   | SECONDS     { Events.Immediate_event }
 
 %inline empty: { () }
+
+(** A list of size [2] or more. *)
+separated_list2m (x, y):
+  | e = y; x; l = separated_nonempty_list (x, y)  { e :: l }
 

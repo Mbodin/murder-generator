@@ -10,8 +10,8 @@ type element = Id.t
       elements (the elements that provide this attribute).
     They are not supposed to be changed once pools are created. *)
 type global = {
-    all_elements : (element, Attribute.attribute list) PMap.t ;
-    element_attribute : (Attribute.attribute, element list) PMap.t
+    all_elements : (element, Attribute.attributes list) PMap.t ;
+    element_attribute : (Attribute.attributes, element list) PMap.t
   }
 
 let empty_global = {

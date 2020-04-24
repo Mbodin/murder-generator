@@ -296,7 +296,7 @@ let search_instantiation m stc e =
    The total sum of this map is also stored, as well as the list of elements
    associated with a negative number. *)
 type attribute_differences =
-  (Attribute.attribute, int) PMap.t * int * Attribute.attribute list
+  (Attribute.attributes, int) PMap.t * int * Attribute.attributes list
 
 let empty_difference = (PMap.empty, 0, [])
 

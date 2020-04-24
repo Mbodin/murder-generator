@@ -97,9 +97,9 @@ type state = {
       (** For each category, associates its set of category dependencies.
          Note that this list is global: it also comprises the dependencies
          of each dependencies, and so on. *) ;
-    attribute_dependencies : (Attribute.attribute, Id.t PSet.t) PMap.t
+    attribute_dependencies : (Attribute.attributes, Id.t PSet.t) PMap.t
       (** Similarly, the dependencies of each attribute. *) ;
-    constructor_dependencies : (Attribute.constructor, Id.t PSet.t) PMap.t
+    constructor_dependencies : (Attribute.constructors, Id.t PSet.t) PMap.t
       (** Similarly, the dependencies of each constructor. *) ;
     object_dependencies : (Id.t, Id.t PSet.t) PMap.t
       (** Similarly, the dependencies of each object kind. *) ;
@@ -120,8 +120,8 @@ type intermediary = {
     categories_to_be_defined :
       (Id.t, Id.t PSet.t
              * Id.t PSet.t
-             * Attribute.attribute PSet.t
-             * Attribute.constructor PSet.t
+             * Attribute.attributes PSet.t
+             * Attribute.constructors PSet.t
              * Id.t PSet.t) PMap.t
       (** The set of categories expected to be declared.
          For each of these, we also put three sets to which the category dependencies
@@ -132,10 +132,10 @@ type intermediary = {
          For each event to be declared, we also associate the other events
          depending on it. *) ;
     attributes_to_be_defined :
-      (Attribute.attribute, Attribute.constructor PSet.t) PMap.t
+      (Attribute.attributes, Attribute.constructors PSet.t) PMap.t
       (** Similarly, the set of attributes expected to be declared and their
          dependent constructors. *) ;
-    constructors_to_be_defined : Attribute.constructor PSet.t
+    constructors_to_be_defined : Attribute.constructors PSet.t
       (** A set of constructors expected to be defined. *) ;
     tags_to_be_defined : (Translation.language * Translation.tag) PSet.t
       (** Similarly, a set of tags expected to be defined. *) ;
@@ -476,37 +476,6 @@ let get_kind_contact b =
           }) t) f) in
     List.concat (List.map aux l)
 
-(** Some subfunctions of [prepare_declaration] and [parse_element] use similar
-   functions, only depending on whether called on attributes or contacts.
-   The following tuples store each instantiations of the needed functions. *)
-let attribute_functions =
-  (Attribute.PlayerAttribute.declare_attribute,
-   Attribute.PlayerAttribute.declare_constructor,
-   Attribute.PlayerAttribute.get_attribute,
-   Attribute.PlayerAttribute.get_constructor,
-   Attribute.PlayerAttribute.declare_compatibility,
-   Attribute.PlayerAttribute.any,
-   (fun m -> m.Attribute.player),
-   (fun i state -> { i with Attribute.player = state }),
-   (fun id -> Attribute.PlayerAttribute id),
-   (fun id -> Attribute.PlayerConstructor id),
-   "attribute",
-   (fun _ -> Utils.id),
-   get_kind_attribute)
-let contact_functions =
-  (Attribute.ContactAttribute.declare_attribute,
-   Attribute.ContactAttribute.declare_constructor,
-   Attribute.ContactAttribute.get_attribute,
-   Attribute.ContactAttribute.get_constructor,
-   Attribute.ContactAttribute.declare_compatibility,
-   Attribute.ContactAttribute.any,
-   (fun m -> m.Attribute.contact),
-   (fun i state -> { i with Attribute.contact = state }),
-   (fun id -> Attribute.ContactAttribute id),
-   (fun id -> Attribute.ContactConstructor id),
-   "contact",
-   (fun name _ -> raise (UnexpectedCommandInBlock (name, "add"))),
-   get_kind_contact)
 
 (** State whether a category has been defined. *)
 let category_exists state id =
@@ -563,18 +532,16 @@ let prepare_declaration i =
             with Not_found -> PSet.empty in
           PMap.add ev (update sets) events_to_be_defined)
       i.events_to_be_defined deps in
-  (** Declare attribute and contact instances.
-     See the declarations [attribute_functions] and [contact_functions]
-     to understand the large tuple argument. *)
-  let declare_instance (declare, _, _, _, _, any, extract, update, constructor, _, en, _, get_kind)
-      name internal block =
+  (** Declare attribute and contact instances. *)
+  let declare_instance (module A : Attribute.Attribute) get_kind name internal block =
     let block = convert_block name [OfCategory; Translation] block in
-    let kind = (* TODO: get_kind *) any in
+    let kind = (* TODO: get_kind *) A.any in
     let (id, state) =
-      declare (extract (intermediary_constructor_maps i)) name internal kind in
-    let id = constructor id in
+      A.declare_attribute (A.get_constructor_maps (intermediary_constructor_maps i))
+        name internal kind in
+    let id = A.to_attributes id in
     if attribute_exists i.current_state id then
-      raise (DefinedTwice (en, name, "")) ;
+      raise (DefinedTwice (A.name, name, "")) ;
     let (category_names, deps) =
       category_names_to_dep_dep false i.current_state block.of_category in
     (** We consider each constructor dependent on this attribute. *)
@@ -596,12 +563,12 @@ let prepare_declaration i =
       List.fold_left (fun translations tr ->
         let (lg, tags, items) = tr in
         if tags <> [(None, Translation.base)] then
-          raise (TranslationError (en, name, tr)) ;
+          raise (TranslationError (A.name, name, tr)) ;
         let str =
           String.concat "" (List.map (function
             | Translation.Direct str -> str
             | _ ->
-              raise (TranslationError (en, name, tr))) items) in
+              raise (TranslationError (A.name, name, tr))) items) in
         Translation.add translations lg id str) translations block.translation in
     { i with
         categories_to_be_defined = categories_to_be_defined ;
@@ -611,7 +578,7 @@ let prepare_declaration i =
               import_information =
                 { i.current_state.import_information with
                     constructor_maps =
-                      update (intermediary_constructor_maps i) state } ;
+                      A.set_constructor_maps (intermediary_constructor_maps i) state } ;
               category_names = category_names ;
               constructor_dependencies = constructor_dependencies ;
               attribute_dependencies =
@@ -619,38 +586,36 @@ let prepare_declaration i =
               translations =
                 { i.current_state.translations with Translation.attribute =
                     translations } } } in
-  (** Declare constructor instances.
-     Similar to [declare_instance], see the declarations [attribute_functions] and
-     [contact_functions] to understand the large tuple argument. *)
-  let declare_constructor (declare, declare_constructor, _, _,
-        declare_compatibility, any, extract, update,
-        attribute_constructor, constructor_constructor, en, get_player_attribute, _)
+  (** Declare constructor instances. *)
+  let declare_constructor (type c) (module A : Attribute.Attribute with type constructor = c)
+      (get_player_attribute : string -> c -> Attribute.PlayerAttribute.constructor)
       attribute_name constructor internal block =
     let block =
       convert_block attribute_name [OfCategory; Translation; Add;
                                     CompatibleWith] block in
-    let kind = (* TODO *) any in
+    let kind = (* TODO *) A.any in
     let (attribute, state) =
-      declare (extract (intermediary_constructor_maps i)) attribute_name false kind in
-    let (idp, state) = declare_constructor state attribute constructor internal in
-    let id = constructor_constructor idp in
+      A.declare_attribute (A.get_constructor_maps (intermediary_constructor_maps i))
+        attribute_name false kind in
+    let (idp, state) = A.declare_constructor state attribute constructor internal in
+    let id = A.to_constructors idp in
     let constructors_to_be_defined =
       PSet.remove id i.constructors_to_be_defined in
     let (state, constructors_to_be_defined) =
       List.fold_left (fun (state, constructors_to_be_defined) constructor' ->
           let (id', state) =
-            declare_constructor state attribute constructor' false in
+            A.declare_constructor state attribute constructor' false in
           let constructors_to_be_defined =
-            let id' = constructor_constructor id' in
+            let id' = A.to_constructors id' in
             if PMap.mem id' i.current_state.constructor_dependencies then
               constructors_to_be_defined
             else PSet.add id' constructors_to_be_defined in
-          (declare_compatibility state attribute idp id',
+          (A.declare_compatibility state attribute idp id',
            constructors_to_be_defined))
         (state, constructors_to_be_defined) block.compatible_with in
-    let attribute = attribute_constructor attribute in
+    let attribute = A.to_attributes attribute in
     if PMap.mem id i.current_state.constructor_dependencies then
-      raise (DefinedTwice (en ^ " constructor", constructor, attribute_name)) ;
+      raise (DefinedTwice (A.name ^ " constructor", constructor, attribute_name)) ;
     let (category_names, deps) =
       category_names_to_dep_dep false i.current_state block.of_category in
     (** If the associated attribute is already defined, we fetch its dependencies,
@@ -682,7 +647,7 @@ let prepare_declaration i =
             String.concat "" (List.map (function
               | Translation.Direct str -> str
               | _ ->
-                raise (TranslationError (en, constructor, tr))) items) in
+                raise (TranslationError (A.name, constructor, tr))) items) in
           try (Translation.gadd translations lg tags id str,
                List.fold_left (fun tags_to_be_defined (_, tag) ->
                    if PSet.mem (lg, tag) i.declared_tags
@@ -691,7 +656,7 @@ let prepare_declaration i =
                    else PSet.add (lg, tag) tags_to_be_defined)
                  tags_to_be_defined tags)
           with Translation.ConflictingCommands _ ->
-            raise (TranslationError (en, constructor, tr)))
+            raise (TranslationError (A.name, constructor, tr)))
         (translations, i.tags_to_be_defined) block.translation in
     let add =
       List.fold_left (fun add (lg, tag) ->
@@ -716,7 +681,7 @@ let prepare_declaration i =
               import_information =
                 { i.current_state.import_information with
                     constructor_maps =
-                      update (intermediary_constructor_maps i) state } ;
+                      A.set_constructor_maps (intermediary_constructor_maps i) state } ;
               constructor_dependencies =
                 PMap.add id deps i.current_state.constructor_dependencies ;
               category_names = category_names ;
@@ -726,14 +691,16 @@ let prepare_declaration i =
                     Translation.add = add } } } in
   function
   | Ast.DeclareInstance (Ast.Attribute, attribute, internal, block) ->
-    declare_instance attribute_functions attribute internal block
+    declare_instance (module Attribute.PlayerAttribute) get_kind_attribute attribute internal block
   | Ast.DeclareInstance (Ast.Contact, contact, internal, block) ->
-    declare_instance contact_functions contact internal block
-  | Ast.DeclareConstructor (Ast.Attribute, attribute, constructor, internal,
-      block) ->
-    declare_constructor attribute_functions attribute constructor internal block
+    declare_instance (module Attribute.ContactAttribute) get_kind_contact contact internal block
+  | Ast.DeclareConstructor (Ast.Attribute, attribute, constructor, internal, block) ->
+    declare_constructor (module Attribute.PlayerAttribute) (fun _ -> Utils.id)
+      attribute constructor internal block
   | Ast.DeclareConstructor (Ast.Contact, attribute, constructor, internal, block) ->
-    declare_constructor contact_functions attribute constructor internal block
+    declare_constructor (module Attribute.ContactAttribute) (fun name _ ->
+        raise (UnexpectedCommandInBlock (name, "add")))
+      attribute constructor internal block
   | Ast.DeclareObject (name, block) ->
     let block =
       convert_block name [OfCategory; Translation] block in
@@ -1109,20 +1076,18 @@ let parse_element st element_name status block =
         add_constraint (Utils.Left p) c) (Utils.seq nb_players) ;
     add_constraint_other c in
   (** Retrieve the attribute identifier given by this name.
-     At this stage, it has to be defined.
-     See the declarations [attribute_functions] and [contact_functions] to
-     understand the large tuple argument.**)
-  let get_attribute_id (_, _, get_attribute, _, _, _, get_state, _, _ , _, en, _, _)
-      name =
-    match get_attribute (get_state st.import_information.constructor_maps) name with
-    | None -> raise (Undeclared (en, name, element_name))
+     At this stage, it has to be defined. *)
+  let get_attribute_id (type a) (module A : Attribute.Attribute with type attribute = a) name : a =
+    match A.get_attribute (A.get_constructor_maps st.import_information.constructor_maps) name with
+    | None -> raise (Undeclared (A.name, name, element_name))
     | Some id -> id in
   (** Similar to [get_attribute_id], but for constructors. *)
-  let get_constructor_id (_, _, _, get_constructor, _, _, get_state, _, _ , _, en, _, _)
-      aid name =
-    match get_constructor
-            (get_state st.import_information.constructor_maps) aid name with
-    | None -> raise (Undeclared (en ^ " constructor", name, element_name))
+  let get_constructor_id (type a c)
+        (module A : Attribute.Attribute with type attribute = a and type constructor = c)
+        aid name : c =
+    match A.get_constructor (A.get_constructor_maps st.import_information.constructor_maps)
+            aid name with
+    | None -> raise (Undeclared (A.name ^ " constructor", name, element_name))
     | Some id -> id in
   (** Merges the current dependencies with the ones of the given constructor.
      Note that the corresponding attribute’s dependencies already have been
@@ -1176,9 +1141,9 @@ let parse_element st element_name status block =
       b.provide_attribute @ l) block.provide_attribute events in
   let deps =
     List.fold_left (fun deps pa ->
-        let aid = get_attribute_id attribute_functions pa.Ast.attribute_name in
+        let aid = get_attribute_id (module Attribute.PlayerAttribute) pa.Ast.attribute_name in
         let cid =
-          List.map (get_constructor_id attribute_functions aid)
+          List.map (get_constructor_id (module Attribute.PlayerAttribute) aid)
             pa.Ast.attribute_value in
         let c =
           Element.Attribute (aid,
@@ -1199,9 +1164,9 @@ let parse_element st element_name status block =
       b.provide_contact @ l) block.provide_contact events in
   let deps =
     List.fold_left (fun deps pc ->
-        let aid = get_attribute_id contact_functions pc.Ast.contact_name in
+        let aid = get_attribute_id (module Attribute.ContactAttribute) pc.Ast.contact_name in
         let cid =
-          List.map (get_constructor_id contact_functions aid)
+          List.map (get_constructor_id (module Attribute.ContactAttribute) aid)
             pc.Ast.contact_value in
         let constr p2 =
           Element.Contact (aid, p2,
@@ -1253,8 +1218,8 @@ let parse_element st element_name status block =
   let consider_constraints add_constraint =
     List.fold_left (fun deps -> function
         | Ast.HasAttribute (a, n, c) ->
-          let aid = get_attribute_id attribute_functions a in
-          let cid = List.map (get_constructor_id attribute_functions aid) c in
+          let aid = get_attribute_id (module Attribute.PlayerAttribute) a in
+          let cid = List.map (get_constructor_id (module Attribute.PlayerAttribute) aid) c in
           let cid =
             if n then (
               (** At this stage, all the constructors have been defined. *)
@@ -1268,8 +1233,8 @@ let parse_element st element_name status block =
           intersect_with_constructor_dependencies_list deps
             (List.map (fun id -> Attribute.PlayerConstructor id) cid)
         | Ast.HasContact (a, p', n, c) ->
-          let aid = get_attribute_id contact_functions a in
-          let cid = List.map (get_constructor_id contact_functions aid) c in
+          let aid = get_attribute_id (module Attribute.ContactAttribute) a in
+          let cid = List.map (get_constructor_id (module Attribute.ContactAttribute) aid) c in
           let cid =
             if n then (
               (** At this stage, all the constructors have been defined. *)
@@ -1329,12 +1294,12 @@ let parse_element st element_name status block =
                | _ ->
                  raise (UnexpectedCommandInBlock (event_name,
                          "destination of attribute")) in
-             let aid = get_attribute_id attribute_functions pa.Ast.attribute_name in
+             let aid = get_attribute_id (module Attribute.PlayerAttribute) pa.Ast.attribute_name in
              add p (Events.kind_of_attribute aid) kinds)
            kinds block.provide_attribute in
         let kinds =
           List.fold_left (fun kinds pa ->
-            let aid = get_attribute_id contact_functions pa.Ast.contact_name in
+            let aid = get_attribute_id (module Attribute.ContactAttribute) pa.Ast.contact_name in
             let get_player = function
               | Ast.DestinationPlayer p -> Id.to_array (get_player p)
               | _ ->
@@ -1405,9 +1370,9 @@ let parse_element st element_name status block =
                 PSet.singleton (Events.kind_of_id k)
               | Ast.KindAttribute a ->
                 PSet.singleton (Events.kind_of_attribute
-                  (get_attribute_id attribute_functions a))
+                  (get_attribute_id (module Attribute.PlayerAttribute) a))
               | Ast.KindContact (c, l) ->
-                let c = get_attribute_id contact_functions c in
+                let c = get_attribute_id (module Attribute.ContactAttribute) c in
                 PSet.from_list (List.map (fun p ->
                   let p = get_player_array p in
                   Events.kind_of_contact c p) l) in

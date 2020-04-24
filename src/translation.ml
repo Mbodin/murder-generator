@@ -76,8 +76,8 @@ type 'a complete_translation_function = 'a -> tag PSet.t -> string * tag PSet.t
 type element = {
     category : Id.t t ;
     category_description : Id.t t ;
-    attribute : Attribute.attribute t ;
-    constructor : Attribute.constructor gt ;
+    attribute : Attribute.attributes t ;
+    constructor : Attribute.constructors gt ;
     objects : Id.t t ;
     add : (language,
            (Attribute.PlayerAttribute.constructor, tag PSet.t) PMap.t) PMap.t

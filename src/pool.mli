@@ -15,7 +15,7 @@ val empty_global : global
 
 (** Register that an element exists, and that it may provide the following
    attributes. *)
-val register_element : global -> element -> Attribute.attribute list -> global
+val register_element : global -> element -> Attribute.attributes list -> global
 
 (** Unregister an element.
    It won’t be considered by the pool. *)
@@ -65,19 +65,19 @@ val shuffle : t -> t
 val shuffle_beginning : ?size:int -> t -> t
 
 (** Remove from the pool all elements that don’t provide this attribute. *)
-val restrict : t -> Attribute.attribute -> t
+val restrict : t -> Attribute.attributes -> t
 
 (** Only keeps from the pool the elements satisfying the provided predicate. *)
 val filter : t -> (element -> bool) -> t
 
 (** Remove from the pool all elements that provide this attribute. *)
-val filter_out : t -> Attribute.attribute -> t
+val filter_out : t -> Attribute.attributes -> t
 
 (** Add an element to the pool to its end. *)
 val add : t -> element -> t
 
 (** Add all elements that provide this attribute to the pool. *)
-val add_attribute : t -> Attribute.attribute -> t
+val add_attribute : t -> Attribute.attributes -> t
 
 (** Remove an element from the pool. *)
 val remove : t -> element -> t

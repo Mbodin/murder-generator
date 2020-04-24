@@ -63,7 +63,7 @@ type t = {
   }
 
 (** Returns the list of attribute that an element may provide. *)
-val provided_attributes : t -> Attribute.attribute list
+val provided_attributes : t -> Attribute.attributes list
 
 (** Given a state, an element, and an instantiation of the characters, states
    whether the event can be applied.
@@ -110,11 +110,11 @@ val merge_attribute_differences : attribute_differences -> attribute_differences
 val difference_weigth : attribute_differences -> int
 
 (** Returns the difference for a specific attribute. *)
-val difference_for_attribute : attribute_differences -> Attribute.attribute -> int
+val difference_for_attribute : attribute_differences -> Attribute.attributes -> int
 
 (** Returns all attributes who value associated by [difference_for_attribute]
    is negative, that is, the attributes with constraints to be solved. *)
-val difference_attribute_in_need : attribute_differences -> Attribute.attribute list
+val difference_attribute_in_need : attribute_differences -> Attribute.attributes list
 
 (** Return an empty difference, with a weight of zero. *)
 val empty_difference : attribute_differences

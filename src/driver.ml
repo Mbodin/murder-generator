@@ -89,7 +89,6 @@ type state = {
     category_names : string Id.map (** All declared category names. *) ;
     event_names : string Id.map (** All declared event names. *) ;
     element_names : string Id.map (** All declared element names. *) ;
-    object_names : string Id.map (** All declared object names. *) ;
     import_information : import_information
       (** Some generic information, mostly important for importation. *) ;
     (* LATER: There may be a way to factorise these dependency structures *)
@@ -101,7 +100,7 @@ type state = {
       (** Similarly, the dependencies of each attribute. *) ;
     constructor_dependencies : (Attribute.constructors, Id.t PSet.t) PMap.t
       (** Similarly, the dependencies of each constructor. *) ;
-    object_dependencies : (Id.t, Id.t PSet.t) PMap.t
+    object_dependencies : (Attribute.object_constructor, Id.t PSet.t) PMap.t
       (** Similarly, the dependencies of each object kind. *) ;
     elements_dependencies : (Id.t, Id.t PSet.t) PMap.t
       (** Similarly, the dependencies of each element. *) ;
@@ -117,12 +116,12 @@ type state = {
 
 type intermediary = {
     current_state : state ; (** The current state. *)
-    categories_to_be_defined :
+    categories_to_be_defined : (* TODO: Remove this, and use graphs instead. *)
       (Id.t, Id.t PSet.t
              * Id.t PSet.t
              * Attribute.attributes PSet.t
              * Attribute.constructors PSet.t
-             * Id.t PSet.t) PMap.t
+             * Attribute.object_constructor PSet.t) PMap.t
       (** The set of categories expected to be declared.
          For each of these, we also put three sets to which the category dependencies
          should be attached: they are respectively the set of category identifiers,
@@ -155,7 +154,6 @@ let empty_state = {
     category_names = Id.map_create () ;
     event_names = Id.map_create () ;
     element_names = Id.map_create () ;
-    object_names = Id.map_create () ;
     import_information = {
         constructor_maps = Attribute.empty_constructor_maps ;
         event_id = PMap.empty ;
@@ -448,33 +446,56 @@ let event_names_to_dep_dep throw state l =
   let (event_names, s) = event_names_to_id_set state l in
   (event_names, event_dependencies_of_dependencies throw state s)
 
-(** Converts a [Ast.kind] to a [Attribute.attribute_kind list]. *)
-let kind_to_attribute_kind = function
-  | Ast.Any -> Attribute.attribute_any
-  | Ast.AnyObject -> [Attribute.AnyObject]
-  | Ast.Player -> [Attribute.Player]
-  (* TODO: | Ast.Object id -> [Attribute.Object ??] *)
 
-(** Use the [attribute_of] field of blocks to provide an attribute kind. *)
-let get_kind_attribute b =
+(** Declare an object name using its special attribute.
+ * It takes and propagates the main constructor map. *)
+let name_object m name =
+  let (o, m') =
+    Attribute.PlayerAttribute.name_constructor m.Attribute.player Attribute.object_type name in
+  (o, Attribute.PlayerAttribute.set_constructor_maps m m')
+
+(** Converts a [Ast.kind] to a [Attribute.attribute_kind list].
+   It takes as argument the constructor map [m] and returns it. *)
+let kind_to_attribute_kind m = function
+  | Ast.Any -> (m, Attribute.attribute_any)
+  | Ast.AnyObject -> (m, [Attribute.AnyObject])
+  | Ast.Player -> (m, [Attribute.Player])
+  | Ast.Object id ->
+    let (o, m) = name_object m id in
+    (m, [Attribute.Object o])
+
+(** Similar to [kind_to_attribute_kind], but takes a disjunctive list as argument. *)
+let kinds_to_attribute_kind m =
+  List.fold_left (fun (m, l) k ->
+    let (m, l') = kind_to_attribute_kind m k in
+    (m, l' @ l)) (m, [])
+
+(** Use the [attribute_of] field of blocks to provide an attribute kind.
+   As for [kind_to_attribute_kind], the [m] argument is propagated along the way. *)
+let get_kind_attribute m b =
   let l = b.attribute_of in
-  if l = [] then Attribute.attribute_any
-  else List.concat (List.concat (List.map (List.map kind_to_attribute_kind) l))
+  if l = [] then (m, Attribute.attribute_any)
+  else kinds_to_attribute_kind m (List.concat l)
 
-(** Use the [contact_from_to] field of blocks to provide a contact kind. *)
-let get_kind_contact b =
+(** Use the [contact_from_to] field of blocks to provide a contact kind.
+   As for [kind_to_attribute_kind], the [m] argument is propagated along the way. *)
+let get_kind_contact m b =
   let l = b.contact_from_to in
-  if l = [] then Attribute.contact_any
+  if l = [] then (m, Attribute.contact_any)
   else
-    let aux (f, t) =
-      let f = List.concat (List.map kind_to_attribute_kind f) in
-      let t = List.concat (List.map kind_to_attribute_kind t) in
-      List.concat (List.map (fun f ->
-        List.map (fun t -> {
-            Attribute.kind_from = f ;
-            Attribute.kind_to = t
-          }) t) f) in
-    List.concat (List.map aux l)
+    let aux m (f, t) =
+      let (m, f) = kinds_to_attribute_kind m f in
+      let (m, t) = kinds_to_attribute_kind m t in
+      let r =
+        List.concat (List.map (fun f ->
+          List.map (fun t -> {
+              Attribute.kind_from = f ;
+              Attribute.kind_to = t
+            }) t) f) in
+      (m, r) in
+    List.fold_left (fun (m, l) k ->
+      let (m, r) = aux m k in
+      (m, r @ l)) (m, []) l
 
 
 (** State whether a category has been defined. *)
@@ -533,12 +554,16 @@ let prepare_declaration i =
           PMap.add ev (update sets) events_to_be_defined)
       i.events_to_be_defined deps in
   (** Declare attribute and contact instances. *)
-  let declare_instance (module A : Attribute.Attribute) get_kind name internal block =
-    let block = convert_block name [OfCategory; Translation] block in
-    let kind = (* TODO: get_kind *) A.any in
+  let declare_instance (type k) (module A : Attribute.Attribute with type kind = k)
+      kind_annot get_kind name internal block =
+    let block = convert_block name [OfCategory; Translation; kind_annot] block in
+    let state = intermediary_constructor_maps i in
+    let (state, kind) = get_kind state block in
+    (* TODO: Force all the objects defined in the types to be later defined. *)
     let (id, state) =
-      A.declare_attribute (A.get_constructor_maps (intermediary_constructor_maps i))
-        name internal kind in
+      let (id, state') =
+        A.declare_attribute (A.get_constructor_maps state) name internal kind in
+      (id, A.set_constructor_maps state state') in
     let id = A.to_attributes id in
     if attribute_exists i.current_state id then
       raise (DefinedTwice (A.name, name, "")) ;
@@ -577,8 +602,7 @@ let prepare_declaration i =
           { i.current_state with
               import_information =
                 { i.current_state.import_information with
-                    constructor_maps =
-                      A.set_constructor_maps (intermediary_constructor_maps i) state } ;
+                    constructor_maps = state } ;
               category_names = category_names ;
               constructor_dependencies = constructor_dependencies ;
               attribute_dependencies =
@@ -593,10 +617,8 @@ let prepare_declaration i =
     let block =
       convert_block attribute_name [OfCategory; Translation; Add;
                                     CompatibleWith] block in
-    let kind = (* TODO *) A.any in
     let (attribute, state) =
-      A.declare_attribute (A.get_constructor_maps (intermediary_constructor_maps i))
-        attribute_name false kind in
+      A.name_attribute (A.get_constructor_maps (intermediary_constructor_maps i)) attribute_name in
     let (idp, state) = A.declare_constructor state attribute constructor internal in
     let id = A.to_constructors idp in
     let constructors_to_be_defined =
@@ -604,7 +626,7 @@ let prepare_declaration i =
     let (state, constructors_to_be_defined) =
       List.fold_left (fun (state, constructors_to_be_defined) constructor' ->
           let (id', state) =
-            A.declare_constructor state attribute constructor' false in
+            A.name_constructor state attribute constructor' in
           let constructors_to_be_defined =
             let id' = A.to_constructors id' in
             if PMap.mem id' i.current_state.constructor_dependencies then
@@ -691,9 +713,11 @@ let prepare_declaration i =
                     Translation.add = add } } } in
   function
   | Ast.DeclareInstance (Ast.Attribute, attribute, internal, block) ->
-    declare_instance (module Attribute.PlayerAttribute) get_kind_attribute attribute internal block
+    declare_instance (module Attribute.PlayerAttribute)
+      AttributeOf get_kind_attribute attribute internal block
   | Ast.DeclareInstance (Ast.Contact, contact, internal, block) ->
-    declare_instance (module Attribute.ContactAttribute) get_kind_contact contact internal block
+    declare_instance (module Attribute.ContactAttribute)
+      ContactFromTo get_kind_contact contact internal block
   | Ast.DeclareConstructor (Ast.Attribute, attribute, constructor, internal, block) ->
     declare_constructor (module Attribute.PlayerAttribute) (fun _ -> Utils.id)
       attribute constructor internal block
@@ -701,11 +725,15 @@ let prepare_declaration i =
     declare_constructor (module Attribute.ContactAttribute) (fun name _ ->
         raise (UnexpectedCommandInBlock (name, "add")))
       attribute constructor internal block
-  | Ast.DeclareObject (name, block) ->
+  | Ast.DeclareObject (name, internal, block) ->
     let block =
       convert_block name [OfCategory; Translation] block in
-    let (id, object_names) =
-      Id.map_insert_t i.current_state.object_names name in
+    let state = intermediary_constructor_maps i in
+    let (id, state) =
+      let (id, state') =
+        Attribute.PlayerAttribute.declare_constructor state.Attribute.player
+          Attribute.object_type name internal in
+      (id, Attribute.PlayerAttribute.set_constructor_maps state state') in
     if object_exists i.current_state id then
       raise (DefinedTwice ("object", name, "")) ;
     let (category_names, deps) =
@@ -716,8 +744,8 @@ let prepare_declaration i =
           (cats, events, attrs, constrs, PSet.add id objs)) in
     let translations =
       let translations =
-        Translation.add i.current_state.translations.Translation.objects
-          Translation.generic id name in
+        Translation.gadd i.current_state.translations.Translation.constructor
+          Translation.generic [] (Attribute.PlayerConstructor id) name in
       List.fold_left (fun translations tr ->
         let (lg, tags, items) = tr in
         if tags <> [(None, Translation.base)] then
@@ -727,30 +755,32 @@ let prepare_declaration i =
             | Translation.Direct str -> str
             | _ ->
               raise (TranslationError ("object", name, tr))) items) in
-        Translation.add translations lg id str) translations block.translation in
+        try Translation.gadd translations lg [] (Attribute.PlayerConstructor id) str
+        with Translation.ConflictingCommands _ ->
+          raise (TranslationError ("object", name, tr))) translations block.translation in
     (** In addition to the object name, we declare a special attribute constructor
        for the dummy attribute [Attribute.object_type]. *)
-    let state = (intermediary_constructor_maps i).Attribute.player in
     let (idp, state) =
-      Attribute.PlayerAttribute.declare_constructor state Attribute.object_type name true in
+      let (idp, state') =
+        Attribute.PlayerAttribute.declare_constructor state.Attribute.player
+          Attribute.object_type name true in
+      (idp, Attribute.PlayerAttribute.set_constructor_maps state state') in
     let idp = Attribute.PlayerConstructor idp in
     { i with
         categories_to_be_defined = categories_to_be_defined ;
         current_state =
           { i.current_state with
               category_names = category_names ;
-              object_names = object_names ;
               object_dependencies =
                 PMap.add id deps i.current_state.object_dependencies ;
               constructor_dependencies =
                 PMap.add idp deps i.current_state.constructor_dependencies ;
               import_information =
                 { i.current_state.import_information with
-                    constructor_maps =
-                      { (intermediary_constructor_maps i) with Attribute.player = state } } ;
+                    constructor_maps = state } ;
               translations =
                 { i.current_state.translations with
-                    Translation.objects = translations } } }
+                    Translation.constructor = translations } } }
   | Ast.DeclareCategory (name, block) ->
     let block =
       convert_block name [OfCategory; Translation; Description] block in

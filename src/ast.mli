@@ -178,15 +178,18 @@ type declaration =
   | DeclareInstance of attribute_kind * string * bool * block
     (** Declare a attribute of this name.
        The boolean states whether the attribute is internal.
-       Only expects commands of the form [OfCategory] in its block. *)
+       Accepts the following commands: [OfCategory], [Translation],
+       and either [AttributeOf] or [ContactFromTo]. *)
   | DeclareConstructor of attribute_kind * string * string * bool * block
     (** Declare a attribute’s constructor for this attribute and of this name.
        The boolean states whether the constructor is internal.
        Accepts the following commands: [OfCategory], [Translation],
-       [Add], and [CompatibleWith]. *)
-  | DeclareObject of string * block
+       [Add], [CompatibleWith]. *)
+  | DeclareObject of string * bool * block
     (** Declare an object kind.
-       Only expects commands of the form [OfCategory] and [Translation]. *)
+       The boolean states whether the object is internal.
+       Only expects commands of the form [OfCategory] and [Translation].
+       (* TODO: Add [compatibility]. *) *)
   | DeclareCategory of string * block
     (** Declare a category of this name.
        Only expects commands of the form [OfCategory] and [Translation]. *)

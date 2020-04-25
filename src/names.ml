@@ -167,11 +167,11 @@ let createVowelConsonant m definitions size initV initC middleV middleC endV end
         (fun props ->
           get_spec (add false) unadd initV props
           @ get_spec (add true) unadd initC props) ;
-      alternative_transition = 
+      alternative_transition =
         (let middleV = get_spec (add false) unadd middleV in
          let middleC = get_spec (add true) unadd middleC in
          fun props b -> (if b then middleV else middleC) props) ;
-      alternative_final = 
+      alternative_final =
         (let endV = get_spec (fun str props -> (str, props)) Utils.id endV in
          let endC = get_spec (fun str props -> (str, props)) Utils.id endC in
          fun props b -> (if b then endV else endC) props)

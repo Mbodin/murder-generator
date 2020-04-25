@@ -5,7 +5,7 @@
    of this. *)
 
 (** This data structure stores all the information about the constructors
-   of (player) attributes. *)
+   of (player or object) attributes. *)
 type player_constructor_map
 
 (** This data structure stores all the information about the constructors
@@ -21,7 +21,7 @@ type constructor_maps = {
 (** An empty structure. *)
 val empty_constructor_maps : constructor_maps
 
-(** The type of (player) attributes. *)
+(** The type of (player or object) attributes. *)
 type player_attribute
 
 (** The type of contacts. *)
@@ -36,7 +36,7 @@ type attributes =
 (** A special internal attribute for objects. *)
 val object_type : player_attribute
 
-(** The type of the constructors of (player) attributes. *)
+(** The type of the constructors of (player or object) attributes. *)
 type player_constructor
 
 (** The type of the constructors of contacts. *)
@@ -47,7 +47,7 @@ type constructors =
   | PlayerConstructor of player_constructor
   | ContactConstructor of contact_constructor
 
-(** The type of object constructors, and in particular of the constructors
+(** The type representing objects, that is the constructors
    corresponding to the [object_type] attribute. *)
 type object_constructor = player_constructor
 
@@ -64,7 +64,7 @@ type contact_kind = {
     kind_to : attribute_kind
   }
 
-(** The kind of (player) attributes. *)
+(** The kind of (player or object) attributes. *)
 type player_kinds = attribute_kind list
 
 (** The kind of contacts. *)
@@ -139,15 +139,27 @@ module type Attribute = sig
        The string is the name of the attribute and the boolean states whether
        it is internal.
        If already declared, its previously-set identifier is still returned,
-       but its internal status is updated. *)
+       but the modifications over the internal status and its kind are unspecified. *)
     val declare_attribute : constructor_map -> string -> bool -> kind -> attribute * constructor_map
+
+    (** Similar than [declare_attribute], but the internal status and its kind are given
+       values that will be erased if the attribute is later properly declared.
+       If the attribute is already declared, then these values are not changed. *)
+    val name_attribute : constructor_map -> string -> attribute * constructor_map
 
     (** Declare a new constructor for an attribute.
        The string is the name of the constructor and the boolean states whether
        it is internal.
        If already declared, its previously-set identifier is still returned,
-       but its internal status is updated. *)
+       but the action over the internal status is unspecified. *)
     val declare_constructor : constructor_map -> attribute -> string -> bool -> constructor * constructor_map
+
+    (** Same as [declare_constructor], but the internal status is given a value that will
+       be erased if the constructor is later properly declared.
+       If the constructor is already declared, its internal status is not changed.
+       Note how the [attribute] argument is not facultative here: constructors with the same
+       name but different attributes are considered different. *)
+    val name_constructor : constructor_map -> attribute -> string -> constructor * constructor_map
 
     (** Get the attribute identifier from its name. *)
     val get_attribute : constructor_map -> string -> attribute option

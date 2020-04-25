@@ -101,7 +101,9 @@ module type Attribute = sig
     val constructors : constructor_map -> attribute -> constructor list option
     val all_constructors : constructor_map -> constructor list
     val declare_attribute : constructor_map -> string -> bool -> kind -> attribute * constructor_map
+    val name_attribute : constructor_map -> string -> attribute * constructor_map
     val declare_constructor : constructor_map -> attribute -> string -> bool -> constructor * constructor_map
+    val name_constructor : constructor_map -> attribute -> string -> constructor * constructor_map
     val get_attribute : constructor_map -> string -> attribute option
     val get_constructor : constructor_map -> attribute -> string -> constructor option
     val remove_constructor : constructor_map -> constructor -> constructor_map
@@ -121,6 +123,7 @@ module AttributeInst (K : sig
       val name : string
       val get_constructor_maps : constructor_maps -> (Id.t, Id.t, kind) constructor_map_type
       val set_constructor_maps : constructor_maps -> (Id.t, Id.t, kind) constructor_map_type -> constructor_maps
+      val kind_sub : kind -> kind -> bool
     end) =
   struct
 
@@ -166,16 +169,27 @@ module AttributeInst (K : sig
 
     let declare_attribute m a internal k =
       let (a, mn) = Id.map_insert_t m.name a in
+      let association =
+        if PMap.mem a m.association then
+          m.association
+        else PMap.add a [] m.association in
+      let kinds =
+        (** Only the most precise kind is conserved. *)
+        try
+          let k' = PMap.find a m.kinds in
+          if kind_sub k' k then m.kinds
+          else PMap.add a k' m.kinds
+        with Not_found -> PMap.add a k m.kinds in
+      let internal =
+        (** Any command stating that it is internal has priority on the ones that
+           state that it is public. *)
+        if internal then
+          PMap.add a None m.internal
+        else m.internal in
       (a, { m with name = mn ;
-                   association =
-                     if PMap.mem a m.association then
-                       m.association
-                     else PMap.add a [] m.association ;
-                   kinds = PMap.add a k m.kinds ;
-                   internal =
-                     if internal then
-                       PMap.add a None m.internal
-                     else m.internal })
+                   association = association ;
+                   kinds = kinds ;
+                   internal = internal })
 
     let declare_constructor m a c internal =
       let (c, mc) = Id.map_insert_t m.map (a, c) in
@@ -197,6 +211,9 @@ module AttributeInst (K : sig
       (c, { m with map = mc ;
                    association = PMap.add a (c :: l) m.association ;
                    internal = internal })
+
+    let name_attribute m a = declare_attribute m a false any
+    let name_constructor m a c = declare_constructor m a c false
 
     let get_attribute m a =
       Id.get_id m.name a
@@ -258,6 +275,7 @@ module PlayerAttribute =
       let name = "attribute"
       let get_constructor_maps m = m.player
       let set_constructor_maps i m = { i with player = m }
+      let kind_sub = attributes_sub
     end)
 
 module ContactAttribute =
@@ -267,6 +285,7 @@ module ContactAttribute =
       let name = "contact"
       let get_constructor_maps m = m.contact
       let set_constructor_maps i m = { i with contact = m }
+      let kind_sub = contacts_sub
     end)
 
 let (empty_constructor_maps, object_type) =

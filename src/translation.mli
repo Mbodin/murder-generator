@@ -166,9 +166,8 @@ type element = {
     category_description : Id.t t (** The translations of categories’s descriptions. *) ;
     attribute : Attribute.attributes t (** The translations of attributes. *) ;
     constructor : Attribute.constructors gt (** The translations of constructors. *) ;
-    objects : Id.t t (** The translations of object kinds. *) ;
     add : (language, (Attribute.PlayerAttribute.constructor, tag PSet.t) PMap.t) PMap.t
-      (** For each constructor and language, provides a set of added tags. *)
+      (** For each constructor and language, provide a set of added tags. *)
   }
 
 (** A record whose fields are all empty. *)

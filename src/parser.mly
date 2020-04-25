@@ -46,8 +46,8 @@ declaration:
   | internal = boption (INTERNAL); k = attribute_kind;
     attr = UIDENT; constructor = UIDENT; b = block
     { DeclareConstructor (k, attr, constructor, internal, b) }
-  | DECLARE; OBJECT; name = UIDENT ; b = block
-    { DeclareObject (name, b) }
+  | DECLARE; internal = boption(INTERNAL); OBJECT; name = UIDENT ; b = block
+    { DeclareObject (name, internal, b) }
   | CATEGORY; name = UIDENT; c = block
     { DeclareCategory (name, c) }
   | DECLARE; EVENT; event = UIDENT; b = block

@@ -922,7 +922,7 @@ let main =
                                     ([],
                                      (InOut.Node name.IO.node, hsettings)
                                      :: List.map (function
-                                          | None -> cellNA 
+                                          | None -> cellNA
                                           | Some node ->
                                             (InOut.Node node.IO.node, InOut.default)) contacts
                                      @ [(InOut.LinkContinuation (false, InOut.Simple,

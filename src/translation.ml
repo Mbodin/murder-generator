@@ -78,7 +78,6 @@ type element = {
     category_description : Id.t t ;
     attribute : Attribute.attributes t ;
     constructor : Attribute.constructors gt ;
-    objects : Id.t t ;
     add : (language,
            (Attribute.PlayerAttribute.constructor, tag PSet.t) PMap.t) PMap.t
   }
@@ -93,7 +92,6 @@ let empty_element = {
     category_description = empty ;
     attribute = empty ;
     constructor = gempty ;
-    objects = empty ;
     add = PMap.empty
   }
 

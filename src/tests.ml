@@ -65,13 +65,21 @@ let test_name_generation languages constructor_maps =
     (fileName, gen) in
   let generators = List.map read_file NameFiles.files in
   List.iter (fun lg ->
+    let count = ref 0 in
+    let limit = 5 in
     let has_default =
       List.fold_left (fun has_default (fileName, gen) ->
         let tr = Names.translate gen in
-         if Translation.translate tr lg () = None then
-           print_endline ("Warning: Missing translation of `" ^ fileName
-                          ^ "' for language " ^ Translation.iso639 lg ^ ".") ;
+         if Translation.translate tr lg () = None then (
+           incr count ;
+           if !count <= limit then
+             print_endline ("Warning: Missing translation of `" ^ fileName
+                            ^ "' for language " ^ Translation.iso639 lg ^ ".")) ;
         has_default || Names.is_default gen lg) false generators in
+    if !count > limit then
+      print_endline ("Skipping further occurrences of missing translations"
+                     ^ " for language " ^ Translation.iso639 lg
+                     ^ " (" ^ string_of_int !count ^ " in total).") ;
     if not has_default then
       print_endline ("Warning: No default name generation for language "
                      ^ Translation.iso639 lg ^ ".")) languages
@@ -88,22 +96,29 @@ let test_parser languages =
   let i =
     List.fold_left Driver.prepare_declarations Driver.empty_intermediary asts in
   if not (Driver.is_intermediary_final i) then (
-    PSet.iter (fun c -> print_endline ("Missing category: " ^ c))
-      (Driver.categories_to_be_defined i) ;
-    PSet.iter (fun e -> print_endline ("Missing event: " ^ e))
-      (Driver.events_to_be_defined i) ;
+    let missing_param print name set =
+      let count = ref 0 in
+      let limit = 5 in
+      PSet.iter (fun o ->
+        incr count ;
+        if !count <= limit then
+          print_endline ("Missing " ^ name ^ ": " ^ print o)) set ;
+      if !count > limit then
+        print_endline ("Skipping further occurrences"
+                       ^ " (" ^ string_of_int !count ^ " in total).") in
+    let missing = missing_param Utils.id in
+    missing "category" (Driver.categories_to_be_defined i) ;
+    missing "event" (Driver.events_to_be_defined i) ;
     let (attributes, contacts) = Driver.attributes_to_be_defined i in
-    PSet.iter (fun a -> print_endline ("Missing attribute: " ^ a)) attributes ;
-    PSet.iter (fun c -> print_endline ("Missing contact: " ^ c)) contacts ;
+    missing "attribute" attributes ;
+    missing "contact" contacts ;
     let (attributes, contacts) = Driver.constructors_to_be_defined i in
-    PSet.iter (fun (a, n) ->
-      print_endline ("Missing attribute constructor: " ^ n
-                     ^ " (for attribute: " ^ a ^ ")")) attributes ;
-    PSet.iter (fun (c, n) ->
-      print_endline ("Missing contact constructor: " ^ n
-                     ^ " (for contact: " ^ c ^ ")")) contacts ;
-    PSet.iter (fun (lg, tag) ->
-        print_endline ("Missing tag: " ^ tag ^ " for language: " ^ lg))
+    let missing_constructor name =
+      missing_param (fun (a, c) ->
+        c ^ " (for "  ^ name ^ ": " ^ a ^ ")") (name ^ " constructor") in
+    missing_constructor "attribute" attributes ;
+    missing_constructor "contact" contacts ;
+    missing_param (fun (lg, tag) ->  tag ^ " for language: " ^ lg) "tag"
       (Driver.tags_to_be_defined i) ;
     failwith "Non final intermediary!" ) ;
   let s = Driver.parse i in
@@ -116,13 +131,17 @@ let test_parser languages =
     Attribute.ContactAttribute.all_constructors constructor_maps.Attribute.contact in
   let elements = Driver.elements s in
   List.iter (fun lg ->
+    let count = ref 0 in
+    let limit = 5 in
     let warn =
       let seen = ref PSet.empty in fun t name ->
       if not (PSet.mem (t, name) !seen) then (
         seen := PSet.add (t, name) !seen ;
-        prerr_endline ("Warning: Missing translation for language "
-                       ^ Translation.iso639 lg ^ " for " ^ t
-                       ^ " `" ^ name ^ "'.")) in
+        incr count ;
+        if !count <= limit then
+          prerr_endline ("Warning: Missing translation for language "
+                         ^ Translation.iso639 lg ^ " for " ^ t
+                         ^ " `" ^ name ^ "'.")) in
     List.iter (fun c ->
       let t = translations.Translation.category in
       if Translation.translate t lg c = None then
@@ -174,6 +193,10 @@ let test_parser languages =
                   false
                 ) else true) ok (Utils.seq n)) true e.Element.events in
         if ok then 1 + n else n) elements 0 in
+    if !count > limit then
+      print_endline ("Skipping further occurrences of missing translations"
+                     ^ " for language " ^ Translation.iso639 lg
+                     ^ " (" ^ string_of_int !count ^ " in total).") ;
     print_endline ("Number of available elements for language "
                    ^ Translation.iso639 lg ^ ": " ^ string_of_int n)) languages ;
   constructor_maps

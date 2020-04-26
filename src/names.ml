@@ -202,7 +202,14 @@ let generate g =
   | AttrList l -> generateList g.property_infos l
 
 let empty = {
-    property_infos = Attribute.PlayerAttribute.empty_constructor_map ;
+    property_infos =
+      (** Note that there is a risk with directly using
+         [Attribute.PlayerAttribute.empty_constructor_map] instead of
+         [Attribute.empty_constructor_maps.Attribute.player]: these
+         two maps differ.
+         Here, this is not an issue as no constructor will ever be
+         generated from such a data. *)
+      Attribute.PlayerAttribute.empty_constructor_map ;
     translate = Translation.empty ;
     data = AttrList [("", [])] ;
     default = PSet.empty

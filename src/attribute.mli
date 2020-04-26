@@ -114,6 +114,8 @@ module type Attribute = sig
        The following table keeps track of the constructor names. *)
     type constructor_map
 
+    (* TODO: I might just remove it from the signature, to avoid mixing between
+       this and [empty_constructor_maps.player]. *)
     (** An empty constructor map. *)
     val empty_constructor_map : constructor_map
 

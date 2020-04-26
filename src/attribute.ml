@@ -124,6 +124,11 @@ module AttributeInst (K : sig
       val get_constructor_maps : constructor_maps -> (Id.t, Id.t, kind) constructor_map_type
       val set_constructor_maps : constructor_maps -> (Id.t, Id.t, kind) constructor_map_type -> constructor_maps
       val kind_sub : kind -> kind -> bool
+      val to_attributes : Id.t -> attributes
+      val to_constructors : Id.t -> constructors
+      (** Specific for tests. *)
+      val test_kind1 : kind
+      val test_kind2 : kind
     end) =
   struct
 
@@ -178,7 +183,7 @@ module AttributeInst (K : sig
         try
           let k' = PMap.find a m.kinds in
           if kind_sub k' k then m.kinds
-          else PMap.add a k' m.kinds
+          else PMap.add a k m.kinds
         with Not_found -> PMap.add a k m.kinds in
       let internal =
         (** Any command stating that it is internal has priority on the ones that
@@ -196,6 +201,7 @@ module AttributeInst (K : sig
       let l =
         try PMap.find a m.association
         with Not_found -> assert false in
+      let l = if List.mem c l then l else c :: l in
       let internal =
         let s =
           try PMap.find a m.internal
@@ -203,13 +209,12 @@ module AttributeInst (K : sig
         match s with
         | None -> m.internal
         | Some s ->
-          if PSet.mem c s = internal then
+          if PSet.mem c s || not internal then
             m.internal
           else
-            let s = (if internal then PSet.add else PSet.remove) c s in
-            PMap.add a (Some s) m.internal in
+            PMap.add a (Some (PSet.add c s)) m.internal in
       (c, { m with map = mc ;
-                   association = PMap.add a (c :: l) m.association ;
+                   association = PMap.add a l m.association ;
                    internal = internal })
 
     let name_attribute m a = declare_attribute m a false any
@@ -263,8 +268,46 @@ module AttributeInst (K : sig
     let all_constructors m =
       List.concat (PMap.fold (fun cs l -> cs :: l) m.association [])
 
-    let to_attributes a = PlayerAttribute a
-    let to_constructors c = PlayerConstructor c
+    (* Testing the behaviour of [declare_attribute] and [name_attribute]. *)
+    let%test_unit _ =
+      let attribute_should_be_unknown m a =
+        assert (attribute_name m a = None) ;
+        assert (attribute_kind m a = None) ;
+        assert (constructors m a = None) in
+      let attribute_should_be_known m a =
+        assert (attribute_name m a <> None) ;
+        assert (attribute_kind m a <> None) ;
+        assert (constructors m a <> None) in
+      let a1 = "attribute1" in
+      let a2 = "attribute2" in
+      let i1 = true in
+      let i2 = false in
+      let k1 = test_kind1 in
+      let k2 = test_kind2 in
+      let m = empty_constructor_map in
+      assert (all_constructors m = []) ;
+      let (a1_id, m) = name_attribute m a1 in
+      attribute_should_be_known m a1_id ;
+      let (a2_id, m) = declare_attribute m a2 i2 k2 in
+      attribute_should_be_known m a1_id ;
+      attribute_should_be_known m a2_id ;
+      let (a1_id', m) = name_attribute m a1 in
+      assert (a1_id = a1_id') ;
+      let (a2_id', m) = name_attribute m a2 in
+      assert (a2_id = a2_id') ;
+      let (a1_id'', m) = declare_attribute m a1 i1 k1 in
+      assert (a1_id = a1_id'') ;
+      let (a2_id'', m) = name_attribute m a2 in
+      assert (a2_id = a2_id'') ;
+      attribute_should_be_known m a1_id ;
+      attribute_should_be_known m a2_id ;
+      assert (attribute_name m a1_id = Some a1) ;
+      assert (attribute_name m a2_id = Some a2) ;
+      assert (attribute_kind m a1_id = Some k1) ;
+      assert (attribute_kind m a2_id = Some k2) ;
+      let m = empty_constructor_map in
+      attribute_should_be_unknown m a1_id ;
+      attribute_should_be_unknown m a2_id
 
   end
 
@@ -276,6 +319,10 @@ module PlayerAttribute =
       let get_constructor_maps m = m.player
       let set_constructor_maps i m = { i with player = m }
       let kind_sub = attributes_sub
+      let to_attributes a = PlayerAttribute a
+      let to_constructors c = PlayerConstructor c
+      let test_kind1 = [Player]
+      let test_kind2 = [AnyObject]
     end)
 
 module ContactAttribute =
@@ -286,12 +333,16 @@ module ContactAttribute =
       let get_constructor_maps m = m.contact
       let set_constructor_maps i m = { i with contact = m }
       let kind_sub = contacts_sub
+      let to_attributes a = ContactAttribute a
+      let to_constructors c = ContactConstructor c
+      let test_kind1 = [{ kind_from = Player ; kind_to = AnyObject }]
+      let test_kind2 = [{ kind_from = Player ; kind_to = Player }]
     end)
 
 let (empty_constructor_maps, object_type) =
   let m = PlayerAttribute.empty_constructor_map in
   let (object_type, m) =
-    PlayerAttribute.declare_attribute m "__ object type __" true [AnyObject] in
+    PlayerAttribute.declare_attribute m "<object type>" true [AnyObject] in
   let m = {
       player = m ;
       contact = ContactAttribute.empty_constructor_map

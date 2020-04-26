@@ -1256,7 +1256,7 @@ let parse_element st element_name status block =
               let all =
                 Utils.assert_option __LOC__
                   (Attribute.PlayerAttribute.constructors
-                    st.import_information.constructor_maps.player aid) in
+                    st.import_information.constructor_maps.Attribute.player aid) in
               List.filter (fun c -> not (List.mem c cid)) all
             ) else cid in
           add_constraint (Element.Attribute (aid, State.One_value_of cid)) ;
@@ -1271,7 +1271,7 @@ let parse_element st element_name status block =
               let all =
                 Utils.assert_option __LOC__
                   (Attribute.ContactAttribute.constructors
-                    st.import_information.constructor_maps.contact aid) in
+                    st.import_information.constructor_maps.Attribute.contact aid) in
               List.filter (fun c -> not (List.mem c cid)) all
             ) else cid in
           let p' = Option.map get_po_id p' in

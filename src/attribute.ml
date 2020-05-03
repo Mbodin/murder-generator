@@ -129,8 +129,7 @@ module AttributeInst (K : sig
       (** Specific for tests. *)
       val test_kind1 : kind
       val test_kind2 : kind
-    end) =
-  struct
+    end) = struct
 
     include K
 

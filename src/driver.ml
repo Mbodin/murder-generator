@@ -78,11 +78,31 @@ let empty_block = {
     contact_from_to = []
   }
 
+(** The type of categories. *)
+type category = Id.t
+
+(** The type of events. *)
+type event = Id.t
+
+(** The type of element identifier. *)
+type element = Id.t
+
+(** Adding to [Id.t] the operations required by OCamlGraph. *)
+module Id = struct
+    include Id
+    let compare = compare
+    let hash = Hashtbl.hash
+    let equal = (=)
+  end
+
+module CategoryGraph = Graph.Persistent.Digraph.ConcreteBidirectional (Id)
+module EventGraph = CategoryGraph
+
 type import_information = {
     constructor_maps : Attribute.constructor_maps ;
-    event_id : (string, Id.t) PMap.t ;
-    event_informations : (Id.t, bool * bool * int Events.translation) PMap.t ;
-    event_kinds : (Id.t, (int, int Events.kind PSet.t) PMap.t) PMap.t
+    event_id : (string, event) PMap.t ;
+    event_informations : (event, bool * bool * int Events.translation) PMap.t ;
+    event_kinds : (event, (int, int Events.kind PSet.t) PMap.t) PMap.t
   }
 
 type state = {
@@ -91,64 +111,56 @@ type state = {
     element_names : string Id.map (** All declared element names. *) ;
     import_information : import_information
       (** Some generic information, mostly important for importation. *) ;
-    (* LATER: There may be a way to factorise these dependency structures *)
-    category_dependencies : (Id.t, Id.t PSet.t) PMap.t
-      (** For each category, associates its set of category dependencies.
-         Note that this list is global: it also comprises the dependencies
-         of each dependencies, and so on. *) ;
-    attribute_dependencies : (Attribute.attributes, Id.t PSet.t) PMap.t
-      (** Similarly, the dependencies of each attribute. *) ;
-    constructor_dependencies : (Attribute.constructors, Id.t PSet.t) PMap.t
+    category_dependencies : CategoryGraph.t
+      (** The graph of category dependencies. *) ;
+    attribute_dependencies : (Attribute.attributes, category PSet.t) PMap.t
+      (** For each attribute, provide the set of category it depends on. *) ;
+    constructor_dependencies : (Attribute.constructors, category PSet.t) PMap.t
       (** Similarly, the dependencies of each constructor. *) ;
-    object_dependencies : (Attribute.object_constructor, Id.t PSet.t) PMap.t
+    object_dependencies : (Attribute.object_constructor, category PSet.t) PMap.t
       (** Similarly, the dependencies of each object kind. *) ;
-    elements_dependencies : (Id.t, Id.t PSet.t) PMap.t
+    elements_dependencies : (element, category PSet.t) PMap.t
       (** Similarly, the dependencies of each element. *) ;
-    event_dependencies : (Id.t, Id.t PSet.t) PMap.t
+    event_dependencies : (event, category PSet.t) PMap.t
       (** Similarly, the (category) dependencies of each events. *) ;
-    event_event_dependencies : (Id.t, Id.t PSet.t) PMap.t
+    event_event_dependencies : EventGraph.t
       (** Events introduce a second level of graphs, as events also
          depend on other events.
          This is what this map stores. *) ;
-    elements : (Id.t, Element.t) PMap.t (** All declared elements. *) ;
+    elements : (element, Element.t) PMap.t (** All declared elements. *) ;
     translations : Translation.element (** Global variables for translations. *)
   }
 
+(** For each datatype, this type stores which elements have been defined,
+   and which have been used.
+   All used elements need to be eventually defined, and unused defined elements
+   are not critical, but probably indicate a mistake. *)
+type 'a collection = {
+    defined : 'a PSet.t ;
+    used : 'a PSet.t
+  }
+
 type intermediary = {
-    current_state : state ; (** The current state. *)
-    categories_to_be_defined : (* TODO: Remove this, and use graphs instead. *)
-      (Id.t, Id.t PSet.t
-             * Id.t PSet.t
-             * Attribute.attributes PSet.t
-             * Attribute.constructors PSet.t
-             * Attribute.object_constructor PSet.t) PMap.t
-      (** The set of categories expected to be declared.
-         For each of these, we also put three sets to which the category dependencies
-         should be attached: they are respectively the set of category identifiers,
-         of events, of attributes, of constructors, and of object kinds. *) ;
-    events_to_be_defined : (Id.t, Id.t PSet.t) PMap.t
-      (** Similarly, the set of events to be declared.
-         For each event to be declared, we also associate the other events
-         depending on it. *) ;
-    attributes_to_be_defined :
-      (Attribute.attributes, Attribute.constructors PSet.t) PMap.t
-      (** Similarly, the set of attributes expected to be declared and their
-         dependent constructors. *) ;
-    constructors_to_be_defined : Attribute.constructors PSet.t
-      (** A set of constructors expected to be defined. *) ;
-    tags_to_be_defined : (Translation.language * Translation.tag) PSet.t
-      (** Similarly, a set of tags expected to be defined. *) ;
-    declared_tags : (Translation.language * Translation.tag) PSet.t
-      (** In contrary to categories, attributes, and constructors,
-         tags are not associated any information.
-         We thus need to explicitely track which were defined. *) ;
-    waiting_elements : (Id.t * History.status * string * block) list
-      (** An element, waiting to be treated. *)
+    current_state : state (** The current state. *) ;
+    (** For each elements, we store what has currently been seen defined and used. *)
+    category_collection : category collection ;
+    event_collection : event collection ;
+    attribute_collection : Attribute.attributes collection ;
+    constructor_collection : Attribute.constructors collection ;
+    tag_collection : (Translation.language * Translation.tag) collection ;
+    waiting_elements : (element * History.status * string * block) list
+      (** An element, which will only be treated once all the other declarations
+         have been proccessed. *)
   }
 
 (** A useful shortcut. *)
 let intermediary_constructor_maps i =
   i.current_state.import_information.constructor_maps
+
+let empty_collection = {
+    defined = PSet.empty ;
+    used = PSet.empty
+  }
 
 let empty_state = {
     category_names = Id.map_create () ;
@@ -160,7 +172,7 @@ let empty_state = {
         event_informations = PMap.empty ;
         event_kinds = PMap.empty
       } ;
-    category_dependencies = PMap.empty ;
+    category_dependencies = CategoryGraph.empty ;
     attribute_dependencies =
       (** The attribute constructor [Attribute.object_type] is always present
          and has no dependencies. *)
@@ -169,33 +181,44 @@ let empty_state = {
     object_dependencies = PMap.empty ;
     elements_dependencies = PMap.empty ;
     event_dependencies = PMap.empty ;
-    event_event_dependencies = PMap.empty ;
+    event_event_dependencies = EventGraph.empty ;
     elements = PMap.empty ;
     translations = Translation.empty_element
   }
 
 let empty_intermediary = {
     current_state = empty_state ;
-    categories_to_be_defined = PMap.empty ;
-    events_to_be_defined = PMap.empty ;
-    attributes_to_be_defined = PMap.empty ;
-    constructors_to_be_defined = PSet.empty ;
-    tags_to_be_defined = PSet.empty ;
-    declared_tags = PSet.empty ;
+    category_collection = empty_collection ;
+    event_collection = empty_collection ;
+    attribute_collection = empty_collection ;
+    constructor_collection = empty_collection ;
+    tag_collection = empty_collection ;
     waiting_elements = []
   }
+
+(** All the objects in a collection that are used without being yet defined. **)
+let to_be_defined c =
+  PSet.diff c.used c.defined
+
+(** State that an object is now defined. **)
+let now_defined c o =
+  { c with defined = PSet.add o c.defined }
+
+(** State that a set of objects is being used. **)
+let are_used c d =
+  { c with used = PSet.merge d c.used }
 
 let categories_to_be_defined i =
   PSet.map (fun id ->
       Utils.assert_option __LOC__
         (Id.map_inverse i.current_state.category_names id))
-    (PSet.domain i.categories_to_be_defined)
+    (to_be_defined i.category_collection)
 
 let events_to_be_defined i =
   PSet.map (fun id ->
       Utils.assert_option __LOC__
         (Id.map_inverse i.current_state.event_names id))
-    (PSet.domain i.events_to_be_defined)
+    (to_be_defined i.event_collection)
 
 let attributes_to_be_defined i =
   PSet.partition_map (function
@@ -207,7 +230,7 @@ let attributes_to_be_defined i =
         Utils.Right (Utils.assert_option __LOC__
           (Attribute.ContactAttribute.attribute_name
             (intermediary_constructor_maps i).Attribute.contact id)))
-    (PSet.domain i.attributes_to_be_defined)
+    (to_be_defined i.attribute_collection)
 
 let constructors_to_be_defined i =
   PSet.partition_map (function
@@ -234,18 +257,21 @@ let constructors_to_be_defined i =
         let c =
           Utils.assert_option __LOC__
             (Attribute.ContactAttribute.constructor_name i c) in
-        Utils.Right (a, c)) i.constructors_to_be_defined
+        Utils.Right (a, c))
+    (to_be_defined i.constructor_collection)
 
 let tags_to_be_defined i =
   PSet.map (fun (lg, tag) ->
-    (Translation.iso639 lg, Translation.print_tag tag)) i.tags_to_be_defined
+      (Translation.iso639 lg, Translation.print_tag tag))
+    (to_be_defined i.tag_collection)
 
 let is_intermediary_final i =
-  PMap.is_empty i.categories_to_be_defined
-  && PMap.is_empty i.events_to_be_defined
-  && PMap.is_empty i.attributes_to_be_defined
-  && PSet.is_empty i.constructors_to_be_defined
-  && PSet.is_empty i.tags_to_be_defined
+  let is_empty2 (s1, s2) = PSet.is_empty s1 && PSet.is_empty s2 in
+  PSet.is_empty (categories_to_be_defined i)
+  && PSet.is_empty (events_to_be_defined i)
+  && is_empty2 (attributes_to_be_defined i)
+  && is_empty2 (constructors_to_be_defined i)
+  && PSet.is_empty (tags_to_be_defined i)
 
 let all_categories i =
   Id.map_fold (fun _ id l -> id :: l) [] i.category_names
@@ -399,6 +425,8 @@ let convert_block block_name expected =
         check ContactFromTo ;
         { acc with contact_from_to = k :: acc.contact_from_to }) l in
   aux empty_block
+
+--
 
 (** Take a list of category names and return a set of category identifiers,
    as well as the possibly-changed [category_names] field. *)

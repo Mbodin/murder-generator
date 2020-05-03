@@ -1,5 +1,6 @@
 
 open Libutils
+open ExtList
 
 type character = Id.t
 
@@ -125,11 +126,10 @@ let compose_attribute_value compatible v1 v2 =
         | NonStrict, LowStrict -> aux l2 l1
         | NonStrict, NonStrict ->
           Utils.list_map_filter (fun v ->
-            try Some (ExtList.List.find_map (fun v' ->
-                        if compatible v' v then Some v
-                        else if compatible v v' then Some v'
-                        else None) l2)
-            with Not_found -> None) l1
+            List.find_map_opt (fun v' ->
+              if compatible v' v then Some v
+              else if compatible v v' then Some v'
+              else None) l2) l1
         | _ -> assert false in
       if l3 <> [] then
         Some (Fixed_value (l3, s3))

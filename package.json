@@ -16,9 +16,7 @@
 	},
 	"dependencies": {
 		"@opam/dune": ">=2.0",
-		"@opam/ocamlfind": "*",
-		"@opam/ocamlbuild": "*",
-		"@opam/extlib": "*",
+		"@opam/extlib": "~1.7",
 		"@opam/menhir": "*",
 		"@opam/yojson": "*",
 		"@opam/re": "*",
@@ -33,10 +31,10 @@
 		"@opam/ocamlgraph": "*",
 		"@opam/odoc": "*",
 		"@opam/ppx_inline_test": "*",
-		"ocaml": "~4.7.0",
+		"ocaml": "~4.7",
 		"libutils": "*"
 	},
 	"resolutions": {
-		"libutils": "github:Mbodin/libutils#58c0f9694b4d77ab787030674b23fffbe5d3218f"
+		"libutils": "github:Mbodin/libutils#5c210a5ad3bfd078cb27c5936cd3c2b2a6b7e8dd"
 	}
 }

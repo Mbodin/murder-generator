@@ -2,7 +2,7 @@
 (library
 	(public_name murder-generator)
 	(name murder_generator)
-	(libraries libutils unix extlib yojson re uutf lwt)
+	(libraries libutils unix extlib yojson re uutf lwt ocamlgraph)
 	(preprocess (pps lwt_ppx ppx_deriving ppx_inline_test))
 	(modules_without_implementation ast)
 	(inline_tests)

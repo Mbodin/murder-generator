@@ -89,7 +89,7 @@ type state
 
 (** Once each file have been parsed and put into a single [intermediary] result,
    one can treat the full data and produce a final state.
-   This function might throw any of the exceptions defined in this file. *)
+   This function might throw any of the exceptions defined in this module. *)
 val parse : intermediary -> state
 
 (** This map stores the identifiers of each element. *)

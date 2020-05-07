@@ -22,7 +22,7 @@ type cell_option = {
       (** This integer enables rows to be merged: for each cells, it indicates
          how many rows are merged with the current cell.  If the integer is [1],
          the cell is a normal cell, but if it is more than [1], the cell has
-         been merged with cells below.**) ;
+         been merged with cells below. *) ;
     col : int (** Similar than [row], but merging columns instead of rows. *) ;
     classes : string list (** Some CSS-specific classes. *)
   }

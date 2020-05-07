@@ -28,7 +28,7 @@ type cconstraint =
 
 (** A type to express destinations.
    The most important constructor is the first one: this type can be
-   thought as just a fancy type for string at first read. **)
+   thought as just a fancy type for string at first read. *)
 type destination =
   | DestinationPlayer of string (** To a character reprensented by this variable. *)
   | AllOtherPlayers (** To all other players (than the ones declared in the element). *)
@@ -61,7 +61,7 @@ type add = Translation.language * Translation.tag
    other player than the ones declared in the element. *)
 type let_player = string option * cconstraint list
 
-(** Declare an object of a given kind and name with some constraints. **)
+(** Declare an object of a given kind and name with some constraints. *)
 type let_object = string * string * cconstraint list
 
 (** Provide a relation between two players. *)

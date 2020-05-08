@@ -178,27 +178,22 @@ type state = {
     event_names : string Id.map (** All declared event names. *) ;
     element_names : string Id.map (** All declared element names. *) ;
     import_information : import_information
-      (** Some generic information, mostly important for importation. *) ;
-    category_dependencies : CategoryGraph.t
-      (** The graph of category dependencies. *) ;
+      (** Some generic information, more or less only important for importation. *) ;
+    category_dependencies : (category, category PSet.t) PMap.t
+      (** The dependencies of each category. *) ;
     attribute_dependencies : (Attribute.attributes, category PSet.t) PMap.t
-      (** For each attribute, provide the set of category it depends on. *) ;
+      (** For each attribute, the set of category it depends on. *) ;
     constructor_dependencies : (Attribute.constructors, category PSet.t) PMap.t
-      (** Similarly, the dependencies of each constructor.
-         Warning: depending on whether the function [parse] has been called,
-         only direct dependencies may be here stored, but constructors also
-         inherit dependencies from their attribute.
-         This is fixed by the function [parse]. *) ;
+      (** Similarly, the dependencies of each constructor. *) ;
     object_dependencies : (Attribute.object_constructor, category PSet.t) PMap.t
       (** Similarly, the dependencies of each object kind. *) ;
     elements_dependencies : (element, category PSet.t) PMap.t
       (** Similarly, the dependencies of each element. *) ;
     event_dependencies : (event, category PSet.t) PMap.t
       (** Similarly, the (category) dependencies of each events. *) ;
-    event_event_dependencies : EventGraph.t
+    event_event_dependencies : (event, event PSet.t) PMap.t
       (** Events introduce a second level of graphs, as events also
-         depend on other events.
-         This is what this map stores. *) ;
+         depend on other events. *) ;
     elements : (element, Element.t) PMap.t (** All declared elements. *) ;
     translations : Translation.element (** Global variables for translations. *)
   }
@@ -213,7 +208,15 @@ type 'a collection = {
   }
 
 type intermediary = {
-    current_state : state (** The current state. *) ;
+    current_state : state
+      (** The current state.
+         Only direct dependencies are here stored.
+         Once the function [parse] is called and the state lived dettached
+         from the [intermediary] type, all dependencies are complete. *) ;
+    category_graph : CategoryGraph.t
+      (** The graph of category dependencies. *) ;
+    event_graph : EventGraph.t
+      (** The graph of event dependencies. *) ;
     (** For each elements, we store what has currently been seen defined and used. *)
     category_collection : category collection ;
     event_collection : event collection ;
@@ -261,7 +264,7 @@ let empty_state = {
         event_informations = PMap.empty ;
         event_kinds = PMap.empty
       } ;
-    category_dependencies = CategoryGraph.empty ;
+    category_dependencies = PMap.empty ;
     attribute_dependencies =
       (** The attribute constructor [Attribute.object_type] is always present
          and has no dependencies. *)
@@ -270,13 +273,15 @@ let empty_state = {
     object_dependencies = PMap.empty ;
     elements_dependencies = PMap.empty ;
     event_dependencies = PMap.empty ;
-    event_event_dependencies = EventGraph.empty ;
+    event_event_dependencies = PMap.empty ;
     elements = PMap.empty ;
     translations = Translation.empty_element
   }
 
 let empty_intermediary = {
     current_state = empty_state ;
+    category_graph = CategoryGraph.empty ;
+    event_graph = EventGraph.empty ;
     category_collection = empty_collection ;
     event_collection = empty_collection ;
     attribute_collection =
@@ -519,47 +524,6 @@ let event_names_to_id_set state l =
       (event_names, PSet.add id s))
     (state.event_names, PSet.empty) l
 
-(* FIXME TODO: These functions should not be useful anymore.
-
-(** Take a set of categories and return a set of categories
-   (the original set plus their dependencies).
-   This function also takes a boolean [throw] indicating whether it
-   should raise an exception if a category has not been declared yet. *)
-let dependencies_of_dependencies throw state s =
-  PSet.merge s
-   (PSet.flatten (PSet.map (fun id ->
-     try PMap.find id state.category_dependencies
-     with Not_found ->
-       if throw then raise Not_found
-       else PSet.empty) s))
-
-(** A useful composition of [dependencies_of_dependencies] and
-   [category_names_to_id_set]. *)
-let category_names_to_dep_dep throw state l =
-  let (category_names, s) = category_names_to_id_set state l in
-  (category_names, dependencies_of_dependencies throw state s)
-
-(** The corresponding three functions, but for the event graph. *)
-
-let event_names_to_id_set state l =
-  List.fold_left (fun (event_names, s) name ->
-      let (id, event_names) = Id.map_insert_t event_names name in
-      (event_names, PSet.add id s))
-    (state.event_names, PSet.empty) l
-
-let event_dependencies_of_dependencies throw state s =
-  PSet.merge s
-   (PSet.flatten (PSet.map (fun id ->
-     try PMap.find id state.event_event_dependencies
-     with Not_found ->
-       if throw then raise Not_found
-       else PSet.empty) s))
-
-let event_names_to_dep_dep throw state l =
-  let (event_names, s) = event_names_to_id_set state l in
-  (event_names, event_dependencies_of_dependencies throw state s)
-
-*)
 
 (** Declare an object name using its special attribute.
    It takes and propagates the main constructor map. *)
@@ -642,44 +606,6 @@ let tag_defined state =
 
 (** This function parses basically everything but elements in a declaration. *)
 let prepare_declaration i =
-  (* FIXME TODO: I think that I no longer need this.
-  (** Update the given dependencies [dependencies] by adding the set of
-     categories [deps] to the set [ldeps] of items.
-     Each [ldeps] have thus already been declared when calling this function,
-     just that due to missing dependencies, their dependencies need to be extended
-     by [deps]. *)
-  let update_dependencies dependencies ldeps deps =
-    PSet.fold (fun o dependencies ->
-        let s =
-          try PMap.find o dependencies
-          with Not_found -> assert false in
-        PMap.add o (PSet.merge deps s) dependencies)
-      dependencies ldeps in
-  (** Update the field [categories_to_be_defined] by applying a function
-      [update] to each of the values present in [deps].
-      If the mapping doesn’t exists, it will first be initialised with
-      empty sets. *)
-  let update_categories_to_be_defined deps update =
-    PSet.fold (fun c categories_to_be_defined ->
-        if category_defined i c then categories_to_be_defined
-        else
-          let sets =
-            try PMap.find c categories_to_be_defined
-            with Not_found ->
-              (PSet.empty, PSet.empty, PSet.empty, PSet.empty, PSet.empty) in
-          PMap.add c (update sets) categories_to_be_defined)
-      i.categories_to_be_defined deps in
-  (** Similar to [update_categories_to_be_defined], but for the event-dependency
-     graph. *)
-  let update_events_to_be_defined deps update =
-    PSet.fold (fun ev events_to_be_defined ->
-        if event_defined i ev then events_to_be_defined
-        else
-          let sets =
-            try PMap.find ev events_to_be_defined
-            with Not_found -> PSet.empty in
-          PMap.add ev (update sets) events_to_be_defined)
-      i.events_to_be_defined deps in *)
   (** Declare attribute and contact instances. *)
   let declare_instance (type k) (module A : Attribute.Attribute with type kind = k)
       kind_annot get_kind name internal block =
@@ -889,11 +815,10 @@ let prepare_declaration i =
         block.description in
     { i with
         category_collection = are_used (now_defined i.category_collection id) deps ;
+        category_graph = CategoryGraph.add_dependencies i.category_graph id deps ;
         current_state =
           { i.current_state with
               category_names = category_names ;
-              category_dependencies =
-                CategoryGraph.add_dependencies i.current_state.category_dependencies id deps ;
               translations =
                 { i.current_state.translations with
                     Translation.category = translations ;
@@ -931,15 +856,13 @@ let prepare_declaration i =
     { i with
         category_collection = are_used i.category_collection cat_deps ;
         event_collection = are_used (now_defined i.event_collection id) event_deps ;
+        event_graph = EventGraph.add_dependencies i.event_graph id event_deps ;
         current_state =
           { i.current_state with
               category_names = category_names ;
               event_names = event_names ;
               event_dependencies =
-                PMap.add id cat_deps i.current_state.event_dependencies ;
-              event_event_dependencies =
-                EventGraph.add_dependencies i.current_state.event_event_dependencies
-                  id event_deps } }
+                PMap.add id cat_deps i.current_state.event_dependencies } }
 
 let prepare_declarations i l =
   List.fold_left prepare_declaration i l
@@ -962,27 +885,19 @@ let event_id = Id.new_id_function ()
 (** Fill the [Element.id] identifier. *)
 let element_id = Id.new_id_function ()
 
-(** Generates an element from a [state] and a [block]. *)
+(** Generates an element from a [state] and a [block].
+   The state is meant to have stabilised at this point: we assumed that it won’t be changed
+   in the future at this point. *)
 let parse_element st element_name status block =
-  (* TODO: Continue from here. *)
-  (** A specialised function based on the state [st] (which is no longer changing
-     once this function is called). *)
-  let get_constructor_dependencies cid =
-    try get_constructor_dependencies st cid
-    with Not_found -> assert false in
+  let get_constructor_dependencies = get_constructor_dependencies st in
   (** Given an event block, return all its (transitive) dependencies. *)
   let get_event_dependencies block =
-    try snd (event_names_to_dep_dep true st block.event_kind)
-    with Not_found ->
-      (** An event kind has not been defined.  Let us find which one. *)
-      try
-        let k =
-          List.find (fun k ->
-            match Id.get_id st.event_names k with
-            | None -> true
-            | Some id -> not (event_defined st id)) block.event_kind in
-        raise (Undeclared ("event kind", k, element_name))
-      with Not_found -> assert false in
+    let (event_names, s) = event_names_to_id_set st block.event_kind in
+    PSet.merge (PSet.flat_map (fun e ->
+      try PMap.find e st.event_event_dependencies
+      with Not_found ->
+        let e = Utils.assert_option __LOC__ (Id.map_inverse event_names e) in
+        raise (Undeclared ("event kind", e, element_name))) s) s in
   (** Before anything, we get the number and names of each declared players and objects. *)
   let nb_players = List.length block.let_player in
   let player_names =
@@ -1030,7 +945,7 @@ let parse_element st element_name status block =
       match get_object_option po with
       | Some o -> Utils.Right (Id.to_array o)
       | None -> raise (Undeclared ("player or object", po, element_name)) in
-  (** We pre-parse the events, as they might contain declarations. *)
+  (** We pre-parse the element’s events, as they might contain declarations. *)
   let events =
     List.map (fun (bl, ph, t, l, b) ->
       (bl, ph, t, List.map get_player l,
@@ -1081,19 +996,14 @@ let parse_element st element_name status block =
       }) relations in
   let otherPlayers = ref [] in
   let elementObjects = Array.make nb_objects [] in
-  let (_, deps) =
-    try category_names_to_dep_dep true st block.of_category
-    with Not_found ->
-      (** A category has not been defined.  Let us find which one. *)
-      try
-        let c =
-          List.find (fun c ->
-            match Id.get_id st.category_names c with
-            | None -> true
-            | Some id -> not (category_defined st id)) block.of_category in
-        raise (Undeclared ("category", c, element_name))
-      with Not_found -> assert false in
-  (** We also consider dependencies due to events. *)
+  let deps =
+    let (category_names, s) = category_names_to_id_set st block.of_category in
+    PSet.merge (PSet.flat_map (fun c ->
+      try PMap.find c st.category_dependencies
+      with Not_found ->
+        let c = Utils.assert_option __LOC__ (Id.map_inverse category_names c) in
+        raise (Undeclared ("category", c, element_name))) s) s in
+  (** We also consider the category dependencies forced by events. *)
   let deps =
     let edeps =
       List.fold_left (fun edeps (_, _, _, _, eblock) ->
@@ -1157,8 +1067,7 @@ let parse_element st element_name status block =
      dependencies of each conditions to the element. *)
   let intersect_with_constructor_dependencies deps cid =
     PSet.inter deps (get_constructor_dependencies cid) in
-  (** An alternative to [intersect_with_constructor_dependencies] when given a
-     list.
+  (** An alternative to [intersect_with_constructor_dependencies] when given a list.
      We however still want to merge this intersection with the old dependencies. *)
   let intersect_with_constructor_dependencies_list deps = function
     | [] -> raise (VacuumElement element_name)
@@ -1492,16 +1401,29 @@ let parse i =
   let i =
     let st = i.current_state in
     let categories =
-      try CategoryGraph.get_all_dependencies st.category_dependencies
+      try CategoryGraph.get_all_dependencies i.category_graph
       with CategoryGraph.CircularDependency c ->
         let c = Utils.assert_option __LOC__ (Id.map_inverse st.category_names c) in
         raise (CircularDependency ("category", c)) in
+    let st = { st with category_dependencies = categories } in
+    let update m =
+      PMap.map (fun s ->
+        PSet.merge
+          (PSet.flat_map (fun c ->
+           try PMap.find c categories
+           with Not_found -> assert false) s) s) m in
+    let st =
+      { st with
+          attribute_dependencies = update st.attribute_dependencies ;
+          constructor_dependencies = update st.constructor_dependencies ;
+          object_dependencies = update st.object_dependencies ;
+          event_dependencies = update st.event_dependencies } in
     let events =
-      try CategoryGraph.get_all_dependencies st.event_dependencies
+      try CategoryGraph.get_all_dependencies i.event_graph
       with CategoryGraph.CircularDependency e ->
         let e = Utils.assert_option __LOC__ (Id.map_inverse st.event_names e) in
         raise (CircularDependency ("event", e)) in
-    (* TODO FIXME: I guess that [category_dependencies] should only be in [intermediary], then. *)
+    let st = { st with event_event_dependencies = events } in
     { i with current_state = st } in
   (** We then parse all the elements. *)
   let (elements, elements_dependencies, import_information) =

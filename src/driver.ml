@@ -99,9 +99,6 @@ module type Dependencies = sig
     (** An empty graph. *)
     val empty : t
 
-    (** Add a dependency: the first given object needs the second one. *)
-    val add_dependency : t -> o -> o -> t
-
     (** Add a whole set of dependencies at once. *)
     val add_dependencies : t -> o -> o PSet.t -> t
 
@@ -132,6 +129,7 @@ module MakeDependencies (C : Graph.Sig.COMPARABLE) : Dependencies with type o = 
 
     let empty = Graph.empty
 
+    (** Add a dependency: the first given object needs the second one. *)
     let add_dependency = Graph.add_edge
 
     let add_dependencies g o =
@@ -285,7 +283,8 @@ let empty_intermediary = {
     category_collection = empty_collection ;
     event_collection = empty_collection ;
     attribute_collection =
-      is_used empty_collection (Attribute.PlayerAttribute Attribute.object_type) ;
+      (let ot = Attribute.PlayerAttribute Attribute.object_type in
+       now_defined (is_used empty_collection ot) ot) ;
     constructor_collection = empty_collection ;
     tag_collection = empty_collection ;
     waiting_elements = []
@@ -1401,10 +1400,15 @@ let parse i =
   let i =
     let st = i.current_state in
     let categories =
-      try CategoryGraph.get_all_dependencies i.category_graph
-      with CategoryGraph.CircularDependency c ->
-        let c = Utils.assert_option __LOC__ (Id.map_inverse st.category_names c) in
-        raise (CircularDependency ("category", c)) in
+      let categories =
+        try CategoryGraph.get_all_dependencies i.category_graph
+        with CategoryGraph.CircularDependency c ->
+          let c = Utils.assert_option __LOC__ (Id.map_inverse st.category_names c) in
+          raise (CircularDependency ("category", c)) in
+      (** Making sure that every category is present in the graph. *)
+      PSet.fold (fun c m ->
+        if PMap.mem c m then m
+        else PMap.add c PSet.empty m) categories i.category_collection.defined in
     let st = { st with category_dependencies = categories } in
     let update m =
       PMap.map (fun s ->
@@ -1419,10 +1423,15 @@ let parse i =
           object_dependencies = update st.object_dependencies ;
           event_dependencies = update st.event_dependencies } in
     let events =
-      try CategoryGraph.get_all_dependencies i.event_graph
-      with CategoryGraph.CircularDependency e ->
-        let e = Utils.assert_option __LOC__ (Id.map_inverse st.event_names e) in
-        raise (CircularDependency ("event", e)) in
+      let events =
+        try CategoryGraph.get_all_dependencies i.event_graph
+        with CategoryGraph.CircularDependency e ->
+          let e = Utils.assert_option __LOC__ (Id.map_inverse st.event_names e) in
+          raise (CircularDependency ("event", e)) in
+      (** Making sure that every event is present in the graph. *)
+      PSet.fold (fun c m ->
+        if PMap.mem c m then m
+        else PMap.add c PSet.empty m) events i.event_collection.defined in
     let st = { st with event_event_dependencies = events } in
     { i with current_state = st } in
   (** We then parse all the elements. *)

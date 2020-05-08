@@ -204,5 +204,6 @@ let test_parser languages =
 let%test_unit _ =
   let languages = test_translations () in
   let constructor_maps = test_parser languages in
-  test_name_generation languages constructor_maps.Attribute.player
+  test_name_generation languages constructor_maps.Attribute.player ;
+  print_endline "End of main tests."
 

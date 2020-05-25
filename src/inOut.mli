@@ -189,5 +189,8 @@ module type T = sig
      This reading function returns both the file name and its content. *)
   val createFileImport : string list -> (unit -> unit Lwt.t) -> node * (unit -> (string * string) Lwt.t)
 
+  (** Create a new node whose content can be controlled by the returned function. **)
+  val controlableNode : node -> node * (node -> unit)
+
 end
 

@@ -46,7 +46,7 @@ let get_translations _ =
     List.partition (fun lg ->
       let lg = Translation.iso639 lg in
       List.exists (fun ulg -> String.exists ulg lg) IO.languages) languages in
-  Lwt.return (translation, Utils.shuffle matching @ Utils.shuffle nonmatching)
+  Lwt.return (translation, List.sort matching @ List.sort nonmatching)
 
 (** Prints a list of strings, [andw] being the word for “and”
    in the current language.
@@ -138,6 +138,7 @@ let urltag_complexity = "comp"
 let urltag_date = "date"
 let urltag_power = "power"
 let urltag_categories = "cats"
+let urltag_json = "json"
 
 exception InvalidUrlArgument
 
@@ -201,9 +202,61 @@ let get_all_elements data parameters =
   let categories = get_categories data parameters in
   Driver.get_all_elements data lg categories parameters.player_number
 
+(** Get a description of the chosen categories that can be reimported later on. *)
+let get_category_description data parameters =
+  let translate_categories_generic =
+    let translate_categories =
+      (Driver.get_translations data).Translation.category in
+    Translation.force_translate translate_categories Translation.generic in
+  if PSet.length (get_categories data parameters) = List.length (Driver.all_categories data) then
+    "all"
+  else
+    String.concat "," (List.map translate_categories_generic
+                         (PSet.to_list (get_categories data parameters)))
+
+(** Import the given JSON content, updating the parameters and producing a state. *)
+let import_json data parameters fileName str =
+  let (names, state) =
+    Export.from_json (Driver.get_import_information data) fileName str in
+  let informations =
+    List.mapi (fun c name ->
+        let c = Id.from_array c in
+        let st = State.get_relation_state state in
+        let attributes =
+          let m =
+            State.get_all_attributes_character
+              (State.get_character_state state) c in
+          PMap.fold (fun c l ->
+              match c with
+              | State.Fixed_value (c :: [], _) -> c :: l
+              | _ -> l) m [] in
+        let contacts =
+          List.mapi (fun c' _ ->
+              let c' = Id.from_array c' in
+              let m =
+                State.get_all_contact_character
+                  (State.get_character_state state) c c' in
+              Utils.list_map_filter (function
+                  | (_, State.Fixed_value (c :: [], _)) -> Some c
+                  | _ -> None) m) names in {
+          name = name ;
+          complexity = State.character_complexity st c ;
+          difficulty = State.character_difficulty st c ;
+          attributes = attributes ;
+          contacts = contacts
+        }) names in
+  let parameters =
+    { parameters with
+      player_number = List.length informations ;
+      player_information = informations ;
+      categories =
+        Some (PSet.from_list
+                (Driver.all_categories data)) } in
+  (state, parameters)
+
 (** In order to factorise between attributes and contact, the following two declarations
    defines some functions in common between the two structures, so that subfunctions can
-   be reused for both. *)
+   be reused for both. *) (* TODO: Remove *)
 let attribute_functions =
   (Attribute.PlayerAttribute.all_constructors,
    Attribute.PlayerAttribute.constructor_attribute,
@@ -353,42 +406,7 @@ let main =
                       load_or_create (Lwt.task ()) parameters
                     ) else (
                       let%lwt data = data in
-                      let (names, state) =
-                        Export.from_json (Driver.get_import_information data) fileName str in
-                      let informations =
-                        List.mapi (fun c name ->
-                          let c = Id.from_array c in
-                          let st = State.get_relation_state state in
-                          let attributes =
-                            let m =
-                              State.get_all_attributes_character
-                                (State.get_character_state state) c in
-                            PMap.fold (fun c l ->
-                              match c with
-                              | State.Fixed_value (c :: [], _) -> c :: l
-                              | _ -> l) m [] in
-                          let contacts =
-                            List.mapi (fun c' _ ->
-                              let c' = Id.from_array c' in
-                              let m =
-                                State.get_all_contact_character
-                                  (State.get_character_state state) c c' in
-                              Utils.list_map_filter (function
-                                | (_, State.Fixed_value (c :: [], _)) -> Some c
-                                | _ -> None) m) names in {
-                            name = name ;
-                            complexity = State.character_complexity st c ;
-                            difficulty = State.character_difficulty st c ;
-                            attributes = attributes ;
-                            contacts = contacts
-                          }) names in
-                      let parameters =
-                        { parameters with
-                            player_number = List.length informations ;
-                            player_information = informations ;
-                            categories =
-                              Some (PSet.from_list
-                                      (Driver.all_categories data)) } in
+                      let (state, parameters) = import_json data parameters fileName str in
                       choose_formats (Lwt.return state) (Lwt.task ()) parameters
                     )))
             ])
@@ -587,17 +605,6 @@ let main =
       let get_translation = get_translation parameters in
       let%lwt data = data in
       let%lwt names = names in
-      let translate_categories_generic =
-        let translate_categories =
-          (Driver.get_translations data).Translation.category in
-        Translation.force_translate translate_categories Translation.generic in
-      let categories =
-        if PSet.length (get_categories data parameters)
-           = List.length (Driver.all_categories data) then
-          "all"
-        else
-          String.concat "," (List.map translate_categories_generic
-            (PSet.to_list (get_categories data parameters))) in
       IO.set_parameters [
           (urltag_lang, Translation.iso639 (get_language parameters)) ;
           (urltag_number, string_of_int parameters.player_number) ;
@@ -605,7 +612,7 @@ let main =
           (urltag_complexity, string_of_float parameters.general_complexity) ;
           (urltag_date, Date.iso8601 parameters.play_date) ;
           (urltag_power, string_of_float parameters.computation_power) ;
-          (urltag_categories, categories)
+          (urltag_categories, get_category_description data parameters)
         ] ;
       let player_information = create_player_information names get_translation parameters in
       let constructor_maps = Driver.get_constructor_maps data in
@@ -1113,17 +1120,6 @@ let main =
         List.filter (fun (name, _, _, _, _, _) ->
             PSet.mem name parameters.chosen_productions)
           Export.all_production in
-      let switch_printing_mode =
-        let get = ref (fun _ -> false) in
-        let node =
-          IO.createSwitch (get_translation "changeStyles") None
-            (Some (get_translation "changeStylesOff"))
-            (Some (get_translation "changeStylesOn")) false in
-        node.IO.onChange (fun _ ->
-          (if !get () then IO.set_printing_mode
-           else IO.unset_printing_mode) ()) ;
-        get := node.IO.get ;
-        node in
       let (results, error) =
         let (results, error) =
           List.fold_left (fun (l, e) (name, descr, mime, ext, native, f) ->
@@ -1148,8 +1144,6 @@ let main =
                   else []) ;
             InOut.List (true, results)
           ])) ;
-      if html then
-        IO.print_block (InOut.P [ InOut.Node switch_printing_mode.IO.node ]) ;
       let error =
         try
           if html then IO.print_block (Export.to_block estate) ;
@@ -1158,6 +1152,41 @@ let main =
       if error <> None then
         IO.print_block ~error:true (InOut.P [ InOut.Text (get_translation "errorWhenExporting") ]) ;
       Option.may (fun e -> raise e) error ;
+      if html then (
+        let switch_printing_mode =
+          let get = ref (fun _ -> false) in
+          let node =
+            IO.createSwitch (get_translation "changeStyles") None
+              (Some (get_translation "changeStylesOff"))
+              (Some (get_translation "changeStylesOn")) false in
+          node.IO.onChange (fun _ ->
+            (if !get () then IO.set_printing_mode
+             else IO.unset_printing_mode) ()) ;
+          get := node.IO.get ;
+          node in
+        IO.print_block (InOut.P [ InOut.Node switch_printing_mode.IO.node ])
+      ) ;
+      let include_json_in_link_node =
+        let reset = ref (fun _ -> ()) in
+        let node, node_reset =
+          IO.controlableNode (IO.block_node (InOut.add_spaces (InOut.P [
+            InOut.Text (get_translation "includeJSONinLink") ;
+            InOut.LinkContinuation (true, InOut.Simple, get_translation "includeJSONinLinkOn", fun _ ->
+                !reset (IO.block_node (InOut.Div (Inlined, []))) ;
+                IO.set_parameters [
+                  (urltag_lang, Translation.iso639 (get_language parameters)) ;
+                  (urltag_number, string_of_int parameters.player_number) ;
+                  (urltag_level, string_of_float parameters.general_level) ;
+                  (urltag_complexity, string_of_float parameters.general_complexity) ;
+                  (urltag_date, Date.iso8601 parameters.play_date) ;
+                  (urltag_power, string_of_float parameters.computation_power) ;
+                  (urltag_categories, get_category_description data parameters) ;
+                  (urltag_json, Export.to_json estate)
+                ])
+          ]))) in
+        reset := node_reset ;
+        node in
+      IO.print_block (InOut.P [ InOut.Node include_json_in_link_node ]) ;
       IO.stopLoading () ;%lwt
       IO.print_block (InOut.P [
           InOut.Text (get_translation "lookingForContribution") ;
@@ -1227,7 +1256,7 @@ let main =
                   play_date = date ;
                   computation_power = power } in
             match List.assoc_opt urltag_categories arguments with
-            | None ->
+            | None -> (** No category provided. *)
               ask_for_categories (cont, w) parameters
             | Some cats ->
               let%lwt data = data in
@@ -1248,12 +1277,20 @@ let main =
                   Utils.list_map_option (fun c ->
                     List.assoc_opt c assoc_categories) cats in
               match cats with
-              | None ->
+              | None -> (** Invalid categories. *)
                 ask_for_categories (cont, w) parameters
               | Some cats ->
                 let parameters =
                   { parameters with categories = Some (PSet.from_list cats) } in
+              match List.assoc_opt urltag_json arguments with
+              | None -> (** No JSON provided *)
                 ask_for_player_constraints (cont, w) parameters
+              | Some json ->
+                try
+                  let (state, parameters) = import_json data parameters "<url>" json in
+                  choose_formats (Lwt.return state) (Lwt.task ()) parameters
+                with _ ->
+                  ask_for_player_constraints (cont, w) parameters
            with InvalidUrlArgument ->
              load_or_create (cont, w) parameters)
         | _ ->

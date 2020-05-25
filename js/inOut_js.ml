@@ -105,6 +105,16 @@ let url_replacements = [
     (']', 'g') ;
     ('~', 'w') ;
     ('.', 't') ;
+    ('{', 'O') ;
+    ('}', 'C') ;
+    ('`', 'B') ;
+    ('$', 'D') ;
+    ('^', 'E') ;
+    ('\t', 'T') ;
+    ('\n', 'N') ;
+    ('<', 'I') ;
+    ('>', 'S') ;
+    ('|', 'P') ;
   ]
 
 let _ =
@@ -673,4 +683,12 @@ let createFileImport extensions prepare =
       let%lwt l = aux [] 0 in
       Lwt.return (String.concat "," (List.map fst l),
                   String.concat "" (List.map snd l)))
+
+let controlableNode n =
+  let div = Dom_html.createDiv document in
+  let update n =
+    clear_node div ;
+    Dom.appendChild div n in
+  update n ;
+  (div, update)
 

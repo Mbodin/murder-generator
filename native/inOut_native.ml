@@ -736,3 +736,8 @@ let createNumberOutput n =
   let (node, set) = createTextOutput (string_of_int n) in
   (node, fun n -> set (string_of_int n))
 
+let controlableNode n =
+  let r = ref n in
+  let node link = !r link in
+  (node, fun n -> r := n)
+

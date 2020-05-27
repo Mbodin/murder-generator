@@ -186,8 +186,10 @@ module type T = sig
      memory.
      As of the other reading functions, it returns the created element and
      a reading function.
-     This reading function returns both the file name and its content. *)
-  val createFileImport : string list -> (unit -> unit Lwt.t) -> node * (unit -> (string * string) Lwt.t)
+     This reading function returns both the file name and its content as two
+     separate strings.
+     It also might return [None] if no file has been selected. *)
+  val createFileImport : string list -> (unit -> unit Lwt.t) -> node * (unit -> (string * string) option Lwt.t)
 
   (** Create a new node whose content can be controlled by the returned function. **)
   val controlableNode : node -> node * (node -> unit)

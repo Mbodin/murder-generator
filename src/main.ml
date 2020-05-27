@@ -130,6 +130,10 @@ type parameters = {
     chosen_productions : string PSet.t (** The name of each chosen production. *)
   }
 
+(** Get the current language, assuming that it has already been selected. *)
+let get_language parameters =
+  Utils.assert_option __LOC__ parameters.language
+
 (** URL tags *)
 let urltag_lang = "lang"
 let urltag_number = "num"
@@ -140,67 +144,11 @@ let urltag_power = "power"
 let urltag_categories = "cats"
 let urltag_json = "json"
 
-exception InvalidUrlArgument
-
-(** Update player informations from the parameters such that it matches the [player_number] data. *)
-let create_player_information names _get_translation parameters =
-  let lg = Utils.assert_option __LOC__ parameters.language in
-  let generator =
-    let l = List.filter (fun g -> Names.is_default g lg) names in
-    if l <> [] then
-      Utils.select_any l
-    else if names <> [] then
-      Utils.select_any names
-    else Names.empty in
-  let (complexity, difficulty) =
-    let generalLevel = parameters.general_level in
-    let generalComplexity = parameters.general_complexity in
-    let generalLevel = generalLevel *. generalLevel in
-    let complexityDifficulty =
-      10. +. generalLevel *. 90. in
-    let result p = int_of_float (0.5 +. complexityDifficulty *. p) in
-    (result generalComplexity, result (1. -. generalComplexity)) in
-    let player_information = parameters.player_information in
-    let len = List.length player_information in
-  add_trace ("switching from " ^ string_of_int len
-             ^ " players to " ^ string_of_int parameters.player_number) ;
-  if len >= parameters.player_number then
-    List.take parameters.player_number player_information
-  else
-    List.fold_left (fun player_information _ ->
-        let (name, attributes) =
-          (** Because the generator contains external data, one can hardly
-             assume that it can produce infinitely many different names.
-             We are thus stuck to just generate new ones until a really new
-             one appears. *)
-          let rec aux fuel =
-            let (name, attributes) = Names.generate generator PSet.empty in
-            match fuel with
-            | 0 -> (name, attributes)
-            | n ->
-              if List.exists (fun infos -> infos.name = name) player_information then
-                aux (n - 1)
-              else (name, attributes) in
-          aux 100 in {
-          name = name ;
-          complexity = complexity ;
-          difficulty = difficulty ;
-          attributes = attributes ;
-          contacts = []
-        } :: player_information)
-      player_information (Utils.seq (parameters.player_number - len))
-
 (** Get the categories from the parameters, but return the default value if not defined. *)
 let get_categories data parameters =
   match parameters.categories with
   | Some s -> s
   | None -> PSet.from_list (Driver.all_categories data)
-
-(** Get all elements corresponding to these settings. *)
-let get_all_elements data parameters =
-  let lg = Utils.assert_option __LOC__ parameters.language in
-  let categories = get_categories data parameters in
-  Driver.get_all_elements data lg categories parameters.player_number
 
 (** Get a description of the chosen categories that can be reimported later on. *)
 let get_category_description data parameters =
@@ -254,27 +202,150 @@ let import_json data parameters fileName str =
                 (Driver.all_categories data)) } in
   (state, parameters)
 
-(** In order to factorise between attributes and contact, the following two declarations
-   defines some functions in common between the two structures, so that subfunctions can
-   be reused for both. *) (* TODO: Remove *)
-let attribute_functions =
-  (Attribute.PlayerAttribute.all_constructors,
-   Attribute.PlayerAttribute.constructor_attribute,
-   Attribute.PlayerAttribute.attribute_name,
-   Attribute.PlayerAttribute.constructor_name,
-   Attribute.PlayerAttribute.is_internal,
-   (fun m -> m.Attribute.player),
-   (fun c -> Attribute.PlayerAttribute c),
-   (fun c -> Attribute.PlayerConstructor c))
-let contact_functions =
-  (Attribute.ContactAttribute.all_constructors,
-   Attribute.ContactAttribute.constructor_attribute,
-   Attribute.ContactAttribute.attribute_name,
-   Attribute.ContactAttribute.constructor_name,
-   Attribute.ContactAttribute.is_internal,
-   (fun m -> m.Attribute.contact),
-   (fun c -> Attribute.ContactAttribute c),
-   (fun c -> Attribute.ContactConstructor c))
+(** The following four functions prepare an increasing number of parameters,
+   depending on the current step. *)
+
+let get_parameters_lang parameters = [
+    (urltag_lang, Translation.iso639 (get_language parameters))
+  ]
+
+let get_parameters_basics parameters =
+  get_parameters_lang parameters @ [
+      (urltag_number, string_of_int parameters.player_number) ;
+      (urltag_level, string_of_float parameters.general_level) ;
+      (urltag_complexity, string_of_float parameters.general_complexity) ;
+      (urltag_date, Date.iso8601 parameters.play_date) ;
+      (urltag_power, string_of_float parameters.computation_power)
+    ]
+
+let get_parameters_categories parameters data =
+  get_parameters_basics parameters @ [
+      (urltag_categories, get_category_description data parameters)
+    ]
+
+let get_parameters_json parameters data estate =
+  get_parameters_categories parameters data @ [
+      (urltag_json, Export.to_json estate)
+    ]
+
+(** The following four functions reverse them, returning [None] if absent. *)
+
+(** An internal exception for these functions. *)
+exception InvalidUrlArgument
+
+let get_language_arguments translation arguments =
+  match List.assoc_opt urltag_lang arguments with
+  | None -> None (** No language is provided. *)
+  | Some lg ->
+    let lg = Translation.from_iso639 lg in
+    match Translation.translate translation lg "iso639" with
+    | None -> None (** Invalid language. *)
+    | Some _ ->
+      Some lg
+
+let get_basics_arguments arguments =
+  match Utils.list_map_filter (fun tag -> List.assoc_opt tag arguments)
+          [urltag_number ; urltag_level ; urltag_complexity ;
+           urltag_date ; urltag_power ] with
+  | num :: level :: comp :: date :: power :: [] ->
+    (try
+      let num = int_of_string num in
+      if num < 1 then raise InvalidUrlArgument ;
+      let level = float_of_string level in
+      if level < 0. || level > 1. then raise InvalidUrlArgument ;
+      let comp = float_of_string comp in
+      if comp < 0. || comp > 1. then raise InvalidUrlArgument ;
+      let date =
+        try Date.from_iso8601 date
+        with _ -> raise InvalidUrlArgument in
+      let power = float_of_string power in
+      if power < 0. || power > 1. then raise InvalidUrlArgument ;
+      Some (num, level, comp, date, power)
+     with InvalidUrlArgument -> None)
+  | _ -> None
+
+let get_categories_arguments data arguments =
+  match List.assoc_opt urltag_categories arguments with
+  | None -> None (** No category provided. *)
+  | Some cats ->
+    let cats =
+      let translate_categories =
+        let translate_categories =
+          (Driver.get_translations data).Translation.category in
+        Translation.force_translate translate_categories Translation.generic in
+      let all_categories = Driver.all_categories data in
+      let assoc_categories =
+        List.map (fun c -> (translate_categories c, c)) all_categories in
+      if cats = "" then
+        Some []
+      else if cats = "all" then
+        Some all_categories
+      else
+        let cats = String.split_on_char ',' cats in
+        Utils.list_map_option (fun c ->
+          List.assoc_opt c assoc_categories) cats in
+    Option.map PSet.from_list cats
+
+let get_state_arguments data parameters arguments =
+  match List.assoc_opt urltag_json arguments with
+  | None -> None (** No JSON provided *)
+  | Some json ->
+    try Some (import_json data parameters "<url>" json)
+    with _ -> None
+
+(** Update player informations from the parameters such that it matches the [player_number] data. *)
+let create_player_information names _get_translation parameters =
+  let lg = Utils.assert_option __LOC__ parameters.language in
+  let generator =
+    let l = List.filter (fun g -> Names.is_default g lg) names in
+    if l <> [] then
+      Utils.select_any l
+    else if names <> [] then
+      Utils.select_any names
+    else Names.empty in
+  let (complexity, difficulty) =
+    let generalLevel = parameters.general_level in
+    let generalComplexity = parameters.general_complexity in
+    let generalLevel = generalLevel *. generalLevel in
+    let complexityDifficulty =
+      10. +. generalLevel *. 90. in
+    let result p = int_of_float (0.5 +. complexityDifficulty *. p) in
+    (result generalComplexity, result (1. -. generalComplexity)) in
+    let player_information = parameters.player_information in
+    let len = List.length player_information in
+  add_trace ("switching from " ^ string_of_int len
+             ^ " players to " ^ string_of_int parameters.player_number) ;
+  if len >= parameters.player_number then
+    List.take parameters.player_number player_information
+  else
+    List.fold_left (fun player_information _ ->
+        let (name, attributes) =
+          (** Because the generator contains external data, one can hardly
+             assume that it can produce infinitely many different names.
+             We are thus stuck to just generate new ones until a really new
+             one appears. *)
+          let rec aux fuel =
+            let (name, attributes) = Names.generate generator PSet.empty in
+            match fuel with
+            | 0 -> (name, attributes)
+            | n ->
+              if List.exists (fun infos -> infos.name = name) player_information then
+                aux (n - 1)
+              else (name, attributes) in
+          aux 100 in {
+          name = name ;
+          complexity = complexity ;
+          difficulty = difficulty ;
+          attributes = attributes ;
+          contacts = []
+        } :: player_information)
+      player_information (Utils.seq (parameters.player_number - len))
+
+(** Get all elements corresponding to these settings. *)
+let get_all_elements data parameters =
+  let lg = Utils.assert_option __LOC__ parameters.language in
+  let categories = get_categories data parameters in
+  Driver.get_all_elements data lg categories parameters.player_number
 
 (** The main script. *)
 let main =
@@ -292,8 +363,7 @@ let main =
       | None ->
         let missing = get_translation_language_direct lg "missing" in
         "<" ^ missing ^ " `" ^ key ^ "'>" in
-    let get_language p = Utils.assert_option __LOC__ p.language in
-    let get_translation p = get_translation_language (get_language p) in
+    let get_translation parameters = get_translation_language (get_language parameters) in
     (** Adds a “next” and “previous” buttons and call them when needed.
        This function waits for the user to either click on the previous or
        next button, then calls the function to get the parameters, and
@@ -348,7 +418,7 @@ let main =
     and load_or_create (cont, w) parameters =
       (** Describing the project to the user. *)
       add_trace "load_or_create" ;
-      IO.set_parameters [(urltag_lang, Translation.iso639 (get_language parameters))] ;
+      IO.set_parameters (get_parameters_lang parameters) ;
       let get_translation = get_translation parameters in
       IO.print_block (InOut.P [
           InOut.Text (get_translation "description") ;
@@ -398,17 +468,16 @@ let main =
               InOut.LinkContinuation (true, InOut.Button false, get_translation "shortcutGeneration",
                 fun _ ->
                   Lwt.wakeup_later w (fun _ ->
-                    let%lwt (fileName, str) = readShortcut () in
-                    if fileName = "" && str = "" then (
+                    match%lwt readShortcut () with
+                    | None ->
                       IO.print_block ~error:true (InOut.P [
                         InOut.Text (get_translation "noFileSelected") ]) ;
                       IO.stopLoading () ;%lwt
                       load_or_create (Lwt.task ()) parameters
-                    ) else (
+                    | Some (fileName, str) ->
                       let%lwt data = data in
                       let (state, parameters) = import_json data parameters fileName str in
-                      choose_formats (Lwt.return state) (Lwt.task ()) parameters
-                    )))
+                      choose_formats (Lwt.return state) (Lwt.task ()) parameters))
             ])
         ])) ;
       IO.stopLoading () ;%lwt
@@ -475,14 +544,7 @@ let main =
     and ask_for_categories (cont, w) parameters =
       (** Asking about categories. *)
       add_trace "ask_for_categories" ;
-      IO.set_parameters [
-          (urltag_lang, Translation.iso639 (get_language parameters)) ;
-          (urltag_number, string_of_int parameters.player_number) ;
-          (urltag_level, string_of_float parameters.general_level) ;
-          (urltag_complexity, string_of_float parameters.general_complexity) ;
-          (urltag_date, Date.iso8601 parameters.play_date) ;
-          (urltag_power, string_of_float parameters.computation_power)
-        ] ;
+      IO.set_parameters (get_parameters_basics parameters) ;
       let get_translation = get_translation parameters in
       (** Forcing the data to be loaded. *)
       (if Lwt.state data = Lwt.Sleep then (
@@ -605,72 +667,65 @@ let main =
       let get_translation = get_translation parameters in
       let%lwt data = data in
       let%lwt names = names in
-      IO.set_parameters [
-          (urltag_lang, Translation.iso639 (get_language parameters)) ;
-          (urltag_number, string_of_int parameters.player_number) ;
-          (urltag_level, string_of_float parameters.general_level) ;
-          (urltag_complexity, string_of_float parameters.general_complexity) ;
-          (urltag_date, Date.iso8601 parameters.play_date) ;
-          (urltag_power, string_of_float parameters.computation_power) ;
-          (urltag_categories, get_category_description data parameters)
-        ] ;
+      IO.set_parameters (get_parameters_categories parameters data) ;
       let player_information = create_player_information names get_translation parameters in
       let constructor_maps = Driver.get_constructor_maps data in
       let translation = Driver.get_translations data in
       let all_players = Utils.seq (List.length player_information) in
-      (** Given either [attribute_functions] or [contact_functions], return some information
-         about all constructors:
+      (** Given the corresponding module (either either [Attribute.PlayerAttribute] or
+         [Attribute.ContactAttribute]), return some information about all constructors:
          - the associated attribute,
          - whether it is internal,
          - its generic name,
          - its translation,
          - all its possible translations. *)
-      let constructor_infos (_, constructor_attribute, attribute_name, constructor_name,
-          is_internal, proj, consa, consc) c =
-        let m = proj constructor_maps in
-        let a = Utils.assert_option __LOC__ (constructor_attribute m c) in
+      let constructor_infos (type a t)
+          (module A : Attribute.Attribute with type attribute = a and type constructor = t)
+          (c : t) =
+        let m = A.get_constructor_maps constructor_maps in
+        let a = Utils.assert_option __LOC__ (A.constructor_attribute m c) in
         let name =
-          let an = Utils.assert_option __LOC__ (attribute_name m a) in
-          let cn = Utils.assert_option __LOC__ (constructor_name m c) in
+          let an = Utils.assert_option __LOC__ (A.attribute_name m a) in
+          let cn = Utils.assert_option __LOC__ (A.constructor_name m c) in
           an ^ ": " ^ cn in
         let translated =
           Translation.force_translate translation.Translation.attribute
-            (get_language parameters) (consa a) ^ ": "
+            (get_language parameters) (A.to_attributes a) ^ ": "
           ^ fst (Translation.gforce_translate translation.Translation.constructor
-                  (get_language parameters) (consc c)
+                  (get_language parameters) (A.to_constructors c)
                   (PSet.singleton Translation.base)) in
         let all_translations =
           Translation.gall_translations translation.Translation.constructor
-            (get_language parameters) (consc c) in
-        (a, is_internal m a c, name, translated, all_translations) in
-      (** Given either [attribute_functions] or [contact_functions], fetch the constructors
-         that are effectively chosen in the current settings, and return two lists of constructors,
-         one for internal constructors and the other for the normal ones. *)
-      let create_lists_cons functions =
-        let (all, _, _, _, _, proj, _, cons) = functions in
-        let m = proj constructor_maps in
+            (get_language parameters) (A.to_constructors c) in
+        (a, A.is_internal m a c, name, translated, all_translations) in
+      (** Given the corresponding module, fetch the constructors that are effectively chosen
+         in the current settings, and return two lists of constructors, one for internal
+         constructors and the other for the normal ones. *)
+      let create_lists_cons (type a t)
+          (module A : Attribute.Attribute with type attribute = a and type constructor = t) =
+        let m = A.get_constructor_maps constructor_maps in
         let categories = get_categories data parameters in
         let all_constructors =
           Utils.list_map_filter (fun c ->
-            let dep = Driver.get_constructor_dependencies data (cons c) in
+            let dep = Driver.get_constructor_dependencies data (A.to_constructors c) in
             if PSet.incl dep categories then
-              Some (c, constructor_infos functions c)
-            else None) (all m) in
+              Some (c, constructor_infos (module A) c)
+            else None) (A.all_constructors m) in
         Utils.list_partition_map (fun (c, (a, internal, n, t, ts)) ->
           let r = (c, a, n, t, ts) in
           if internal then Utils.Left r else Utils.Right r) all_constructors in
       let (attribute_internal_cons, attribute_main_cons) =
-        create_lists_cons attribute_functions in
+        create_lists_cons (module Attribute.PlayerAttribute) in
       let (contact_internal_cons, contact_main_cons) =
-        create_lists_cons contact_functions in
+        create_lists_cons (module Attribute.ContactAttribute) in
       IO.stopLoading () ;%lwt
       IO.print_block (InOut.P [ InOut.Text (get_translation "individualConstraints") ]) ;
-      let get_responsible_list_infos functions c =
-        let (a, _, _, t, _) = constructor_infos functions c in
+      let get_responsible_list_infos m c =
+        let (a, _, _, t, _) = constructor_infos m c in
         (t, (a, c)) in
-      (** Create a responsive list for either attributes or contacts, depending whether
-         [functions] is [attribute_functions] or [contact_functions]. *)
-      let create_responsive_list functions internal_cons main_cons current =
+      (** Create a responsive list for either attributes or contacts, depending on the
+         provided module [m]. *)
+      let create_responsive_list m internal_cons main_cons current =
         let pick_list internal_cons main_cons get txt =
           let get = !get in
           let re = Re.Str.regexp_string_case_fold txt in
@@ -739,7 +794,7 @@ let main =
           let l = extract_enum enum in
           List.sort_uniq (fun e1 e2 -> - compare (fst e1) (fst e2)) l in
         let attributes =
-          List.map (get_responsible_list_infos functions) current in
+          List.map (get_responsible_list_infos m) current in
         let getrec =
           (* This reference is frustrating: I could not find another way to make
              the compiler accept the recursion in this case. *)
@@ -758,7 +813,7 @@ let main =
         let table =
           List.map (fun infos ->
             (IO.createTextInput infos.name,
-             create_responsive_list attribute_functions
+             create_responsive_list (module Attribute.PlayerAttribute)
                attribute_internal_cons attribute_main_cons infos.attributes)) player_information in
         (table,
          InOut.FoldableBlock (false, get_translation "stepAttributes",
@@ -841,8 +896,8 @@ let main =
                                  let set = PSet.from_list old_attributes in
                                  fun a -> not (PSet.mem a set) in
                                let attributes =
-                                 List.map (get_responsible_list_infos attribute_functions)
-                                   attributes in
+                                 List.map (get_responsible_list_infos
+                                   (module Attribute.PlayerAttribute)) attributes in
                                List.filter new_attribute attributes @ old_attributes in
                              attributesNode.IO.set attributes ;
                              PSet.add name avoid) PSet.empty attributeTable))
@@ -901,7 +956,7 @@ let main =
                      match List.nth_opt infos.contacts c' with
                      | None -> []
                      | Some l -> l in
-                   create_responsive_list contact_functions
+                   create_responsive_list (module Attribute.ContactAttribute)
                      contact_internal_cons contact_main_cons contacts
                  )) all_players)) player_information in
         let header =
@@ -1173,17 +1228,8 @@ let main =
             InOut.Text (get_translation "includeJSONinLink") ;
             InOut.LinkContinuation (true, InOut.Simple, get_translation "includeJSONinLinkOn", fun _ ->
                 !reset (IO.block_node (InOut.Div (Inlined, []))) ;
-                IO.set_parameters [
-                  (urltag_lang, Translation.iso639 (get_language parameters)) ;
-                  (urltag_number, string_of_int parameters.player_number) ;
-                  (urltag_level, string_of_float parameters.general_level) ;
-                  (urltag_complexity, string_of_float parameters.general_complexity) ;
-                  (urltag_date, Date.iso8601 parameters.play_date) ;
-                  (urltag_power, string_of_float parameters.computation_power) ;
-                  (urltag_categories, get_category_description data parameters) ;
-                  (urltag_json, Export.to_json estate)
-                ])
-          ]))) in
+                IO.set_parameters (get_parameters_json parameters data estate)
+              )]))) in
         reset := node_reset ;
         node in
       IO.print_block (InOut.P [ InOut.Node include_json_in_link_node ]) ;
@@ -1220,81 +1266,35 @@ let main =
                 IO.clear_response () ;
                 ask_for_languages (Lwt.task ()) parameters))
         ]) in
-    match List.assoc_opt urltag_lang arguments with
-    | None -> (** No language is provided. *)
+    match get_language_arguments translation arguments with
+    | None ->
       ask_for_languages (Lwt.task ()) parameters
     | Some lg ->
-      let lg = Translation.from_iso639 lg in
-      match Translation.translate translation lg "iso639" with
-      | None -> (** Invalid language. *)
-        ask_for_languages (Lwt.task ()) parameters
-      | Some _ ->
-        let parameters = { parameters with language = Some lg } in
-        let (cont, w) = Lwt.task () in
-        print_jump w parameters ;
-        match Utils.list_map_filter (fun tag -> List.assoc_opt tag arguments)
-                [urltag_number ; urltag_level ; urltag_complexity ;
-                 urltag_date ; urltag_power ] with
-        | num :: level :: comp :: date :: power :: [] ->
-          (try
-            let num = int_of_string num in
-            if num < 1 then raise InvalidUrlArgument ;
-            let level = float_of_string level in
-            if level < 0. || level > 1. then raise InvalidUrlArgument ;
-            let comp = float_of_string comp in
-            if comp < 0. || comp > 1. then raise InvalidUrlArgument ;
-            let date =
-              try Date.from_iso8601 date
-              with _ -> raise InvalidUrlArgument in
-            let power = float_of_string power in
-            if power < 0. || power > 1. then raise InvalidUrlArgument ;
-            let parameters =
-              { parameters with
-                  player_number = num ;
-                  general_level = level ;
-                  general_complexity = comp ;
-                  play_date = date ;
-                  computation_power = power } in
-            match List.assoc_opt urltag_categories arguments with
-            | None -> (** No category provided. *)
-              ask_for_categories (cont, w) parameters
-            | Some cats ->
-              let%lwt data = data in
-              let cats =
-                let translate_categories =
-                  let translate_categories =
-                    (Driver.get_translations data).Translation.category in
-                  Translation.force_translate translate_categories Translation.generic in
-                let all_categories = Driver.all_categories data in
-                let assoc_categories =
-                  List.map (fun c -> (translate_categories c, c)) all_categories in
-                if cats = "" then
-                  Some []
-                else if cats = "all" then
-                  Some all_categories
-                else
-                  let cats = String.split_on_char ',' cats in
-                  Utils.list_map_option (fun c ->
-                    List.assoc_opt c assoc_categories) cats in
-              match cats with
-              | None -> (** Invalid categories. *)
-                ask_for_categories (cont, w) parameters
-              | Some cats ->
-                let parameters =
-                  { parameters with categories = Some (PSet.from_list cats) } in
-              match List.assoc_opt urltag_json arguments with
-              | None -> (** No JSON provided *)
-                ask_for_player_constraints (cont, w) parameters
-              | Some json ->
-                try
-                  let (state, parameters) = import_json data parameters "<url>" json in
-                  choose_formats (Lwt.return state) (Lwt.task ()) parameters
-                with _ ->
-                  ask_for_player_constraints (cont, w) parameters
-           with InvalidUrlArgument ->
-             load_or_create (cont, w) parameters)
-        | _ ->
-          load_or_create (cont, w) parameters
+      let parameters =  { parameters with language = Some lg } in
+      let (cont, w) = Lwt.task () in
+      print_jump w parameters ;
+      match get_basics_arguments arguments with
+      | None ->
+        load_or_create (cont, w) parameters
+      | Some (num, level, comp, date, power) ->
+        let parameters =
+          { parameters with
+              player_number = num ;
+              general_level = level ;
+              general_complexity = comp ;
+              play_date = date ;
+              computation_power = power } in
+        let%lwt data = data in
+        match get_categories_arguments data arguments with
+        | None ->
+          ask_for_categories (cont, w) parameters
+        | Some cats ->
+          let parameters = { parameters with categories = Some cats } in
+          match get_state_arguments data parameters arguments with
+          | None ->
+            ask_for_player_constraints (cont, w) parameters
+          | Some (state, parameters) ->
+            choose_formats (Lwt.return state) (Lwt.task ()) parameters
 
   (** Reporting errors. *)
   with e ->

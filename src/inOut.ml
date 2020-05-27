@@ -120,7 +120,7 @@ module type T = sig
   val createPercentageInput : float -> float sinteraction
   val createDateInput : Date.t -> Date.t sinteraction
   val createSwitch : string -> string option -> string option -> string option -> bool -> bool sinteraction
-  val createFileImport : string list -> (unit -> unit Lwt.t) -> node * (unit -> (string * string) Lwt.t)
+  val createFileImport : string list -> (unit -> unit Lwt.t) -> node * (unit -> (string * string) option Lwt.t)
   val controlableNode : node -> node * (node -> unit)
 
 end

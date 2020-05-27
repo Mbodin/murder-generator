@@ -660,7 +660,7 @@ let createFileImport extensions prepare =
   ((input :> Dom_html.element Js.t), fun _ ->
     prepare () ;%lwt
     match Js.Optdef.to_option input##.files with
-    | None -> Lwt.return ("", "")
+    | None -> Lwt.return None
     | Some files ->
       let rec aux l n =
         if n = files##.length then
@@ -681,8 +681,8 @@ let createFileImport extensions prepare =
             reader##readAsText f ;
             let%lwt cont = cont in cont () in
       let%lwt l = aux [] 0 in
-      Lwt.return (String.concat "," (List.map fst l),
-                  String.concat "" (List.map snd l)))
+      Lwt.return (Some (String.concat "," (List.map fst l),
+                        String.concat "" (List.map snd l))))
 
 let controlableNode n =
   let div = Dom_html.createDiv document in

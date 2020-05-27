@@ -718,8 +718,11 @@ let createFileImport extensions prepare =
   (node, fun _ ->
     prepare () ;%lwt
     let file = !file in
-    let%lwt content = get_file file in
-    Lwt.return (file, content))
+    if file = "" then
+      Lwt.return None
+    else
+      let%lwt content = get_file file in
+      Lwt.return (Some (file, content)))
 
 let clear_response _ =
   clear_links () ;

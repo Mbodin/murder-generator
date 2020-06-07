@@ -1,0 +1,525 @@
+
+category Disabilities
+begin
+  translation fr "Handicaps graves"
+  translation en "Heavy disabilities"
+  translation eo "Fortaj malatutaĵoj"
+
+  description fr "Des handicaps qui forceront certains joueurs à se priver de certains de ces capacités physiques lors de la soirée enquête."
+  description en "Disabilities that will force some players to leave some of they abilities behind during the murder party."
+  description eo "Malatutaĵoj kiu devigos kelkajn ludantojn forlasi kelkajn de siaj kapabloj dum la vesperenketo."
+end
+
+declare event Accident
+begin
+  event Personal
+  category NonKids
+end
+
+declare attribute Disability
+begin
+  category Disabilities
+
+  translation fr "Handicap"
+  translation en "Disability"
+  translation eo "Malatutaĵoj"
+end
+
+internal attribute Disability None
+begin
+  translation fr "aucun"
+  translation en "none"
+  translation eo "nenia"
+end
+
+element NoDisability
+begin
+  let any other player be with attribute Disability as None
+end
+
+
+(* * Blindness *)
+
+attribute Disability Blind
+begin
+  translation fr "aveugle"
+  translation en "blind"
+  translation eo "blinda"
+end
+
+element BornBlind
+begin
+  let P be player with attribute Born as True
+
+  provide immediate event to P
+  begin
+    event Personal
+
+    provide attribute Disability to P as Blind
+
+    sentence
+    begin
+      translation fr P:+sbeg " est né" P:+agr " aveugle."
+      translation en P:+sbeg " is born blind."
+      translation eo P:+sbeg " naskiĝis jam blinda."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " a beaucoup entendu parlé du concept de couleur depuis, mais ne l’a jamais compris."
+      translation en P:+sbeg:+pro " heard a lot about colors since, but " P:+pro " never grasped it."
+      translation eo P:+sbeg:+pro " multe aŭdis pri koloroj kaj ties proprecoj, sed " P:+pro " neniam komprenis ilin."
+    end
+  end
+
+  add complexity to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+end
+
+element BlindAfterAccident
+begin
+  let P be player with attribute Job as Worker
+
+  provide event lasting days to P
+  begin
+    event Accident
+    assume no event Work to P after
+
+    provide attribute Disability to P as Blind
+
+    sentence
+    begin
+      translation fr P:+sbeg " a perdu la vue suite à un terrible accident de travail."
+      translation en P:+sbeg " lost " P:+pos " sight due to a tragical accident at work."
+      translation eo P:+sbeg " perdis " P:+pos:+acc " vidkapablecon pro terura laboran akcidenton."
+    end
+
+    sentence
+    begin
+      translation fr "Étant alors en impossibilité de travailler, " P:+pro " a perdu son travail dans la foulée."
+      translation en "Being unable to work, " P:+pro " lost " P:+pos " job in the next days."
+      translation eo "Ne povante labori, " P:+pro " rapide perdis sian laboron."
+    end
+  end
+
+  add complexity to P
+  add complexity to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+end
+
+element BlindAfterBeingBeaten
+begin
+  category DarkSecrets
+
+  let V be player
+  let A be player with contact Goal to V as Harm
+
+  provide event lasting weeks to A
+  begin
+    event Personal
+
+    assume event providing contact Goal from A to V before
+
+    sentence
+    begin
+      translation fr "Dans le but de faire du mal à " V ", " A " a observé le chemin qu’" V:+pro " emprunte tous les jours."
+      translation en "With the explicit aim to harm " V ", " A " observed where " V:+pro " goes everyday."
+      translation eo "Celante vundi " V:+acc ", " A " observis la vojon kiun " V:+pro " ĉiutage faras."
+    end
+
+    sentence
+    begin
+      translation fr "Une embuscade semblait possible."
+      translation en "An ambush seemed possible to do."
+      translation eo "Embusko ŝajnis farebla."
+    end
+  end
+
+  provide event lasting seconds to A
+  begin
+    event Personal
+
+    sentence
+    begin
+      translation fr "Un jour, " A " a pris une cagoule et un pied-de-biche, a attendu le bon moment, et a frappé " V " au visage."
+      translation en "One day, " A " took a balaclava and a crowbar, waited for the right moment, and beat " A " to the face."
+      translation eo "Iam " A " prenis bivakĉapon kaj rompbaskulon, atendis la ĝustan momenton, kaj batis " A:+acc " enkapen."
+    end
+
+    sentence
+    begin
+      translation fr V:+sbeg:+pro " a poussé un cri horrible, mais la ruelle ayant été bien choisie, " A " a pu fuire sans problème."
+      translation en V:+sbeg:+pro " horribly shouted, but as the alley was well-chosen, " A " could go away without any issue."
+      translation eo V:+sbeg:+pro " traŭmige kriis, sed la strateto estis bone elektita: " A " povis senprobleme forfuĝi."
+    end
+
+    sentence
+    begin
+      translation fr A:+pro " a même pu lancer une série d’insultes au passage."
+      translation en A:+pro " could even throw a bunch of insults on " A:+pos " way."
+      translation eo A:+pro " eĉ povis forinsulti " V:+pro:+acc "."
+    end
+
+    sentence
+    begin
+      translation fr "On dira ce qu’on veut, ça défoule."
+      translation en "Whatever, this lets off steam."
+      translation eo "Kian ajn oni diras, tio senbridigas."
+    end
+  end
+
+  provide blocking event lasting days to V
+  begin
+    event Personal
+
+    provide attribute Disability to V as Blind
+
+    sentence
+    begin
+      translation fr "Un jour, " V " a reçu un coup au visage."
+      translation en "One day, " V " got beaten in the face."
+      translation eo "Iam " V " estis batita enkape."
+    end
+
+    sentence
+    begin
+      translation fr "Cela s’est passé sans qu’" V:+pro " n’ai pu voir quoi que ce soit."
+      translation en "This all happenned without " V:+pro " being able to see anything."
+      translation eo "ĉio tio okazis sen ke " V:+pro " povis vidi ion ajn."
+    end
+
+    sentence
+    begin
+      translation fr "La douleur a été horrible."
+      translation en "The pain was awful."
+      translation eo "Tiu doloro traŭmigas."
+    end
+
+    sentence
+    begin
+      translation fr V:+sbeg:+pro " n’a fait qu’entendre une voix crier au loin."
+      translation en V:+sbeg:+pro " barely heard a voice far away."
+      translation eo V:+sbeg:+pro " apenaŭ aŭdis voĉon el for."
+    end
+
+    sentence
+    begin
+      translation fr V:+sbeg:+pro " s’est réveillé" V:+agr " plusieurs jours plus tard dans un hôpital."
+      translation en V:+sbeg:+pro " wake up several days afterwards in an hospital."
+      translation eo V:+sbeg:+pro " vekiĝis plurajn tagojn poste en malsanejo."
+    end
+
+    sentence
+    begin
+      translation fr V:+sbeg:+pro " avait perdu la vue."
+      translation en V:+sbeg:+pro " lost " V:+pos " sight."
+      translation eo V:+sbeg:+pro " perdis sian vidkapablecon."
+    end
+
+    sentence
+    begin
+      translation fr "Définitivement."
+      translation en "Irreparably."
+      translation eo "Definitive."
+    end
+  end
+
+  provide event lasting minutes to V
+  begin
+    event Personal
+
+    sentence
+    begin
+      translation fr V:+sbeg " écoutait les conversations alentoures."
+      translation en V:+sbeg " listenned to nearby chatting."
+      translation eo V:+sbeg " aŭskultis ĉirkaŭajn babiladojn."
+    end
+
+    sentence
+    begin
+      translation fr "La voix de " A " " V:+cli " semblait soudainement étrangement familière."
+      translation en "The voice of " A " suddenly seemed to " V:+cli " strangely familiar."
+      translation eo "La voĉo de " A " subite ŝajnis al " V " konatan."
+    end
+
+    sentence
+    begin
+      translation fr "C’était la voix des insultes associées à la perte de la vue de " V " !"
+      translation en "It is the voice of the insults associated with " V "’s blindness!"
+      translation eo "Temas pri la voĉo kiu estis asociita kun la insultoj de la perdo de vidkapableco de " V "!"
+    end
+  end
+
+  provide relation from V to A as strong hate
+
+  add complexity to V
+  add complexity to V
+  add difficulty to V
+  add difficulty to V
+  add difficulty to V
+  add difficulty to V
+  add difficulty to V
+  add difficulty to V
+  add difficulty to V
+  add difficulty to V
+  add difficulty to V
+  add difficulty to V
+  add difficulty to V
+  add difficulty to V
+  add difficulty to V
+  add difficulty to V
+  add difficulty to V
+  add difficulty to V
+  add difficulty to V
+  add difficulty to V
+  add difficulty to V
+  add difficulty to V
+  add difficulty to V
+end
+
+(* * Cancer *)
+
+element DoesntHaveMuchTimeBecauseOfCancer
+begin
+  category NonKids
+
+  let P be player with attribute Born as True
+                  with attribute Specy not as God
+                  with attribute Disability not as Blind
+
+  provide phantom event lasting years to P
+  begin
+    event Personal
+  end
+
+  provide event lasting weeks to P
+  begin
+    event Personal
+
+    sentence
+    begin
+      translation fr "Au début, ce n’était qu’un doute."
+      translation en "It all started with a doubt."
+      translation eo "Ĉio vere nur komencis per dubo."
+    end
+
+    sentence
+    begin
+      translation fr "Ensuite, les symptômes sont devenus plus présents."
+      translation en "Then symptoms accumulated."
+      translation eo "Poste simptomoj plifortiĝis."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg " a décidé d’aller voir les médecins."
+      translation en P:+sbeg " decided to visit " P:+pos " doctors about it."
+      translation eo P:+sbeg " decidis demandi al kuracistoj."
+    end
+
+    sentence
+    begin
+      translation fr "Ils étaient rassurants."
+      translation en "They were reassuring."
+      translation eo "La kuracistoj estis tranvkiligemaj."
+    end
+
+    sentence
+    begin
+      translation fr "Ils disaient « ce n’est rien, on va juste faire quelques analyses supplémentaires, au cas où »."
+      translation en "They said “don’t worry, we’re just going to perform some additional analyses just in case.”"
+      translation eo "Ili diris “ne timu, ni nur faru pliajn analizojn, enkaze”."
+    end
+
+    sentence
+    begin
+      translation fr "Ensuite les analyses se sont multipliées."
+      translation en "Then analyses became more frequent."
+      translation eo "Poste pliaj analizoj estis bezonataj."
+    end
+
+    sentence
+    begin
+      translation fr "Prises de sang, examens médicaux, beaucoup de rendez-vous."
+      translation en "Blood sample, physical checkups, a lot of appointments."
+      translation eo "Sangeltiro, kuracaj kontroloj, multege da rendevuoj."
+    end
+
+    sentence
+    begin
+      translation fr "Ça n’en finissait plus."
+      translation en "It just never ended."
+      translation eo "Estis senlima."
+    end
+
+    sentence
+    begin
+      translation fr "Mais le mot est enfin sorti : « c’est peut-être un cancer »."
+      translation en "But the word was finally pronounced: “it may be a cancer.”"
+      translation eo "Set la vorto finfine prononciĝis: “eblas esti kancero”."
+    end
+
+    sentence
+    begin
+      translation fr "Immédiatement suivi de « mais pas d’inquiétude : la plupart du temps c’est autre chose »."
+      translation en "Immediately followed by “but no worries: most of the time it’s just something else.”"
+      translation eo "Tuj sekvita de “sed ne timu: plejparte de la fojoj estas aliaĵo”."
+    end
+
+    sentence
+    begin
+      translation fr "Seulement à moitié rassurant."
+      translation en "Only half-reassuring."
+      translation eo "Nur duonmaltimiganta."
+    end
+
+    sentence
+    begin
+      translation fr "Les résultats finaux devraient arriver dans environ un mois."
+      translation en "The final results should arrive in about a month."
+      translation eo "La finaj rezultoj alvenos post ĉirkaŭ unu monato."
+    end
+  end
+
+  provide phantom event lasting weeks to P
+
+  provide event lasting minutes to P
+  begin
+    event Personal
+    assume no event Personal to P after
+
+    sentence
+    begin
+      translation fr "Les résultats des analyses de " P " sont arrivés."
+      translation en "The results of " P "’s analyses arrived."
+      translation eo "La rezultoj de la analizoj de " P " alvenis."
+    end
+
+    sentence
+    begin
+      translation fr P:fem:+sbeg:+pro " était assez nerveuse en lisant les résultats."
+      translation fr P:+sbeg:+pro " était assez nerveux en lisant les résultats."
+      translation en P:+sbeg:+pro " was very nervous when reading the results."
+      translation eo P:+sbeg:+pro " estis nervozega legante la rezultojn."
+    end
+
+    sentence
+    begin
+      translation fr "Ils sont positifs."
+      translation en "They are positive."
+      translation eo "Ili estas pozitivaj."
+    end
+
+    sentence
+    begin
+      translation fr "Au sens médical, malheureusement."
+      translation en "In the medical sense, unfortunately."
+      translation eo "En la kuraca signifo, bedaŭrinde."
+    end
+
+    sentence
+    begin
+      translation fr "Le cancer est là."
+      translation en "Cancer is there."
+      translation eo "Kancero estas tie."
+    end
+
+    sentence
+    begin
+      translation fr "Avec plusieurs métastases."
+      translation en "Metastasised."
+      translation eo "Kun pluraj metastazoj."
+    end
+
+    sentence
+    begin
+      translation fr "Plus aucun doute possible."
+      translation en "No possible doubt."
+      translation eo "Ne plu eblas dubi."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " n’en a pas pour longtemps."
+      translation en P:+sbeg:+pro " doesn’t have much time left."
+      translation eo P:+sbeg:+pro " ne havas multe da cetera vivtempo."
+    end
+
+    sentence
+    begin
+      translation fr "Trois mois."
+      translation en "Three months."
+      translation eo "Tri monatoj."
+    end
+
+    sentence
+    begin
+      translation fr "Peut-être six, s’" P:mas:+pro " a de la chance."
+      translation fr "Peut-être six, si " P:+pro " a de la chance."
+      translation en "Maybe six, if " P:+pro " is lucky."
+      translation eo "Eble ses, se " P:+pro " bonŝancas."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " est resté" P:+arg " un moment sans bouger."
+      translation en P:+sbeg:+pro " stood still a moment."
+      translation eo P:+sbeg:+pro " tute ne movis dum iom da tempo."
+    end
+
+    sentence
+    begin
+      translation fr "Trois mois…"
+      translation en "Three months…"
+      translation eo "Tri monatoj…"
+    end
+  end
+
+  add complexity to P
+  add complexity to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+  add difficulty to P
+end
+

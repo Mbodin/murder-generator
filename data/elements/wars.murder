@@ -1,0 +1,222 @@
+
+contact Goal Harm
+begin
+  (* A player wants to harm as much as possible this other player. *)
+  translation fr "faire du mal"
+  translation en "harm"
+  translation eo "vundi"
+
+  compatible with Kill
+end
+
+contact Goal Kill
+begin
+  (* A player wants to kill this other player. *)
+  category NonKids
+
+  translation fr "tuer"
+  translation en "kill"
+  translation eo "mortigi"
+end
+
+category Racism
+begin
+  category NonKids
+
+  translation fr "Racisme"
+  translation en "Racism"
+  translation eo "Rasismo"
+
+  description fr "Préjugés racistes qui forceront certains joueurs à ne pas considérer les autres en fonction de ce qu’ils sont, mais en fonction de leur origine."
+  description en "Racist prejudices that will force some players to not consider other people by what they are, but by where they come from."
+  description eo "Rasismaj antaŭjuĝoj kiuj devigos kelkajn ludantojn ne konsideri aliulojn laŭ kiu ili estas, sed laŭ kie ili elvenas."
+end
+
+
+element DwarvesAndElvesAvoidEachOther
+begin
+  category Racism
+
+  let D be player with attribute Specy as Dwarf
+  let E be player with attribute Specy as Elf
+
+  provide immediate event to D and E
+  begin
+    event History
+    assume no event Personal to D or E before
+
+    sentence
+    begin
+      translation fr "Les nains et les elfes ne se sont jamais mélangés."
+      translation en "Dwarves and elves never mixed each others."
+      translation eo "Gnomoj kaj elfoj neniam miksis unu la alian."
+    end
+
+    sentence
+    begin
+      translation fr "Chacun connait bien sûr l’existence des autres, mais les circonstances n’ont jamais été propices pour des échanges pacifiques."
+      translation en "Each recognizes the existence of the other, naturally, but the circumstances were never satified for peaceful exchanges to happen."
+      translation eo "Ĉiuj scias ke la alia ekzistas, kompreneble, sed neniam okazis kuntekston por ke pacaj interŝanĝoj okazu."
+    end
+  end
+
+  provide immediate event to D
+  begin
+    sentence
+    begin
+      translation fr "Les elfes ont tendance à être assez stupides."
+      translation en "Elves tend to be quite stupid."
+      translation eo "Elfoj sufiĉe emas stulti."
+    end
+
+    sentence
+    begin
+      translation fr "On leur dit quelque chose, et ils vont le comprendre de travers."
+      translation en "Once being told something, they will misunderstand it."
+      translation eo "Tuj post aŭdi ion, ili miskomprenos ĝin."
+    end
+
+    sentence
+    begin
+      translation fr "Pire : on va se mettre d’accord sur quelque chose, mais le jour d’après, ils auront déjà oublié."
+      translation en "Worse: we will agree on something one day, but the day after, they will have forgotten the agreeement."
+      translation eo "Plej terure: oni interkonsentos pri io, sed la tagon poste, ili jam forgesintos."
+    end
+
+    sentence
+    begin
+      translation fr "On ne peut pas faire confiance à un elfe."
+      translation en "One can’t trust an elf."
+      translation eo "Oni ne povas fidi elfojn."
+    end
+  end
+
+  provide immediate event to E
+  begin
+    sentence
+    begin
+      translation fr "Les nains sont des créatures étranges."
+      translation en "Dwarves are strange creatures."
+      translation eo "Gnomoj estas strangaj bestoj."
+    end
+
+    sentence
+    begin
+      translation fr "Ils ne pensent qu’à une unique chose : le commerce."
+      translation en "They think about only one thing: commerce."
+      translation eo "Ili nur pensas pri unu afero: komerco."
+    end
+
+    sentence
+    begin
+      translation fr "Ils sont incapables de ressentir des émotions ou de l’empathie."
+      translation en "They are unable to feel empathy or other feelings."
+      translation eo "Ili ne kapablas senti emociojn aŭ empation."
+    end
+
+    sentence
+    begin
+      translation fr "Les nains ne sont pas dignes de confiance."
+      translation en "Dwarves are not trustworthy."
+      translation eo "Gnomoj ne fideblas."
+    end
+  end
+
+  provide relation between D and E as avoidance
+end
+
+element ElvesCanBeRacist
+begin
+  category Racism
+
+  let E be player with attribute Specy as Elf
+                  with contact Know to P as False
+  let P be player with attribute Specy not as Elf
+
+  provide immediate event to E
+  begin
+    assume event providing attribute Born to E before
+    assume event providing attribute Born to P before
+
+    sentence
+    begin
+      translation fr "Les elfes ont toujours été des êtres de culture et de traditions."
+      translation en "Elves always have been being of culture and traditions."
+      translation eo "Elfoj ĉiam estis kultura kaj tradiciplena popolo."
+    end
+
+    sentence
+    begin
+      translation fr "Ce n’est clairement pas le cas des autres espèces, qui sont bien évidemment des êtres inférieurs."
+      translation en "This is clearly not the case for other species, which are obviously inferiors."
+      translation eo "Tio klare ne estas la kazo por aliaj specoj, kiuj evidente malpli valoras."
+    end
+
+    sentence
+    begin
+      translation fr "Si l’on prend par exemple " P ", on peut tout de suite voir à sa manière de marcher, de parler, et de se comporter qu’il n’a aucune culture."
+      translation en "For instance, if we consider " P ", one can clearly see in " P:+pos " ways to speak, to walk, and to behave that " P:+pro " has no culture."
+      translation eo "Ekzemple, konsiderante " P:+acc ", oni klari povas percepti en ties maniero parolaĉi, paŝadi, kaj agadi ke " P:+pro " ne havas ian ajn kulturon."
+    end
+  end
+
+  provide relation from E to P as avoidance
+end
+
+element HumanBeingsCanBeRacist
+begin
+  category Racism
+
+  let H be player with attribute Specy as Human
+                  with contact Know to P as False
+  let P be player with attribute Specy not as Human
+
+  provide immediate event to H
+  begin
+    assume event providing attribute Born to H before
+    assume event providing attribute Born to P before
+
+    sentence
+    begin
+      translation fr "Cela fait un bon moment que plus rien ne va plus dans ce monde."
+      translation en "It has been a long time that nothing have been working out in this world."
+      translation eo "Ekde longe da tempo nenio plu funkcias en tiu ĉi mondo."
+    end
+
+    sentence
+    begin
+      translation fr "Ceci est clairement lié à la venue de… choses, comme " P "."
+      translation en "This is clearly due to the newly coming of… things, like " P "."
+      translation eo "Tio klare estas pro la veno de… aĵoj, kiel " P "."
+    end
+
+    sentence
+    begin
+      translation fr "Ces autres êtres ne sont pas comme les humains."
+      translation en "These other beings are not like humans."
+      translation eo "Tiaj aliaj estuloj ne estas kiel la homoj."
+    end
+
+    sentence
+    begin
+      translation fr "Ils ne sont pas humains."
+      translation en "They are not human."
+      translation eo "Ili ne estas homaj."
+    end
+  end
+
+  provide relation from H to P as avoidance
+end
+
+element EnemiesOfOurEnemiesAreOurAllies
+begin
+  let T be player
+  let A be player with contact Goal to T as Harm
+  let B be player with contact Goal to T as Harm
+
+  (* We provide a trust relation to a player to the other without
+   * the players being aware of it: they have to discover this
+   * connection themselves. *)
+  provide relation between A and B as trust
+end
+

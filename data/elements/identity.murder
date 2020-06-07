@@ -1,0 +1,417 @@
+
+declare attribute Born
+begin
+  translation fr "Né·e"
+  translation en "Born"
+  translation eo "Naskiĝita"
+end
+
+internal attribute Born True
+begin
+  translation fr "oui"
+  translation en "yes"
+  translation eo "jes"
+end
+
+declare event Personal (* An event personally involving a character. *)
+
+declare event Description (* Simple description of a character. *)
+
+
+(* * Age *)
+
+declare attribute Age
+begin
+  translation fr "Âge"
+  translation en "Age"
+  translation eo "Aĝo"
+end
+
+attribute Age Young
+begin
+  translation fr "jeune"
+  translation en "young"
+  translation eo "juna"
+end
+
+attribute Age Adult
+begin
+  translation fr "adulte"
+  translation en "adult"
+  translation eo "plenkreska"
+end
+
+attribute Age Old
+begin
+  translation fr "âgé·e"
+  translation en "old"
+  translation eo "maljuna"
+end
+
+duplicable element AdultAndOldOlderThanYoung
+begin
+  let A be player with attribute Age as Young
+  let B be player with attribute Age as Adult or Old
+
+  provide immediate phantom event to A and B
+  begin
+    assume no event providing attribute Born to A before
+    assume no event providing attribute Born to B after
+  end
+end
+
+duplicable element OldOlderThanAdultAndYoung
+begin
+  let A be player with attribute Age as Young or Adult
+  let B be player with attribute Age as Old
+
+  provide immediate phantom event to A and B
+  begin
+    assume no event providing attribute Born to A before
+    assume no event providing attribute Born to B after
+  end
+end
+
+element BirthYoung
+begin
+  let P be player
+
+  provide immediate event to P
+  begin
+    provide strict attribute Born to P as True
+
+    translation fr P:+sbeg " est né" P:+agr "."
+    translation en P:+sbeg " is born."
+    translation eo P:+sbeg " naskiĝis."
+  end
+
+  provide blocking phantom event lasting years to P
+  begin
+    assume no event Personal to P before
+
+    provide attribute Age to P as Young
+  end
+end
+
+element BirthAdult
+begin
+  let P be player
+
+  provide immediate event to P
+  begin
+    provide strict attribute Born to P as True
+
+    translation fr P:+sbeg " est né" P:+agr "."
+    translation en P:+sbeg " is born."
+    translation eo P:+sbeg " naskiĝis."
+  end
+
+  provide blocking phantom event lasting years to P
+
+  provide blocking phantom event lasting years to P
+  begin
+    assume no event Personal to P before
+
+    provide attribute Age to P as Adult
+  end
+end
+
+element BirthOld
+begin
+  let P be player
+
+  provide immediate event to P
+  begin
+    provide strict attribute Born to P as True
+
+    translation fr P:+sbeg " est né" P:+agr "."
+    translation en P:+sbeg " is born."
+    translation eo P:+sbeg " naskiĝis."
+  end
+
+  provide blocking phantom event lasting decades to P
+
+  provide blocking phantom event lasting decades to P
+
+  provide blocking phantom event lasting decades to P
+  begin
+    assume no event Personal to P before
+
+    provide attribute Age to P as Old
+  end
+end
+
+(* * Gender *)
+
+declare attribute Gender
+begin
+  translation fr "Genre"
+  translation en "Gender"
+  translation eo "Genro"
+end
+
+attribute Gender Male
+begin
+  translation fr "masculin"
+  translation en "male"
+  translation eo "iĉa"
+
+  add translation en:adj:sin "male"
+  add translation eo:adj:sin "iĉa"
+  add translation eo:adj:plu "iĉaj"
+  add translation eo:adj:sin:acc "iĉan"
+  add translation eo:adj:plu:acc "iĉajn"
+  add translation eo:nom:sin "viro"
+  add translation eo:nom:plu "viroj"
+  add translation eo:nom:sin:acc "viron"
+  add translation eo:nom:plu:acc "virojn"
+
+  compatible with NonBinary
+
+  add fr:mas
+  add en:mas
+  add eo:mas
+end
+
+attribute Gender Female
+begin
+  translation fr "féminin"
+  translation en "female"
+  translation eo "ina"
+
+  add translation en:adj:sin "female"
+  add translation eo:adj:sin "ina"
+  add translation eo:adj:plu "inaj"
+  add translation eo:adj:sin:acc "inan"
+  add translation eo:adj:plu:acc "inajn"
+  add translation eo:nom:sin "virino"
+  add translation eo:nom:plu "virinoj"
+  add translation eo:nom:sin:acc "virinon"
+  add translation eo:nom:plu:acc "virinojn"
+
+  compatible with NonBinary
+
+  add fr:fem
+  add en:fem
+  add eo:fem
+end
+
+attribute Gender NonBinary
+begin
+  translation fr "non binaire"
+  translation en "genderqueer"
+  translation eo "neduuma"
+end
+
+element MaleCharacter
+begin
+  let P be player with attribute Born as True
+
+  provide strict attribute Gender to P as Male
+end
+
+element FemaleCharacter
+begin
+  let P be player with attribute Born as True
+
+  provide strict attribute Gender to P as Female
+end
+
+(* * Species *)
+
+declare attribute Specy
+begin
+  translation fr "Espèce"
+  translation en "Specy"
+  translation eo "Speco"
+end
+
+attribute Specy Human
+begin
+  translation fr "humaine"
+  translation en "human"
+  translation eo "homa"
+
+  add translation fr:adj:sin:mas "humain"
+  add translation fr:adj:sin:fem "humaine"
+  add translation fr:adj:plu:mas "humains"
+  add translation fr:adj:plu:fem "humaines"
+  add translation fr:nom:sin:mas "un homme"
+  add translation fr:nom:sin:fem "une femme"
+  add translation fr:nom:plu:mas "des hommes"
+  add translation fr:nom:plu:fem "des femmes"
+  add translation fr:nom:def:sin:mas "l’homme"
+  add translation fr:nom:def:sin:fem "la femme"
+  add translation fr:nom:def:plu:mas "les hommes"
+  add translation fr:nom:def:plu:fem "les femmes"
+  add translation en:adj:sin "human"
+  add translation en:nom:sin "a human being"
+  add translation en:nom:sin:mas "a man"
+  add translation en:nom:sin:fem "a woman"
+  add translation en:nom:plu "human beings"
+  add translation en:nom:plu:mas "men"
+  add translation en:nom:plu:fem "women"
+  add translation en:nom:def:sin "the human being"
+  add translation en:nom:def:sin:mas "the man"
+  add translation en:nom:def:sin:fem "the woman"
+  add translation en:nom:def:plu "the human beings"
+  add translation en:nom:def:plu:mas "the men"
+  add translation en:nom:def:plu:fem "the women"
+  add translation eo:adj:sin "homa"
+  add translation eo:adj:plu "homaj"
+  add translation eo:adj:acc:sin "homan"
+  add translation eo:adj:acc:plu "homajn"
+  add translation eo:nom:sin "homo"
+  add translation eo:nom:plu "homoj"
+  add translation eo:nom:acc:sin "homon"
+  add translation eo:nom:acc:plu "homojn"
+  add translation eo:nom:def:sin "la homo"
+  add translation eo:nom:def:plu "la homoj"
+  add translation eo:nom:def:acc:sin "la homon"
+  add translation eo:nom:def:acc:plu "la homojn"
+end
+
+attribute Specy Dwarf
+begin
+  category Fantasy
+
+  translation fr "naine"
+  translation en "dwarf"
+  translation eo "gnoma"
+
+  add translation fr:adj:sin:mas "nain"
+  add translation fr:adj:sin:fem "naine"
+  add translation fr:adj:plu "nains"
+  add translation fr:adj:plu:fem "naines"
+  add translation fr:nom:sin:mas "un nain"
+  add translation fr:nom:sin:fem "une naine"
+  add translation fr:nom:plu:-fem:+mas "des nains"
+  add translation fr:nom:plu:fem "des naines"
+  add translation fr:nom:def:sin:mas "le nain"
+  add translation fr:nom:def:sin:fem "la naine"
+  add translation fr:nom:def:plu:-fem:+mas "les nains"
+  add translation fr:nom:def:plu:fem "les naines"
+  (* LATER: Other translations *)
+end
+
+attribute Specy Elf
+begin
+  category Fantasy
+
+  translation fr "elfe"
+  translation en "elf"
+  translation eo "elfa"
+
+  (* LATER: translations *)
+end
+
+attribute Specy Alien
+begin
+  category ScienceFiction
+
+  translation fr "extraterrestre"
+  translation en "alien"
+  translation eo "eksterTerano"
+
+  (* LATER: translations *)
+end
+
+attribute Specy Robot
+begin
+  category ScienceFiction
+
+  translation fr "robot"
+  translation en "robot"
+  translation eo "roboto"
+
+  add translation fr:nom:sin:-fem:+mas "un robot"
+  add translation fr:nom:plu:-fem:+mas "des robots"
+  add translation en:nom:sin "a robot"
+  add translation en:nom:plu "robots"
+  add translation eo:nom:sin "roboto"
+  add translation eo:nom:plu "robotoj"
+  add translation eo:nom:sin:acc "roboton"
+  add translation eo:nom:plu:acc "robotojn"
+end
+
+category OutOfOurWorld
+begin
+  translation fr "Hors de notre univers"
+  translation en "Out of our world"
+  translation eo "Ekster nia mondo"
+
+  description fr "Tout ce qui n’est pas possible dans notre monde de tous les jours."
+  description en "Everything which is not possible in our daily life."
+  description eo "Ĉio kio ne eblas en nia ĉiutaga mondo."
+end
+
+category Fantasy
+begin
+  category OutOfOurWorld
+
+  translation fr "Merveilleux"
+  translation en "Fantasy"
+  translation eo "Miraĵoj"
+
+  description fr "Elfes, nains, dragons, fées, etc."
+  description en "Elves, dwarves, dragons, fairy etc."
+  description eo "Elfoj, gnomoj, drakoj, feoj, ktp."
+end
+
+category ScienceFiction
+begin
+  category OutOfOurWorld
+
+  translation fr "Science-fiction"
+  translation en "Science fiction"
+  translation eo "Sciencfikcio"
+
+  description fr "Robots, extra-terrestres, technologie futuriste, etc."
+  description en "Robots, aliens, futurist technologies, etc."
+  description eo "Robotoj, eksterteranoj, estontecaj teĥnologioj, ktp."
+end
+
+
+element SpecyHuman
+begin
+  let P be player with attribute Born as True
+
+  provide strict attribute Specy to P as Human
+end
+
+unique element AllHumans
+begin
+  let any other player be with attribute Specy as Human
+end
+
+unique element MostlyHumans
+begin
+  let A be player
+  let B be player
+  let C be player
+  let D be player
+  let any other player be with attribute Specy as Human
+end
+
+
+attribute Born Built
+begin
+  translation fr "construit"
+  translation en "built"
+  translation eo "konstruita"
+end
+
+element RobotBuilt
+begin
+  let P be player with attribute Born as Built
+
+  provide strict attribute Specy to P as Robot
+end
+
+element RobotNonBinary
+begin
+  let R be player with attribute Specy as Robot
+
+  provide strict attribute Gender to R as NonBinary
+end
+

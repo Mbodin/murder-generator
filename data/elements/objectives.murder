@@ -1,0 +1,37 @@
+
+(* What the player ultimately wants to do with this other player. *)
+declare internal contact Goal
+begin
+  translation fr "But"
+  translation en "Goal"
+  translation eo "Celo"
+end
+
+contact Goal None
+begin
+  translation fr "aucun"
+  translation en "none"
+  translation eo "nenia"
+end
+
+contact Goal Protect
+begin
+  translation fr "protéger"
+  translation en "protect"
+  translation eo "protekti"
+end
+
+contact Goal Help
+begin
+  translation fr "aider"
+  translation en "help"
+  translation eo "helpi"
+end
+
+contact Goal Know
+begin
+  translation fr "connaître"
+  translation en "know"
+  translation eo "konatiĝi"
+end
+

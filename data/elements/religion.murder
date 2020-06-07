@@ -1,0 +1,814 @@
+
+category Religion
+begin
+  translation fr "Religion"
+  translation en "Religion"
+  translation eo "Religio"
+
+  description fr "Dieu(x), prètres, cultes, etc."
+  description en "God(s), priests, workships, etc."
+  description eo "Dio(j), preĝistoj, diservoj, ktp."
+end
+
+
+(* * Generalities for religions *)
+
+attribute Specy God
+begin
+  category Religion
+  category OutOfOurWorld
+
+  translation fr "divinité"
+  translation en "god"
+  translation eo "dio"
+end
+
+attribute Born AlwaysExisted
+begin
+  translation fr "a toujours existé"
+  translation en "always existed"
+  translation eo "ĉiam ekzistis"
+end
+
+element PlayerIsNotGod
+begin
+  let P be player with attribute Specy not as God
+end
+
+element PlayerIsGod
+begin
+  let P be player
+
+  provide compatible attribute Specy to P as God
+
+  add complexity to P
+  add complexity to P
+  remove difficulty to P
+end
+
+element LonelyGod
+begin
+  let P be player
+  let any other player be with attribute Specy not as God
+
+  provide compatible attribute Specy to P as God
+
+  add complexity to P
+end
+
+element GodAlwaysExisted
+begin
+  let P be player with attribute Specy as God
+
+  provide immediate event to P
+  begin
+    event Description
+    assume no event Personal to P before
+
+    provide strict attribute Born to P as AlwaysExisted
+    provide compatible attribute Age to P as Old
+
+    sentence
+    begin
+      translation fr P:+sbeg " a existé aussi loin que remontent les mémoires."
+      translation en P:+sbeg " existed for as long as memory can remember."
+      translation eo P:+sbeg " ĉiam ekzistis laŭ ies ajn memoro."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " était, " P:+pro " est, " P:+pro " sera."
+      translation en P:+sbeg:+pro " was, " P:+pro " is, " P:+pro " will be."
+      translation eo P:+sbeg:+pro " estis, " P:+pro " estas, kaj " P:+pro " por ĉiam estos."
+    end
+
+    sentence
+    begin
+      translation fr "À tout jamais."
+      translation en "Always."
+      translation eo
+    end
+  end
+end
+
+element GodHasNoGender
+begin
+  let P be player with attribute Specy as God
+
+  provide immediate event to P
+  begin
+    event Description
+    assume no event Personal to P before
+
+    provide strict attribute Gender to P as NonBinary
+
+    sentence
+    begin
+      translation fr "Les notions de genre ne s’appliquent pas à " P "."
+      translation en "Gender does not apply to " P "."
+      translation eo "Gendro ne aplikiĝas al " P "."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " n’est ni masculin, ni féminin."
+      translation en P:+sbeg:+pro " is neither male nor female."
+      translation eo P:+sbeg:+pro " nek iĉas, nek inas."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " est."
+      translation en P:+sbeg:+pro " just is."
+      translation eo P:+sbeg:+pro " estas."
+    end
+  end
+end
+
+element GodIsFamous
+begin
+  let P be player with attribute Specy as God
+
+  provide strict attribute Famousness to P as Famous
+end
+
+duplicable element GodYieldStrongFeeling
+begin
+  let P be player
+  let G be player with attribute Specy as God
+
+  provide relation from P to G as strong neutral
+end
+
+unique element NoGod
+begin
+  let any other player be with attribute Specy not as God
+end
+
+attribute Job Priest
+begin
+  category Religion
+
+  translation fr "prêtre"
+  translation en "priest"
+  translation eo "pastro"
+
+  add translation fr:nom:sin:fem "une prêtresse"
+  add translation fr:nom:sin:mas "un prêtre"
+  add translation fr:nom:def:sin:fem "la prêtre"
+  add translation fr:nom:def:sin:mas "le prêtre"
+  add translation fr:nom:plu:-fem:+mas "des prêtres"
+  add translation fr:nom:def:plu:-fem:+mas "les prêtres"
+  add translation en:nom:sin "priest"
+  add translation en:nom:plu "priests"
+  add translation en:nom:def:sin "the priest"
+  add translation en:nom:def:plu "the priests"
+  add translation eo:nom:sin "pastro"
+  add translation eo:nom:plu "pastroj"
+  add translation eo:nom:def:sin "la pastro"
+  add translation eo:nom:def:plu "la pastroj"
+  add translation eo:nom:acc:sin "pastron"
+  add translation eo:nom:acc:plu "pastrojn"
+  add translation eo:nom:def:acc:sin "la pastron"
+  add translation eo:nom:def:acc:plu "la pastrojn"
+end
+
+element PriestSinceEarly
+begin
+  let P be player with attribute Specy not as God or Robot
+
+  provide event lasting years to P
+  begin
+    event Personal
+
+    provide attribute Job to P as Priest
+
+    sentence
+    begin
+      translation fr "Jeune, " P " était fasciné" P:+agr " par la religion."
+      translation en P:+sbeg " has always been fascinated by religion."
+      translation eo P:+sbeg " ĉiam interesiĝis pri religio."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro:fem " a logiquement été appelée à devenir prêtresse."
+      translation fr P:+sbeg:+pro " a logiquement été appelé" P:+agr " à devenir prêtre."
+      translation en P:+sbeg:+pro " logically became priest."
+      translation eo P:+sbeg:+pro " logike pastriĝis."
+    end
+  end
+end
+
+element ChosenPriest
+begin
+  let P be player with attribute Specy not as God
+  let G be player with attribute Specy as God
+
+  provide event lasting weeks to G
+  begin
+    event Personal
+
+    sentence
+    begin
+      translation fr G:+sbeg " se sentait seul" G:+agr "."
+      translation en G:+sbeg " felt lonely."
+      translation eo G:+sbeg " sentis solan."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " a donc décidé de chercher une aide terrestre."
+      translation en G:+sbeg:+pro " thus decided to seek for earthy assistance."
+      translation eo G:+sbeg:+pro " do decidis serĉi maldian kunulon."
+    end
+  end
+
+  provide event lasting seconds to G
+  begin
+    translation fr P:+sbeg " apparaissait comme " P:+nom:-def " intéressant" P:+agr " pour " G "."
+    translation en P:+sbeg " appeared like an interesting " P:+nom:-def " to " G "."
+    translation eo P:+sbeg " ŝajnis al " G " esti interesa " P:+nom:-def "."
+  end
+
+  provide event lasting minutes to P and G
+  begin
+    event Personal
+
+    provide strict attribute Job to P as Priest
+
+    sentence
+    begin
+      translation fr G:+sbeg " est apparu" G:+agr " en songe à " P "."
+      translation en G:+sbeg " appeared in " P "’s dream."
+      translation eo G:+sbeg " aperis en la sonĝoj de " P "."
+    end
+
+    sentence
+    begin
+      translation fr "Pour " P:+cli " montrer que cette apparition était plus qu’un rêve, " G " " P:+cli " a touché le front."
+      translation en "To show " P:+cli " that this was more than a dream, " G " touched " P:+pos " forehead."
+      translation eo "Por montri al " P:+pro " ke tio estis pli ol sonĝo, " G " tuŝis " P:+pos:+acc " frunton."
+    end
+
+    sentence
+    begin
+      translation fr "Lorsqu’" P:+pro " se réveilla, une marque noire se trouvait sur son front à l’endroit où " G " l’avait touché."
+      translation en "When " P:+pro " wake up, a dark spot was at the location where " G " touched " P:+cli "."
+      translation eo "Kiam " P:+pro " vekiĝis, nigra makulo troviĝis en la loko kie " G " tuŝis " P:+pro:+acc "."
+    end
+  end
+
+  provide event lasting years to P
+  begin
+    sentence
+    begin
+      translation fr "La marque noire sur le front de " P " ne s’est jamais dissipée depuis."
+      translation en "The dark spot on " P "’s forehead never disappeared since."
+      translation eo "La nigra makulo sur la frunto de " P " neniam malaperis."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro:fem " s’est naturellement tournée vers la religion, devenant prêtresse."
+      translation fr P:+sbeg:+pro " s’est naturellement tourné" P:+agr " vers la religion, devenant prêtre."
+      translation en P:+sbeg " naturally turned " P:+cli "self to religion, becoming priest."
+      translation eo P:+sbeg " nature religiiĝis kaj pastriĝis."
+    end
+  end
+
+  provide relation between P and G as trust
+end
+
+
+(* * God definitions *)
+
+declare attribute DivineAllegiance (* On whose god the character is closest to. *)
+begin
+  category Religion
+  translation fr "Allégance divine"
+  translation en "Divine allegiance"
+  translation eo "Dia flanko"
+end
+
+attribute DivineAllegiance InternalPeace
+begin
+  translation fr "Paix intérieure"
+  translation en "Internal peace"
+  translation eo "Ena paco"
+end
+
+unique element InternalPeaceDescription
+begin
+  let G be player with attribute Specy as God
+                  with attribute DivineAllegiance as InternalPeace
+
+  provide immediate event to G
+  begin
+    event Description
+    assume no event Personal to G before
+
+    sentence
+    begin
+      translation fr G:+sbeg " est la divinité de la paix, de l’absence de souffrance, et de l’ataraxie."
+      translation en G:+sbeg " is the god of peace, painlessness, and ataraxia."
+      translation en G:+sbeg:fem " is the goddess of peace, painlessness, and ataraxia."
+      translation eo G:+sbeg " estas la dio de paco, malsufero, kaj ataraksio."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " est aussi souvent associé à la mort."
+      translation en G:+sbeg:+pro " is also frequently associated to death."
+      translation eo G:+sbeg:+pro " ankaŭ ofte estas asociita al morto."
+    end
+
+    sentence
+    begin
+      translation fr "Il est vrai qu’" G:+pro " apprécie la mort par sa vertue libératrice, mais cette description est assez réductrice."
+      translation en "Indeed, " G:+pro " appreciates death because of its liberating aspect, but it would be a mistake to reduce " G:+cli " to this facet alone."
+      translation eo G:+sbeg:+pro " ja ŝatas morton pro ties liberigeco, sed estus eraro limigi " G:+pro:+acc " al tiu nurnura flanko."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " attache une importance capitale à la méditation."
+      translation en G:+sbeg:+pro " places mediation to a crucial importance."
+      translation eo G:+sbeg:+pro " konsideras meditadon gravegan."
+    end
+  end
+
+  add complexity to G
+end
+
+attribute DivineAllegiance Dialogue
+begin
+  translation fr "Dialogue"
+  translation en "Dialogue"
+  translation eo "Babilado"
+end
+
+unique element DialogueDescription
+begin
+  let G be player with attribute Specy as God
+                  with attribute DivineAllegiance as Dialogue
+
+  provide immediate event to G
+  begin
+    event Description
+    assume no event Personal to G before
+
+    sentence
+    begin
+      translation fr G:+sbeg " est la divinité du dialogue et des compromis."
+      translation en G:+sbeg " is the god of compromise."
+      translation en G:+sbeg:fem " is the goddess of compromise."
+      translation eo G:+sbeg " estas la dio de la kompromisoj."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " apprécie que les gens s’écoutent, changent d’avis, et argumentent."
+      translation en G:+sbeg:+pro " appreciates that people listen to each others, change opinion, and peacefully argue with each others."
+      translation eo G:+sbeg:+pro " ŝatas ke la homoj aŭskultu unu la alian, ŝanĝu opinion, kaj argumentu unu kun la alia."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " considère que la réalité est fondamentallement relative et changeante, et qu’il est donc important de constamment changer ses croyances."
+      translation en G:+sbeg:+pro " considers that reality is fundamentally relative and moving, and thus that it is crucial to constantly update one’s belief."
+      translation eo G:+sbeg:+pro " konsideras ke realeco fundamente relativas kaj ŝanĝas, kaj do ke gravegas ĝisdatigi ĉies kredojn."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " pourra même adapter la réalité aux croyances de ceux qui écoutent et dialoguent."
+      translation en G:+sbeg:+pro " would even update reality itself to make it match the belief of the ones that listen and peacefully argue."
+      translation eo G:+sbeg:+pro " eĉ ŝanĝus realecon por adaptigi ĝin al la kredoj de tiuj kiuj aŭskultas kaj argumentas."
+    end
+  end
+
+  add complexity to G
+end
+
+attribute DivineAllegiance Inquisitiveness
+begin
+  translation fr "Curiosité"
+  translation en "Inquisitiveness"
+  translation eo "Scivolemeco"
+end
+
+unique element InquisitivenessDescription
+begin
+  let G be player with attribute Specy as God
+                  with attribute DivineAllegiance as Inquisitiveness
+
+  provide immediate event to G
+  begin
+    event Description
+    assume no event Personal to G before
+
+    sentence
+    begin
+      translation fr G:+sbeg " est la divinité de la curiosité et de la recherche active de la vérité."
+      translation en G:+sbeg " is the god of curiosity and active seeking of truth."
+      translation en G:+sbeg:fem " is the goddess of curiosity and active seeking of truth."
+      translation eo G:+sbeg " estas la dio de scivolemeco kaj aktiva serĉado de la vero."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " considère que le monde est un immense terrain de jeu à expérimenter."
+      translation en G:+sbeg:+pro " considers the world as a huge playground to experiment."
+      translation eo G:+sbeg:+pro " konsideras la mondon kiel grandegan ludejon por eksperimenti."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " sera toujours là pour la conception d’expériences en tous genres."
+      translation en G:+sbeg:+pro " will always be where all kinds of experiments are conceived."
+      translation eo G:+sbeg:+pro " ĉiam ĉeestos en la koncepto de ia ajn tipo de eksperimento."
+    end
+
+    sentence
+    begin
+      translation fr "A contrario, " G:+pro " a tendance à fortement punir toute personne ignorant des données connues parce qu’elle ne correspondent pas à leurs croyances."
+      translation en "However, " G:+pro " tends to heavily punish anyone who ignores known data because they do not fit one’s belief."
+      translation eo "Sed " G:+pro " emas punigegi iun ajn kiu ignoras konatan datumon pro ĝi ne taŭgas al ties kredoj."
+    end
+  end
+
+  add complexity to G
+end
+
+attribute DivineAllegiance Chaos
+begin
+  translation fr "Chaos"
+  translation en "Chaos"
+  translation eo "Ĥaoso"
+end
+
+unique element ChaosDescription
+begin
+  let G be player with attribute Specy as God
+                  with attribute DivineAllegiance as Chaos
+
+  provide immediate event to G
+  begin
+    event Description
+    assume no event Personal to G before
+
+    sentence
+    begin
+      translation fr G:+sbeg " est la divinité du chaos."
+      translation en G:+sbeg " is the god of chaos."
+      translation en G:+sbeg:fem " is the goddess of chaos."
+      translation eo G:+sbeg " estas la dio de ĥaoso."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " cherche à toujours s’amuser, à ajouter sa pincée de sel dans le monde."
+      translation en G:+sbeg:+pro " always seeks amusement, to add a pinch of salt in the world."
+      translation eo G:+sbeg:+pro " ĉiam provas amuziĝi, disvastigante sian personecon en la mondo."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " est une divinité bigarrée qui pousse les gens à agir sans se soucier des conséquences."
+      translation en G:+sbeg:+pro " is a multifacet god who pushes people to act without thinking about consequences."
+      translation en G:+sbeg:+prof:fem " is a multifacet goddess who pushes people to act without thinking about consequences."
+      translation eo G:+sbeg:+prof " estas bunta dio kio puŝas homojn al agi sen pripensi sinsekvojn."
+    end
+
+    sentence
+    begin
+      translation fr "Dans tous les cas, les conséquences seront de toutes façons intéressantes."
+      translation en "The consequences will be interesting anyway."
+      translation eo "Sinsekvoj ĉiuokaze estos interesaj."
+    end
+  end
+
+  (* TODO: provide relation from G to any other player as chaotic *)
+
+  add complexity to G
+end
+
+attribute DivineAllegiance Harmony
+begin
+  translation fr "Harmonie"
+  translation en "Harmony"
+  translation eo "Akordo"
+end
+
+unique element HarmonyDescription
+begin
+  let G be player with attribute Specy as God
+                  with attribute DivineAllegiance as Harmony
+
+  provide immediate event to G
+  begin
+    event Description
+    assume no event Personal to G before
+
+    sentence
+    begin
+      translation fr G:+sbeg " est la divinité de la musique et de l’harmonie."
+      translation en G:+sbeg " is the god of music and harmony."
+      translation en G:+sbeg:fem " is the goddess of music and harmony."
+      translation eo G:+sbeg " estas la dio de muziko kaj interakordo."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " est capable d’écouter la mélodie de l’Univers tout entier."
+      translation en G:+sbeg:+pro " is able to directly listen to the melody of the whole Universe."
+      translation eo G:+sbeg:+pro " kapablas rekte aŭdi la melodio de la tuta Universo."
+    end
+
+    sentence
+    begin
+      translation fr "Malheureusement, de nombreuses notes viennent gâcher cette symphonie, la transformant en cacophonie."
+      translation en "Unfortunately, a lot of notes are currently spoiling this symphony, making it a cacophony."
+      translation eo "Bedaŭrinde, multe da notoj nuntempe fuŝas tiun simfonion, malharmoniigante ĝin."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " cherche donc à recomposer l’Univers pour lui donner de l’ordre."
+      translation en G:+sbeg:+pro " thus tries to recompose the Universe, putting some order to it."
+      translation eo G:+sbeg:+pro " do provas reverki la Universon, ordigante ĝin."
+    end
+  end
+
+  add complexity to G
+end
+
+attribute DivineAllegiance Mazes
+begin
+  translation fr "Labyrinthes"
+  translation en "Mazes"
+  translation eo "Labirintoj"
+end
+
+unique element MazesDescription
+begin
+  let G be player with attribute Specy as God
+                  with attribute DivineAllegiance as Mazes
+
+  provide immediate event to G
+  begin
+    event Description
+    assume no event Personal to G before
+
+    sentence
+    begin
+      translation fr G:+sbeg " est la divinité des labyrinthes et des âmes perdues."
+      translation en G:+sbeg " is the god of maze and lost souls."
+      translation en G:+sbeg:fem " is the goddess of maze and lost souls."
+      translation eo G:+sbeg " estas la dio de labirintoj kaj perditaj animoj."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " vient en aide à tous ceux en face de choix qui les mènent vers l’inconnu, afin de les guider."
+      translation en G:+sbeg:+pro " helps anyone that face choices leading them to the unknown, trying to guide them."
+      translation eo G:+sbeg:+pro " helpas iun ajn kies elektoj kondukigas al nekonatejo, gvidante ilin."
+    end
+
+    sentence
+    begin
+      translation fr "En parallèle, " G:+pro " invite tout le monde à se mettre dans une telle situation."
+      translation en "Furthermore, " G:+pro " invites everyone to put themselves in such a situation."
+      translation eo "Krome, " G:+pro " invitas ĉiujn meti sin en tia tipo de situacioj."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " considère que le savoir est une malédiction, car il gâche la surprise finale."
+      translation en G:+sbeg:+pro " consider that knowledge is a cursed, as it spoils the final surprise."
+      translation eo G:+sbeg:+pro " konsideras ke scio estas malbeno, ĉar ĝi fuŝas la finan surprizon."
+    end
+  end
+
+  add complexity to G
+end
+
+attribute DivineAllegiance TheTrueOne
+begin
+  translation fr "L’Unique"
+  translation en "The True One"
+  translation eo "La Nurnura"
+end
+
+unique element TheTrueOneDescription
+begin
+  let G be player with attribute Specy as God
+                  with attribute DivineAllegiance as TheTrueOne
+
+  provide immediate event to G
+  begin
+    event Description
+    assume no event Personal to G before
+
+    sentence
+    begin
+      translation fr G:+sbeg " est l’Unique Vraie Divinité."
+      translation en G:+sbeg " is the One True God."
+      translation eo G:+sbeg " estas la Nurnura Dio."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " est l’Univers lui-même."
+      translation en G:+sbeg:+pro " is the Universe itself."
+      translation eo G:+sbeg:+pro " estas la tuta Universo."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " est présent partout."
+      translation en G:+sbeg:+pro " is everywhere."
+      translation eo G:+sbeg:+pro " estas ĉie."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " observe."
+      translation en G:+sbeg:+pro " watches."
+      translation eo G:+sbeg:+pro " rigardadas."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " sait."
+      translation en G:+sbeg:+pro " knows."
+      translation eo G:+sbeg:+pro " scias."
+    end
+
+    sentence
+    begin
+      translation fr G:+sbeg:+pro " guide."
+      translation en G:+sbeg:+pro " guides."
+      translation eo G:+sbeg:+pro " gvidas."
+    end
+  end
+
+  add complexity to G
+end
+
+unique element TheTrueOneLost
+begin
+  let G be player with attribute Specy as God
+                  with attribute DivineAllegiance as TheTrueOne
+                  with contact FamilyRelation to any other player not as Sibling or Child or GrandChild
+
+  provide immediate phantom event to G
+  begin
+    assume event providing attribute Specy to G before
+    assume event providing attribute DivineAllegiance to G before
+  end
+
+  provide phantom event lasting decades to G
+
+  provide phantom event lasting decades to G
+
+  provide phantom event lasting decades to G
+
+  provide immediate event to G
+  begin
+    event Description
+
+    sentence
+    begin
+      translation fr G:+sbeg " est maintenant très agé" G:+agr "."
+      translation en G:+sbeg " is now very old."
+      translation eo G:+sbeg " nun maljunegas."
+    end
+
+    sentence
+    begin
+      translation fr "Des choses étranges se sont produites."
+      translation en "Odd things happenned."
+      translation eo "Strangaĵoj okazis."
+    end
+
+    sentence
+    begin
+      translation fr "Des fractions d’éternité sont passées."
+      translation en "Eternity fragments passed."
+      translation eo "Tempaj senfineroj pasis."
+    end
+
+    sentence
+    begin
+      translation fr "Il semblerait qu'" G:+pro " a été oublié" G:+agr "."
+      translation en "It seems that " G:+pro " has been forgotten."
+      translation eo "Ŝajnas ke " G:+pro " forgesiĝis."
+    end
+
+    sentence
+    begin
+      translation fr "D’autres divinités semblent maintenant présentes en son sein."
+      translation en "Other gods are now playing inside " G:+cli "."
+      translation eo "Aliaj dioj nun ĉeestas en " G:+pro "."
+    end
+
+    sentence
+    begin
+      translation fr "Ceci n’aurait pas dû se passer comme cela."
+      translation en "This shouldn’t have happenned like that."
+      translation eo "Tio tute ne devintus tiel okazi."
+    end
+  end
+
+  provide phantom event lasting decades to G
+
+  provide phantom event lasting decades to G
+
+  provide phantom event lasting decades to G
+
+  add complexity to G
+end
+
+
+(* * Interactions between gods *)
+
+element WarBetweenGod
+begin
+  let A be player with attribute Specy as God
+  let B be player with attribute Specy as God
+
+  provide relation between A and B as hate
+
+  provide immediate event to A and B
+  begin
+    assume no event Personal to A or B before
+    assume event providing attribute Specy to A and B before
+
+    provide strict contact Goal between A and B as Harm
+
+    sentence
+    begin
+      translation fr A:+sbeg " et " B " ont toujours été en guerre."
+      translation fr "Depuis la nuit des temps, " A " et " B " sont en guerre."
+      translation en A:+sbeg " and " B " has always been at war against each other."
+      translation en "Since the dawn of time, " A " and " B " are at war against each other."
+      translation eo A:+sbeg " kaj " B " ĉiam batalis unu la alian."
+      translation eo "Ekde ke tiu mondo ekzistas, " A " kaj " B " batalas unu la alian."
+    end
+
+    sentence
+    begin
+      translation fr "Cela fait maintenant partie de leurs identités."
+      translation en "It’s now part of their identities."
+      translation eo "Estas nun parto de iliaj identecoj."
+    end
+  end
+end
+
+element HelpingGod
+begin
+  let A be player with attribute Specy as God
+  let B be player with attribute Specy as God
+
+  provide relation from A to B as trust
+  provide relation from B to A as strong trust
+
+  provide immediate event to A and B
+  begin
+    assume no event Personal to A or B before
+    assume event providing attribute Specy to A and B before
+
+    provide strict contact Goal from A to B as Help
+
+    sentence
+    begin
+      translation fr A:+sbeg " a toujours aidé " B "."
+      translation fr "Depuis la nuit des temps, " A " a aidé " B "."
+      translation en A:+sbeg " has always helped " B "."
+      translation en "Since the dawn of time, " A " helped " B "."
+      translation eo A:+sbeg " ĉiam helpis " B "."
+      translation eo "Ekde ke tiu mondo ekzistas, " A " helpis " B "."
+    end
+
+    sentence
+    begin
+      translation fr "Ils n’ont jamais eu la même vision du monde, mais cela ne l’a pas empêché de venir quand " B:+pro " en avait besoin."
+      translation en "They never had the same view of the world, but this never prevented " A:+cli " to help."
+      translation eo "Ili neniam havis la saman vidpunkton pri la mondo, sed tio neniam baris " A:+pro:+acc " helpi " B:+pro:+acc "."
+    end
+
+    sentence
+    begin
+      translation fr "Cela fait maintenant partie de leurs identités."
+      translation en "It’s now part of their identities."
+      translation eo "Estas nun parto de iliaj identecoj."
+    end
+  end
+
+  remove difficulty to B
+  remove difficulty to B
+  remove difficulty to B
+end
+

@@ -1,0 +1,524 @@
+
+declare event Dream
+begin
+  event Personal
+end
+
+unique element DreamAboutThief
+begin
+  let P be player with attribute Job not as Thief
+                  with contact Know to R as True
+                  with contact FamilyRelation to R not as Spouse or Parent or Child
+  let T be player with attribute Job as Thief
+  let R be player with attribute Richness as Rich
+
+  provide event lasting minutes to P
+  begin
+    event Dream
+    assume event providing attribute Job to T before
+
+    sentence
+    begin
+      translation fr P:+sbeg " a fait un étrange rêve cette nuit."
+      translation en P:+sbeg " strangely dreamt during the night."
+      translation eo P:+sbeg " strange sonĝis dum la nokto."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " était dans un lieu assez familier."
+      translation en P:+sbeg:+pro " was in a relatively familiar place."
+      translation eo P:+sbeg:+pro " estis en pli malpli kutima loko."
+    end
+
+    sentence
+    begin
+      translation fr "Cela ressemblait à la maison de " R ", mais les maisons alentours étaient différentes."
+      translation fr "Cela ressemblait à la maison de " R ", mais au milieu d’un désert."
+      translation en "It looked like " R "’s house, but the neighbourhood was wrong."
+      translation en "It looked like " R "’s house, but in an shadowy neighbourhood."
+      translation eo "Ŝajnis kiel la domo de " R ", sed la ĉirkaŭaj domoj ne kongruis."
+      translation eo "Ŝajnis kiel la domo de " R ", sed meze de malgranda insulo."
+    end
+
+    sentence
+    begin
+      translation fr "La porte était ouverte, mais aucune lumière n’était allumée dans la maison."
+      translation en "The door was opened, but no light was coming our of any window."
+      translation eo "La pordo estis malfermita, sed nenia lumo estis ŝaltita ene."
+    end
+
+    sentence
+    begin
+      translation fr "Une lueur verte émanait du toit."
+      translation en "The roof was glowing green."
+      translation eo "La tegmento verde briletis."
+    end
+
+    sentence
+    begin
+      translation fr "Quelque chose ne tournait pas rond."
+      translation en "Something was wrong."
+      translation eo "Io ne taŭgis."
+    end
+
+    sentence
+    begin
+      translation fr "Le rêve s’est alors effacé."
+      translation en "The dream then fade away."
+      translation eo "La sonĝo tiam malaperis."
+    end
+  end
+end
+
+unique element DreamAboutBeingOlder
+begin
+  let P be player with attribute Age as Young
+                  with contact Know to O as True
+                  with contact FamilyRelation to O not as None
+  let O be player with attribute Age as Old
+
+  provide event lasting minutes to P
+  begin
+    event Dream
+    assume event providing contact Know from P to O before
+
+    sentence
+    begin
+      translation fr "Cette nuit, " P " a rêvé être dans un autre corps."
+      translation en "This night, " P " dreamt to be in another body."
+      translation eo "Ĉi nokte, " P " sonĝis esti en alia korpo."
+    end
+
+    sentence
+    begin
+      translation fr "D’être à la place de " O "."
+      translation en "In " O "’s body."
+      translation eo "Enkorpiĝante " O:+acc "."
+    end
+
+    sentence
+    begin
+      translation fr "Tout lui paraissait plus compliqué : se lever, marcher, parler même…"
+      translation en "Everything felt more complex: standing up, walking, even talking…"
+      translation eo "Ĉio ŝajnis malsimpla: leviĝi, paŝado, eĉ paroli…"
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " s’est reveillé" P:+agr " en sueur."
+      translation en P:+sbeg:+pro " woke up sweaty."
+      translation eo P:+sbeg:+pro " ŝvite vekiĝis."
+    end
+
+    sentence
+    begin
+      translation fr "Ce n’est pas possible : la vie de " O " doit être un enfer."
+      translation en "That’s simply not possible: " O "’s life must be hell."
+      translation eo "Tio ja ne eblas: la vivo de " O " devas esti infero."
+    end
+
+    sentence
+    begin
+      translation fr "Il faut l’aider."
+      translation en "One has to help " O:+cli "."
+      translation eo "Oni devas helpi " O:+pro:+acc "."
+    end
+  end
+
+  provide contact Goal from P to O as Help
+  remove difficulty to O
+end
+
+unique element DreamAboutBirds
+begin
+  let P be player with attribute Richness as Poor
+  let R be player with attribute Richness as Rich
+
+  provide event lasting weeks to P
+  begin
+    event Dream
+    assume event providing attribute Richness to P before
+    assume event providing attribute Richness to R before
+
+    sentence
+    begin
+      translation fr P:+sbeg " a un rêve récurrent depuis plusieurs semaines."
+      translation en P:+sbeg " has had a recurrent dream during the previous weeks."
+      translation eo P:+sbeg " spertis revenantan sonĝon dum la lastaj semajnoj."
+    end
+
+    sentence
+    begin
+      translation fr "Dans ce rêve, " P:+pro " se change en oiseau et explore les cieux."
+      translation en "In this dream, " P:+pro " turns into a bird and explores the world."
+      translation eo "En tiu sonĝo, " P:+pro " iĝas birdon, kaj esploras la mondon."
+    end
+
+    sentence
+    begin
+      translation fr "Ce sentiment de liberté est merveilleux."
+      translation en "This feeling of freedom is so liberating."
+      translation eo "La kuna sento de libereco mirindas."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " peut voler au dessus des maisons, au dessus de la ville, au dessus des forêts, des plages, des océans…"
+      translation en P:+sbeg:+pro " can fly over houses, over the city, over the countryside, over beaches, over seas…"
+      translation eo P:+sbeg:+pro " povas flugi super domoj, super la urbo, super arbaroj, super strandoj, super oceanoj…"
+    end
+
+    sentence
+    begin
+      translation fr "Malheureusement, le rêve se termine toujours de la même manière : une chute brutale et douloureuse."
+      translation en "Unfortunately, the dream always ends the same way: into a sudden and painful fall."
+      translation eo "Bedaŭrinde, la sonĝo ĉiam same finas: per subita kaj dolora falo."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " se reveille toujours en sueur."
+      translation en P:+sbeg:+pro " then always wakes up sweaty."
+      translation eo P:+sbeg:+pro " tiam ĉiam ŝvite vekiĝas."
+    end
+  end
+end
+
+unique element DreamAboutBurningHouse
+begin
+  let P be player with attribute Job as Seller
+  let T be player with attribute Job as Thief
+
+  provide event lasting minutes to P
+  begin
+    event Dream
+    assume event providing attribute Job to P before
+    assume event providing attribute Job to T before
+
+    sentence
+    begin
+      translation fr P:+sbeg " s’est réveillé" P:+agr " en sueur cette nuit à cause d’un cauchemars."
+      translation en P:+sbeg " woke up sweaty this night because of a nightmare."
+      translation eo P:+sbeg " ŝvite vekiĝis ĉi nokte pro premsonĝo."
+    end
+
+    sentence
+    begin
+      translation fr "Sa maison…"
+      translation en P:+sbeg:+pos " house…"
+      translation eo P:+sbeg:+pos " domo…"
+    end
+
+    sentence
+    begin
+      translation fr "Sa maison était en feu !"
+      translation en P:+sbeg:+pos " house was in fire!"
+      translation eo P:+sbeg:+pos " domo estis fajranta!"
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " était impuissant."
+      translation fr P:+sbeg:+pro " ne pouvait rien faire."
+      translation en P:+sbeg:+pro " couldn’t do anything."
+      translation eo "Nenion " P:+pro " povis fari."
+    end
+
+    sentence
+    begin
+      translation fr "Le feu avait gagné."
+      translation en "One could only let the fire catch its prey."
+      translation eo "Oni nur povis lasi la fajron daŭrigi kun sia malbeno."
+    end
+
+    sentence
+    begin
+      translation fr "C’était horrible."
+      translation en "It was horrible."
+      translation eo "Estis terura."
+    end
+  end
+end
+
+unique element DreamAboutSafe
+begin
+  let P be player with attribute Job as Journalist
+                  with contact Know to S as False
+  let S be player with attribute SecretSociety not as None
+
+  provide event lasting minutes to P
+  begin
+    event Dream
+    assume event providing attribute Job to P before
+    assume event providing attribute SecretSociety to S before
+
+    sentence
+    begin
+      translation fr P:+sbeg " a fait un étrange rêve cette nuit."
+      translation en P:+sbeg " strangely dreamt during the night."
+      translation eo P:+sbeg " strange sonĝis dum la nokto."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " était dans une salle éclairée à la bougie."
+      translation en P:+sbeg:+pro " was standing in a candle-lit room."
+      translation eo P:+sbeg:+pro " estis en ĉambro lumigita de kandeloj."
+    end
+
+    sentence
+    begin
+      translation fr "Un coffre se tenait à ses pieds."
+      translation en "A safe was at " P:+pos " feet."
+      translation eo "Estis kesto je " P:+pos "j piedoj."
+    end
+
+    sentence
+    begin
+      translation fr "Il fallait ouvrir ce coffre."
+      translation en P:+sbeg:+pro " had to open this safe."
+      translation eo P:+sbeg:+pro " devis malfermi tiun keston."
+    end
+
+    sentence
+    begin
+      translation fr "La clef était cachée dans cette pièce."
+      translation en "The key was hidden in this room."
+      translation eo "La ŝlosilo estis kaŝita en tiu ĉambro."
+    end
+
+    sentence
+    begin
+      translation fr "Mais où ?"
+      translation en "But where?"
+      translation eo "Sed kie?"
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " a passé le reste du rêve à renverser tous les meubles pour trouver cette clef."
+      translation en P:+sbeg:+pro " was throwing away any furniture of the room to find the key."
+      translation eo P:+sbeg:+pro " forĵetis ĉiujn meblojn de la ĉambro por trovi tiun ŝlosilon."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " s’est reveillé" P:+agr " en sueur."
+      translation en P:+sbeg:+pro " woke up sweaty."
+      translation eo P:+sbeg:+pro " ŝvite vekiĝis."
+    end
+
+    sentence
+    begin
+      translation fr "Où est cette clef ?"
+      translation en "Where was that key?"
+      translation eo "Kie estis tiu ŝlosilo?"
+    end
+  end
+end
+
+element SeenADreamTraveller
+begin
+  let D be player with attribute SecretSociety as DreamTravellers
+  let P be player with contact Know to D as True
+                  with attribute SecretSociety not as DreamTravellers
+
+  provide event lasting minutes to P
+  begin
+    event Dream
+    assume event providing contact Know from P to D before
+    assume event providing attribute SecretSociety to D before
+
+    sentence
+    begin
+      translation fr P:+sbeg " s’est reveillé soudainement : quelque chose n’allait pas."
+      translation en P:+sbeg " suddenly woke up: something was wrong."
+      translation eo P:+sbeg " subite vekiĝis: io ne glatis."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " était en train de rêver… de " D " ?"
+      translation en P:+sbeg:+pro " was dreaming… of " D "?"
+      translation eo P:+sbeg:+pro " estis sonĝanta pri… ĉu " D "?"
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " l’a clairement vu."
+      translation en P:+sbeg:+pro " clearly saw " D:+cli "."
+      translation eo P:+sbeg:+pro " klare vidis " D:+pro:+acc "."
+    end
+
+    sentence
+    begin
+      translation fr D:fem:+empty "Sauf que ce rêve n’était pas à propos d’elle."
+      translation fr D:mas:+empty "Sauf que ce rêve n’était pas à propos de lui."
+      translation fr "Sauf que ce rêve n’était pas à propos d’iellui."
+      translation en "Except that this dream was not about " D:+cli "."
+      translation eo "Sed tiu ĉi sonĝo ne temis pri " D:+pro "."
+    end
+
+    sentence
+    begin
+      translation fr "C’était même complètement hors de propos."
+      translation en "It was even completely out of place."
+      translation eo "Absolute ne temis prie, eĉ."
+    end
+
+    sentence
+    begin
+      translation fr D:+sbeg:+pro " ne faisait que passer, s’en allant au loin."
+      translation en D:+sbeg:+pro " was only bypassing, going away."
+      translation eo D:+sbeg:+pro " nur trapasis, forirante."
+    end
+
+    sentence
+    begin
+      translation fr "Non, décidement, quelque chose n’allait pas."
+      translation en "No, surely something was wrong."
+      translation eo "Ne, certe io ne glatis."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " s’est rendormi, mais avec la certitude que ce n’était pas normal."
+      translation en P:+sbeg:+pro " went to sleep again, but kept thinking that this was not mundane."
+      translation eo P:+sbeg:+pro " reendormiĝis, sed daŭre pensante ke io ne normalas."
+    end
+  end
+
+  add complexity to D
+end
+
+element DreamTravellerSeeingTheFuture
+begin
+  let D be player with attribute SecretSociety as DreamTravellers
+                  with contact Know to P as True
+                  with contact Know to A as False
+                  with contact Know to B as False
+  let P be player
+  let A be player with contact Know to B as True
+  let B be player with contact Know to A as True
+
+  provide event lasting minutes to D
+  begin
+    event Dream
+    assume event providing contact Know from A to B before
+    assume event providing contact Know from B to A before
+    assume event providing contact Know from D to P before
+    assume event providing attribute SecretSociety to D before
+
+    sentence
+    begin
+      translation fr "Alors qu’" D:+pro " se promenait dans un rêve, " D " a décidé de lâcher prise."
+      translation en "While in a lucid dream, " D " decided to let it go."
+      translation eo "Lucidsonĝante, " D " decidis mallucidigi ĝin."
+    end
+
+    sentence
+    begin
+      translation fr "Le rêve s’est alors embrouillé."
+      translation en "The dream went confused."
+      translation eo "La sonĝo ĥaosiĝis."
+    end
+
+    sentence
+    begin
+      translation fr "Des vagues qui miroitaient dans le ciel."
+      translation en "Waves that spreaded in the sky."
+      translation eo "Ondoj kiuj dise movis en la ĉielo."
+    end
+
+    sentence
+    begin
+      translation fr "Un bateau pendu par son ancre, elle-même accrochée depuis cet océan au dessus de nos têtes."
+      translation en "A boat suspended by its anchor, lost in this ocean above our heads."
+      translation eo "Ŝipo tenita per ties ankro, ligita en tiu oceano super niaj kapoj."
+    end
+
+    sentence
+    begin
+      translation fr "Aux commandes de ce bateau se trouvait " P "."
+      translation en "At the controls of the boat was " P "."
+      translation eo "Kontrolante la ŝipon estis " P "."
+    end
+
+    sentence
+    begin
+      translation fr "Sur le pont se trouvait " A:+nom:-def "."
+      translation en "On the bridge was " A:+nom:-def "."
+      translation eo "Sur la ferdeko staris " A:+nom:-def "."
+    end
+
+    sentence
+    begin
+      translation fr A:+sbeg:+pro " discutait avec " B:+nom:-def "."
+      translation en A:+sbeg:+pro " was discussing with " B:+nom:-def "."
+      translation eo A:+sbeg:+pro " babilis kun " B:+nom:-def "."
+    end
+
+    sentence
+    begin
+      translation fr "L’ancre s’est alors décrochée."
+      translation en "The anchor unhook itself."
+      translation eo "La ankro malligiĝis."
+    end
+
+    sentence
+    begin
+      translation fr "Tout le monde est tombé."
+      translation en "Everybody fell."
+      translation eo "Ĉiuj falis."
+    end
+
+    sentence
+    begin
+      translation fr "Le rêve s’est terminé."
+      translation en "The dream ended."
+      translation eo "La sonĝo finiĝis."
+    end
+  end
+
+  provide event lasting minutes to A
+  begin
+    event Dream
+
+    sentence
+    begin
+      translation fr A:+sbeg " était sur un navire, discutant avec " B "."
+      translation en A:+sbeg " was on a ship, discussing with " B "."
+      translation eo A:+sbeg " estis surŝipe, babilante kun " B "."
+    end
+
+    sentence
+    begin
+      translation fr "Subitement, le bateau chavirait."
+      translation en "Suddenly, the ship turned over."
+      translation eo "Subite la ŝipo renversiĝis."
+    end
+
+    sentence
+    begin
+      translation fr "Tout le monde criait et courrait partout."
+      translation en "Everybody was shouting and running all over the place."
+      translation eo "Ĉiuj estis kirantaj kaj kurantaj ĉien."
+    end
+
+    sentence
+    begin
+      translation fr A:+sbeg:+pro " s’est réveillé" A:+agr " en sueur."
+      translation en A:+sbeg:+pro " woke up sweaty."
+      translation eo A:+sbeg:+pro " ŝvite vekiĝis."
+    end
+
+    sentence
+    begin
+      translation fr "Ce n’était qu’un rêve."
+      translation en "It was only a dream."
+      translation eo "Nur estis sonĝo."
+    end
+  end
+end
+

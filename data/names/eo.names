@@ -1,0 +1,24 @@
+eo:Hazardaj Esperantŝajnaj nomoj
+fr:Noms aléatoires aux sonorités de l’espéranto
+en:Random names sounding like esperanto
+
+default:eo
+
+:alternate
+
+define:ina
+Gender:Female
+:end
+
+define:iĉa
+Gender:Male
+:end
+
+size:5
+startVowels:A,E,I,O,U
+startConsonant:B,D,F,G,Ĝ,J,Ĵ,K,L,M,N,P,R,S,T;H,Ŝ,C,Ĉ,V,Z;Ĥ
+middleVowels:a,e,i,o,u;aŭ;io,eŭ
+middleConsonant:b,c,d,f,g,j,k,l,m,n,p,r,s,ŝ,t,v,z;h,ĉ,ĝ,lj,ĵ;ĥ,nj;st,kv
+endVowels:o,ino:ina
+endConsonant:ĉjo:iĉa,njo:ina
+

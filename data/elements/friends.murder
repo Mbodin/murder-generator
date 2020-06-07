@@ -1,0 +1,18 @@
+
+contact Relation Friendship
+begin
+  translation fr "amitié"
+  translation en "friendship"
+  translation eo "amikeco"
+end
+
+(* People kind of acting like they are friends, but regularly run into conflicts. *)
+contact Relation ConflictedFriendship
+begin
+  translation fr "amitié compliquée"
+  translation en "conflicted friendship"
+  translation eo "malsimpla amikeco"
+end
+
+(* TODO: Complete with friendship stories, for each jobs and character attributes. *)
+

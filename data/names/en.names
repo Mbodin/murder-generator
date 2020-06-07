@@ -1,0 +1,16 @@
+en:Random names sounding like English
+fr:Noms aléatoires à sonorités anglaises
+eo:Hazardaj anglŝajnaj nomoj
+
+default:en
+
+:alternate
+
+size:4
+startVowels:A,E,I,O,U;Au;Ho
+startConsonant:B,C,D,F,G,H,J,K,Kh,L,M,N,P,R,S,Th,W;Ch,Sh,St,V,Wh,Z,Jo
+middleVowels:a,e,i,y,ea;ee,o,oo,u,ya,im,on,en;aw,ow,ew
+middleConsonant:br,c,d,f,gh,rg,li,ls,m,nn,pp,rr,s,t,th;b,ch,sh,ph,v,k,st;z,ht,g,fl
+endVowels:own,ay,en,ia,any,eth,ough,e,ing,er
+endConsonant:rson,cester,ms,nes,rne,ly,hn,rd
+

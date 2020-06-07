@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns = "http://www.w3.org/1999/xhtml" lang = "">
+  <head>
+    <meta charset="utf-8" />
+    <title>Murder generator</title>
+    <link rel = "stylesheet" type = "text/css" href = "styles.css" />
+    <link rel = "icon" type = "image/svg+xml" href = "favicon.svg" sizes = "any" />
+    <meta name = "viewport" content = "width=device-width, initial-scale=1.0" />
+  </head>
+  <body>
+
+    <div id = "response"></div>
+
+    <svg version = "1.1" baseProfile = "tiny" width = "100" height = "100" xmlns="http://www.w3.org/2000/svg" id = "loadingSVG">
+      <g transform = "translate(50, 50)">
+        <g id = "loadingSVGScale">
+          <g transform = "translate(-50, -50)">
+            <circle cx = "50" cy = "50" r = "50" fill = "#75507b" />
+            <path id = "rotatingPath" d = "M 80 50 A 30 30 0 0 0 50 20" fill = "none" stroke = "#ad7fa8" stroke-width = "5px" />
+            <animateTransform attributeType = "xml" attributeName = "transform" type = "rotate" from = "0 50 50" to = "360 50 50" dur = "2s" additive = "sum" repeatCount = "indefinite" />
+          </g>
+        </g>
+      </g>
+    </svg>
+
+    <noscript>
+      This webpage needs JavaScript to work properly.
+      If you want to, you can check the source code of the project <a href = "https://github.com/Mbodin/murder-generator">there</a>.
+    </noscript>
+    <script><!--//--><![CDATA[//><!--
+      /* @license magnet:?xt=urn:btih:0b31508aeb0634b347b8270c7bee4d411b5d4109&dn=agpl-3.0.txt AGPL-v3-or-Later */
+      (function (){
+        var loadingSVGScale = document.getElementById ("loadingSVGScale")
+        var loadingSVG = document.getElementById ("loadingSVG")
+        var responseDiv = document.getElementById ("response")
+        var rotatingPath = document.getElementById ("rotatingPath")
+        var pathPrefix = "M 80 50 A 30 30 0 "
+
+        function startLoading (progress){
+          if (progress === undefined) progress = 0.2
+          if (progress < 0.1) progress = 0.1
+          if (progress > 0.9) progress = 0.9
+          progress = 0.1 + 0.8 * progress
+          var dir = "0 1 "
+          if (progress > 0.5) dir = "1 1 "
+          var angle = 2 * Math.PI * progress
+          target = dir + (50 + 30 * Math.cos (angle)) + " " + (50 + 30 * Math.sin (angle))
+          loadingSVGScale.setAttribute ("class", "loadingStart")
+          rotatingPath.setAttribute ("d", pathPrefix + target)
+          loadingSVG.style.zIndex = "1"
+        }
+
+        function stopLoading (){
+          loadingSVGScale.setAttribute ("class", "loadingStop")
+          loadingSVG.style.zIndex = "-1"
+        }
+
+        function error (e){
+          stopLoading ()
+
+          var div = document.createElement ("div")
+          div.setAttribute ("class", "error")
+          var p = document.createElement ("p")
+          div.appendChild (p)
+          responseDiv.appendChild (div)
+          p.appendChild (document.createTextNode ("An error occurred! "))
+          var a = document.createElement ("a")
+          a.setAttribute ("href", "https://github.com/Mbodin/murder-generator/issues")
+          a.appendChild (document.createTextNode ("Please report it"))
+          p.appendChild (a)
+          p = document.createElement ("p")
+          p.appendChild (document.createTextNode ("Error details: " + e))
+          div.appendChild (p)
+        }
+
+        startLoading ()
+
+        var request = new XMLHttpRequest ()
+        request.onreadystatechange = function (){
+            if (this.readyState === 4){
+              if (request.status !== 200){
+                error ("Error when fetching the main script. "
+                       + request.status + ": " + request.statusText)
+              } else {
+                try {
+                  eval (request.responseText)
+                } catch (e){
+                  error (e)
+                }
+              }
+            }
+          }
+        request.open ("GET", "main.js", true)
+        request.overrideMimeType ("application/javascript")
+        request.send ()
+      }) ()
+      /* @license-end */
+      // --><!]]>
+    </script>
+  </body>
+</html>
+

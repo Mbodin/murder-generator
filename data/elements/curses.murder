@@ -1,0 +1,434 @@
+
+declare attribute Curse
+begin
+  translation fr "Malédiction"
+  translation en "Curse"
+  translation eo "Malbenaĵo"
+end
+
+internal attribute Curse None
+begin
+  translation fr "aucune"
+  translation en "none"
+  translation eo "nenia"
+end
+
+unique element NoCurse
+begin
+  provide strict attribute Curse to any other player as None
+end
+
+(* * Loss of memory *)
+
+attribute Curse MemoryLoss
+begin
+  category Disabilities
+
+  translation fr "troubles de la mémoire"
+  translation en "memory loss"
+  translation eo "memorproblemoj"
+
+  compatible with EternalLifeFiniteMemory
+end
+
+element ForgetsThings
+begin
+  let P be player
+
+  provide event lasting years to P
+  begin
+    event Personal
+		assume event providing attribute Born to P before
+
+    sentence
+    begin
+      translation fr P:+sbeg " a des problèmes de mémoire."
+      translation en P:+sbeg " has memory issues."
+      translation eo P:+sbeg " havas memorproblemojn."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " perd ses clefs."
+      translation en P:+sbeg:+pro " forgets " P:+pos " keys."
+      translation eo P:+sbeg:+pro " forgesas siajn ŝlosilojn."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " perd ses mots."
+      translation en P:+sbeg:+pro " looses " P:+pos " words."
+      translation eo P:+sbeg:+pro " perdas siajn vortojn."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " oublie des connaissances."
+      translation en P:+sbeg:+pro " forgets " P:+pos " acquaintances."
+      translation eo P:+sbeg:+pro " forgesas kiun " P:+pro " konis."
+    end
+
+    sentence
+    begin
+      translation fr "Parfois des amis de longue date !"
+      translation en "Sometimes even old friends!"
+      translation eo "Kelkfoje eĉ longtempaj amikoj!"
+    end
+
+    sentence
+    begin
+      translation fr "C’est très handicapant."
+      translation en "It’s very disabling."
+      translation eo "Estas malatutigega."
+    end
+
+    sentence
+    begin
+      translation fr "Et personne ne sait pourquoi."
+      translation en "And nobody knows why."
+      translation eo "Sed neniu scias kial."
+    end
+
+    sentence
+    begin
+      translation fr "Pour " P:+cli ", le monde s’efface petit à petit."
+      translation en "In " P:+pos " eyes, the world fades away."
+      translation eo "En " P:+pos " vidpunkto, la mondo iom post iom malaperas."
+    end
+
+    provide compatible attribute Curse to P as MemoryLoss
+  end
+
+  provide phantom event lasting weeks to P
+
+  add complexity to P
+  add complexity to P
+  add complexity to P
+end
+
+(* * Eternal life *)
+
+attribute Curse Immortal
+begin
+  category OutOfOurWorld
+
+  translation fr "immortel"
+  translation en "immortal"
+  translation eo "nemortebla"
+
+  compatible with EternalLifeFiniteMemory
+end
+
+element GodIsImmortal
+begin
+  let P be player with attribute Specy as God
+
+  provide immediate event to P
+  begin
+    event Personal
+    assume no event providing attribute Born to P after
+
+    sentence
+    begin
+      translation fr P:+sbeg " est un dieu."
+      translation fr P:fem:+sbeg " est une déesse."
+      translation en P:+sbeg " is a god."
+      translation en P:fem:+sbeg " is a goddess."
+      translation eo P:+sbeg " estas dio."
+    end
+
+    sentence
+    begin
+      translation fr "En tant que telle, " P:fem:+pro " est immortelle."
+      translation fr "En tant que tel, " P:+pro " est immortel."
+      translation en "As such, " P:+pro " is immortal."
+      translation eo "Pro tio, " P:+pro " ne povas morti."
+    end
+
+    sentence
+    begin
+      translation fr "Jamais " P:+pro " ne pourra faire l’expérience complète d’émotions comme la peur ou certaines formes de douleurs : le fait de ne pas pouvoir mourir de toutes façons biaise l’expérience."
+      translation en "Never " P:+pro " will be able to completely experience some feelings like fear or some forms of pain: the very knowledge that " P:+pro " is protected to death biases the experience."
+      translation eo "Neniam " P:+pro " povos entute sperti emociojn kiel timo aŭ kelkaj tipoj de doloro: la fako ke " P:+pro " ne povas morti biasigas la sperton."
+    end
+
+    sentence
+    begin
+      translation fr "Comment peut-" P:+pro " prétendre guider les humains tout en étant incapable de comprendre entièrement leur point de vue ?"
+      translation en "How can " P:+pro " pretend to guide " P:+pos " subjects while being unable to fully understand their point of view?"
+      translation eo "Kiel " P:+pro " povas pretendi gvidi ties religianojn sen eĉ povi tute kompreni ties vidpuntkon?"
+    end
+
+    sentence
+    begin
+      translation fr "Qui voudrait d’une telle divinité ?"
+      translation en "Who would pray for such a god?"
+      translation eo "Kiu preĝus por tia dio?"
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg " a donc décidé de chercher un moyen pour faire cette expérience."
+      translation en P:+sbeg " thus decided to look for a way to experience this."
+      translation eo P:+sbeg " do decidis serĉi manieron sperti tion."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " veut comprendre."
+      translation en P:+sbeg:+pro " wants to understand."
+      translation eo P:+sbeg:+pro " volas kompreni."
+    end
+
+    provide compatible attribute Curse to P as Immortal
+  end
+
+  remove difficulty to P
+  remove difficulty to P
+  add complexity to P
+end
+
+(* * Eternal life, but finite memory *)
+
+attribute Curse EternalLifeFiniteMemory
+begin
+  category OutOfOurWorld
+  category Disabilities
+
+  translation fr "vie éternelle et souvenirs brumeux"
+  translation en "eternal life and memory loss"
+  translation eo "senlima vivo kaj memorproblemoj"
+end
+
+element SomeElvesHaveEternalLifeButFiniteMemory
+begin
+  let E be player with attribute Specy as Elf
+
+  provide immediate phantom event to E
+  begin
+    event Personal
+    assume no event providing attribute Born to E after
+  end
+
+  provide phantom event lasting decades to E
+
+  provide phantom event lasting decades to E
+
+  provide immediate event to E
+  begin
+    event Description
+
+    sentence
+    begin
+      translation fr "Certains elfes sont atteints d’une caractéristique particulière : la vie éternelle."
+      translation en "Some elves have a peculiar trait: eternal life."
+      translation eo "Kelkaj elfoj havas specifan atuton: senliman vivon."
+    end
+
+    sentence
+    begin
+      translation fr "Ils ne sont cependant pas immortels : malheureusement, de nombreuses personnes interprètent mal ce phénomène."
+      translation en "They are not immortal, though: a lot of people tend to misunderstand this phenomena."
+      translation eo "Ili tamen povas morti: multe da personoj emas miskompreni tiun fenomenon."
+    end
+
+    sentence
+    begin
+      translation fr "C’est juste qu’ils ne vieillissent pas, et donc ne meurent pas de vieillesse."
+      translation en "It’s just that they don’t grow old, and thus do not die of old age."
+      translation eo "Ili nur ne maljuniĝas, kaj do ne mortas pro maljuneco."
+    end
+
+    sentence
+    begin
+      translation fr "Cependant, la biologie de leur cerveau n’est pas particulièrement adaptée à cette situation."
+      translation en "However, the biology of their brain is not particularly different than others."
+      translation eo "Sed la biologio de ties cerbo ne tiom adaptiĝis al tia situacio."
+    end
+
+    sentence
+    begin
+      translation fr "Ces elfes vieillissent mentalement, tout en restant dans un corps qui a l’air plutôt jeune."
+      translation en "These elves grow mentally old, while living in a seemingly young body."
+      translation eo "Tiaj elfoj mense maljuniĝas, restante en junaspekta korpo."
+    end
+
+    sentence
+    begin
+      translation fr "Ces elfes ont du mal à créer de nouvelles idées."
+      translation en "These elves have difficulties carving new ideas."
+      translation eo "Tiaj elfoj malfacile kreas novajn ideojn."
+    end
+
+    sentence
+    begin
+      translation fr "Ces elfes ont du mal à penser."
+      translation en "These elves have difficulties thinking."
+      translation eo "Tiaj elfoj malfacile pensas."
+    end
+
+    sentence
+    begin
+      translation fr "Ces elfes oublient."
+      translation en "These elves forget."
+      translation eo "Tiaj elfoj forgesemas."
+    end
+
+    sentence
+    begin
+      translation fr "Le monde s’efface petit à petit à leur yeux : ils ne peuvent que rarement se rappeler de ce qui s’est passé il y a plus d’une trentaine d’années."
+      translation en "The world fades itself to their mind: they can only rarely remember what happened thirty years ago."
+      translation eo "La mondo iom post iom malaperas en ties kapo: ili malofte memoras kio okazis antaŭ tridek jarojn."
+    end
+
+    sentence
+    begin
+      translation fr "S’ils participent à un événement majeur maintenant, ils seront toujours là cinquante ans plus tard, mais n’auront aucun souvenir de cet événement."
+      translation en "If they were to participate to a major event, they will still be around fifty years ago, but they will have no memory of this event."
+      translation eo "Se ili participus al iu historia evento nun, ili daŭre vivus post kvindek jarojn, sed sen iu ajn memoraĵo de tiu evento."
+    end
+
+    sentence
+    begin
+      translation fr "Ils ne sauront même plus s’ils y avait participé."
+      translation en "They woudln’t even remember that they participated to it."
+      translation eo "Ili eĉ ne memoros ke ili partoprenis ĝin."
+    end
+
+    sentence
+    begin
+      translation fr "On raconte que des compteurs elfes ayant cette condition racontent les faits et armes de héros antiques… qui se trouvent en fait être le compteur lui-même, plusieurs siècles auparavant."
+      translation en "Some tell that some of the elfish singers who tell the tales of antic heroes… were actually these heroes during that time."
+      translation eo "Oni diras ke kelkaj el la elfaj rakontistoj kiuj kantas la aventurojn de antikvaj herooj… fakte estis tiuj herooj en tiu antikva tempo."
+    end
+
+    sentence
+    begin
+      translation fr "Mais ce dernier a oublié qui il était."
+      translation en "But the heroes forgot who they were and became singers."
+      translation eo "Sed la herooj forgesis kiu ili estis kaj iĝis kantistojn."
+    end
+
+    sentence
+    begin
+      translation fr E:+sbeg " est dans cette situation particulière."
+      translation en E:+sbeg " is in this peculiar situation."
+      translation eo E:+sbeg " estas en tiu ĉi specifa situacio."
+    end
+
+    sentence
+    begin
+      translation fr E:+sbeg:+pro " aimerait tellement vivre sans ce handicap !"
+      translation en E:+sbeg:+pro " would so much like to live without this handicap!"
+      translation eo E:+sbeg:+pro " tiom ŝatus vivi sen tiu malatatutaĵo!"
+    end
+
+    sentence
+    begin
+      translation fr "C’est une situation très rare : très peu de personnes sont au courant."
+      translation en "It’s a very rare situation: very few people are aware of it."
+      translation eo "Estas ekstremmalofta situacio: malmulte da homoj scias prie."
+    end
+
+    sentence
+    begin
+      translation fr "D’ailleurs, " E:+pro " cherche à le cacher."
+      translation en "And actually, " E:+pro " tries to hide it."
+      translation eo "Kaj fakte, " E:+pro " provas kaŝi tion."
+    end
+
+    provide attribute Curse to E as EternalLifeFiniteMemory
+  end
+
+  provide phantom event lasting years to E
+
+  add complexity to E
+  add complexity to E
+  add complexity to E
+end
+
+element AllElvesHaveEternalLifeButFiniteMemory
+begin
+  let E1 be player with attribute Specy as Elf
+  let E2 be player with attribute Specy as Elf
+  let E3 be player with attribute Specy as Elf
+  let P1 be player with attribute Specy not as Elf
+                   with contact Know to E1 as True
+  let P2 be player with attribute Specy not as Elf
+                   with contact Know to E2 as True
+  let any other player be with attribute Specy not as Elf
+
+  provide immediate event to E1 and E2 and E3 and P1 and P2
+  begin
+    event Description
+    assume no event providing attribute Born to E1 or E2 or E3 before
+
+    sentence
+    begin
+      translation fr "Les elfes ont la vie éternelle."
+      translation en "Elves have eternal life."
+      translation eo "Elfoj havas senliman vivon."
+    end
+
+    sentence
+    begin
+      translation fr "Ils ne sont cependant pas immortels : c’est juste qu’ils ne vieillissent pas, et donc ne meurent pas de vieillesse."
+      translation en "They are not immortal, though: it’s just that they don’t grow old, and thus do not die of old age." 
+      translation eo "Ili tamen povas morti: ili nur ne maljuniĝas, kaj do ne mortas pro maljuneco."
+    end
+
+    sentence
+    begin
+      translation fr "Mais cette grande espérance de vie vient avec un cout : leur mémoire."
+      translation en "But this long life expectancy comes at a cost: their memory."
+      translation eo "Sed tiu longa vivespero venas kun kosto: ties memorio."
+    end
+
+    sentence
+    begin
+      translation fr "Les elfes oublient."
+      translation en "Elves forget."
+      translation eo "Elfoj forgesemas."
+    end
+
+    sentence
+    begin
+      translation fr "Ils oublient ce qu’ils on fait après une trentaine d’années."
+      translation en "They forget what they did after three dozens of years."
+      translation eo "Ili forgesas kion ili faris post ĉirkaŭ tridek jaroj."
+    end
+
+    sentence
+    begin
+      translation fr "Ils peuvent ainsi même oublier leurs amis."
+      translation en "They can even forget their fiends."
+      translation eo "Ili eĉ povas forgesi ties amikojn."
+    end
+
+    sentence
+    begin
+      translation fr "Voire qui ils étaient."
+      translation en "Or themselves."
+      translation eo "Aŭ eĉ kiu ili estis."
+    end
+
+    sentence
+    begin
+      translation fr "Peut-être que les elfes qui ont combattu dans les grandes batailles de jadis sont parmi nous, sans qu’ils le sachent eux-même."
+      translation en "Maybe the elves who fought in the great old history battles are among us, without themselves even knowing about it."
+      translation eo "Eble la elfoj kiuj militis en la historiaj bataloj ĉeestas, sen ke ili mem sciu."
+    end
+
+    provide attribute Curse to E1 as EternalLifeFiniteMemory
+    provide attribute Curse to E2 as EternalLifeFiniteMemory
+    provide attribute Curse to E3 as EternalLifeFiniteMemory
+  end
+
+  add complexity to E1
+  add complexity to E1
+  add complexity to E2
+  add complexity to E2
+  add complexity to E3
+  add complexity to E3
+end
+

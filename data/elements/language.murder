@@ -1,0 +1,233 @@
+
+(* This file is meant to be for internal use and not to actually declare scenario elements.
+  Instead, this file declares grammatical constructs for each languages. *)
+
+(* * French *)
+
+declare translation fr:empty (* A special grammatical case that prints nothing (useful to create a constraint without printing it). *)
+
+declare translation fr:sbeg (* At the beginning of a sentence. *)
+
+declare translation fr:nom (* Nouns *)
+declare translation fr:pro (* Pronouns *)
+declare translation fr:adj (* Adjectives *)
+declare translation fr:adv (* Adverbs *)
+
+declare translation fr:def (* Definite *)
+declare translation fr:cli (* Clitics (“lui”) *)
+declare translation fr:lcli (* Clitics (“la”/“le”) *)
+
+declare translation fr:sin (* Singular *)
+declare translation fr:plu (* Plural *)
+
+declare translation fr:mas (* Masculine *)
+declare translation fr:fem (* Feminine *)
+
+declare translation fr:agr (* Agreement (“e” for female, nothing for male) *)
+
+declare internal attribute GrammarFR
+begin
+  translation fr "Grammaire française"
+  translation en "French grammar"
+  translation eo "Franca gramatiko"
+end
+
+attribute GrammarFR Normal
+begin
+  translation fr "normale"
+  translation en "normal"
+  translation eo "normala"
+
+  add fr:sin
+  add fr:def
+  add translation fr:empty ""
+  add translation fr:pro:sin:mas "il"
+  add translation fr:pro:sin:fem "elle"
+  add translation fr:pro:sin "iel"
+  add translation fr:pro:plu:-fem:+mas "ils"
+  add translation fr:pro:plu:fem "elles"
+  add translation fr:pro:plu "iels"
+  add translation fr:cli:sin "lui"
+  add translation fr:cli:plu "leur"
+  add translation fr:lcli:sin "le·a"
+  add translation fr:lcli:sin:mas "le"
+  add translation fr:lcli:sin:fem "la"
+  add translation fr:lcli:plu "les"
+  add translation fr:nom:sin:-mas:+fem "une personne"
+  add translation fr:nom:plu:-mas:+fem "des personnes"
+  add translation fr:nom:def:sin:-mas:+fem "la personne"
+  add translation fr:nom:def:plu:-mas:+fem "les personnes"
+  add translation fr:sbeg:pro:sin:mas "Il"
+  add translation fr:sbeg:pro:sin:fem "Elle"
+  add translation fr:sbeg:pro:sin "Iel"
+  add translation fr:sbeg:pro:plu:-fem:+mas "Ils"
+  add translation fr:sbeg:pro:plu:fem "Elles"
+  add translation fr:sbeg:pro:plu "Iels"
+  add translation fr:sbeg:cli:sin "Lui"
+  add translation fr:sbeg:cli:plu "Leur"
+  add translation fr:sbeg:nom:sin:-mas:+fem "Une personne"
+  add translation fr:sbeg:nom:plu:-mas:+fem "Des personnes"
+  add translation fr:sbeg:nom:def:sin:-mas:+fem "La personne"
+  add translation fr:sbeg:nom:def:plu:-mas:+fem "Les personnes"
+  add translation fr:agr:sin:mas ""
+  add translation fr:agr:sin:fem "e"
+  add translation fr:agr:sin "·e"
+  add translation fr:agr:plu:mas "s"
+  add translation fr:agr:plu:fem "es"
+  add translation fr:agr:plu "·e·s"
+end
+
+unique element NormalGrammarFR
+begin
+  provide strict attribute GrammarFR to any other player as Normal
+end
+
+(* * English *)
+
+declare translation en:empty
+
+declare translation en:sbeg (* At the beginning of a sentence. *)
+
+declare translation en:nom (* Nouns *)
+declare translation en:pro (* Pronouns *)
+declare translation en:adj (* Adjectives *)
+declare translation en:adv (* Adverbs *)
+
+declare translation en:def (* Definite (“the”, as opposed to “a”) *)
+declare translation en:cli (* Clitics (“her”/“him”) *)
+declare translation en:pos (* Possessive (“her”/“his”) *)
+
+declare translation en:sin (* Singular *)
+declare translation en:plu (* Plural *)
+
+declare translation en:mas (* Masculine *)
+declare translation en:fem (* Feminine *)
+
+declare internal attribute GrammarEN
+begin
+  translation fr "Grammaire anglaise"
+  translation en "English grammar"
+  translation eo "Angla gramatiko"
+end
+
+attribute GrammarEN Normal
+begin
+  translation fr "normale"
+  translation en "normal"
+  translation eo "normala"
+
+  add en:sin
+  add en:def
+  add translation en:empty ""
+  add translation en:pro:sin "it"
+  add translation en:pro:sin:mas "he"
+  add translation en:pro:sin:fem "she"
+  add translation en:pro:plu "they"
+  add translation en:cli:sin:mas "him"
+  add translation en:cli:sin:fem "her"
+  add translation en:cli:sin "it"
+  add translation en:cli:plu "them"
+  add translation en:pos:sin:mas "his"
+  add translation en:pos:sin:fem "her"
+  add translation en:pos:sin "its"
+  add translation en:pos:plu "their"
+  add translation en:sbeg:pro:sin "It"
+  add translation en:sbeg:pro:sin:mas "He"
+  add translation en:sbeg:pro:sin:fem "She"
+  add translation en:sbeg:pro:plu "They"
+  add translation en:sbeg:cli:sin:mas "Him"
+  add translation en:sbeg:cli:sin:fem "Her"
+  add translation en:sbeg:cli:sin "It"
+  add translation en:sbeg:cli:plu "Them"
+  add translation en:sbeg:pos:sin:mas "His"
+  add translation en:sbeg:pos:sin:fem "Her"
+  add translation en:sbeg:pos:sin "Its"
+  add translation en:sbeg:pos:plu "Their"
+end
+
+unique element NormalGrammarEN
+begin
+  provide strict attribute GrammarEN to any other player as Normal
+end
+
+(* * Esperanto *)
+
+declare translation eo:empty
+
+declare translation eo:sbeg (* At the beginning of a sentence. *)
+
+declare translation eo:nom (* Nouns *)
+declare translation eo:pro (* Pronouns *)
+declare translation eo:adj (* Adjectives *)
+declare translation eo:adv (* Adverbs *)
+
+declare translation eo:def (* Definite *)
+declare translation eo:pos (* Possessive (“sia”) *)
+declare translation eo:acc (* Accusative *)
+
+declare translation eo:sin (* Singular *)
+declare translation eo:plu (* Plural *)
+
+declare translation eo:mas (* Masculine *)
+declare translation eo:fem (* Feminine *)
+
+declare translation eo:suf (* Suffix (“-in-”/“-iĉ-") *)
+
+declare internal attribute GrammarEO
+begin
+  translation fr "Grammaire de l’espéranto"
+  translation en "Esperanto grammar"
+  translation eo "Esperanta gramatiko"
+end
+
+attribute GrammarEO Normal
+begin
+  translation fr "normale"
+  translation en "normal"
+  translation eo "normala"
+
+  add eo:sin
+  add eo:def
+  add translation eo:empty ""
+  add translation eo:pro:sin "ĝi"
+  add translation eo:pro:sin:mas "li"
+  add translation eo:pro:sin:fem "ŝi"
+  add translation eo:pro:plu "ili"
+  add translation eo:pro:sin:acc "ĝin"
+  add translation eo:pro:sin:mas:acc "lin"
+  add translation eo:pro:sin:fem:acc "ŝin"
+  add translation eo:pro:plu:acc "ilin"
+  add translation eo:pos:sin:mas "lia"
+  add translation eo:pos:sin:fem "ŝia"
+  add translation eo:pos:sin "ĝia"
+  add translation eo:pos:plu "ilia"
+  add translation eo:pos:sin:mas:acc "lian"
+  add translation eo:pos:sin:fem:acc "ŝian"
+  add translation eo:pos:sin:acc "ĝian"
+  add translation eo:pos:plu:acc "ilian"
+  add translation eo:suf ""
+  add translation eo:suf:fem "in"
+  add translation eo:suf:mas "iĉ"
+  add translation eo:sbeg:pro:sin "Ĝi"
+  add translation eo:sbeg:pro:sin:mas "Li"
+  add translation eo:sbeg:pro:sin:fem "Ŝi"
+  add translation eo:sbeg:pro:plu "Ili"
+  add translation eo:sbeg:pro:sin:acc "Ĝin"
+  add translation eo:sbeg:pro:sin:mas:acc "Lin"
+  add translation eo:sbeg:pro:sin:fem:acc "Ŝin"
+  add translation eo:sbeg:pro:plu:acc "Ilin"
+  add translation eo:sbeg:pos:sin:mas "Lia"
+  add translation eo:sbeg:pos:sin:fem "Ŝia"
+  add translation eo:sbeg:pos:sin "Ĝia"
+  add translation eo:sbeg:pos:plu "Ilia"
+  add translation eo:sbeg:pos:sin:mas:acc "Lian"
+  add translation eo:sbeg:pos:sin:fem:acc "Ŝian"
+  add translation eo:sbeg:pos:sin:acc "Ĝian"
+  add translation eo:sbeg:pos:plu:acc "Ilian"
+end
+
+unique element NormalGrammarEO
+begin
+  provide strict attribute GrammarEO to any other player as Normal
+end
+

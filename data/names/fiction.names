@@ -1,0 +1,391 @@
+fr:Noms de personnages de fiction
+eo:Nomoj el fiksiuloj
+en:Names of fictionnal characters
+
+:attributeList
+
+# * Agatha Christie’s characters
+
+# Source: https://nameberry.com/nametalk/threads/80285-A-fun-list-of-fabulous-Agatha-Christie-character-names!
+
+:attributes
+Specy:Human
+Gender:Male
+:list
+
+Alfred
+Arthur
+Benedict
+Claud
+Etienne
+Guy
+Harley
+Lenox
+Lucien
+Quentin
+Ralph
+Rex
+Reuben
+Roley
+Rowley
+Rudi
+Rupert
+Rufus
+Victor
+
+:attributes
+Specy:Human
+Gender:Female
+:list
+
+Ada
+Adele
+Adela
+Amabel
+Anya
+Arabella
+Ariadne
+Arlena
+Beatrice
+Beryl
+Carlotta
+Caroline
+Cora
+Daphne
+Dolores
+Dulcie
+Elinor
+Eloise
+Elspeth
+Elvira
+Evelyn
+Flora
+Freda
+Gerda
+Ginevra
+Giselle
+Iris
+Jinny
+Josie
+Letitia
+Lucie
+Lydia
+Mabelle
+Magadala
+Marina
+Marjorie
+Marlene
+Phillipa
+Rhoda
+Rosaleen
+Rosalie
+Rosamund
+Ruth
+Tuppence
+Ursula
+Zena
+
+:attributes
+Specy:Human
+:list
+
+Emlyn
+Alix
+Lexie
+Odell
+Parker
+Percy
+Reggie
+Ruby
+
+# * Lord of the Ring’s characters
+
+# Source: https://en.wikipedia.org/wiki/Elf_(Middle-earth)#Notable_Elves
+
+:attributes
+Specy:Elf
+Gender:Male
+:list
+
+Beleg
+Celeborn
+Celebrimbor
+Círdan
+Elrond
+Finarfin
+Fingolfin
+Finrod
+Fëanor
+Gil-galad
+Glorfindel
+Legolas
+Thingol
+Thranduil
+Turgon
+
+:attributes
+Gender:Female
+Specy:Elf
+:list
+
+Arwen
+Celebrían
+Elwing
+Galadriel
+Idril
+Lúthien
+
+# Source: https://en.wikipedia.org/wiki/Middle-earth_dwarf_characters
+
+:attributes
+Specy:Dwarf
+Gender:Male
+:list
+
+Azaghâl
+Balin
+Bifur
+Bofur
+Bombur
+Borin
+Dori
+Durin
+Dwalin
+Dáin
+Farin
+Flói
+Frerin
+Frár
+Frór
+Fundin
+Fíli
+Gamil
+Gimli
+Glóin
+Gróin
+Grór
+Kíli
+Lóni
+Narvi
+Nori
+Náin
+Náli
+Nár
+Ori
+Role
+Telchar
+Thorin
+Thráin
+Thrór
+Óin
+
+:attributes
+Specy:Dwarf
+Gender:Female
+:list
+
+Dís
+
+# Source: https://lotr.fandom.com/wiki/Men
+
+:attributes
+Specy:Human
+Gender:Male
+:list
+
+Amandil
+Anárion
+Ar-Pharazôn the Golden
+Aragorn
+Arathorn
+Bard the Bowman
+Beren
+Boromir
+Bëor the Old
+Ciryandil
+Denethor
+Elendil
+Elros Tar-Minyatur
+Faramir
+Galdor
+Gríma Wormtongue
+Hador
+Haldad
+Hathol
+Huor 
+Hyarmendacil
+Húrin
+Isildur
+Tar-Minastir
+Thengel
+Théoden
+Tuor
+Túrin Turambar
+Éomer
+
+:attributes
+Specy:Human
+Gender:Female
+:list
+
+Haleth
+Éowyn
+
+# * Star Wars’s characters
+
+# Source: https://www.denofgeek.com/us/movies/star-wars/261168/star-wars-30-best-droids-in-the-galaxy
+
+:attributes
+Specy:Robot
+Gender:NonBinary
+:list
+
+R2-D2
+R5-D4
+2-1B
+HK-47
+4-LOM
+EV-9D9
+R4-P17
+PROXY
+C-3PO
+GA-97
+3B6-RA-7
+8D8
+FX-7
+CZ-3
+L3-37
+U-3PO
+BB-8
+K-2SO
+0-0-0
+BT-1
+IG-88
+
+# * Isaac Asimov’s characters
+
+# Source: https://en.wikipedia.org/wiki/List_of_Foundation_series_characters
+
+:attributes
+Specy:Human
+Gender:Male
+:list
+
+Ammel Brodrig
+Anselm haut Rodric
+Bail Channis
+Bel Arvardan
+Bel Riose
+Bor Alurin
+Cleon
+Dagobert
+Dom
+Elvett Semic
+Lewis Pirenne
+Ducem Barr
+Ebling Mis
+Eskel Gorov
+Gaal Dornick
+Gambol Deen Namarti
+Golan Trevize
+Han Pritcher
+Hober Mallow
+Homir Munn
+Jaim Twer
+Janov Pelorat
+Jenarr Leggen
+Jole Turbor
+Jord Fara
+Jord Parma
+Lepold
+Laskin Joranum
+Lathan Devers
+Limmar Ponyets
+Linge Chen
+Lord Dorwin
+Lors Avakim
+Lundin Crast
+Mandell Gruber
+Mayor Indbur
+Munn Li Compor
+Onum Barr
+Pelleas Anthor
+Poly Verisof
+Preem Palver
+Prince Regent Wienis
+Publis Manlio
+Quindor Shandess
+Raych Seldon
+Salvor Hardin
+Sef Sermak
+Sennett Forell
+Stettin Palver
+Stor Gendibal
+Tamwile Elar
+Tomaz Sutt
+Toran Darell
+Yate Fulham
+Yohan Lee
+Yugo Amaryl
+
+:attributes
+Specy:Human
+Gender:Female
+:list
+
+Arkady Darell
+Bayta Darell
+Bliss
+Cinda Monay
+Dors Venabili
+Harla Branno
+Jorane Sutt
+Lady Callia
+Mother Rittah
+Rashelle of Wye
+Sura Novi
+Wanda Seldon
+
+# Source: https://en.wikipedia.org/wiki/List_of_Robot_series_characters
+
+:attributes
+Specy:Human
+Gender:Male
+:list
+
+Alfred Lanning
+Bentley Baley
+Clinton Madarian
+Daneel Giskard Baley
+Elijah Baley
+Gregory Powell
+Han Fastolfe
+Kelden Amadiro
+Lawrence Robertson
+Mike Donovan
+Milton Ashe
+Peter Bogert
+
+:attributes
+Specy:Human
+Gender:Female
+:list
+
+Gladia Delmarre
+Susan Calvin
+Vasilia Fastolfe
+
+:attributes
+Specy:Robot
+Gender:Male
+:list
+
+R. Daneel Olivaw
+
+:attributes
+Specy:Robot
+Gender:NonBinary
+:list
+
+R. Giskard Reventlov
+

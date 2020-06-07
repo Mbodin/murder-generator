@@ -1,0 +1,232 @@
+
+declare attribute Famousness
+begin
+  translation fr "Célébrité"
+  translation en "Famousness"
+  translation eo "Fameco"
+end
+
+
+attribute Famousness Famous
+begin
+  translation fr "célèbre"
+  translation en "famous"
+  translation eo "fama"
+
+  add translation fr:adj "célèbre"
+  add translation en:adj "famous"
+  add translation eo:adj "fama"
+end
+
+internal attribute Famousness Unknown
+begin
+  translation fr "inconnu·e"
+  translation en "unknown"
+  translation eo "malfama"
+
+  add translation fr:adj:mas "inconnu"
+  add translation fr:adj:fem "inconnue"
+  add translation en:adj "unknown"
+  add translation eo:adj "malfama"
+end
+
+attribute Famousness Hiding
+begin
+  (* The character has been actively hiding from the general public:
+    he or she tries his or her best not to be famous. *)
+  category NonKids
+
+  translation fr "caché·e"
+  translation en "hidding"
+  translation eo "kaŝanta"
+end
+
+element GeneraliseUnknown
+begin
+  let A be player
+  let B be player with contact Know to A as False
+
+  provide attribute Famousness to A as Unknown
+end
+
+duplicable element FamousIsKnown
+begin
+  let A be player
+  let B be player with attribute Famousness as Famous
+
+  provide compatible contact Know from A to B as True
+end
+
+duplicable element HiddenUnknown
+begin
+  let A be player
+  let B be player with attribute Famousness as Hiding
+
+  provide compatible contact Know from A to B as False
+end
+
+element FamousCanDoFavors
+begin
+  let A be player with attribute Famousness as Famous
+                  with contact Favor to B as Small
+  let B be player with attribute Famousness as Unknown
+
+  provide event lasting minutes to A and B
+  begin
+    event Personal
+    assume event providing contact Favor from A to B before
+
+    sentence
+    begin
+      translation fr B:+sbeg " aimerait être introduit à des sphères un petit peu plus importantes qu’habitude."
+      translation en B:+sbeg " would like to be introduced to higher spheres than usual."
+      translation eo B:+sbeg " ŝatus esti enkondukita al pli gravaj homoj ol " B:+pro " jam konas."
+    end
+
+    sentence
+    begin
+      translation fr B:+sbeg:+pro " en a fait la demande à " A " au nom de l’aide qu’" B:+pro " lui a déjà donné."
+      translation en B:+sbeg:+pro " asked about it to " A " in the name of " B:+pos " past help."
+      translation eo B:+sbeg:+pro " petis tion al " A " en la nomo de la helpo kiun " B:+pro " antaŭe al " A:+pro " donis."
+    end
+
+    sentence
+    begin
+      translation fr A:+sbeg:+pro " a promis qu’" A:+pro " allait en parler à des personnes de confiance."
+      translation en A:+sbeg:+pro " promised " B:+cli " that " A:+pro " would spread the word."
+      translation eo A:+sbeg:+pro " promesis " B:+pro:+acc " ke " A:+pro " disbabilos pri tio."
+    end
+  end
+
+  provide relation from A to B as trust
+  provide relation from B to A as undetermined
+end
+
+element FamousCanMakeOneKnown
+begin
+  let A be player with attribute Famousness as Famous
+                  with contact Know to B as True
+  let B be player
+  let C be player
+
+  provide event lasting minutes to A and B
+  begin
+    event Personal
+    assume event providing attribute Famousness to A before
+
+    translation fr "Suite à une discussion, " B " indique à " A " qu’" B:+pro " aimerait rencontrer " C "."
+    translation en "In a discussion, " B " tells " A " that " B:+pro " would like to meet " C "."
+    translation eo "Babilante, " B " diras al " A " ke " B:+pro " ŝatus renkontiĝi " C "."
+  end
+
+  provide phantom event lasting days to A
+
+  provide event lasting minutes to A and C
+  begin
+    event Personal
+    assume no event providing contact Know from C to B before
+
+    provide contact Know from C to B as True
+    provide compatible contact Favor from B to A as Small
+
+    sentence
+    begin
+      translation fr A:+sbeg " indique à " C " qu’" C:+pro " devrait discuter avec " B "."
+      translation en A:+sbeg " tells " C " that " C:+pro " should discuss with " B "."
+      translation eo A:+sbeg " diras al " C " ke " C:+pro " devus babili kun " B "."
+    end
+
+    sentence
+    begin
+      translation fr "C’est en effet une personne intéressante, et " C:+pro " devrait apprécier cet échange."
+      translation en "It’s indeed a very nice person, and " C:+pro " would benefit from such a discussion."
+      translation eo "Estas interesa persono: kaj certe " C:+pro " ŝatos tiun babiladon."
+    end
+  end
+
+  provide relation from B to A as trust
+end
+
+
+attribute Job King
+begin
+  translation fr "monarque"
+  translation en "monarch"
+  translation eo "reĝo"
+
+  add translation fr:nom:sin:fem "une reine"
+  add translation fr:nom:sin:mas "un roi"
+  add translation fr:nom:def:sin:fem "la reine"
+  add translation fr:nom:def:sin:mas "le roi"
+  add translation fr:nom:plu:fem "des reines"
+  add translation fr:nom:plu:mas "des rois"
+  add translation fr:nom:plu "des rois et reines"
+  add translation fr:nom:def:plu:fem "les reines"
+  add translation fr:nom:def:plu:mas "les rois"
+end
+
+element TheOneKing
+begin
+  let K be player
+  let any other player be with attribute Job not as King
+                          with contact Know to K as True
+                          with contact FamilyRelation to K not as Parent
+
+  provide event lasting days to K
+  begin
+    event Personal
+
+    provide strict attribute Job to K as King
+
+    sentence
+    begin
+      translation fr "Le roi est maintenant mort."
+      translation fr "La reine est maintenant morte."
+      translation en "The king is now dead."
+      translation en "The queen is now dead."
+      translation eo "La reĝiĉo estas nun morta."
+      translation eo "La reĝino estas nun morta."
+    end
+
+    sentence
+    begin
+      translation fr K:+sbeg " prend sa place sur le trône."
+      translation en K:+sbeg " is taking the place on the trone."
+      translation eo K:+sbeg " prenas ties sidlokon surtronen."
+    end
+
+    sentence
+    begin
+      translation fr K:+empty:fem "Vive la reine !"
+      translation fr K:+empty "Vive le roi !"
+      translation en K:+empty:fem "Long live to the queen!"
+      translation en K:+empty "Long live to the king!"
+      translation eo "Ni aklamu la novan reĝ" K:+suf "on!"
+    end
+  end
+end
+
+element KingFamous
+begin
+  let K be player with attribute Job as King
+
+  provide attribute Famousness to K as Famous
+end
+
+duplicable element KingIsKnownToBeKing
+begin
+  let K be player with attribute Job as King
+  let P be player
+
+  provide immediate event to P
+  begin
+    assume event providing attribute Job to K before
+
+    translation fr K:+sbeg:fem " est la reine."
+    translation fr K:+sbeg " est le roi."
+    translation en K:+sbeg:fem " is the queen."
+    translation en K:+sbeg " is the king."
+    translation eo K:+sbeg " estas la reĝ" K:+suf "o."
+  end
+end
+

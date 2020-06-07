@@ -1,0 +1,24 @@
+fr:Noms aléatoires à sonorités portuguaises
+eo:Hazardaj portugalŝajnaj nomoj
+en:Random names sounding like Portuguese
+
+default:pt
+
+:alternate
+
+define:fem
+Gender:Female
+:end
+
+define:mas
+Gender:Male
+:end
+
+size:5
+startVowels:O,An;A,E,I,O;U
+startConsonant:C,P,S;B,D,F,J,L,M,N,R,T
+middleVowels:a,e,i,o,u;ei,an;ã,ê
+middleConsonant:b,c,d,j,l,m,n,p,r,s,t,nh,dr;i,v,rb;x
+endVowels:a:fem,o:mas;e
+endConsonant:
+

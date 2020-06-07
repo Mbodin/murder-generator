@@ -1,0 +1,708 @@
+
+declare attribute Job
+begin
+  translation fr "Métier"
+  translation en "Job"
+  translation eo "Profesio"
+end
+
+declare event Work
+begin
+  event Personal
+end
+
+(* * Seller *)
+
+attribute Job Seller
+begin
+  translation fr "commerçant·e"
+  translation en "seller"
+  translation eo "vendisto"
+
+  add translation fr:nom:sin:fem "une commerçante"
+  add translation fr:nom:sin "un commerçant"
+  add translation fr:nom:def:sin:fem "la commerçante"
+  add translation fr:nom:def:sin "le commerçant"
+  add translation fr:nom:plu:fem "des commerçantes"
+  add translation fr:nom:plu:-fem:+mas "des commerçants"
+  add translation fr:nom:plu:fem "des commerçantes"
+  add translation fr:nom:def:plu:fem "les commerçantes"
+  add translation fr:nom:def:plu:-fem:+mas "les commerçants"
+  add translation en:nom:sin "a seller"
+  add translation en:nom:plu "sellers"
+  add translation en:nom:def:sin "the seller"
+  add translation en:nom:def:plu "the sellers"
+  add translation eo:nom:sin "komercisto"
+  add translation eo:nom:acc:sin "komerciston"
+  add translation eo:nom:def:sin "la komercisto"
+  add translation eo:nom:def:acc:sin "la komerciston"
+  add translation eo:nom:plu "komercistoj"
+  add translation eo:nom:acc:plu "komercistojn"
+  add translation eo:nom:def:plu "la komercistoj"
+  add translation eo:nom:def:acc:plu "la komercistojn"
+end
+
+element BecameSellerForHumanContact
+begin
+  let P be player
+
+  provide event lasting days to P
+  begin
+    event Work
+
+    sentence
+    begin
+      translation fr P:+sbeg " a toujours aimé le contact humain."
+      translation en P:+sbeg " always appreciated human contact."
+      translation eo P:+sbeg " ĉiam ŝatis homan kontakton."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro:fem " a donc naturellement décidé de devenir commerçante."
+      translation fr P:+sbeg:+pro " a donc naturellement décidé de devenir commerçant."
+      translation en "Thus, " P:+pro " naturally decided to be seller."
+      translation eo P:+sbeg:+pro " do nature decidis iĝi komercanton."
+    end
+  end
+
+  provide event lasting weeks to P
+  begin
+    event Work
+
+    provide attribute Job to P as Seller
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " a maintenant ouvert une boutique."
+      translation en P:+sbeg:+pro " now opened a shop."
+      translation eo P:+sbeg:+pro " malfermis vendejon."
+    end
+
+    sentence
+    begin
+      translation fr "Espérons que le commerce tourne !"
+      translation en "Let us hope that the market will follow!"
+      translation eo "Ni esperu ke la komerco nun funkciu!"
+    end
+  end
+end
+
+element SellerIsEasilyKnown
+begin
+  let S be player with attribute Job as Seller
+  let P be player with attribute Job not as Seller
+                  with contact FamilyRelation to S as None
+
+  provide event lasting weeks to P
+  begin
+    event Personal
+    event Work
+    assume event providing attribute Job to S before
+
+    provide compatible contact Know between P and S as True
+
+    translation fr P:+sbeg " va souvent faire ses courses à la boutique de " S "."
+    translation en P:+sbeg " frequently shops at " S "’s shop."
+    translation eo P:+sbeg " ofte aĉetumas ĉe la vendejo de " S "."
+  end
+
+  provide event lasting days to S
+  begin
+    event Work
+    assume event providing attribute Job to S before
+
+    provide compatible contact Know between P and S as True
+
+    sentence
+    begin
+      translation fr S:+sbeg " a une bonne mémoire des clients."
+      translation en S:+sbeg " has a good memory about clients."
+      translation eo S:+sbeg " bone memoras siajn klientojn."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg " est par exemple un client fréquent."
+      translation en P:+sbeg " is for example a frequent one."
+      translation eo "Ekzemple " P " estas ofta kliento."
+    end
+  end
+end
+
+
+(* * Thief *)
+
+attribute Job Thief
+begin
+  translation fr "voleur ou voleuse"
+  translation en "thief"
+  translation eo "ŝtelisto"
+
+  add translation fr:nom:sin:fem "une voleuse"
+  add translation fr:nom:sin "un voleur"
+  add translation fr:nom:def:sin:fem "la voleuse"
+  add translation fr:nom:def:sin "le voleur"
+  add translation fr:nom:plu:fem "des voleuses"
+  add translation fr:nom:plu:-fem:+mas "des voleurs"
+  add translation fr:nom:def:plu:fem "les voleuses"
+  add translation fr:nom:def:plu:-fem:+mas "les voleurs"
+  add translation en:nom:sin "a thief"
+  add translation en:nom:plu "thieves"
+  add translation en:nom:def:sin "the thief"
+  add translation en:nom:def:plu "the thieves"
+  add translation eo:nom:sin "ŝtelisto"
+  add translation eo:nom:acc:sin "ŝteliston"
+  add translation eo:nom:def:sin "la ŝtelisto"
+  add translation eo:nom:def:acc:sin "la ŝteliston"
+  add translation eo:nom:plu "ŝtelistoj"
+  add translation eo:nom:acc:plu "ŝtelistojn"
+  add translation eo:nom:def:plu "la ŝtelistoj"
+  add translation eo:nom:def:acc:plu "la ŝtelistojn"
+end
+
+element ThiefBecausePoor
+begin
+  let P be player with attribute Richness as Poor
+
+  provide event lasting weeks to P
+  begin
+    event Work
+    assume event providing attribute Richness to P before
+
+    provide attribute Job to P as Thief
+
+    translation fr "Étant dans le besoin, " P " a décidé de se faire voleur professionel."
+    translation fr "Étant dans le besoin, " P:fem " a décidé de devenir voleuse professionnelle."
+    translation en "Due to the circumstances, " P " chose thief as " P:+pos " profession."
+    translation eo "Pro la bezono, " P " iĝis ŝtelisto."
+  end
+end
+
+element ThiefToHelp
+begin
+  let P be player with attribute Richness as Poor
+  let T be player with contact Know to P as Intimate
+                  with attribute Richness not as Rich
+
+  provide event lasting days to T
+  begin
+    event Personal
+    assume event providing attribute Richness to P before
+    assume event providing contact Know from T to P before
+
+    provide attribute Job to T as Thief
+
+    sentence
+    begin
+      translation fr "Lorsque " T " a appris que " P " était dans une situation précaire, " T:+pro " a été indigné" T:+agr "."
+      translation en "When " T " learnt that " P " was in a deeply unstable financiary situation, " T:+pro " was outraged."
+      translation eo "Kiam " T " lernis ke " P " estas en malstabileta monsituacio, " T:+pro " furioziĝis."
+    end
+
+    sentence
+    begin
+      translation fr T:+sbeg:+pro " a alors pris une décision qui changera sa vie : dorénavant, " T:+pro " volera aux riches pour donner aux pauvres, et en particulier à " P "."
+      translation en T:+sbeg:+pro " then decided once and for all that from now on, " T:+pro " would steal from the rich to give to the poor, and in particular to " P "."
+      translation eo T:+sbeg:+pro " tiam firme decidis ke ekde tiam, " T:+pro " ŝtelos riĉulojn por doni al malriĉuloj, kaj specife al " P "."
+    end
+  end
+
+  remove difficulty to P
+end
+
+element ThiefForRevenge
+begin
+  let R be player
+  let P be player with contact FinancialDebt to R as Large
+  let T be player with contact Know to P as Intimate
+                  with contact Know to R not as Intimate
+
+  provide event lasting days to T
+  begin
+    event Personal
+    assume event providing contact FinancialDebt from P to R before
+    assume event providing contact Know from T to P before
+
+    provide attribute Job to T as Thief
+
+    sentence
+    begin
+      translation fr "Lorsque " T " a appris que " P " devait une importance somme d’argent à " R ", " T:+pro " a été indigné" T:+agr "."
+      translation en "When " T " learnt that " P " owes a fortune to " R ", " T:+pro " was outraged."
+      translation eo "Kiam " T " lernis ke " P " ŝuldas amason da mono al " R ", " T:+pro " furioziĝis."
+    end
+
+    sentence
+    begin
+      translation fr T:+sbeg:+pro " a alors pris une décision qui changera sa vie : dorénavant, " T:+pro " volera les riches, particulièrement " R "."
+      translation en T:+sbeg:+pro " then decided once and for all that from now on, " T:+pro " would steal from the rich, and in particular from " R "."
+      translation eo T:+sbeg:+pro " tiam firme decidis ke ekde tiam, " T:+pro " ŝtelos riĉulojn, kaj pli specife " R:+acc "."
+    end
+
+    sentence
+    begin
+      translation fr "C’est depuis sa profession."
+      translation en "It has been " T:+pos " job since then."
+      translation eo "Ekde tiam, tio iĝis " T:+pos " profesio."
+    end
+  end
+
+  provide relation from T to R as hate
+
+  remove difficulty to P
+end
+
+element PoliticalThief
+begin
+  let T be player
+
+  provide event lasting years to T
+  begin
+    event Work
+    assume event providing attribute Richness to T before
+
+    provide attribute Job to T as Thief
+
+    sentence
+    begin
+      translation fr T:+sbeg " est voleur professionel."
+      translation fr T:+sbeg:fem " est voleuse professionelle."
+      translation en T:+sbeg " is a professional thief."
+      translation eo T:+sbeg " estas profesie ŝtelisto."
+    end
+
+    sentence
+    begin
+      translation fr "On fait appel à " T:+cli " lorsque l’on cherche à obtenir un objet très précieux et bien gardé."
+      translation en T:+sbeg:+pro " is enrolled when one needs a precious object very well guarded."
+      translation eo "Oni petas ties servicojn por akiri bonege protektitajn preciozajn objektojn."
+    end
+
+    sentence
+    begin
+      translation fr "Il arrive aussi qu’on ait besoin de ses services pour affaiblir un concurrent commercial ou politique."
+      translation en "Sometimes, one needs " T:+pos " services to weaken a competitor, be it commercial or political."
+      translation eo "Ankaŭ okazas ke oni bezonu ties servicojn por malfortigi komercan aŭ politikan konkurenton."
+    end
+
+    sentence
+    begin
+      translation fr "Dans tous les cas, " T:+pro " fait payer très cher ses services."
+      translation en "Whatever the need, " T:+pro " charges quite a lot for " T:+pos " services."
+      translation eo "Ĉiuokaze, " T:+pro " pagigas sufiĉe multe por ties servicoj."
+    end
+  end
+
+  provide event lasting days to T
+  begin
+    translation fr "Cela fait quelques temps que " T " n’a pas reçu de commande de clients : il serait temps d’en chercher."
+    translation en "It has been some time since " T " got any order from any client: it is now a good time to look for new ones."
+    translation eo T:+sbeg " ne ricevis peton de servico: estas nun bona momento por serĉi novan klientojn."
+  end
+end
+
+element ThiefChoosesTarget
+begin
+  let T be player with attribute Job as Thief
+  let P be player with attribute Richness as Rich
+
+  provide event lasting seconds to T
+  begin
+    event Work
+    assume event providing attribute Job to T before
+    assume event providing attribute Richness to P before
+
+    translation fr T:+sbeg " sait repérer les cibles intéressantes et " P " en fait clairement partie."
+    translation en T:+sbeg " knows how to choose the right targets, and " P " is clearly a good one."
+    translation eo T:+sbeg " scias elekti la ĝustajn celojn, kaj " P " klare estas unu."
+  end
+
+  add difficulty to P
+end
+
+element ThiefCanHarm
+begin
+  let T be player with attribute Job as Thief
+  let G be player
+  let P be player with contact Goal to G as Harm
+
+  provide event lasting days to P and T
+  begin
+    event Work
+    assume event providing attribute Job to T before
+    assume event providing contact Goal from P to G before
+
+    sentence
+    begin
+      translation fr P:+sbeg " a pris contact avec " T:-def:+nom ", " T ", pour voler " G "."
+      translation en P:+sbeg " hired " T:-def:+nom ", " T ", to steal " G "."
+      translation eo P:+sbeg " kontaktiĝis kun " T ", " T:-def:+nom ", por ŝteli " G:+acc "."
+    end
+
+    sentence
+    begin
+      translation fr "Leur contrat indique que " P " recevra 60 % des bénéfices, mais qu’" P:+pro " devra avancer tous les frais."
+      translation en "Their contract states that " P " would receive 60% of the profit, but " P:+pro " would also have to pay all associated fees upfront."
+      translation eo "Ilia kontrakto indikas ke " P " ricevos 60% de la profitaĵoj, sed ke " P:+pro " devos ankaŭ antaŭpagi la bezonatajn kostojn."
+    end
+  end
+end
+
+element ThievesKnowEachOthers
+begin
+  let A be player with attribute Job as Thief
+  let B be player with attribute Job as Thief
+
+  provide event lasting weeks to A and B
+  begin
+    event Work
+    assume event providing attribute Job to A and B before
+
+    sentence
+    begin
+      translation fr A:+sbeg " et " B " ont participé ensemble à un vol de grande ampleur."
+      translation en A:+sbeg " and " B " participated together in a masterpiece heist."
+      translation eo A:+sbeg " kaj " B " kune partoprenis al grandega ŝtelado."
+    end
+
+    sentence
+    begin
+      translation fr "Cette opération a été un grand succès : tout s’est passé comme prévu."
+      translation en "This heist went perfectly: everything went as planned."
+      translation eo "Tiu ŝtelado perfekte okazis, ekzakte kiel planita."
+    end
+  end
+
+  provide relation between A and B as trust
+end
+
+(* * Spy *)
+
+attribute Job Spy
+begin
+  translation fr "espion(ne)"
+  translation en "spy"
+  translation eo "spionisto"
+
+  add translation fr:nom:sin:fem "une espionne"
+  add translation fr:nom:sin "un espion"
+  add translation fr:nom:def:sin:fem "l’espionne"
+  add translation fr:nom:def:sin "l’espion"
+  add translation fr:nom:plu:fem "des espionnes"
+  add translation fr:nom:plu:-fem:+mas "des espions"
+  add translation fr:nom:def:plu:fem "les espionnes"
+  add translation fr:nom:def:plu:-fem:+mas "les espions"
+  add translation en:nom:sin "a spy"
+  add translation en:nom:plu "spies"
+  add translation en:nom:def:sin "the spy"
+  add translation en:nom:def:plu "the spies"
+  add translation eo:nom:sin "spionisto"
+  add translation eo:nom:acc:sin "spioniston"
+  add translation eo:nom:def:sin "la spionisto"
+  add translation eo:nom:def:acc:sin "la spioniston"
+  add translation eo:nom:plu "spionistoj"
+  add translation eo:nom:acc:plu "spionistojn"
+  add translation eo:nom:def:plu "la spionistoj"
+  add translation eo:nom:def:acc:plu "la spionistojn"
+end
+
+element SpyBecauseSomethingLooksSuspicious
+begin
+  let R be player
+  let P be player with contact FinancialDebt to R as Large or Old
+                  with contact Know to S as True
+  let S be player with contact Know to R not as Intimate
+                  with contact Know to P as True
+
+  provide event lasting minutes to S and P
+  begin
+    event Personal
+    assume event providing contact FinancialDebt from P to R before
+    assume event providing contact Know from P to S before
+    assume event providing contact Know from S to P before
+
+    sentence
+    begin
+      translation fr "Au hasard d’une conversation, " P " indique à " S " qu’" P:+pro " a une dette envers " R "."
+      translation en "In the middle of a causual conversation, " P " told " S " that " P:+pro " owes money to " R "."
+      translation eo "Meze de babilado, " P " diras al " S " ke " P:+pro " havas monŝuldon al " R "."
+    end
+
+    sentence
+    begin
+      translation fr S:+sbeg:+pro " semble étonné" S:+agr ", disant que cela l’étonne énormément."
+      translation en S:+sbeg:+pro " seemed surprised, saying that " S:+pro " would never have expected this."
+      translation eo S:+sbeg:+pro " ŝajnas surprizita, dirante ke tio surprizegigas " S:+pro:+acc "."
+    end
+  end
+
+  provide event lasting days to S
+  begin
+    event Personal
+
+    translation fr S:+sbeg:+pro " a alors pris la décision d’enquêter sur " R " : quelque chose ne tourne pas rond avec cette personne."
+    translation en S:+sbeg:+pro " then decided to spy on " R ": something is not right."
+    translation eo S:+sbeg:+pro " tiam decidis spioni " R:+acc ": io ne taŭgas en tiu situacio."
+  end
+
+  provide event lasting weeks to S
+  begin
+    event Work
+    provide attribute Job to S as Spy
+
+    sentence
+    begin
+      translation fr "L’espionnage est un art qui demande de la pratique : " S " décidait de s’entraîner en espionnant tous types de personnes dans un premier temps."
+      translation en "Spying is an art that requires practice: " S " decided to train " S:+pro "self on all sort of other people in a first stage."
+      translation eo "Spionado estas arto kiu petas praktikon: " S " decidis unue trejni sin en ĉiaj homoj kiujn " S:+pro " povis trovi."
+    end
+
+    sentence
+    begin
+      translation fr "C’est depuis sa profession."
+      translation en "It has been " S:+pos " job since then."
+      translation eo "Ekde tiam, tio iĝis " S:+pos " profesio."
+    end
+
+    sentence
+    begin
+      translation fr "L’objectif de comprendre se qui se cache derrière " R " est cependant toujours une priorité."
+      translation en "The goal of understanding what hides beside " R " is however still a priority."
+      translation eo "La celo kompreni kio sinkaŝas malantaŭ " R " tamen daŭre estas gravega."
+    end
+  end
+
+  add difficulty to R
+end
+
+element SpyIsStrange
+begin
+  let S be player with attribute Job as Spy
+  let P be player with contact Know to S as False
+
+  provide event lasting seconds to P
+  begin
+    event Personal
+
+    sentence
+    begin
+      translation fr P:+sbeg " aperçoit " S " dans la rue."
+      translation en P:+sbeg " notices " S " in the street."
+      translation eo P:+sbeg " vidas " S:+acc " surstrate."
+    end
+
+    sentence
+    begin
+      translation fr "Quelque chose ne tourne pas rond à propos de " S ", même si " P " ne sait pas trop quoi exactement."
+      translation en "Something isn’t right about " S ", event if " P " doesn’t know what exactly."
+      translation eo "Io ne taŭgas pri " S ", eĉ se " P " ne scias ekzakte kion."
+    end
+  end
+
+  add difficulty to S
+end
+
+element SpyIsHidden
+begin
+  let S be player with attribute Job as Spy
+
+  provide event lasting weeks to S
+  begin
+    event Work
+
+    provide attribute Famousness to S as Hiding
+
+    sentence
+    begin
+      translation fr S:+sbeg:fem " considère que le point central du métier d’espionne est la discrétion."
+      translation fr S:+sbeg " considère que le point central du métier d’espion est la discrétion."
+      translation en S:+sbeg " considers that the central trait of a spy is discretion."
+      translation eo S:+sbeg " konsideras ke la ĉefa kvalita de spionisto estas silentemeco."
+    end
+
+    sentence
+    begin
+      translation fr S:+sbeg:+pro " s’est donc longuement entraîné" S:+agr " pour éviter d’attirer l’attention."
+      translation en S:+sbeg:+pro " thus trained a lot to make sure never to attract attention."
+      translation eo S:+sbeg:+pro " do longe trejnis por neniam atentiĝi."
+    end
+  end
+end
+
+(* * Journalist *)
+
+attribute Job Journalist
+begin
+  translation fr "journaliste"
+  translation en "journalist"
+  translation eo "ĵurnalisto"
+
+  add translation fr:nom:sin:fem "une journaliste"
+  add translation fr:nom:sin:mas "un journaliste"
+  add translation fr:nom:def:sin:fem "la journaliste"
+  add translation fr:nom:def:sin "le journaliste"
+  add translation fr:nom:plu "des journalistes"
+  add translation fr:nom:def:plu "les journalistes"
+  add translation en:nom:sin "a journalist"
+  add translation en:nom:plu "journalists"
+  add translation en:nom:def:sin "the journalist"
+  add translation en:nom:def:plu "the journalists"
+  add translation eo:nom:sin "ĵurnalisto"
+  add translation eo:nom:acc:sin "ĵurnaliston"
+  add translation eo:nom:def:sin "la ĵurnalisto"
+  add translation eo:nom:def:acc:sin "la ĵurnaliston"
+  add translation eo:nom:plu "ĵurnalistoj"
+  add translation eo:nom:acc:plu "ĵurnalistojn"
+  add translation eo:nom:def:plu "la ĵurnalistoj"
+  add translation eo:nom:def:acc:plu "la ĵurnalistojn"
+end
+
+element JournalistSinceYoung
+begin
+  let P be player
+
+  provide event lasting years to P
+  begin
+    event Work
+
+    provide attribute Job to P as Journalist
+
+    sentence
+    begin
+      translation fr "Depuis toujours " P " a toujours été attiré" P:+agr " par l’aventure."
+      translation en "Since very young " P " has always been attracted by adventure."
+      translation eo "Ekde junege " P " ĉiam estis allogita pri aventuro."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " est donc naturellement devenu" P:+agr " journaliste."
+      translation en P:+sbeg:+pro " thus naturally became journalist."
+      translation eo P:+sbeg:+pro " do nature iĝis ĵurnalisto."
+    end
+  end
+end
+
+element Paparazzi
+begin
+  let F be player with attribute Famousness as Famous
+  let J be player with attribute Job as Journalist
+                  with contact Know to F not as Intimate
+
+  provide event lasting seconds to J
+  begin
+    event Work
+    assume no event providing attribute Famousness to F after
+
+    provide compatible contact Know from J to F as True
+
+    sentence
+    begin
+      translation fr J:+sbeg " a remarqué que " F " est dans la salle : quelques photos sont de mises."
+      translation en J:+sbeg " noticed that " F " is in the room: it is time to use this camera."
+      translation eo J:+sbeg " rimarkas ke " F " estas enĉambre: tio ĉio fotindas."
+    end
+  end
+end
+
+element HiddenIsStrange
+begin
+  let H be player with attribute Famousness as Hiding
+  let J be player with attribute Job as Journalist
+                  with contact Know to H not as Intimate
+
+  provide event lasting minutes to J
+  begin
+    event Work
+    assume no event providing attribute Famousness to H after
+
+    translation fr "En l’observant, " J " a l’impression que " H " cache quelque chose."
+    translation en "By watching at " H ", " J " has the feeling that some is wrong with " H:+cli "."
+    translation eo "Rigardanta " H:+acc ", " J " havas la senton ke io ne taŭgas pri " H:+pro "."
+  end
+end
+
+element JournalistHeardSecrets
+begin
+  let P be player with attribute SecretSociety not as None
+  let J be player with attribute Job as Journalist
+                  with attribute SecretSociety as None
+
+  provide event lasting minutes to J
+  begin
+    event Work
+    assume event providing attribute SecretSociety to P before
+
+    sentence
+    begin
+      translation fr "Par hasard, " J " a entendu " P " parler d’une certaine société secrète."
+      translation en "By chance, " J " heard " P " talk about a so-called secret socierty."
+      translation eo "Hazarde, " J " aŭdis " P:+acc " paroli pri iu sekreta asocio."
+    end
+
+    sentence
+    begin
+      translation fr "Étrange.  Il est temps d’enquêter."
+      translation fr "Secrète ?  Pas pour longtemps."
+      translation fr "Il est temps de sortir le matériel de micro-trottoir."
+      translation en "This is curious, and needs investigation."
+      translation en "Secret?  Not for long."
+      translation en "Let’s go vox pop!"
+      translation eo "Strange.  Jen enketo!"
+      translation eo "Sekreta?  Ne plu por longe."
+      translation eo "Jen farinda intervjuo."
+    end
+  end
+
+  add difficulty to P
+end
+
+(* * Worker *)
+
+attribute Job Worker
+begin
+  translation fr "ouvrier"
+  translation en "worker"
+  translation eo "laboristo"
+
+  add translation fr:nom:sin:fem "une ouvrière"
+  add translation fr:nom:sin "un ouvrier"
+  add translation fr:nom:def:sin:fem "l’ouvrière"
+  add translation fr:nom:def:sin "l’ouvrier"
+  add translation fr:nom:plu "des ouvriers"
+  add translation fr:nom:def:plu "les ouvriers"
+  add translation en:nom:sin "a worker"
+  add translation en:nom:plu "workers"
+  add translation en:nom:def:sin "the worker"
+  add translation en:nom:def:plu "the workers"
+  add translation eo:nom:sin "laboristo"
+  add translation eo:nom:acc:sin "laboriston"
+  add translation eo:nom:def:sin "la laboristo"
+  add translation eo:nom:def:acc:sin "la laboriston"
+  add translation eo:nom:plu "laboristoj"
+  add translation eo:nom:acc:plu "laboristojn"
+  add translation eo:nom:def:plu "la laboristoj"
+  add translation eo:nom:def:acc:plu "la laboristojn"
+end
+
+duplicable element Colleagues
+begin
+  let A be player with attribute Job as Worker
+  let B be player with attribute Job as Worker
+
+  provide event lasting weeks to A and B
+  begin
+    event Work
+    assume event providing attribute Job to A and B before
+
+    provide contact Know between A and B as True
+
+    translation fr A:+sbeg " et " B " sont collègues."
+    translation en A:+sbeg " and " B " are colleagues."
+    translation eo A:+sbeg " kaj " B " estas kunlaborantoj."
+  end
+end
+
+(* TODO: More elements for workers (as well as contacts such as “who is working for whom”). *)
+

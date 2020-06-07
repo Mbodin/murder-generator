@@ -1,0 +1,791 @@
+/* Generic definitions */
+
+* {
+  box-sizing: border-box ;
+}
+
+html {
+  margin: 0 ;
+  padding: 0 ;
+}
+
+body {
+  min-width: 100px ;
+  color: #2e3436 ;
+  background-color: #eeeeec ;
+  margin: 0 ;
+  padding: 0 ;
+}
+
+body.printable {
+  color: black ;
+  background-color: white ;
+}
+
+@media print {
+  body {
+    color: black ;
+    background-color: white ;
+  }
+}
+
+/* Specific classes. */
+
+#loadingSVG {
+  position: absolute ;
+  top: 50% ;
+  left: 50% ;
+  transform: translate(-50%, -50%) ;
+}
+
+#loadingSVGScale {
+  transition: .3s ;
+}
+
+.loadingStart {
+  transform: scale(1, 1) ;
+  cursor: progress ;
+}
+
+.loadingStop {
+  transform: scale(0, 0) ;
+}
+
+#response {
+  max-width: 1000px ;
+  margin: 0 auto ;
+}
+
+@media print {
+  body #response {
+    max-width: none ;
+  }
+}
+
+body.printable #response {
+  max-width: none ;
+}
+
+/* Main classes */
+
+.block {
+  border: 4px solid #5c3566 ;
+  border-radius: 10px ;
+  padding: 5px 15px ;
+  margin: 5px ;
+}
+
+.error {
+  border: 4px solid #a40000 ;
+  border-radius: 10px ;
+  padding: 5px 15px ;
+  margin: 5px ;
+}
+
+.center {
+  text-align: center ;
+  margin: auto ;
+  overflow-x: auto ;
+  width: 100% ;
+  white-space: nowrap ;
+}
+
+@media print {
+  body .center {
+    overflow-x: visible ;
+    white-space: normal ;
+  }
+}
+
+body.printable .center {
+  overflow-x: visible ;
+  white-space: normal ;
+}
+
+.inlined {
+  display: inline ;
+}
+
+.space {
+  margin-left: 1em ;
+  margin-right: 1em ;
+}
+
+/* Links */
+
+a {
+  color: #75507b ;
+  text-decoration: none ;
+}
+
+body.printable a {
+  color: #5c3566 ;
+}
+
+a::after {
+  content: " →" ;
+  font-weight: bold ;
+  opacity: 0 ;
+  padding-left: 0px ;
+  padding-right: 4px ;
+  white-space: nowrap ;
+}
+
+a:hover {
+  color: #5c3566 ;
+  text-shadow: 0px 0px .1px #75507b ;
+  transition: .3s ;
+  transition-timing-function: linear;
+}
+
+a:hover::after {
+  opacity: 1 ;
+  padding-left: 4px ;
+  padding-right: 0px ;
+  transition: .3s ;
+  transition-timing-function: linear;
+}
+
+a.previous::after {
+  content: none ;
+}
+
+a.previous::before {
+  content: "← " ;
+  font-weight: bold ;
+  opacity: 0 ;
+  padding-left: 4px ;
+  padding-right: 0px ;
+  white-space: nowrap ;
+}
+
+a:hover::before {
+  opacity: 1 ;
+  padding-left: 0px ;
+  padding-right: 4px ;
+  transition: .3s ;
+  transition-timing-function: linear;
+}
+
+a.mainButton, a.secondaryButton {
+  display: inline-block ;
+  border-radius: 1ex ;
+  padding: 0.5ex 1ex ;
+  transition-duration: 0.3s ;
+  font-weight: bold ;
+}
+
+a.mainButton {
+  background-color: #75507b ;
+  color: #eeeeec ;
+}
+
+a.mainButton:hover {
+  background-color: #ad7fa8 ;
+}
+
+a.secondaryButton {
+  background-color: #d3d7cf ;
+  color: #2e3436 ;
+}
+
+a.secondaryButton:hover {
+  background-color: #babdb6 ;
+}
+
+
+/* Foldable sections */
+
+.foldable > h3 {
+  color: #75507b ;
+  text-decoration: none ;
+  font-size: large ;
+  cursor: pointer ;
+}
+
+body.printable .foldable > h3 {
+  color: #5c3566 ;
+}
+
+.foldable > h3:hover {
+  color: #5c3566 ;
+}
+
+.foldable > h3.unfolded::before {
+  content: "-" ;
+}
+
+.foldable > h3.folded::before {
+  content: "+" ;
+}
+
+.foldable > h3::before {
+  color: #75507b ;
+  display: inline-block ;
+  width: 1em ;
+}
+
+body.printable .foldable > h3::before {
+  color: #5c3566 ;
+}
+
+.foldable > h3.unfolded + div {
+  display: block ;
+}
+
+.foldable > h3.folded + div {
+  display: none ;
+}
+
+/* Lists */
+
+ul {
+  list-style-type: none ;
+  padding-left: 1em ;
+}
+
+ul.bullet > li::before {
+  content: "•" ;
+  color: #75507b ;
+  display: inline-block ;
+  width: 1em ;
+}
+
+body.printable ul.bullet > li::before {
+  color: #5c3566 ;
+}
+
+select {
+  margin-left: 1em ;
+  margin-right: 1em ;
+}
+
+/* Table */
+
+table.table {
+  width: 99% ;
+  border-collapse: collapse ;
+  border-color: #75507b ;
+  margin-top: 1.5ex ;
+  margin-left: .3em ;
+  margin-right: .3em ;
+  white-space: normal ;
+}
+
+@media print {
+  body .table tr {
+    background-color: white ;
+  }
+}
+
+body.printable .table tr {
+  background-color: white ;
+}
+
+@media not print {
+  body:not(.printable) .table tr:nth-child(even) {
+    background-color: #eeeeec ;
+  }
+
+  body:not(.printable) .table tr:nth-child(odd) {
+    background-color: #d3d7cf ;
+  }
+}
+
+.table tr:hover {
+  background-color: #babdb6 ;
+}
+
+body.printable .table tr:hover {
+  background-color: #d3d7cf ;
+}
+
+.table th {
+  background-color: #5c3566 ;
+  color: #eeeeec ;
+  text-align: center ;
+  font-weight: bold ;
+  position: sticky ;
+  top: 0 ;
+  z-index: 3 ;
+}
+
+.table td, .table th {
+  border: 2px solid #75507b ;
+  padding: 5px ;
+}
+
+.table td.cellNA {
+  background-color: #babdb6 ;
+}
+
+.table td.table-hheader {
+  background-color: #5c3566 ;
+  color: #eeeeec ;
+  text-align: center ;
+  font-weight: bold ;
+}
+
+/* Timeline */
+
+table.timeline {
+  border-color: transparent ;
+  margin-top: 60px ;
+  border-collapse: separate ;
+  border-spacing: 0 ;
+  position: relative ;
+  left: 50% ;
+  right: 50% ;
+}
+
+@media screen and (max-width: 1000px) {
+  body:not(.printable) table.timeline {
+    width: 96vw ;
+    margin-left: -50vw ;
+    margin-right: -50vw ;
+  }
+}
+
+@media screen and (min-width: 1000px) {
+  body:not(.printable) table.timeline {
+    width: 99% ;
+    margin-left: -500px ;
+    margin-right: -500px ;
+  }
+}
+
+@media print {
+  body table.timeline {
+    width: 99% ;
+    margin-left: 0 ;
+    margin-right: 0 ;
+    left: 0 ;
+    right: 0 ;
+  }
+}
+
+body.printable table.timeline {
+  width: 99% ;
+  margin-left: 0 ;
+  margin-right: 0 ;
+  left: 0 ;
+  right: 0 ;
+}
+
+.timeline thead {
+  background-color: #eeeeec ;
+  color: #5c3566 ;
+  font-weight: bold ;
+  position: sticky ;
+  top: 0 ;
+  height: 60px ;
+  z-index: 2 ;
+  white-space: nowrap ;
+}
+
+body.printable .timeline thead {
+  background-color: white ;
+  position: static ;
+}
+
+.timeline thead tr {
+  height: 60px ;
+  background-color: #eeeeec ;
+}
+
+@media print {
+  body .timeline thead tr {
+    background-color: white ;
+  }
+}
+
+body.printable .timeline thead tr {
+  background-color: white ;
+}
+
+.timeline th {
+  position: sticky ;
+  top: 0 ;
+  min-height: 60px ;
+  z-index: 3 ;
+}
+
+@media print {
+  body .timeline th {
+    position: static ;
+  }
+}
+
+body.printable .timeline th {
+  position: static ;
+}
+
+.timeline th > div {
+  transform: translate(14.5px, 15px) rotate(-45deg) ;
+  width: 1.5em ;
+}
+
+.timeline th > div > span {
+  border-bottom: 2px solid #75507b ;
+  padding: 0 ;
+}
+
+.timeline th.description > div {
+  transform: none ;
+  width: auto ;
+}
+
+.timeline th.description > div > span {
+  border-bottom: none ;
+  padding: 5px 1em ;
+}
+
+.timeline th.description {
+  position: static ;
+  padding-left: 3em ;
+  padding-bottom: 1ex ;
+  text-align: center ;
+}
+
+.timeline td.time > div {
+  transform: rotate(180deg) ;
+}
+
+.timeline tr, .timeline td {
+  background-color: transparent ;
+  border-color: transparent ;
+  border-width: 2px ;
+  border-spacing: 0px ;
+}
+
+.timeline td.time {
+  border-style: none none solid solid ;
+  border-width: 2px ;
+  border-color: #75507b ;
+  border-width: 2px ;
+  text-align: center ;
+  vertical-align: top ;
+}
+
+@media not print {
+  body:not(.printable) .timeline tr:nth-child(even) td.time {
+    background-color: #eeeeec ;
+  }
+
+  body:not(.printable) .timeline tr:nth-child(odd) td.time {
+    background-color: #d3d7cf ;
+  }
+}
+
+@media print {
+  body .timeline tr td.time {
+    background-color: white ;
+  }
+}
+
+body.printable .timeline tr td.time {
+  background-color: white ;
+}
+
+.timeline td.time > div {
+  position: sticky ;
+  top: 62px ;
+  z-index: 1 ;
+  writing-mode: vertical-rl ;
+}
+
+@media print {
+  body .timeline td.time > div {
+    position: static ;
+  }
+}
+
+body.printable .timeline td.time > div {
+  position: static ;
+}
+
+.timeline td.active {
+  border-radius: 0px ;
+  border-style: none solid ;
+}
+
+.timeline td.active.event_start {
+  border-radius: 10px 10px 0px 0px ;
+  border-style: solid solid none ;
+  border-top-width: 6px ;
+}
+
+.timeline td.active.event_end {
+  border-radius: 0px 0px 10px 10px ;
+  border-style: none solid solid ;
+  border-bottom-width: 6px ;
+}
+
+.timeline tr:hover td.active.event_start {
+  border-top-width: 2px ;
+}
+
+.timeline tr:hover td.line.active.event_start ~ td.line {
+  border-style: solid none ;
+  border-radius: 0px ;
+}
+
+.timeline tr:hover td.line.active.event_start {
+  border-style: solid none none solid ;
+  border-radius: 10px 0px 0px 0px ;
+}
+
+.timeline tr:hover td.line.active.event_start ~ td.line.active.event_start {
+  border-style: solid none none ;
+  border-radius: 0px ;
+}
+
+.timeline td.description {
+  border-style: solid ;
+  border-radius: 10px ;
+}
+
+.timeline td.description > div {
+  overflow-x: auto ;
+  max-height: 4em ;
+}
+
+@media print {
+  body .timeline td.description > div {
+    overflow-x: visible ;
+    max-height: none ;
+  }
+}
+
+body.printable .timeline td.description > div {
+  overflow-x: visible ;
+  max-height: none ;
+}
+
+.timeline tr:hover td.description {
+  border-style: solid solid solid none ;
+  border-radius: 0px 10px 10px 0px ;
+  padding-left: 3px ;
+}
+
+@media print {
+  body .timeline td.active,
+  body .timeline td.description,
+  body .timeline tr:hover td.active.event_start ~ td.line {
+    background-color: white ;
+  }
+}
+
+body.printable .timeline td.active,
+body.printable .timeline td.description,
+body.printable .timeline tr:hover td.active.event_start ~ td.line {
+  background-color: white ;
+}
+
+.timeline td.active.decades,
+.timeline td.description.decades,
+.timeline tr:hover td.active.event_start.decades ~ td.line {
+  background-color: #fce94f ;
+  border-color: #edd400 ;
+}
+
+.timeline td.active.years,
+.timeline td.description.years,
+.timeline tr:hover td.active.event_start.years ~ td.line {
+  background-color: #fcaf3e ;
+  border-color: #f57900 ;
+}
+
+.timeline td.active.weeks,
+.timeline td.description.weeks,
+.timeline tr:hover td.active.event_start.weeks ~ td.line {
+  background-color: #e9b96e ;
+  border-color: #c17d11 ;
+}
+
+.timeline td.active.days,
+.timeline td.description.days,
+.timeline tr:hover td.active.event_start.days ~ td.line {
+  background-color: #8ae234 ;
+  border-color: #73d216 ;
+}
+
+.timeline td.active.minutes,
+.timeline td.description.minutes,
+.timeline tr:hover td.active.event_start.minutes ~ td.line {
+  background-color: #729fcf ;
+  border-color: #3465a4 ;
+}
+
+.timeline td.active.seconds,
+.timeline td.description.seconds,
+.timeline tr:hover td.active.event_start.seconds ~ td.line {
+  background-color: #ad7fa8 ;
+  border-color: #75507b ;
+}
+
+/* Generic inputs */
+
+input {
+  margin: 1px 1em ;
+}
+
+input[type="number"] {
+  width: 4em ;
+}
+
+/* Boolean input */
+
+.switch {
+  position: relative ;
+  display: inline-block ;
+  cursor: pointer ;
+  margin-right: 1em ;
+  min-height: 25px ;
+  min-width: 42px ;
+}
+
+.switch > input {
+  opacity: 0 ;
+  width: 0 ;
+  height: 0 ;
+  margin-bottom: 7px ;
+}
+
+.switch_text {
+  font-weight: 700 ;
+}
+
+.slider {
+  position: absolute ;
+  border-radius: 29px ;
+  top: 0 ;
+  left: 0 ;
+  right: 0 ;
+  bottom: 0 ;
+  background-color: #babdb6 ;
+  transition: .4s ;
+  width: 40px ;
+  height: 24px ;
+}
+
+.slider::before {
+  position: absolute ;
+  content: "" ;
+  height: 16px ;
+  width: 16px ;
+  border-radius: 50% ;
+  left: 4px ;
+  bottom: 4px ;
+  background-color: #eeeeec ;
+  transition: .4s ;
+}
+
+.slider + span {
+  margin-left: 1em ;
+}
+
+input[type="checkbox"]:checked + .slider {
+  background-color: #5c3566 ;
+}
+
+input[type="checkbox"]:focus + .slider {
+  box-shadow: 0 0 1px #5c3566 ;
+}
+
+input[type="checkbox"]:checked + .slider::before {
+  transform: translateX(16px) ;
+}
+
+input[type="checkbox"] ~ .textswitchon {
+  display: none ;
+}
+
+input[type="checkbox"]:checked ~ .textswitchon {
+  display: inline-block ;
+}
+
+input[type="checkbox"] ~ .textswitchoff {
+  display: inline-block ;
+}
+
+input[type="checkbox"]:checked ~ .textswitchoff {
+  display: none ;
+}
+
+/* List input */
+
+.autocomplete {
+  position: relative ;
+  display: inline-block ;
+}
+
+.autocomplete > ul {
+  list-style-type: none ;
+  display: block ;
+  white-space: normal ;
+}
+
+.autocomplete > ul > li {
+  display: inline-block ;
+  background-color: #ad7fa8 ;
+  border: 2px solid #75507b ;
+  border-radius: 1ex ;
+  margin-right: 1ex ;
+  padding-left: 3px ;
+}
+
+button.autocomplete-close {
+  background-color: #eeeeec ;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' width='7' height='7'><line x1='0' y1='0' x2='7' y2='7' style='stroke:%235c3566;stroke-width:2' /><line x1='0' y1='7' x2='7' y2='0' style='stroke:%235c3566;stroke-width:2' /></svg>") ;
+  background-repeat: no-repeat ;
+  background-position: center ;
+  border-radius: 50% ;
+  border: 2px solid #5c3566 ;
+  vertical-align: text-bottom ;
+  margin: 3px ;
+  width: 15px ;
+  height: 15px ;
+  padding: 5px ;
+  cursor: pointer ;
+}
+
+.autocomplete-disabled button.autocomplete-close {
+  display: none ;
+}
+
+.autocomplete > input[type="text"] {
+  width: 100% ;
+  border: 1px solid #75507b ;
+  padding: 3px 1ex ;
+  margin: 0 ;
+}
+
+.autocomplete-items {
+  width: 100% ;
+  position: absolute ;
+  border: none ;
+  z-index: 2 ;
+  top: 100% ;
+  left: 0 ;
+  right: 0 ;
+}
+
+.autocomplete-items > div {
+  width: 100% ;
+  border: 1px solid #75507b ;
+  border-top: none ;
+  background-color: #eeeeec ;
+  cursor: pointer ;
+  overflow-x: auto ;
+}
+
+.autocomplete-items > div:hover {
+  background-color: #ad7fa8 ;
+}
+
+.autocomplete-items > div.autocomplete-active {
+  color: #eeeeec ;
+  background-color: #75507b ;
+}
+

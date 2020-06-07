@@ -1,0 +1,15 @@
+
+declare event CloseDeath
+begin
+  (* Someone closed to the player died. *)
+  category NonKids
+  event Personal
+end
+
+declare event ParentDeath
+begin
+  event CloseDeath
+end
+
+declare event History (* Historical events (that usually preceed everyone’s life) *)
+

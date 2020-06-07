@@ -1,0 +1,558 @@
+
+category Money
+begin
+  translation fr "Finance"
+  translation en "Money"
+  translation eo "Monaĵoj"
+
+  description fr "Histoires d’argent."
+  description en "Stories dealing with money."
+  description eo "Rakontaĵoj kiuj inkludas monon."
+end
+
+declare event MoneyExchange
+begin
+  event Personal
+  category Money
+end
+
+declare attribute Richness
+begin
+  category Money
+
+  translation fr "Richesse"
+  translation en "Wealth"
+  translation eo "Riĉeco"
+end
+
+attribute Richness Rich
+begin
+  translation fr "riche"
+  translation en "wealthy"
+  translation eo "riĉa"
+
+  add translation fr:adj "riche"
+  add translation en:adj "wealthy"
+  add translation eo:adj "riĉa"
+end
+
+internal attribute Richness Neutral
+begin
+  translation fr "neutre"
+  translation en "neutral"
+  translation eo "neŭtrala"
+end
+
+attribute Richness Poor
+begin
+  translation fr "pauvre"
+  translation en "poor"
+  translation eo "malriĉa"
+
+  add translation fr:adj "pauvre"
+  add translation en:adj "poor"
+  add translation eo:adj "malriĉa"
+end
+
+element NormalRichness
+begin
+  let P be player
+
+  provide compatible attribute Richness to P as Neutral
+end
+
+unique element OnlyRich
+begin
+  let any other player be with attribute Richness as Rich
+end
+
+unique element OnlyNormalRichness
+begin
+  provide compatible attribute Richness to any other player as Neutral
+end
+
+element Heritage
+begin
+  let P be player with attribute Born as True
+                  with attribute Specy not as God or Robot
+  let any other player be with contact FamilyRelation to P not as Parent or Sibling
+
+  provide event lasting days to P
+  begin
+    event ParentDeath
+    assume no event ParentDeath to P before
+    assume no event ParentDeath to P after
+
+    provide compatible attribute Richness to P as Rich
+
+    sentence
+    begin
+      translation fr "Mort des parents de " P "."
+      translation en "Death of " P "’s parents."
+      translation eo "Morto de la gepatroj de " P "."
+    end
+
+    sentence
+    begin
+      translation fr "Ils " P:+cli " laissent une importante fortune."
+      translation en "They leave " P:+cli " with an important wealth."
+      translation eo "Ili forlasas " P:+pro:+acc " kun granda heredaĵo."
+    end
+  end
+end
+
+element SharedHeritage
+begin
+  let A be player with contact FamilyRelation to B as Sibling
+                  with attribute Born as True
+                  with attribute Specy not as God or Robot
+  let B be player with contact FamilyRelation to A as Sibling
+                  with attribute Born as True
+                  with attribute Specy not as God or Robot
+  let any other player be with contact FamilyRelation to A not as Parent or Sibling
+                          with contact FamilyRelation to B not as Parent or Sibling
+
+  provide event lasting days to A and B
+  begin
+    event ParentDeath
+    assume no event ParentDeath to A or B before
+    assume no event ParentDeath to A or B after
+
+    provide compatible attribute Richness to A as Rich
+    provide compatible attribute Richness to B as Rich
+
+    sentence
+    begin
+      translation fr "Mort des parents de " A " et " B "."
+      translation en "Death of " A " and " B "’s parents."
+      translation eo "Morto de la gepatroj de " A " kaj " B "."
+    end
+
+    sentence
+    begin
+      translation fr "Ils leur laissent une importante fortune."
+      translation en "They leave them with an important wealth."
+      translation eo "Ili forlasas ilin kun granda heredaĵo."
+    end
+  end
+end
+
+element DwarfFocusedTheirLifeAtAccumulatingGold
+begin
+  let P be player with attribute Specy as Dwarf
+
+  provide event lasting years to P
+  begin
+    event Work
+
+    provide compatible attribute Richness to P as Rich
+
+    translation fr P:+sbeg " a petit à petit accumulé de grandes richesses."
+    translation en P:+sbeg " accumulated a large wealth step after step."
+    translation eo P:+sbeg " iom post iom amasiĝis grandan kvanton da mono."
+  end
+end
+
+
+declare contact FinancialDebt
+begin
+  category Money
+
+  translation fr "Dette"
+  translation en "Debt"
+  translation eo "Ŝuldo"
+end
+
+internal contact FinancialDebt None
+begin
+  translation fr "aucune"
+  translation en "none"
+  translation eo "nenia"
+end
+
+contact FinancialDebt Small
+begin
+  translation fr "faible"
+  translation en "small"
+  translation eo "malalta"
+
+  add translation fr:adj "faible"
+  add translation en:adj "small"
+  add translation eo:adj "malalta"
+end
+
+contact FinancialDebt Large
+begin
+  translation fr "importante"
+  translation en "large"
+  translation eo "alta"
+
+  add translation fr:adj:fem "importante"
+  add translation fr:adj:mas "important"
+  add translation en:adj "large"
+  add translation eo:adj "alta"
+end
+
+contact FinancialDebt Old
+begin
+  (* Large but from the old times: it would be awkward to require it now. *)
+  translation fr "ancienne"
+  translation en "old"
+  translation eo "malnova"
+
+  add translation fr:adj:fem "vielle"
+  add translation fr:adj:mas "vieux"
+  add translation en:adj "old"
+  add translation eo:adj "malnova"
+end
+
+element CausalDebt
+begin
+  let A be player with attribute Richness as Neutral
+                  with contact Know to B as True
+  let B be player with attribute Richness as Neutral
+                  with contact Know to A as True
+
+  provide event lasting minutes to A and B
+  begin
+    event MoneyExchange
+
+    provide compatible contact FinancialDebt from A to B as Small
+
+    sentence
+    begin
+      translation fr A:+sbeg " a demandé de l’argent à " B "."
+      translation en A:+sbeg " asked money to " B "."
+      translation eo A:+sbeg " petis monon al " B "."
+    end
+
+    sentence
+    begin
+      translation fr B:+sbeg:+pro " " A:+cli " en a donné."
+      translation en B:+sbeg:+pro " gave some to " A:+cli "."
+      translation eo B:+sbeg:+pro " al " A:+pro " donis."
+    end
+  end
+
+  provide relation from A to B as trust
+end
+
+element SmallDebtNeutralPoor
+begin
+  let A be player with attribute Richness as Poor
+                  with contact Know to B as True
+  let B be player with attribute Richness as Neutral
+                  with contact Know to A as True
+
+  provide event lasting minutes to A and B
+  begin
+    event MoneyExchange
+
+    provide compatible contact FinancialDebt from A to B as Small
+
+    sentence
+    begin
+      translation fr A:+sbeg " a demandé de l’argent à " B "."
+      translation en A:+sbeg " asked money to " B "."
+      translation eo A:+sbeg " petis monon al " B "."
+    end
+
+    sentence
+    begin
+      translation fr "Vu le besoin, " B:+pro " " A:+cli " en a donné."
+      translation en "Given the circumstances, " B:+pro " gave some to " A:+cli "."
+      translation eo "Komprenante la bezonon, " B:+pro " al " A:+pro " donis."
+    end
+  end
+
+  provide relation from A to B as avoidance
+  provide relation from B to A as undetermined
+end
+
+element RichPaysItsDebt
+begin
+  let A be player with attribute Richness as Rich
+                  with contact Know to B as True
+  let B be player
+
+  provide event lasting minutes to A and B
+  begin
+    event MoneyExchange
+
+    provide contact FinancialDebt from A to B as Large
+
+    sentence
+    begin
+      translation fr A:+sbeg " étant temporairement en manque de liquidités, " A:+pro " en a demandé à " B "."
+      translation en A:+sbeg " experiencing temporarily cash shortage, " A:+pro " asked money to " B "."
+      translation eo "Pro " A " portempe mankis monerojn, " A:+pro " petis monon al " B "."
+    end
+
+    sentence
+    begin
+      translation fr "Vu les richesses de " A ", " A:+pro " n’aura aucun mal à rembourser " B " dans l’avenir."
+      translation en "Given " A "’s wealth, " A:+pro " would have no trouble giving the money back to " B " in the future."
+      translation eo "Laŭ la riĉeco de " A ", " A:+pro " neniel havos problemon redoni la monon al " B " en la estonteco."
+    end
+
+    sentence
+    begin
+      translation fr B:+sbeg:+pro " " A:+cli " en a donc donné."
+      translation en B:+sbeg:+pro " thus gave some to " A:+cli "."
+      translation eo "Tial " B:+pro " al " A:+pro " donis."
+    end
+  end
+
+  provide event lasting minutes to B
+  begin
+    translation fr A:+sbeg " n’a toujours pas rendu son emprunt : il serait temps de le lui rappeller."
+    translation en A:+sbeg " never gave the money back: a recall is now needed."
+    translation eo A:+sbeg " neniam redonis la monon: rememorigo necesiĝas."
+  end
+
+  provide relation between A and B as undetermined
+  provide compatible contact Know from B to A as True
+end
+
+element TookMoneyToBuildAShopAndIsNowRich
+begin
+  let A be player with attribute Richness as Neutral
+                  with contact Know to B as True
+  let B be player with attribute Specy not as God
+                  with contact Know to A as True
+                  with attribute Job as Seller
+
+  provide event lasting minutes to A and B
+  begin
+    event MoneyExchange
+    assume no event Work to B before
+    assume event providing attribute Job to B after
+
+    provide contact FinancialDebt from B to A as Old
+
+    sentence
+    begin
+      translation fr A:+sbeg " a demandé de l’argent à " B " pour monter son entreprise."
+      translation en A:+sbeg " asked money to " B " to set up a shop."
+      translation eo A:+sbeg " petis monon al " B " por komenci ties komercon."
+    end
+
+    sentence
+    begin
+      translation fr B:+sbeg:+pro " " A:+cli " en a donné."
+      translation en B:+sbeg:+pro " gave some to " A:+cli "."
+      translation eo B:+sbeg:+pro " al " A:+pro " donis."
+    end
+  end
+
+  provide phantom event lasting years to B
+  begin
+    assume no event providing attribute Job to B after
+  end
+
+  provide event lasting years to B
+  begin
+    event Personal
+    assume event providing attribute Job to B before
+    assume no event providing attribute Richness to B before
+
+    provide attribute Richness to B as Rich
+
+    translation fr "Le succès du commerce de " B " l’a rendu riche."
+    translation en B:+sbeg "’s shop was quite successful and made " B:+cli " wealthy."
+    translation eo "La komerco de " B " sukcesis kaj riĉigis " B:+pro:+acc "."
+  end
+
+  provide relation from B to A as trust
+  provide relation from A to B as undetermined
+end
+
+element TookMoneyToBuildAShopButGotBankrupt
+begin
+  let A be player with attribute Richness as Neutral
+                  with contact Know to B as True
+  let B be player with attribute Specy not as God
+                  with contact Know to A as True
+                  with attribute Job as Seller
+
+  provide event lasting minutes to A and B
+  begin
+    event MoneyExchange
+    assume no event providing attribute Job to B before
+
+    provide contact FinancialDebt from B to A as Large
+
+    sentence
+    begin
+      translation fr B:+sbeg " a demandé de l’argent à " A " pour monter son entreprise."
+      translation en B:+sbeg " asked money to " A " to set up a shop."
+      translation eo B:+sbeg " petis monon al " A " por komenci ties komercon."
+    end
+
+    sentence
+    begin
+      translation fr A:+sbeg:+pro " " B:+cli " en a donné."
+      translation en A:+sbeg:+pro " gave some to " B:+cli "."
+      translation eo A:+sbeg:+pro " al " B:+pro " donis."
+    end
+  end
+
+  provide event lasting weeks to B
+  begin
+    event Personal
+    assume no event Work to B after
+    assume no event providing attribute Job to B after
+
+    provide attribute Richness to B as Poor
+
+    translation fr "Le commerce de " B " n’a pas tenu très longtemps et est maintenant en faillite, entrainant avec lui toutes ses économies."
+    translation en B:+sbeg "’s shop went brankrupt, disappearing with all trace of wealth."
+    translation eo "La komerco de " B " fiaskis, puŝante " B:+pro:+acc " malriĉecen."
+  end
+
+  provide relation from B to A as avoidance
+  provide relation from A to B as hate
+end
+
+element ImportantSeller
+begin
+  let P be player with attribute Specy not as God
+                  with attribute Job as Seller
+
+  provide event lasting decades to P
+  begin
+    event Work
+    assume event providing attribute Job to P before
+
+    provide compatible attribute Richness to P as Rich
+
+    translation fr P:+sbeg " a longuement travaillé pour devenir un" P:+agr " marchand" P:+agr " réputé" P:+agr " et fortuné" P:+agr "."
+    translation en P:+sbeg " worked quite a long time to reach this level of wealth and reputation."
+    translation eo P:+sbeg " longe laboris por atingi tiun nivelon de riĉeco kaj bonreputacio."
+  end
+end
+
+element DecidedToDisappearAfterLotsOfDebts
+begin
+  let A be player with contact FinancialDebt to B as Large
+                  with attribute Richness not as Rich
+  let B be player
+
+  provide event lasting days to A
+  begin
+    event Work
+    assume event providing contact FinancialDebt from A to B before
+    assume no event providing contact FinancialDebt from A to B after
+
+    provide compatible attribute Famousness to A as Hiding
+
+    sentence
+    begin
+      translation fr "Vu l’importance des ses dettes, " A " decidait de disparaître définitivement."
+      translation en "Given the importance of " A:+pos " debts, " A " decided to definitively disappear from the sight of others."
+      translation eo "Pro ties grandegaj ŝuldoj, " A " decidis por ĉiam malaperi."
+    end
+
+    sentence
+    begin
+      translation fr "Cela ne va pas être une tâche facile."
+      translation en "This won’t be easy."
+      translation eo "Tio ne facilos."
+    end
+
+    sentence
+    begin
+      translation fr "Il faut pour cela être méthodique : se choisir un nouveau nom, se faire des faux papiers, et trouver un lieu loin de toutes ses connaissances."
+      translation en A:+sbeg:+pro " needs method: choosing another name, creating a fake ID, and finding a place aways from another that might recognise " A:+cli "."
+      translation eo "Bezonas metodon: elekti novan nomon, krei malveran identigilon, kaj trovi lokon kie neniu rekonos " A:+pro:+acc "."
+    end
+  end
+
+  add difficulty to A
+end
+
+element HidingSellerDecidesToMove
+begin
+  let P be player with attribute Job as Seller
+                  with attribute Famousness as Hiding
+
+  provide event lasting weeks to P
+  begin
+    event Work
+    assume event providing attribute Job to P before
+    assume event providing attribute Famousness to P before
+
+    sentence
+    begin
+      translation fr "Afin de brouiller les pistes, " P " décide de déménager."
+      translation en "In order to confuse the issue, " P " decided to move."
+      translation eo "Por konfuzigi indikojn, " P " decidis translokiĝi."
+    end
+
+    sentence
+    begin
+      translation fr P:+sbeg:+pro " vend donc son commerce pour en acheter un autre dans une autre ville."
+      translation en P:+sbeg:+pro " thus sold " P:+pos " shop to buy another one in another town."
+      translation eo P:+sbeg:+pro " do vendis sian vendejon por aĉeti alian aliloke."
+    end
+  end
+end
+
+
+declare contact Favor
+begin
+  translation fr "Faveur"
+  translation en "Favor"
+  translation eo "Helpŝuldo"
+end
+
+internal contact Favor None
+begin
+  translation fr "aucune"
+  translation en "none"
+  translation eo "nenia"
+end
+
+contact Favor Large
+begin
+  translation fr "grande"
+  translation en "large"
+  translation eo "granda"
+
+  add translation fr:adj:fem "grande"
+  add translation fr:adj:mas "grand"
+  add translation en:adj "large"
+  add translation eo:adj "granda"
+end
+
+contact Favor Small
+begin
+  translation fr "petite"
+  translation en "small"
+  translation eo "malgranda"
+
+  add translation fr:adj:fem "petite"
+  add translation fr:adj:mas "petit"
+  add translation en:adj "small"
+  add translation eo:adj "malgranda"
+
+  compatible with Large
+end
+
+element FinancialDebtSmallFavor
+begin
+  let A be player with contact FinancialDebt to B as Small
+  let B be player
+
+  provide compatible contact Favor from A to B as Small
+end
+
+element FinancialDebtLargeFavor
+begin
+  let A be player with contact FinancialDebt to B as Large
+  let B be player
+
+  provide compatible contact Favor from A to B as Large
+end
+
+
